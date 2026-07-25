@@ -16,6 +16,14 @@ const makeId = () => {
 }
 const todayIso = () => new Date().toISOString()
 const todayDate = () => todayIso().slice(0, 10)
+const contactDetailsFromNotes = (value) => {
+  try {
+    const parsed = JSON.parse(String(value || ''))
+    if (parsed?.pclafContact) return { address: String(parsed.pclafContact.address || ''), cuit: String(parsed.pclafContact.cuit || ''), notes: String(parsed.notes || '') }
+  } catch {}
+  return { address: '', cuit: '', notes: String(value || '') }
+}
+const contactDetailsNotes = ({ address, cuit, notes }) => JSON.stringify({ pclafContact: { address: String(address || '').trim(), cuit: String(cuit || '').trim() }, notes: String(notes || '').trim() })
 const pinHashVersion = 'sha256-v1'
 const clone = (value) => {
   if (typeof globalThis.structuredClone === 'function') return globalThis.structuredClone(value)
@@ -736,6 +744,7 @@ const migrateState = (source) => {
     email: customer.email || '',
     balance: Number(customer.balance || 0),
     tag: customer.tag || 'Cliente',
+    ...contactDetailsFromNotes(customer.notes),
   }))
 
   if (Array.isArray(source.products)) migrated.products = source.products.map((product) => {
@@ -765,6 +774,8 @@ const migrateState = (source) => {
     balance: Number(supplier.balance || 0),
     lastDelivery: supplier.lastDelivery || todayDate(),
     category: supplier.category || 'General',
+    email: supplier.email || '',
+    ...contactDetailsFromNotes(supplier.notes),
   }))
 
   if (Array.isArray(source.cashSessions)) migrated.cashSessions = source.cashSessions.map((session) => ({
@@ -1193,7 +1204,9 @@ export const createBrowserDataStore = (options = {}) => {
       email: String(payload.email || '').trim().toLowerCase(),
       balance: Number(payload.balance || 0),
       tag: String(payload.tag || '').trim(),
-      notes: String(payload.notes || '').trim(),
+      address: String(payload.address || '').trim(),
+      cuit: String(payload.cuit || '').trim(),
+      notes: contactDetailsNotes(payload),
     }
     const customer = cloudCoreAdapter
       ? await cloudCoreAdapter.upsertCustomer(customerDraft)
@@ -1205,12 +1218,27 @@ export const createBrowserDataStore = (options = {}) => {
       email: String(customer.email || customerDraft.email || '').trim().toLowerCase(),
       balance: Number(customer.balance ?? customerDraft.balance ?? 0),
       tag: customer.tag || customerDraft.tag,
-      notes: customer.notes || customerDraft.notes || '',
+      ...contactDetailsFromNotes(customer.notes || customerDraft.notes),
       isActive: customer.is_active ?? true,
     })
     pushAudit(state, currentUser().id, 'customer', customer.id || customerDraft.id, 'created', customerDraft)
     save({ skipCloud: Boolean(cloudCoreAdapter) })
     return { ok: true, message: 'Cliente creado.' }
+  }
+
+  const updateCustomer = async (customerId, payload) => {
+    const customer = state.customers.find((item) => item.id === customerId)
+    if (!customer) return { ok: false, message: 'Cliente no encontrado.' }
+    const draft = { ...customer, ...payload, id: customerId, fullName: String(payload.fullName || '').trim(), notes: contactDetailsNotes(payload) }
+    if (!draft.fullName) return { ok: false, message: 'El cliente necesita un nombre.' }
+    if (cloudCoreAdapter) {
+      await cloudCoreAdapter.upsertCustomer(draft)
+      await syncFromCloud()
+    } else {
+      Object.assign(customer, draft, contactDetailsFromNotes(draft.notes))
+      save()
+    }
+    return { ok: true, message: 'Cliente actualizado.' }
   }
 
   const createBranch = async (payload) => {
@@ -1563,7 +1591,7 @@ export const createBrowserDataStore = (options = {}) => {
         category: payload.category,
         balance: Number(payload.balance || 0),
         lastDelivery: payload.lastDelivery || null,
-        notes: payload.notes || '',
+        notes: contactDetailsNotes(payload),
         isActive: true,
       })
       await syncFromCloud()
@@ -1574,14 +1602,33 @@ export const createBrowserDataStore = (options = {}) => {
       name: payload.name,
       contact: payload.contact,
       phone: payload.phone,
+      email: payload.email || '',
       balance: Number(payload.balance),
       lastDelivery: payload.lastDelivery,
       category: payload.category,
+      address: String(payload.address || '').trim(),
+      cuit: String(payload.cuit || '').trim(),
+      notes: String(payload.notes || '').trim(),
     }
     state.suppliers.unshift(supplier)
     pushAudit(state, currentUser().id, 'supplier', supplier.id, 'created', supplier)
     save()
     return { ok: true, message: 'Proveedor creado.' }
+  }
+
+  const updateSupplier = async (supplierId, payload) => {
+    const supplier = state.suppliers.find((item) => item.id === supplierId)
+    if (!supplier) return { ok: false, message: 'Proveedor no encontrado.' }
+    const draft = { ...supplier, ...payload, id: supplierId, name: String(payload.name || '').trim(), notes: contactDetailsNotes(payload), isActive: true }
+    if (!draft.name) return { ok: false, message: 'El proveedor necesita un nombre.' }
+    if (cloudCoreAdapter) {
+      await cloudCoreAdapter.upsertSupplier(draft)
+      await syncFromCloud()
+    } else {
+      Object.assign(supplier, draft, contactDetailsFromNotes(draft.notes))
+      save()
+    }
+    return { ok: true, message: 'Proveedor actualizado.' }
   }
 
   const createUser = async (payload) => {
@@ -2587,6 +2634,7 @@ export const createBrowserDataStore = (options = {}) => {
     closeCashSession,
     createCashMovement,
     createCustomer,
+    updateCustomer,
     createBranch,
     updateBranch,
     selectBranch,
@@ -2600,6 +2648,7 @@ export const createBrowserDataStore = (options = {}) => {
     importProducts,
     findProductByCode: (code) => findProductByCode(state, code),
     createSupplier,
+    updateSupplier,
     createUser,
     registerPublicUser,
     updateUser,

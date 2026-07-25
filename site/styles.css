@@ -3761,6 +3761,13 @@ input, select { outline: none; }
   background: color-mix(in srgb, var(--accent) 6%, var(--panel));
 }
 
+.contact-result {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
 .timeline-item strong {
   font-family: 'Oswald', sans-serif;
   font-size: 1rem;

@@ -91,12 +91,16 @@ let saleQuickAddCode = ''
 let topbarSearch = ''
 let cloudSyncBusy = false
 let customerFormOpen = false
+let customerEditingId = ''
+let customerSearchQuery = ''
 let saleFormOpen = false
 let cashFormOpen = false
 let productFormOpen = false
 let stockAdjustmentFormOpen = false
 let stockTransferFormOpen = false
 let supplierFormOpen = false
+let supplierEditingId = ''
+let supplierSearchQuery = ''
 let purchaseFormOpen = false
 let invoiceFormOpen = false
 let ticketFormOpen = false
@@ -1361,6 +1365,11 @@ const customersView = (ui) => `
 `
 
 const customersViewV2 = (ui) => `
+  ${(() => {
+    const editingCustomer = ui.snapshot.customers.find((customer) => customer.id === customerEditingId)
+    const query = customerSearchQuery.trim().toLowerCase()
+    const customers = (query ? ui.snapshot.customers.filter((customer) => [customer.fullName, customer.phone, customer.email, customer.cuit].some((value) => String(value || '').toLowerCase().includes(query))) : ui.snapshot.customers.slice(0, 10))
+    return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Clientes</p><h2>Base comercial</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.snapshot.customers.length}</strong><span>Activos</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.snapshot.customers.reduce((sum, customer) => sum + Number(customer.balance || 0), 0))}</strong><span>Saldo</span></span>
@@ -1369,23 +1378,29 @@ const customersViewV2 = (ui) => `
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="module-board customers-board">
       <div class="module-main">
-        ${customerFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Nuevo cliente</h3><p>Contacto, saldo y etiqueta comercial</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-customer-form">Cerrar</button></div></div>
+        ${customerFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>${editingCustomer ? 'Editar cliente' : 'Nuevo cliente'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-customer-form">Cerrar</button></div></div>
           <form class="form-grid" data-form="customer">
-          <label>Nombre<input type="text" name="fullName" required /></label>
-          <label>Telefono<input type="text" name="phone" placeholder="Opcional" /></label>
-          <label>Email<input type="email" name="email" placeholder="Opcional" /></label>
-          <label>Saldo inicial<input type="number" name="balance" min="0" value="0" /></label>
-          <label class="full-span">Etiqueta<input type="text" name="tag" placeholder="Opcional: mayorista, taller, mostrador..." /></label>
-            <button type="submit">Guardar cliente</button>
+          <input type="hidden" name="customerId" value="${editingCustomer?.id || ''}" />
+          <label>Nombre<input type="text" name="fullName" value="${escapeHtml(editingCustomer?.fullName || '')}" required /></label>
+          <label>Telefono<input type="text" name="phone" value="${escapeHtml(editingCustomer?.phone || '')}" placeholder="Opcional" /></label>
+          <label>Email<input type="email" name="email" value="${escapeHtml(editingCustomer?.email || '')}" placeholder="Opcional" /></label>
+          <label>CUIT<input type="text" name="cuit" value="${escapeHtml(editingCustomer?.cuit || '')}" placeholder="20-12345678-9" /></label>
+          <label class="full-span">Direccion<input type="text" name="address" value="${escapeHtml(editingCustomer?.address || '')}" placeholder="Calle, numero, localidad" /></label>
+          ${editingCustomer?.address ? `<a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editingCustomer.address)}">Ver en mapa</a>` : ''}
+          <label>Saldo inicial<input type="number" name="balance" min="0" value="${editingCustomer?.balance || 0}" /></label>
+          <label>Etiqueta<input type="text" name="tag" value="${escapeHtml(editingCustomer?.tag || '')}" placeholder="Mayorista, taller..." /></label>
+            <button type="submit">${editingCustomer ? 'Guardar cambios' : 'Guardar cliente'}</button>
             <button type="button" class="ghost-action" data-action="close-customer-form">Cancelar</button>
           </form>
         </article>` : ''}
-        <article class="panel"><div class="panel-head"><div><h3>Clientes</h3><p>Primero ves la base cargada y agregas solo si hace falta</p></div><div class="settings-actions">${createToggleButton('customer', customerFormOpen, 'Agregar cliente')}</div></div>
-          ${paginatedDataTable(['Cliente', 'Telefono', 'Email', 'Saldo', 'Accion'], ui.snapshot.customers, 'clientes', (customer) => `<div class="data-row"><span>${customer.fullName}<br /><small>${customer.tag || 'Sin etiqueta'}</small></span><span>${customer.phone || '-'}</span><span>${customer.email || '-'}</span><span>${money(customer.balance)}</span><span>${actionButton('customer', customer.id)}</span></div>`)}
+        <article class="panel"><div class="panel-head"><div><h3>${query ? 'Resultados' : 'Ultimos 10 clientes'}</h3><p>Busca por nombre, telefono, email o CUIT; hace click para editar.</p></div><div class="settings-actions">${createToggleButton('customer', customerFormOpen, 'Agregar cliente')}</div></div>
+          <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-customer-search value="${escapeHtml(customerSearchQuery)}" placeholder="Buscar cliente" aria-label="Buscar cliente" /></div>
+          <div class="timeline-list">${customers.map((customer) => `<button type="button" class="timeline-item contact-result" data-action="edit-customer" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin direccion')} · Saldo ${money(customer.balance)}</span></button>`).join('') || '<p class="empty-state">No hay clientes para esta busqueda.</p>'}</div>
         </article>
       </div>
     </section>
   </section>
+`})()}
 `
 
 const salesView = (ui) => `
@@ -1834,6 +1849,9 @@ const purchasesViewLegacy = (ui) => `
 const purchasesViewV2 = (ui) => `
   ${(() => {
     const editingReceipt = ui.snapshot.purchaseReceipts.find((receipt) => receipt.id === purchaseEditingId)
+    const editingSupplier = ui.snapshot.suppliers.find((supplier) => supplier.id === supplierEditingId)
+    const supplierQuery = supplierSearchQuery.trim().toLowerCase()
+    const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.contact, supplier.phone, supplier.email, supplier.cuit].some((value) => String(value || '').toLowerCase().includes(supplierQuery))) : ui.snapshot.suppliers.slice(0, 10))
     const showPurchaseForm = purchaseFormOpen || Boolean(editingReceipt)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Compras</p><h2>Proveedores y recepcion</h2></div><div class="panel-inline-stats section-inline-stats">
@@ -1857,15 +1875,20 @@ const purchasesViewV2 = (ui) => `
           ${editingReceipt ? '<button type="button" class="danger-action" data-action="cancel-purchase-edit">Cancelar edicion</button>' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cancelar</button>'}
         </form>
       </article>` : ''}
-      ${supplierFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Nuevo proveedor</h3><p>Base comercial de compras</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-supplier-form">Cerrar</button></div></div>
+      ${supplierFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>${editingSupplier ? 'Editar proveedor' : 'Nuevo proveedor'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-supplier-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="supplier">
-          <label>Empresa<input type="text" name="name" required /></label>
-          <label>Contacto<input type="text" name="contact" /></label>
-          <label>Telefono<input type="text" name="phone" /></label>
-          <label>Saldo pendiente<input type="number" name="balance" min="0" value="0" /></label>
-          <label>Ultima entrega<input type="date" name="lastDelivery" value="${today}" /></label>
-          <label>Categoria<input type="text" name="category" placeholder="Opcional" /></label>
-          <button type="submit">Guardar proveedor</button>
+          <input type="hidden" name="supplierId" value="${editingSupplier?.id || ''}" />
+          <label>Empresa<input type="text" name="name" value="${escapeHtml(editingSupplier?.name || '')}" required /></label>
+          <label>Contacto<input type="text" name="contact" value="${escapeHtml(editingSupplier?.contact || '')}" /></label>
+          <label>Telefono<input type="text" name="phone" value="${escapeHtml(editingSupplier?.phone || '')}" /></label>
+          <label>Email<input type="email" name="email" value="${escapeHtml(editingSupplier?.email || '')}" /></label>
+          <label>CUIT<input type="text" name="cuit" value="${escapeHtml(editingSupplier?.cuit || '')}" /></label>
+          <label class="full-span">Direccion<input type="text" name="address" value="${escapeHtml(editingSupplier?.address || '')}" placeholder="Calle, numero, localidad" /></label>
+          ${editingSupplier?.address ? `<a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editingSupplier.address)}">Ver en mapa</a>` : ''}
+          <label>Saldo pendiente<input type="number" name="balance" min="0" value="${editingSupplier?.balance || 0}" /></label>
+          <label>Ultima entrega<input type="date" name="lastDelivery" value="${editingSupplier?.lastDelivery || today}" /></label>
+          <label>Categoria<input type="text" name="category" value="${escapeHtml(editingSupplier?.category || '')}" placeholder="Opcional" /></label>
+          <button type="submit">${editingSupplier ? 'Guardar cambios' : 'Guardar proveedor'}</button>
         </form>
       </article>` : ''}
       <article class="panel">
@@ -1880,8 +1903,9 @@ const purchasesViewV2 = (ui) => `
             ${paginatedDataTable(['Proveedor', 'Producto', 'Cantidad', 'Costo', 'Accion'], ui.enrichedReceipts, 'recepciones', (receipt) => `<div class="data-row"><span>${receipt.supplierName}<br /><small>${receipt.documentNumber || 'Sin comprobante'}</small></span><span>${receipt.productName}${receipt.note ? `<br /><small>${receipt.note}</small>` : ''}</span><span>${receipt.quantity}</span><span>${money(receipt.totalCost)}</span><span>${purchaseActionButtons(receipt)}</span></div>`, 'is-stable purchases-receipts-table')}
           </article>
           <article class="panel">
-            <div class="panel-head"><div><h3>Proveedores</h3><p>Lista base para reponer y comprar</p></div></div>
-            ${paginatedDataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers, 'proveedores', (supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category || 'General'}</span><span>${money(supplier.balance)}</span><span>${supplier.lastDelivery || '-'}</span><span>${actionButton('supplier', supplier.id)}</span></div>`, 'is-stable suppliers-table')}
+            <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Ultimos 10 proveedores'}</h3><p>Busca y hace click para editar.</p></div></div>
+            <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar proveedor" aria-label="Buscar proveedor" /></div>
+            <div class="timeline-list">${visibleSuppliers.map((supplier) => `<button type="button" class="timeline-item contact-result" data-action="edit-supplier" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin direccion')} · Saldo ${money(supplier.balance)}</span></button>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
           </article>
         </div>
       </article>
@@ -3155,9 +3179,11 @@ const handleSubmit = async (event) => {
 
   try {
   if (kind === 'customer') {
-    const result = await store.createCustomer({ fullName: formData.get('fullName'), phone: formData.get('phone'), email: formData.get('email'), balance: formData.get('balance'), tag: formData.get('tag') })
+    const payload = { fullName: formData.get('fullName'), phone: formData.get('phone'), email: formData.get('email'), cuit: formData.get('cuit'), address: formData.get('address'), balance: formData.get('balance'), tag: formData.get('tag') }
+    const result = formData.get('customerId') ? await store.updateCustomer(formData.get('customerId'), payload) : await store.createCustomer(payload)
     feedbackMessage = result.message || ''
     customerFormOpen = false
+    customerEditingId = ''
   }
   if (kind === 'branch') {
     const result = formData.get('branchId')
@@ -3295,9 +3321,11 @@ const handleSubmit = async (event) => {
     feedbackMessage = result.message || ''
   }
   if (kind === 'supplier') {
-    const result = await store.createSupplier({ name: formData.get('name'), contact: formData.get('contact'), phone: formData.get('phone'), balance: formData.get('balance'), lastDelivery: formData.get('lastDelivery'), category: formData.get('category') })
+    const payload = { name: formData.get('name'), contact: formData.get('contact'), phone: formData.get('phone'), email: formData.get('email'), cuit: formData.get('cuit'), address: formData.get('address'), balance: formData.get('balance'), lastDelivery: formData.get('lastDelivery'), category: formData.get('category') }
+    const result = formData.get('supplierId') ? await store.updateSupplier(formData.get('supplierId'), payload) : await store.createSupplier(payload)
     feedbackMessage = result.message || ''
     supplierFormOpen = false
+    supplierEditingId = ''
   }
   if (kind === 'invoice') {
     const currentBranchId = getUiState().currentBranch?.id
@@ -3633,14 +3661,18 @@ const bindEvents = () => {
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-customer-form"]')) button.addEventListener('click', () => {
+    customerEditingId = ''
     customerFormOpen = true
     queueScrollToSelector('form[data-form="customer"]')
     render()
   })
   for (const button of document.querySelectorAll('[data-action="close-customer-form"]')) button.addEventListener('click', () => {
     customerFormOpen = false
+    customerEditingId = ''
     render()
   })
+  for (const input of document.querySelectorAll('[data-customer-search]')) input.addEventListener('input', () => { customerSearchQuery = input.value; render() })
+  for (const button of document.querySelectorAll('[data-action="edit-customer"]')) button.addEventListener('click', () => { customerEditingId = button.dataset.id || ''; customerFormOpen = true; queueScrollToSelector('form[data-form="customer"]'); render() })
   for (const button of document.querySelectorAll('[data-action="open-sale-form"]')) button.addEventListener('click', () => {
     saleFormOpen = true
     queueScrollToSelector('form[data-form="sale"]')
@@ -3673,14 +3705,18 @@ const bindEvents = () => {
   })
   for (const button of document.querySelectorAll('[data-action="open-supplier-form"]')) button.addEventListener('click', () => {
     closePurchaseUtilityForms()
+    supplierEditingId = ''
     supplierFormOpen = true
     queueScrollToSelector('form[data-form="supplier"]')
     render()
   })
   for (const button of document.querySelectorAll('[data-action="close-supplier-form"]')) button.addEventListener('click', () => {
     supplierFormOpen = false
+    supplierEditingId = ''
     render()
   })
+  for (const input of document.querySelectorAll('[data-supplier-search]')) input.addEventListener('input', () => { supplierSearchQuery = input.value; render() })
+  for (const button of document.querySelectorAll('[data-action="edit-supplier"]')) button.addEventListener('click', () => { supplierEditingId = button.dataset.id || ''; supplierFormOpen = true; queueScrollToSelector('form[data-form="supplier"]'); render() })
   for (const button of document.querySelectorAll('[data-action="open-purchase-form"]')) button.addEventListener('click', () => {
     closePurchaseUtilityForms()
     purchaseFormOpen = true
