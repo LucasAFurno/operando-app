@@ -40,9 +40,13 @@ export const createSupabaseCoreAdapter = (config) => {
 
   return {
     async loadState() {
-      return rpc('app_public_load_core_state', {
+      const state = await rpc('app_public_load_core_state', {
         p_session_token: getSessionToken(),
       })
+      const summaries = await rpc('app_public_get_invoice_payment_summaries', { p_session_token: getSessionToken() })
+      const byId = new Map((summaries || []).map((item) => [item.invoiceId, item]))
+      state.invoices = (state.invoices || []).map((invoice) => ({ ...invoice, ...(byId.get(invoice.id) || {}) }))
+      return state
     },
     async updateCommerceProfile(payload) {
       return rpc('app_public_update_commerce_profile', {
@@ -201,11 +205,16 @@ export const createSupabaseCoreAdapter = (config) => {
         p_cash_amount: Number(payload?.cashAmount || 0),
         p_transfer_amount: Number(payload?.transferAmount || 0),
         p_mercado_pago_amount: Number(payload?.mercadoPagoAmount || 0),
+        p_echeq_amount: Number(payload?.echeqAmount || 0),
+        p_echeq_details: payload?.echeqDetails || {},
         p_account_amount: Number(payload?.accountAmount || 0),
         p_items: Array.isArray(payload?.items) ? payload.items : [],
         p_branch_id: payload?.branchId || null,
         p_register_id: payload?.registerId || null,
       })
+    },
+    async registerInvoicePayment(payload) {
+      return rpc('app_public_register_invoice_payment', { p_session_token: getSessionToken(), p_invoice_id: payload?.invoiceId || null, p_method_key: payload?.method || 'transfer', p_amount: Number(payload?.amount || 0), p_reference: payload?.reference || '', p_echeq_details: payload?.echeqDetails || {} })
     },
     async upsertPurchaseReceipt(payload) {
       return rpc('app_public_upsert_purchase_receipt', {

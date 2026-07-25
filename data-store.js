@@ -426,6 +426,7 @@ const getPaymentBreakdown = (payload, totalAmount) => {
       cash: Number(payload.cashAmount || 0),
       transfer: Number(payload.transferAmount || 0),
       mercadoPago: Number(payload.mercadoPagoAmount || 0),
+      echeq: Number(payload.echeqAmount || 0),
       account: Number(payload.accountAmount || 0),
     }
   }
@@ -434,6 +435,7 @@ const getPaymentBreakdown = (payload, totalAmount) => {
     cash: payload.paymentMethod === 'cash' ? (isPaid ? normalizedTotal : Number(payload.amountPaid || 0)) : 0,
     transfer: payload.paymentMethod === 'transfer' ? (isPaid ? normalizedTotal : Number(payload.amountPaid || 0)) : 0,
     mercadoPago: payload.paymentMethod === 'mercado_pago' ? (isPaid ? normalizedTotal : Number(payload.amountPaid || 0)) : 0,
+    echeq: payload.paymentMethod === 'echeq' ? (isPaid ? normalizedTotal : Number(payload.amountPaid || 0)) : 0,
     account: payload.paymentMethod === 'account' ? (normalizedTotal - Number(payload.amountPaid || 0)) : 0,
   }
 }
@@ -2558,6 +2560,27 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Registro eliminado y movimientos revertidos cuando correspondia.' }
   }
 
+  const registerInvoicePayment = async (payload) => {
+    const denied = ensurePermission(actionPermissions.invoicesWrite)
+    if (denied) return denied
+    const invoice = state.invoices.find((entry) => entry.id === payload.invoiceId)
+    if (!invoice) return { ok: false, message: 'Factura no encontrada.' }
+    const amount = Number(payload.amount || 0)
+    const due = Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0))
+    if (amount <= 0 || amount > due) return { ok: false, message: 'El abono debe ser mayor a cero y no superar el saldo pendiente.' }
+    if (payload.method === 'cash' && !getOpenCashSession(state)) return { ok: false, message: 'No podes registrar efectivo sin una caja abierta.' }
+    if (payload.method === 'echeq' && !String(payload.echeqDetails?.number || '').trim()) return { ok: false, message: 'Indicá el número de e-cheq.' }
+    if (cloudCoreAdapter) { await cloudCoreAdapter.registerInvoicePayment(payload); await syncFromCloud(); return { ok: true, message: 'Abono registrado.' } }
+    invoice.amountPaid = Number(invoice.amountPaid || 0) + amount
+    invoice.status = invoice.amountPaid >= Number(invoice.totalAmount || 0) ? 'Cobrada' : 'Emitida'
+    const sale = state.sales.find((entry) => entry.id === invoice.saleId)
+    if (sale) { sale.amountPaid = Math.min(Number(sale.totalAmount || 0), Number(sale.amountPaid || 0) + amount); sale.status = getSaleStatus(sale.totalAmount, sale.amountPaid) }
+    const customer = state.customers.find((entry) => entry.id === invoice.customerId)
+    if (customer) customer.balance = Math.max(0, Number(customer.balance || 0) - amount)
+    save()
+    return { ok: true, message: invoice.status === 'Cobrada' ? 'Abono registrado. Factura cobrada.' : 'Abono registrado.' }
+  }
+
   const exportData = () => clone(state)
   const importData = (payload) => {
     if (!isDesktop) return { ok: false, message: 'La web publica no admite importar datos locales.' }
@@ -2668,6 +2691,7 @@ export const createBrowserDataStore = (options = {}) => {
     createStockAdjustment,
     transferStock,
     createSale,
+    registerInvoicePayment,
     updateSale,
     cancelSale,
     createReturnFromSale,

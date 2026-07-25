@@ -533,6 +533,7 @@ const purchaseActionButtons = (receipt) => `
 `
 const invoiceActionButtons = (invoice) => `
   <div class="inline-action-group invoice-actions">
+    <button type="button" class="inline-action" data-invoice-action="pay" data-id="${invoice.id}" ${Number(invoice.amountPaid || 0) >= Number(invoice.totalAmount || 0) ? 'disabled' : ''}>Abonar</button>
     <button type="button" class="inline-action" data-invoice-action="view" data-id="${invoice.id}">Ver</button>
     <button type="button" class="inline-action" data-invoice-action="print" data-id="${invoice.id}">Imprimir</button>
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
@@ -1553,7 +1554,7 @@ const salesViewV2 = (ui) => `
             </section>
             <aside class="pos-payment-panel">
               <label class="pos-customer-field">Cliente<select name="customerId"><option value="">Mostrador</option>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}" ${editingSale?.customerId === customer.id ? 'selected' : ''}>${customer.fullName}</option>`).join('')}</select></label>
-              <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
+              <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
               <div class="pos-payment-options">
                 <label class="checkbox-row compact-toggle"><input type="checkbox" name="isPaid" ${editingSale ? (editingSale.status === 'completed' ? 'checked' : '') : 'checked'} /><span>Cobrado</span></label>
                 <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
@@ -1565,6 +1566,8 @@ const salesViewV2 = (ui) => `
                 <label>Efectivo<input type="number" min="0" name="cashAmount" value="${editingSale?.paymentBreakdown?.cash || 0}" /></label>
                 <label>Transferencia<input type="number" min="0" name="transferAmount" value="${editingSale?.paymentBreakdown?.transfer || 0}" /></label>
                 <label>Mercado Pago<input type="number" min="0" name="mercadoPagoAmount" value="${editingSale?.paymentBreakdown?.mercadoPago || 0}" /></label>
+                <label>E-cheq<input type="number" min="0" name="echeqAmount" value="${editingSale?.paymentBreakdown?.echeq || 0}" /></label>
+                <label>N° e-cheq<input type="text" name="echeqNumber" /></label>
                 <label>Cuenta corriente<input type="number" min="0" name="accountAmount" value="${editingSale?.paymentBreakdown?.account || 0}" /></label>
                 <label class="full-span">Observaciones<input type="text" name="note" value="${editingSale?.note || ''}" placeholder="Opcional" /></label>
               </div></details>
@@ -2908,6 +2911,8 @@ const getInvoiceDocument = (invoiceId) => {
   const branch = ui.snapshot.branches.find((entry) => entry.id === invoice.branchId) || ui.currentBranch
   const sale = ui.snapshot.sales.find((entry) => entry.id === invoice.saleId)
   const issuedAt = String(invoice.issuedAt || invoice.dueDate || '').slice(0, 10) || today
+  const amountPaid = Number(invoice.amountPaid || 0)
+  const balanceDue = Math.max(0, Number(invoice.totalAmount || 0) - amountPaid)
   const items = sale?.items?.length
     ? sale.items.map((item) => {
       const product = ui.snapshot.products.find((entry) => entry.id === item.productId)
@@ -2919,7 +2924,7 @@ const getInvoiceDocument = (invoiceId) => {
     .invoice{max-width:800px;margin:0 auto;background:#fff;border:1px solid #d7dce5;padding:46px 52px;min-height:1000px}
     .header{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #172033;padding-bottom:24px}.brand h1{margin:0;font-size:28px}.brand p,.meta,.muted{color:#536071;font-size:13px;line-height:1.5}.doc-type{text-align:right}.doc-type strong{display:block;font-size:24px}.doc-type span{font-size:14px}
     .parties{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:30px 0}.party{border:1px solid #d7dce5;padding:16px}.party h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#536071;margin:0 0 10px}.party strong{display:block;font-size:16px;margin-bottom:5px}
-    table{width:100%;border-collapse:collapse;margin-top:24px}th{background:#172033;color:#fff;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:11px}td{border-bottom:1px solid #d7dce5;padding:12px 11px;font-size:14px}th:nth-child(n+2),td:nth-child(n+2){text-align:right}.total{margin-left:auto;width:280px;margin-top:26px;border-top:2px solid #172033;padding-top:12px;display:flex;justify-content:space-between;font-size:21px;font-weight:700}.footer{border-top:1px solid #d7dce5;margin-top:48px;padding-top:16px;font-size:12px;color:#536071}@media print{body{background:#fff;padding:0}.invoice{border:0;max-width:none;min-height:0;padding:18mm 16mm}}
+    table{width:100%;border-collapse:collapse;margin-top:24px}th{background:#172033;color:#fff;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:11px}td{border-bottom:1px solid #d7dce5;padding:12px 11px;font-size:14px}th:nth-child(n+2),td:nth-child(n+2){text-align:right}.totals{margin-left:auto;width:310px;margin-top:26px;border-top:2px solid #172033;padding-top:10px}.totals div{display:flex;justify-content:space-between;padding:5px 0;font-size:15px}.totals .grand{font-size:22px;font-weight:800;border-top:1px solid #d7dce5;margin-top:5px;padding-top:10px}.totals .due{color:#9b2c2c;font-weight:700}.footer{border-top:1px solid #d7dce5;margin-top:48px;padding-top:16px;font-size:12px;color:#536071}@media print{body{background:#fff;padding:0}.invoice{border:0;max-width:none;min-height:0;padding:18mm 16mm}}
   </style></head><body><main class="invoice"><header class="header"><div class="brand"><h1>PCLAF Control</h1><p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p></div><div class="doc-type"><strong>${escapeHtml(invoice.kind || 'Factura')}</strong><span>${escapeHtml(invoice.type || 'B')} · N° ${escapeHtml(invoice.number)}</span><div class="meta">Emision: ${escapeHtml(issuedAt)}</div></div></header><section class="parties"><div class="party"><h2>Cliente</h2><strong>${escapeHtml(customer?.fullName || 'Consumidor final')}</strong><span class="muted">Comprobante ${escapeHtml(invoice.status || 'Emitida')}</span></div><div class="party"><h2>Datos fiscales</h2><strong>${escapeHtml(invoice.fiscalStatus || 'Pendiente')}</strong><span class="muted">Vencimiento: ${escapeHtml(String(invoice.dueDate || issuedAt).slice(0, 10))}</span></div></section><table><thead><tr><th>Descripcion</th><th>Cant.</th><th>Precio unit.</th><th>Importe</th></tr></thead><tbody>${items}</tbody></table><div class="total"><span>Total</span><span>${money(invoice.totalAmount)}</span></div><footer class="footer">Comprobante generado por PCLAF Control · ${escapeHtml(invoice.number)}</footer></main></body></html>`
   return { html, title: `${invoice.kind || 'Factura'} ${invoice.number}` }
 }
@@ -3407,7 +3412,7 @@ const handleSubmit = async (event) => {
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('qty_') && Number(value) > 0) items.push({ productId: key.replace('qty_', ''), quantity: Number(value) })
     }
-    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod: formData.get('paymentMethod'), isPaid: formData.get('isPaid') === 'on', autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
+    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod: formData.get('paymentMethod'), isPaid: formData.get('isPaid') === 'on', autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
     const result = formData.get('saleId')
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
@@ -3915,8 +3920,21 @@ const bindEvents = () => {
     })
   }
   for (const button of document.querySelectorAll('[data-invoice-action]')) {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const action = button.dataset.invoiceAction
+      if (action === 'pay') {
+        const invoice = store.getSnapshot().invoices.find((entry) => entry.id === button.dataset.id)
+        const amount = window.prompt(`Abono (saldo ${money(Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0)))}):`)
+        if (amount === null) return
+        const method = window.prompt('Medio: cash, transfer, mercado_pago o echeq', 'transfer')
+        if (method === null) return
+        const normalized = method.trim().toLowerCase()
+        const echeqDetails = normalized === 'echeq' ? { number: window.prompt('Número de e-cheq:') || '' } : {}
+        const result = await store.registerInvoicePayment({ invoiceId: button.dataset.id, amount, method: normalized, echeqDetails })
+        feedbackMessage = result.message || ''
+        render()
+        return
+      }
       const completed = action === 'print'
         ? openInvoiceDocument(button.dataset.id, true)
         : action === 'view' && openInvoiceDocument(button.dataset.id)
