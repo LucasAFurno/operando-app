@@ -43,9 +43,15 @@ export const createSupabaseCoreAdapter = (config) => {
       const state = await rpc('app_public_load_core_state', {
         p_session_token: getSessionToken(),
       })
-      const summaries = await rpc('app_public_get_invoice_payment_summaries', { p_session_token: getSessionToken() })
-      const byId = new Map((summaries || []).map((item) => [item.invoiceId, item]))
-      state.invoices = (state.invoices || []).map((invoice) => ({ ...invoice, ...(byId.get(invoice.id) || {}) }))
+      try {
+        const summaries = await rpc('app_public_get_invoice_payment_summaries', { p_session_token: getSessionToken() })
+        const byId = new Map((summaries || []).map((item) => [item.invoiceId, item]))
+        state.invoices = (state.invoices || []).map((invoice) => ({ ...invoice, ...(byId.get(invoice.id) || {}) }))
+      } catch (error) {
+        // Permite que el resto de la aplicación siga operando mientras se
+        // despliega la migración de pagos en una instancia existente.
+        if (!String(error?.message || '').includes('app_public_get_invoice_payment_summaries')) throw error
+      }
       return state
     },
     async updateCommerceProfile(payload) {
