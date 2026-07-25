@@ -103,6 +103,7 @@ let supplierEditingId = ''
 let supplierSearchQuery = ''
 let purchaseFormOpen = false
 let invoiceFormOpen = false
+let invoicePaymentId = ''
 let ticketFormOpen = false
 let branchFormOpen = false
 let registerFormOpen = false
@@ -503,6 +504,7 @@ const closeStructureUtilityForms = () => {
 }
 const closeDocumentUtilityForms = () => {
   invoiceFormOpen = false
+  invoicePaymentId = ''
   ticketFormOpen = false
   invoiceEditingId = ''
   ticketEditingId = ''
@@ -533,7 +535,7 @@ const purchaseActionButtons = (receipt) => `
 `
 const invoiceActionButtons = (invoice) => `
   <div class="inline-action-group invoice-actions">
-    <button type="button" class="inline-action" data-invoice-action="pay" data-id="${invoice.id}" ${Number(invoice.amountPaid || 0) >= Number(invoice.totalAmount || 0) ? 'disabled' : ''}>Abonar</button>
+    <button type="button" class="inline-action is-strong" data-invoice-action="pay" data-id="${invoice.id}" ${invoiceBalance(invoice) <= 0 ? 'disabled' : ''}>Abonar ${money(invoiceBalance(invoice))}</button>
     <button type="button" class="inline-action" data-invoice-action="view" data-id="${invoice.id}">Ver</button>
     <button type="button" class="inline-action" data-invoice-action="print" data-id="${invoice.id}">Imprimir</button>
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
@@ -541,6 +543,7 @@ const invoiceActionButtons = (invoice) => `
 `
 
 const invoiceEmissionLabel = (invoice) => invoice.fiscalStatus === 'Interno' ? 'Interno' : 'ARCA'
+const invoiceBalance = (invoice) => Math.max(0, Number(invoice?.totalAmount || 0) - Number(invoice?.amountPaid || 0))
 const ticketActionButtons = (ticket) => `
   <div class="inline-action-group">
     <button type="button" class="inline-action" data-ticket-action="edit" data-id="${ticket.id}">Editar</button>
@@ -1951,6 +1954,8 @@ const invoicesView = (ui) => `
 const invoicesViewV2 = (ui) => `
   ${(() => {
     const showInvoiceForm = invoiceFormOpen
+    const paymentInvoice = ui.snapshot.invoices.find((invoice) => invoice.id === invoicePaymentId)
+    const paymentBalance = invoiceBalance(paymentInvoice)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Facturacion</p><h2>Comprobantes</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.enrichedInvoices.length}</strong><span>Comprobantes</span></span>
@@ -1972,6 +1977,18 @@ const invoicesViewV2 = (ui) => `
           <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero informado por ARCA; no se genera uno interno.</p>
           <button type="submit">Guardar factura</button>
           <button type="button" class="ghost-action" data-action="close-invoice-form">Cancelar</button>
+        </form>
+      </article>` : ''}
+      ${paymentInvoice ? `<article class="panel invoice-payment-panel"><div class="panel-head"><div><h3>Registrar cobro</h3><p>${paymentInvoice.number} · Saldo pendiente ${money(paymentBalance)}</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-invoice-payment">Cerrar</button></div></div>
+        <form class="form-grid compact-form" data-form="invoice-payment">
+          <input type="hidden" name="invoiceId" value="${paymentInvoice.id}" />
+          <label>Importe del abono<input type="number" name="amount" min="1" max="${paymentBalance}" step="0.01" value="${paymentBalance}" required /></label>
+          <label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="echeq">E-cheq</option></select></label>
+          <label class="full-span">Referencia (opcional)<input type="text" name="reference" placeholder="Ej.: comprobante, operación o nota" /></label>
+          <div class="form-note full-span">Podés registrar un abono parcial o pagar el saldo completo. El saldo pendiente se actualiza automáticamente.</div>
+          <button type="submit" name="paymentMode" value="partial">Registrar abono</button>
+          <button type="submit" class="primary-action" name="paymentMode" value="full">Pagar saldo completo (${money(paymentBalance)})</button>
+          <button type="button" class="ghost-action" data-action="close-invoice-payment">Cancelar</button>
         </form>
       </article>` : ''}
       <article class="panel">
@@ -3348,6 +3365,15 @@ const handleSubmit = async (event) => {
     invoiceEditingId = ''
     invoiceFormOpen = false
   }
+  if (kind === 'invoice-payment') {
+    const invoice = store.getSnapshot().invoices.find((entry) => entry.id === formData.get('invoiceId'))
+    const amount = formData.get('paymentMode') === 'full' ? invoiceBalance(invoice) : formData.get('amount')
+    const method = String(formData.get('method') || 'transfer')
+    const reference = String(formData.get('reference') || '').trim()
+    const result = await store.registerInvoicePayment({ invoiceId: formData.get('invoiceId'), amount, method, reference, echeqDetails: method === 'echeq' ? { number: reference } : {} })
+    feedbackMessage = result.message || ''
+    invoicePaymentId = result.ok ? '' : invoicePaymentId
+  }
   if (kind === 'ticket') {
     const currentBranchId = getUiState().currentBranch?.id
     const result = formData.get('ticketId')
@@ -3772,6 +3798,10 @@ const bindEvents = () => {
     closeDocumentUtilityForms()
     render()
   })
+  for (const button of document.querySelectorAll('[data-action="close-invoice-payment"]')) button.addEventListener('click', () => {
+    invoicePaymentId = ''
+    render()
+  })
   for (const button of document.querySelectorAll('[data-action="open-ticket-form"]')) button.addEventListener('click', () => {
     closeDocumentUtilityForms()
     ticketFormOpen = true
@@ -3933,15 +3963,9 @@ const bindEvents = () => {
     button.addEventListener('click', async () => {
       const action = button.dataset.invoiceAction
       if (action === 'pay') {
-        const invoice = store.getSnapshot().invoices.find((entry) => entry.id === button.dataset.id)
-        const amount = window.prompt(`Abono (saldo ${money(Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0)))}):`)
-        if (amount === null) return
-        const method = window.prompt('Medio: cash, transfer, mercado_pago o echeq', 'transfer')
-        if (method === null) return
-        const normalized = method.trim().toLowerCase()
-        const echeqDetails = normalized === 'echeq' ? { number: window.prompt('Número de e-cheq:') || '' } : {}
-        const result = await store.registerInvoicePayment({ invoiceId: button.dataset.id, amount, method: normalized, echeqDetails })
-        feedbackMessage = result.message || ''
+        invoicePaymentId = button.dataset.id
+        invoiceFormOpen = false
+        queueScrollToSelector('form[data-form="invoice-payment"]')
         render()
         return
       }

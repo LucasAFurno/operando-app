@@ -2942,6 +2942,15 @@ input, select { outline: none; }
   gap: 7px;
 }
 
+.invoice-payment-panel {
+  border-color: rgba(255, 59, 48, .38);
+  box-shadow: 0 18px 42px rgba(255, 35, 28, .08);
+}
+
+.invoice-payment-panel .form-note {
+  color: var(--muted);
+}
+
 .invoice-compact-table .data-head,
 .invoice-compact-table .data-row {
   grid-template-columns: minmax(150px, 1.15fr) minmax(170px, 1.35fr) minmax(110px, .9fr) minmax(100px, .75fr) minmax(220px, auto);
