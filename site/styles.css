@@ -3644,6 +3644,11 @@ input, select { outline: none; }
   gap: 7px;
 }
 
+.pos-payment-panel .pos-customer-field,
+.pos-payment-panel .pos-payment-field {
+  grid-column: 1 / -1;
+}
+
 .pos-customer-search {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -3656,6 +3661,8 @@ input, select { outline: none; }
 }
 
 .pos-customer-counter {
+  width: auto;
+  min-width: 104px;
   min-height: 38px;
   padding: 8px 10px;
   border: 1px solid var(--line);
