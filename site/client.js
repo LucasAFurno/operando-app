@@ -1386,8 +1386,8 @@ const customersViewV2 = (ui) => `
           <label>Telefono<input type="text" name="phone" value="${escapeHtml(editingCustomer?.phone || '')}" placeholder="Opcional" /></label>
           <label>Email<input type="email" name="email" value="${escapeHtml(editingCustomer?.email || '')}" placeholder="Opcional" /></label>
           <label>CUIT<input type="text" name="cuit" value="${escapeHtml(editingCustomer?.cuit || '')}" placeholder="20-12345678-9" /></label>
-          <label class="full-span">Direccion<input type="text" name="address" value="${escapeHtml(editingCustomer?.address || '')}" placeholder="Calle, numero, localidad" /></label>
-          ${editingCustomer?.address ? `<a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editingCustomer.address)}">Ver en mapa</a>` : ''}
+          <label class="full-span">Direccion<input type="text" name="address" data-address-map-input value="${escapeHtml(editingCustomer?.address || '')}" placeholder="Calle, numero, localidad" /></label>
+          <div class="address-map full-span"><div><strong>Ubicacion en Google Maps</strong><a class="inline-action" data-address-map-link target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editingCustomer?.address || '')}">Abrir en Maps</a></div><iframe data-address-map title="Mapa de la direccion del cliente" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${editingCustomer?.address ? `https://www.google.com/maps?q=${encodeURIComponent(editingCustomer.address)}&output=embed` : 'about:blank'}"></iframe><p data-address-map-empty ${editingCustomer?.address ? 'hidden' : ''}>Escribí una dirección para visualizarla en el mapa.</p></div>
           <label>Saldo inicial<input type="number" name="balance" min="0" value="${editingCustomer?.balance || 0}" /></label>
           <label>Etiqueta<input type="text" name="tag" value="${escapeHtml(editingCustomer?.tag || '')}" placeholder="Mayorista, taller..." /></label>
             <button type="submit">${editingCustomer ? 'Guardar cambios' : 'Guardar cliente'}</button>
@@ -1886,8 +1886,8 @@ const purchasesViewV2 = (ui) => `
           <label>Telefono<input type="text" name="phone" value="${escapeHtml(editingSupplier?.phone || '')}" /></label>
           <label>Email<input type="email" name="email" value="${escapeHtml(editingSupplier?.email || '')}" /></label>
           <label>CUIT<input type="text" name="cuit" value="${escapeHtml(editingSupplier?.cuit || '')}" /></label>
-          <label class="full-span">Direccion<input type="text" name="address" value="${escapeHtml(editingSupplier?.address || '')}" placeholder="Calle, numero, localidad" /></label>
-          ${editingSupplier?.address ? `<a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editingSupplier.address)}">Ver en mapa</a>` : ''}
+          <label class="full-span">Direccion<input type="text" name="address" data-address-map-input value="${escapeHtml(editingSupplier?.address || '')}" placeholder="Calle, numero, localidad" /></label>
+          <div class="address-map full-span"><div><strong>Ubicacion en Google Maps</strong><a class="inline-action" data-address-map-link target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editingSupplier?.address || '')}">Abrir en Maps</a></div><iframe data-address-map title="Mapa de la direccion del proveedor" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${editingSupplier?.address ? `https://www.google.com/maps?q=${encodeURIComponent(editingSupplier.address)}&output=embed` : 'about:blank'}"></iframe><p data-address-map-empty ${editingSupplier?.address ? 'hidden' : ''}>Escribí una dirección para visualizarla en el mapa.</p></div>
           <label>Saldo pendiente<input type="number" name="balance" min="0" value="${editingSupplier?.balance || 0}" /></label>
           <label>Ultima entrega<input type="date" name="lastDelivery" value="${editingSupplier?.lastDelivery || today}" /></label>
           <label>Categoria<input type="text" name="category" value="${escapeHtml(editingSupplier?.category || '')}" placeholder="Opcional" /></label>
@@ -3677,6 +3677,16 @@ const bindEvents = () => {
     render()
   })
   for (const input of document.querySelectorAll('[data-customer-search]')) input.addEventListener('input', () => { customerSearchQuery = input.value; render() })
+  for (const input of document.querySelectorAll('[data-address-map-input]')) input.addEventListener('input', () => {
+    const address = input.value.trim()
+    const form = input.closest('form')
+    const frame = form?.querySelector('[data-address-map]')
+    const link = form?.querySelector('[data-address-map-link]')
+    const empty = form?.querySelector('[data-address-map-empty]')
+    if (frame) frame.src = address ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed` : 'about:blank'
+    if (link) link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+    if (empty) empty.hidden = Boolean(address)
+  })
   for (const button of document.querySelectorAll('[data-action="edit-customer"]')) button.addEventListener('click', () => { customerEditingId = button.dataset.id || ''; customerFormOpen = true; queueScrollToSelector('form[data-form="customer"]'); render() })
   for (const button of document.querySelectorAll('[data-action="open-sale-form"]')) button.addEventListener('click', () => {
     saleFormOpen = true
