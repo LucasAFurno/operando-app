@@ -2447,7 +2447,7 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Ticket actualizado.' }
   }
 
-  const removeEntity = (entity, id) => {
+  const removeEntity = async (entity, id) => {
     const permissionByEntity = {
       customer: actionPermissions.customersWrite,
       sale: actionPermissions.salesWrite,
@@ -2475,9 +2475,25 @@ export const createBrowserDataStore = (options = {}) => {
       purchase_receipt: 'purchaseReceipts',
     }
     const key = map[entity]
-    if (!key) return
+    if (!key) return { ok: false, message: 'Tipo de registro no valido.' }
     const before = state[key].find((item) => item.id === id) || null
-    if (!before) return
+    if (!before) return { ok: false, message: 'Registro no encontrado.' }
+
+    if (entity === 'register') {
+      const hasOpenCashSession = state.cashSessions.some((session) => session.registerId === id && session.status === 'open')
+      if (hasOpenCashSession) return { ok: false, message: 'No podes eliminar una caja con una sesion abierta. Cerra la caja primero.' }
+      const inactiveRegister = { ...before, isActive: false }
+      if (cloudCoreAdapter) {
+        await cloudCoreAdapter.upsertRegister(inactiveRegister)
+        await syncFromCloud()
+      } else {
+        const register = state.registers.find((item) => item.id === id)
+        Object.assign(register, inactiveRegister)
+        pushAudit(state, currentUser().id, entity, id, 'deactivated', inactiveRegister, before)
+        save()
+      }
+      return { ok: true, message: 'Caja eliminada de la operacion.' }
+    }
 
     if (entity === 'sale') {
       revertSaleEffects(state, before)
@@ -2492,6 +2508,7 @@ export const createBrowserDataStore = (options = {}) => {
     state[key] = state[key].filter((item) => item.id !== id)
     pushAudit(state, currentUser().id, entity, id, 'deleted', null, before)
     save()
+    return { ok: true, message: 'Registro eliminado y movimientos revertidos cuando correspondia.' }
   }
 
   const exportData = () => clone(state)

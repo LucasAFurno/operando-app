@@ -3751,6 +3751,16 @@ input, select { outline: none; }
   border-bottom: 1px solid var(--line);
 }
 
+.timeline-item.is-positive {
+  border-left-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 6%, var(--panel));
+}
+
+.timeline-item.is-negative {
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel));
+}
+
 .timeline-item strong {
   font-family: 'Oswald', sans-serif;
   font-size: 1rem;

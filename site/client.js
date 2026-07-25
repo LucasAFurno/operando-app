@@ -361,6 +361,7 @@ const cashMovementKindLabel = (value) => {
     adjustment: 'Ajuste',
     opening: 'Apertura',
     closing: 'Cierre',
+    sale: 'Cobro de venta',
   }
   return labels[normalized] || (value || 'Movimiento')
 }
@@ -533,6 +534,8 @@ const invoiceActionButtons = (invoice) => `
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
   </div>
 `
+
+const invoiceEmissionLabel = (invoice) => invoice.fiscalStatus === 'Interno' ? 'Interno' : 'ARCA'
 const ticketActionButtons = (ticket) => `
   <div class="inline-action-group">
     <button type="button" class="inline-action" data-ticket-action="edit" data-id="${ticket.id}">Editar</button>
@@ -743,13 +746,14 @@ const getUiState = () => {
   const userMap = new Map(snapshot.users.map((item) => [item.id, item]))
   const supplierMap = new Map(snapshot.suppliers.map((item) => [item.id, item]))
   const branchMap = new Map(snapshot.branches.map((item) => [item.id, item]))
-  const registerMap = new Map(snapshot.registers.map((item) => [item.id, item]))
+  const activeRegisters = snapshot.registers.filter((register) => register.isActive !== false)
+  const registerMap = new Map(activeRegisters.map((item) => [item.id, item]))
   const openCashSession = snapshot.cashSessions.find((session) => session.status === 'open') || null
   const cashSales = snapshot.sales.filter((sale) => sale.cashSessionId === openCashSession?.id && sale.paymentMethod === 'cash')
   const cashSalesTotal = cashSales.reduce((sum, sale) => sum + sale.amountPaid, 0)
   const currentBranch = branchMap.get(snapshot.business.currentBranchId) || snapshot.branches[0]
-  const currentRegister = registerMap.get(snapshot.business.currentRegisterId) || snapshot.registers.find((register) => register.branchId === currentBranch?.id) || null
-  const branchRegisters = snapshot.registers.filter((register) => register.branchId === currentBranch?.id)
+  const currentRegister = registerMap.get(snapshot.business.currentRegisterId) || activeRegisters.find((register) => register.branchId === currentBranch?.id) || null
+  const branchRegisters = activeRegisters.filter((register) => register.branchId === currentBranch?.id)
   const scopedProducts = snapshot.products.map((product) => ({
     ...product,
     scopedStock: getScopedStock(product, currentBranch?.id),
@@ -860,7 +864,7 @@ const getUiState = () => {
     reportScopedReceipts,
     reportScopedCashMovements,
     reportScopedStockMovements,
-    enrichedRegisters: snapshot.registers.map((register) => ({
+    enrichedRegisters: activeRegisters.map((register) => ({
       ...register,
       branchName: branchMap.get(register.branchId)?.name || 'Sucursal',
       cashierName: userMap.get(register.cashierUserId)?.fullName || 'Sin asignar',
@@ -1756,7 +1760,7 @@ const purchasesView = (ui) => `
         <form class="form-grid" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
           <label>Proveedor<select name="supplierId" required>${ui.snapshot.suppliers.map((supplier) => `<option value="${supplier.id}" ${editingReceipt?.supplierId === supplier.id ? 'selected' : ''}>${supplier.name}</option>`).join('')}</select></label>
-          <label>Producto<select name="productId" required>${ui.snapshot.products.map((product) => `<option value="${product.id}" ${editingReceipt?.productId === product.id ? 'selected' : ''}>${product.name}</option>`).join('')}</select></label>
+          <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" value="${escapeHtml(ui.snapshot.products.find((product) => product.id === editingReceipt?.productId)?.name || '')}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
           <label>Cantidad<input type="number" min="1" name="quantity" value="${editingReceipt?.quantity || ''}" required /></label>
           <label>Costo unitario<input type="number" min="0" name="unitCost" value="${editingReceipt?.unitCost || ''}" required /></label>
@@ -1792,7 +1796,7 @@ const purchasesViewLegacy = (ui) => `
           <form class="form-grid compact-form" data-form="purchase-receipt">
             <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
             <label>Proveedor<select name="supplierId" required>${ui.snapshot.suppliers.map((supplier) => `<option value="${supplier.id}" ${editingReceipt?.supplierId === supplier.id ? 'selected' : ''}>${supplier.name}</option>`).join('')}</select></label>
-            <label>Producto<select name="productId" required>${ui.snapshot.products.map((product) => `<option value="${product.id}" ${editingReceipt?.productId === product.id ? 'selected' : ''}>${product.name}</option>`).join('')}</select></label>
+            <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" value="${escapeHtml(ui.snapshot.products.find((product) => product.id === editingReceipt?.productId)?.name || '')}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
             <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
             <label>Cantidad<input type="number" min="1" name="quantity" value="${editingReceipt?.quantity || ''}" required /></label>
             <label>Costo unitario<input type="number" min="0" name="unitCost" value="${editingReceipt?.unitCost || ''}" required /></label>
@@ -1844,7 +1848,7 @@ const purchasesViewV2 = (ui) => `
         <form class="form-grid compact-form" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
           <label>Proveedor<select name="supplierId" required>${ui.snapshot.suppliers.map((supplier) => `<option value="${supplier.id}" ${editingReceipt?.supplierId === supplier.id ? 'selected' : ''}>${supplier.name}</option>`).join('')}</select></label>
-          <label>Producto<select name="productId" required>${ui.snapshot.products.map((product) => `<option value="${product.id}" ${editingReceipt?.productId === product.id ? 'selected' : ''}>${product.name}</option>`).join('')}</select></label>
+          <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" value="${escapeHtml(ui.snapshot.products.find((product) => product.id === editingReceipt?.productId)?.name || '')}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
           <label>Cantidad<input type="number" min="1" name="quantity" value="${editingReceipt?.quantity || ''}" required /></label>
           <label>Costo unitario<input type="number" min="0" name="unitCost" value="${editingReceipt?.unitCost || ''}" required /></label>
@@ -1896,20 +1900,21 @@ const invoicesView = (ui) => `
       <article class="panel"><div class="panel-head"><div><h3>${editingInvoice ? 'Editar factura' : 'Nueva factura'}</h3><p>Numeracion real por sucursal</p></div></div>
         <form class="form-grid" data-form="invoice">
           <input type="hidden" name="invoiceId" value="${editingInvoice?.id || ''}" />
-          <label>Numero<input type="text" name="number" value="${editingInvoice?.number || ''}" placeholder="Se autogenera si lo dejas vacio" /></label>
+          <label>Numero de comprobante<input type="text" name="number" value="${editingInvoice?.number || ''}" placeholder="Interno: se genera con el local · ARCA: numero aprobado" /></label>
           <label>Cliente<select name="customerId" required>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}" ${editingInvoice?.customerId === customer.id ? 'selected' : ''}>${customer.fullName}</option>`).join('')}</select></label>
           <label>Clase<select name="kind"><option ${editingInvoice?.kind === 'Factura' || !editingInvoice ? 'selected' : ''}>Factura</option><option ${editingInvoice?.kind === 'Ticket' ? 'selected' : ''}>Ticket</option><option ${editingInvoice?.kind === 'Presupuesto' ? 'selected' : ''}>Presupuesto</option><option ${editingInvoice?.kind === 'Remito' ? 'selected' : ''}>Remito</option><option ${editingInvoice?.kind === 'Nota de credito' ? 'selected' : ''}>Nota de credito</option></select></label>
           <label>Total<input type="number" min="1" name="totalAmount" value="${editingInvoice?.totalAmount || ''}" required /></label>
           <label>Tipo<select name="type"><option ${editingInvoice?.type === 'A' ? 'selected' : ''}>A</option><option ${editingInvoice?.type === 'B' || !editingInvoice ? 'selected' : ''}>B</option><option ${editingInvoice?.type === 'C' ? 'selected' : ''}>C</option></select></label>
           <label>Vencimiento<input type="date" name="dueDate" value="${editingInvoice?.dueDate || today}" required /></label>
           <label>Estado<select name="status"><option ${editingInvoice?.status === 'Emitida' || !editingInvoice ? 'selected' : ''}>Emitida</option><option ${editingInvoice?.status === 'En revision' ? 'selected' : ''}>En revision</option><option ${editingInvoice?.status === 'Cobrada' ? 'selected' : ''}>Cobrada</option></select></label>
-          <label>Estado fiscal<select name="fiscalStatus"><option ${editingInvoice?.fiscalStatus === 'Pendiente' || !editingInvoice ? 'selected' : ''}>Pendiente</option><option ${editingInvoice?.fiscalStatus === 'Listo para enviar' ? 'selected' : ''}>Listo para enviar</option><option ${editingInvoice?.fiscalStatus === 'Aprobado' ? 'selected' : ''}>Aprobado</option><option ${editingInvoice?.fiscalStatus === 'Rechazado' ? 'selected' : ''}>Rechazado</option><option ${editingInvoice?.fiscalStatus === 'Anulado' ? 'selected' : ''}>Anulado</option></select></label>
+          <label>Emision<select name="fiscalStatus"><option value="Interno" ${editingInvoice?.fiscalStatus === 'Interno' || !editingInvoice ? 'selected' : ''}>Interno</option><option value="Pendiente" ${editingInvoice?.fiscalStatus === 'Pendiente' ? 'selected' : ''}>ARCA · Pendiente</option><option value="Listo para enviar" ${editingInvoice?.fiscalStatus === 'Listo para enviar' ? 'selected' : ''}>ARCA · Listo para enviar</option><option value="Aprobado" ${editingInvoice?.fiscalStatus === 'Aprobado' ? 'selected' : ''}>ARCA · Aprobado</option><option value="Rechazado" ${editingInvoice?.fiscalStatus === 'Rechazado' ? 'selected' : ''}>ARCA · Rechazado</option><option value="Anulado" ${editingInvoice?.fiscalStatus === 'Anulado' ? 'selected' : ''}>ARCA · Anulado</option></select></label>
+          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero informado por ARCA; no se genera uno interno.</p>
           <button type="submit">${editingInvoice ? 'Guardar cambios' : 'Guardar factura'}</button>
           ${editingInvoice ? '<button type="button" class="danger-action" data-action="cancel-invoice-edit">Cancelar edicion</button>' : ''}
         </form>
       </article>
       <article class="panel"><div class="panel-head"><div><h3>Comprobantes</h3><p>Seguimiento comercial y fiscal</p></div></div>
-        ${dataTable(['Numero', 'Cliente', 'Sucursal', 'Total', 'Accion'], ui.enrichedInvoices.map((invoice) => `<div class="data-row" data-invoice-id="${invoice.id}"><span>${invoice.number}</span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'is-stable invoices-table')}
+        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Accion'], ui.enrichedInvoices.map((invoice) => `<div class="data-row" data-invoice-id="${invoice.id}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'is-stable invoices-table')}
       </article>
     </section>
   </section>
@@ -1929,21 +1934,22 @@ const invoicesViewV2 = (ui) => `
     <section class="stacked-section">
       ${showInvoiceForm ? `<article class="panel"><div class="panel-head"><div><h3>Nueva factura</h3><p>Numeracion real por sucursal</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-invoice-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="invoice">
-          <label>Numero<input type="text" name="number" placeholder="Se autogenera si lo dejas vacio" /></label>
+          <label>Numero de comprobante<input type="text" name="number" placeholder="Interno: se genera con el local · ARCA: numero aprobado" /></label>
           <label>Cliente<select name="customerId" required>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}">${customer.fullName}</option>`).join('')}</select></label>
           <label>Clase<select name="kind"><option selected>Factura</option><option>Ticket</option><option>Presupuesto</option><option>Remito</option><option>Nota de credito</option></select></label>
           <label>Total<input type="number" min="1" name="totalAmount" required /></label>
           <label>Tipo<select name="type"><option>A</option><option selected>B</option><option>C</option></select></label>
           <label>Vencimiento<input type="date" name="dueDate" value="${today}" required /></label>
           <label>Estado<select name="status"><option selected>Emitida</option><option>En revision</option><option>Cobrada</option></select></label>
-          <label>Estado fiscal<select name="fiscalStatus"><option selected>Pendiente</option><option>Listo para enviar</option><option>Aprobado</option><option>Rechazado</option><option>Anulado</option></select></label>
+          <label>Emision<select name="fiscalStatus"><option value="Interno" selected>Interno</option><option value="Pendiente">ARCA · Pendiente</option><option value="Listo para enviar">ARCA · Listo para enviar</option><option value="Aprobado">ARCA · Aprobado</option><option value="Rechazado">ARCA · Rechazado</option><option value="Anulado">ARCA · Anulado</option></select></label>
+          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero informado por ARCA; no se genera uno interno.</p>
           <button type="submit">Guardar factura</button>
           <button type="button" class="ghost-action" data-action="close-invoice-form">Cancelar</button>
         </form>
       </article>` : ''}
       <article class="panel">
         <div class="panel-head"><div><h3>Comprobantes</h3><p>Seguimiento comercial y numeracion</p></div><div class="settings-actions">${createToggleButton('invoice', showInvoiceForm, 'Agregar comprobante')}</div></div>
-        ${dataTable(['Numero', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row"><span>${invoice.number}</span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
+        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
       </article>
     </section>
   </section>
@@ -2231,8 +2237,8 @@ const reportsView = (ui) => `
         <div class="priority-item"><strong>Compras</strong><p>${ui.reportScopedReceipts.length}</p></div>
         <div class="priority-item"><strong>Stock</strong><p>${ui.reportScopedStockMovements.length}</p></div>
       </div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Movimientos de stock</h3><p>Ingresos y egresos</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de stock en este rango.</p>'}</div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de caja en este rango.</p>'}</div></article>
+      <article class="panel"><div class="panel-head"><div><h3>Movimientos de stock</h3><p>Ingresos y egresos</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de stock en este rango.</p>'}</div></article>
+      <article class="panel"><div class="panel-head"><div><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de caja en este rango.</p>'}</div></article>
     </section>
   </section>
 `
@@ -2253,8 +2259,8 @@ const reportsViewLegacy = (ui) => `
     <section class="dashboard-grid reports-layout">
       <article class="panel"><div class="panel-head"><div><h3>Top productos</h3><p>Movimiento comercial filtrado</p></div></div><div class="top-list">${[...ui.reportScopedSales.reduce((map, sale) => { for (const item of sale.items) { const current = map.get(item.productId) || { name: ui.snapshot.products.find((product) => product.id === item.productId)?.name || 'Articulo', qty: 0 }; current.qty += item.quantity; map.set(item.productId, current) } return map }, new Map()).values()].sort((a, b) => b.qty - a.qty).slice(0, 5).map((item, index) => `<div class="top-row"><span>${index + 1}</span><div><strong>${item.name}</strong><p>${item.qty} unidades vendidas</p></div></div>`).join('') || '<p class="empty-state">Sin ventas en este rango.</p>'}</div></article>
       <article class="panel"><div class="panel-head"><div><h3>Balance rapido</h3><p>${ui.currentBranch?.name || 'Sucursal'}${reportRegisterFilter === 'all' ? '' : ` / ${ui.enrichedRegisters.find((register) => register.id === reportRegisterFilter)?.name || 'Caja'}`}</p></div></div><div class="priority-list"><div class="priority-item"><strong>Ventas filtradas</strong><p>${money(ui.reportScopedSales.reduce((sum, sale) => sum + sale.totalAmount, 0))}</p></div><div class="priority-item"><strong>Facturas filtradas</strong><p>${money(ui.reportScopedInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0))}</p></div><div class="priority-item"><strong>Mov. caja</strong><p>${money(ui.reportScopedCashMovements.reduce((sum, movement) => sum + movement.signedAmount, 0))}</p></div></div><div class="settings-actions"><button type="button" class="primary-action" data-action="export-report">Exportar CSV</button></div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Movimientos de stock</h3><p>Ingresos y egresos</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de stock en este rango.</p>'}</div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de caja en este rango.</p>'}</div></article>
+      <article class="panel"><div class="panel-head"><div><h3>Movimientos de stock</h3><p>Ingresos y egresos</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de stock en este rango.</p>'}</div></article>
+      <article class="panel"><div class="panel-head"><div><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de caja en este rango.</p>'}</div></article>
     </section>
   </section>
 `
@@ -2868,6 +2874,8 @@ const getReceiptDocument = (saleId) => {
   return { html, filename: `comprobante-${sale.id}.pdf`, fallbackFilename: `comprobante-${sale.id}.html` }
 }
 
+const movementDirectionClass = (value) => Number(value || 0) >= 0 ? 'is-positive' : 'is-negative'
+
 const getInvoiceDocument = (invoiceId) => {
   const ui = getUiState()
   const invoice = ui.snapshot.invoices.find((entry) => entry.id === invoiceId)
@@ -3293,9 +3301,16 @@ const handleSubmit = async (event) => {
   }
   if (kind === 'invoice') {
     const currentBranchId = getUiState().currentBranch?.id
+    const fiscalStatus = String(formData.get('fiscalStatus') || 'Interno')
+    const number = String(formData.get('number') || '').trim()
+    if (fiscalStatus !== 'Interno' && !number) {
+      feedbackMessage = 'Para un comprobante ARCA carga el numero informado por ARCA antes de guardarlo.'
+      render()
+      return
+    }
     const result = formData.get('invoiceId')
-      ? await store.updateInvoice(formData.get('invoiceId'), { number: formData.get('number'), customerId: formData.get('customerId'), totalAmount: formData.get('totalAmount'), kind: formData.get('kind'), type: formData.get('type'), dueDate: formData.get('dueDate'), status: formData.get('status'), fiscalStatus: formData.get('fiscalStatus'), branchId: currentBranchId })
-      : await store.createInvoice({ number: formData.get('number'), customerId: formData.get('customerId'), totalAmount: formData.get('totalAmount'), kind: formData.get('kind'), type: formData.get('type'), dueDate: formData.get('dueDate'), status: formData.get('status'), fiscalStatus: formData.get('fiscalStatus'), branchId: currentBranchId })
+      ? await store.updateInvoice(formData.get('invoiceId'), { number, customerId: formData.get('customerId'), totalAmount: formData.get('totalAmount'), kind: formData.get('kind'), type: formData.get('type'), dueDate: formData.get('dueDate'), status: formData.get('status'), fiscalStatus, branchId: currentBranchId })
+      : await store.createInvoice({ number, customerId: formData.get('customerId'), totalAmount: formData.get('totalAmount'), kind: formData.get('kind'), type: formData.get('type'), dueDate: formData.get('dueDate'), status: formData.get('status'), fiscalStatus, branchId: currentBranchId })
     feedbackMessage = result.message || ''
     invoiceEditingId = ''
     invoiceFormOpen = false
@@ -3339,9 +3354,22 @@ const handleSubmit = async (event) => {
     feedbackMessage = result.message || ''
   }
   if (kind === 'purchase-receipt') {
+    const search = String(formData.get('productSearch') || '').trim()
+    const normalizedSearch = search.toLowerCase()
+    const products = getUiState().snapshot.products
+    const exactProduct = products.find((item) => [item.name, item.sku, item.barcode]
+      .some((value) => String(value || '').toLowerCase() === normalizedSearch))
+    const matches = products.filter((item) => [item.name, item.sku, item.barcode]
+      .some((value) => String(value || '').toLowerCase().includes(normalizedSearch)))
+    const product = exactProduct || (matches.length === 1 ? matches[0] : null)
+    if (!product) {
+      feedbackMessage = search ? 'Selecciona un producto de la lista o revisa la busqueda.' : 'Busca el producto que queres ingresar.'
+      render()
+      return
+    }
     const result = formData.get('receiptId')
-      ? await store.updatePurchaseReceipt(formData.get('receiptId'), { supplierId: formData.get('supplierId'), productId: formData.get('productId'), documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
-      : await store.createPurchaseReceipt({ supplierId: formData.get('supplierId'), productId: formData.get('productId'), documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
+      ? await store.updatePurchaseReceipt(formData.get('receiptId'), { supplierId: formData.get('supplierId'), productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
+      : await store.createPurchaseReceipt({ supplierId: formData.get('supplierId'), productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
     feedbackMessage = result.message || (result.ok ? 'Recepcion registrada y stock actualizado.' : '')
     purchaseEditingId = ''
     purchaseFormOpen = false
@@ -3723,7 +3751,15 @@ const bindEvents = () => {
     closeStructureUtilityForms()
     render()
   })
-  for (const button of document.querySelectorAll('[data-delete]')) button.addEventListener('click', () => { store.removeEntity(button.dataset.delete, button.dataset.id); feedbackMessage = 'Registro eliminado y movimientos revertidos cuando correspondia.'; render() })
+  for (const button of document.querySelectorAll('[data-delete]')) button.addEventListener('click', async () => {
+    try {
+      const result = await store.removeEntity(button.dataset.delete, button.dataset.id)
+      feedbackMessage = result?.message || 'Registro eliminado y movimientos revertidos cuando correspondia.'
+    } catch (error) {
+      feedbackMessage = error?.message || 'No se pudo eliminar el registro.'
+    }
+    render()
+  })
   const quickAddButton = document.querySelector('[data-action="quick-add-sale"]')
   if (quickAddButton) quickAddButton.addEventListener('click', runQuickAdd)
   const focusSaleScannerButton = document.querySelector('[data-action="focus-sale-scanner"]')
