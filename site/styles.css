@@ -3645,8 +3645,13 @@ input, select { outline: none; }
 }
 
 .pos-payment-panel .pos-customer-field,
-.pos-payment-panel .pos-payment-field {
+.pos-payment-panel .pos-payment-field,
+.pos-payment-panel .pos-echeq-field {
   grid-column: 1 / -1;
+}
+
+.pos-echeq-field[hidden] {
+  display: none;
 }
 
 .pos-customer-search {

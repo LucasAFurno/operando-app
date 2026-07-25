@@ -1560,6 +1560,7 @@ const salesViewV2 = (ui) => `
             <aside class="pos-payment-panel">
               <label class="pos-customer-field">Cliente<div class="pos-customer-search"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente o dejar Mostrador" autocomplete="off" list="sale-customer-options" aria-label="Buscar cliente" /><datalist id="sale-customer-options">${ui.snapshot.customers.map((customer) => `<option value="${escapeHtml(customer.fullName)}">${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><button type="button" class="pos-customer-counter" data-action="set-counter-customer">Mostrador</button></div></label>
               <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
+              <label class="pos-echeq-field" data-echeq-field hidden>Número de e-cheq<input type="text" name="echeqNumber" placeholder="Ej.: 00123456" autocomplete="off" /></label>
               <div class="pos-payment-options">
                 <label class="checkbox-row compact-toggle"><input type="checkbox" name="isPaid" ${editingSale ? (editingSale.status === 'completed' ? 'checked' : '') : 'checked'} /><span>Cobrado</span></label>
                 <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
@@ -3549,6 +3550,19 @@ const bindEvents = () => {
     if (hiddenCustomer) hiddenCustomer.value = ''
     saleCustomerSearchQuery = ''
   })
+  for (const select of document.querySelectorAll('select[name="paymentMethod"]')) {
+    const form = select.closest('form')
+    const echeqField = form?.querySelector('[data-echeq-field]')
+    const syncEcheqField = () => {
+      const isEcheq = select.value === 'echeq'
+      if (!echeqField) return
+      echeqField.hidden = !isEcheq
+      const input = echeqField.querySelector('input')
+      if (input) input.required = isEcheq
+    }
+    select.addEventListener('change', syncEcheqField)
+    syncEcheqField()
+  }
   const quickSearchInput = document.querySelector('.quick-search input[name="query"]')
   const jumpToSearchMatch = (value) => {
     const normalized = String(value || '').trim().toLowerCase()
