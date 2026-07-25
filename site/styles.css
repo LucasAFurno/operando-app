@@ -3644,6 +3644,34 @@ input, select { outline: none; }
   gap: 7px;
 }
 
+.pos-customer-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.pos-customer-search .stock-adjustment-search {
+  min-width: 0;
+}
+
+.pos-customer-counter {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pos-customer-counter:hover {
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .pos-payment-panel .payment-split-grid {
   margin-top: 12px;
 }

@@ -88,6 +88,7 @@ let reportDateFrom = ''
 let reportDateTo = ''
 let saleDraftQuantities = {}
 let saleQuickAddCode = ''
+let saleCustomerSearchQuery = ''
 let topbarSearch = ''
 let cloudSyncBusy = false
 let customerFormOpen = false
@@ -1516,6 +1517,7 @@ const cashView = (ui) => `
 const salesViewV2 = (ui) => `
   ${(() => {
     const editingSale = ui.snapshot.sales.find((sale) => sale.id === saleEditingId)
+    const selectedSaleCustomer = ui.snapshot.customers.find((customer) => customer.id === editingSale?.customerId)
     const showSaleForm = true
     if (editingSale && !Object.keys(saleDraftQuantities).length) {
       saleDraftQuantities = Object.fromEntries((editingSale.items || []).map((item) => [item.productId, item.quantity]))
@@ -1556,7 +1558,7 @@ const salesViewV2 = (ui) => `
               </div>
             </section>
             <aside class="pos-payment-panel">
-              <label class="pos-customer-field">Cliente<select name="customerId"><option value="">Mostrador</option>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}" ${editingSale?.customerId === customer.id ? 'selected' : ''}>${customer.fullName}</option>`).join('')}</select></label>
+              <label class="pos-customer-field">Cliente<div class="pos-customer-search"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente o dejar Mostrador" autocomplete="off" list="sale-customer-options" aria-label="Buscar cliente" /><datalist id="sale-customer-options">${ui.snapshot.customers.map((customer) => `<option value="${escapeHtml(customer.fullName)}">${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><button type="button" class="pos-customer-counter" data-action="set-counter-customer">Mostrador</button></div></label>
               <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
               <div class="pos-payment-options">
                 <label class="checkbox-row compact-toggle"><input type="checkbox" name="isPaid" ${editingSale ? (editingSale.status === 'completed' ? 'checked' : '') : 'checked'} /><span>Cobrado</span></label>
@@ -3446,6 +3448,7 @@ const handleSubmit = async (event) => {
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
+    saleCustomerSearchQuery = ''
     saleFormOpen = false
   }
 
@@ -3523,6 +3526,29 @@ const bindEvents = () => {
     })
     if (activeSection === 'ventas') window.requestAnimationFrame(() => quickAddInput.focus({ preventScroll: true }))
   }
+  for (const input of document.querySelectorAll('[data-sale-customer-search]')) {
+    const form = input.closest('form')
+    const hiddenCustomer = form?.querySelector('input[name="customerId"]')
+    const findCustomer = () => getUiState().snapshot.customers.find((customer) => customer.fullName.trim().toLowerCase() === input.value.trim().toLowerCase())
+    input.addEventListener('input', () => {
+      saleCustomerSearchQuery = input.value
+      const customer = findCustomer()
+      if (hiddenCustomer) hiddenCustomer.value = customer?.id || ''
+    })
+    input.addEventListener('change', () => {
+      const customer = findCustomer()
+      if (hiddenCustomer) hiddenCustomer.value = customer?.id || ''
+      if (!customer && input.value.trim()) feedbackMessage = 'Selecciona un cliente de la lista o deja Mostrador.'
+    })
+  }
+  for (const button of document.querySelectorAll('[data-action="set-counter-customer"]')) button.addEventListener('click', () => {
+    const form = button.closest('form')
+    const input = form?.querySelector('[data-sale-customer-search]')
+    const hiddenCustomer = form?.querySelector('input[name="customerId"]')
+    if (input) input.value = ''
+    if (hiddenCustomer) hiddenCustomer.value = ''
+    saleCustomerSearchQuery = ''
+  })
   const quickSearchInput = document.querySelector('.quick-search input[name="query"]')
   const jumpToSearchMatch = (value) => {
     const normalized = String(value || '').trim().toLowerCase()
@@ -3724,6 +3750,7 @@ const bindEvents = () => {
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
+    saleCustomerSearchQuery = ''
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-cash-form"]')) button.addEventListener('click', () => {
