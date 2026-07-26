@@ -1564,9 +1564,6 @@ const salesViewV2 = (ui) => `
               <label class="pos-customer-field">Cliente<div class="pos-customer-search"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente o dejar Mostrador" autocomplete="off" list="sale-customer-options" aria-label="Buscar cliente" /><datalist id="sale-customer-options">${ui.snapshot.customers.map((customer) => `<option value="${escapeHtml(customer.fullName)}">${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><button type="button" class="pos-customer-counter" data-action="set-counter-customer">Mostrador</button></div></label>
               <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
               <label class="pos-echeq-field" data-echeq-field hidden>Número de e-cheq<input type="text" name="echeqNumber" placeholder="Ej.: 00123456" autocomplete="off" /></label>
-              <div class="pos-payment-options">
-                <label class="checkbox-row compact-toggle"><input type="checkbox" name="isPaid" ${editingSale ? (editingSale.status === 'completed' ? 'checked' : '') : 'checked'} /><span>Cobrado</span></label>
-              </div>
               <details class="sales-payment-detail"><summary>Mas opciones</summary>
                 <div class="pos-payment-advanced">
                   <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
@@ -3451,7 +3448,16 @@ const handleSubmit = async (event) => {
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('qty_') && Number(value) > 0) items.push({ productId: key.replace('qty_', ''), quantity: Number(value) })
     }
-    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod: formData.get('paymentMethod'), isPaid: formData.get('isPaid') === 'on', autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
+    const paymentMethod = formData.get('paymentMethod')
+    const selectedProducts = getUiState().scopedProducts
+    const saleTotal = Math.max(0, items.reduce((sum, item) => sum + (Number(selectedProducts.find((product) => product.id === item.productId)?.salePrice || 0) * item.quantity), 0) - Number(formData.get('discountAmount') || 0))
+    const paymentAmounts = ['amountPaid', 'cashAmount', 'transferAmount', 'mercadoPagoAmount', 'echeqAmount', 'accountAmount'].map((key) => Number(formData.get(key) || 0)).filter((amount) => amount > 0)
+    const declaredPayment = Math.max(0, ...paymentAmounts, paymentAmounts.reduce((sum, amount) => sum + amount, 0))
+    const paidControl = form.elements.namedItem('isPaid')
+    const isPaid = paidControl
+      ? paidControl.checked
+      : paymentMethod !== 'account' && (!declaredPayment || declaredPayment >= saleTotal)
+    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
     const result = formData.get('saleId')
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
