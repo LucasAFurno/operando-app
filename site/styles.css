@@ -3620,6 +3620,8 @@ input, select { outline: none; }
 }
 
 .pos-product-search .scanner-input {
+  grid-column: 2;
+  grid-row: 1;
   min-height: 40px;
   padding: 0 4px;
   border: 0;
@@ -3629,8 +3631,14 @@ input, select { outline: none; }
 }
 
 .pos-product-search .primary-action {
+  grid-column: 3;
+  grid-row: 1;
   min-height: 40px;
   padding-block: 8px;
+}
+
+.pos-product-search > datalist {
+  display: none;
 }
 
 .stock-adjustment-product {
