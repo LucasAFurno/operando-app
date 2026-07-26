@@ -1548,7 +1548,6 @@ const salesViewV2 = (ui) => `
             <input type="text" class="scanner-input" name="quickAddCode" value="${saleQuickAddCode}" list="sale-product-options" autocomplete="off" placeholder="Buscar articulo, SKU o escanear codigo de barras" aria-label="Buscar articulo" />
             <datalist id="sale-product-options">${ui.scopedProducts.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist>
             <button type="button" class="primary-action" data-action="quick-add-sale">Agregar</button>
-            <span class="pos-search-help">Enter</span>
           </div>
           <div class="full-span pos-checkout-layout">
             <section class="pos-cart">
