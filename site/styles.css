@@ -3891,6 +3891,15 @@ input, select { outline: none; }
   padding: 8px 10px;
 }
 
+.pos-payment-details-title {
+  padding: 10px 14px 6px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .pos-payment-panel .sales-payment-detail,
 .pos-payment-panel .pos-charge-button,
 .pos-payment-panel > .danger-action {
@@ -3900,6 +3909,7 @@ input, select { outline: none; }
 .pos-payment-panel .sales-payment-detail {
   padding: 0;
   overflow: hidden;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
 }
 
 .pos-payment-panel .sales-payment-detail summary {
@@ -3908,6 +3918,10 @@ input, select { outline: none; }
   justify-content: space-between;
   min-height: 44px;
   padding: 10px 14px;
+}
+
+.pos-payment-panel .sales-payment-detail[open] summary {
+  border-bottom: 1px solid var(--line);
 }
 
 .pos-payment-panel .sales-payment-detail summary::after {
@@ -3922,7 +3936,21 @@ input, select { outline: none; }
 }
 
 .pos-payment-panel .sales-payment-detail .payment-split-grid {
+  gap: 10px;
+  margin-top: 0;
   padding: 0 14px 14px;
+}
+
+.pos-payment-panel .sales-payment-detail .payment-split-grid label {
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.pos-payment-panel .sales-payment-detail .payment-split-grid input,
+.pos-payment-panel .sales-payment-detail .payment-split-grid select {
+  min-height: 38px;
+  padding: 8px 10px;
 }
 
 .pos-charge-button {
