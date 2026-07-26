@@ -3605,8 +3605,9 @@ input, select { outline: none; }
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
+  height: 58px;
   min-height: 58px;
-  padding: 7px 10px 7px 14px;
+  padding: 5px 10px 5px 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
   border-radius: 16px;
   background: color-mix(in srgb, var(--panel) 96%, transparent);
