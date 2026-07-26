@@ -2528,6 +2528,15 @@ export const createBrowserDataStore = (options = {}) => {
     const before = state[key].find((item) => item.id === id) || null
     if (!before) return { ok: false, message: 'Registro no encontrado.' }
 
+    if (entity === 'customer' || entity === 'supplier') {
+      if (cloudCoreAdapter) {
+        if (entity === 'customer') await cloudCoreAdapter.upsertCustomer({ ...before, isActive: false })
+        if (entity === 'supplier') await cloudCoreAdapter.upsertSupplier({ ...before, isActive: false })
+        await syncFromCloud()
+        return { ok: true, message: entity === 'customer' ? 'Cliente eliminado.' : 'Proveedor eliminado.' }
+      }
+    }
+
     if (entity === 'branch') {
       const replacement = state.branches.find((branch) => branch.id !== id)
       if (!replacement) return { ok: false, message: 'No podes eliminar la unica sucursal del comercio.' }
