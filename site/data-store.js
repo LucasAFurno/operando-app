@@ -2528,6 +2528,27 @@ export const createBrowserDataStore = (options = {}) => {
     const before = state[key].find((item) => item.id === id) || null
     if (!before) return { ok: false, message: 'Registro no encontrado.' }
 
+    if (entity === 'branch') {
+      const replacement = state.branches.find((branch) => branch.id !== id)
+      if (!replacement) return { ok: false, message: 'No podes eliminar la unica sucursal del comercio.' }
+      const branchRegisters = state.registers.filter((register) => register.branchId === id)
+      if (cloudCoreAdapter) {
+        await cloudCoreAdapter.upsertBranch({ ...before, isActive: false })
+        for (const register of branchRegisters) await cloudCoreAdapter.upsertRegister({ ...register, isActive: false })
+        await syncFromCloud()
+      } else {
+        state.branches = state.branches.filter((branch) => branch.id !== id)
+        state.registers = state.registers.filter((register) => register.branchId !== id)
+        if (state.business.currentBranchId === id) {
+          state.business.currentBranchId = replacement.id
+          state.business.currentRegisterId = state.registers.find((register) => register.branchId === replacement.id)?.id || ''
+        }
+        pushAudit(state, currentUser().id, entity, id, 'deleted', null, before)
+        save()
+      }
+      return { ok: true, message: 'Sucursal eliminada de la operación.' }
+    }
+
     if (entity === 'register') {
       const hasOpenCashSession = state.cashSessions.some((session) => session.registerId === id && session.status === 'open')
       if (hasOpenCashSession) return { ok: false, message: 'No podes eliminar una caja con una sesion abierta. Cerra la caja primero.' }

@@ -81,6 +81,7 @@ let purchaseEditingId = ''
 let invoiceEditingId = ''
 let ticketEditingId = ''
 let branchEditingId = ''
+let branchSearchQuery = ''
 let registerEditingId = ''
 let userEditingId = ''
 let reportRegisterFilter = 'all'
@@ -555,6 +556,7 @@ const branchActionButtons = (branch) => `
   <div class="inline-action-group">
     <button type="button" class="inline-action" data-branch-action="select" data-id="${branch.id}">Usar</button>
     <button type="button" class="inline-action" data-branch-action="edit" data-id="${branch.id}">Editar</button>
+    <button type="button" class="inline-action danger" data-branch-action="delete" data-id="${branch.id}">Eliminar</button>
   </div>
 `
 const registerActionButtons = (register) => `
@@ -2132,6 +2134,8 @@ const branchesViewV2 = (ui) => `
   ${(() => {
     const editingBranch = ui.snapshot.branches.find((branch) => branch.id === branchEditingId)
     const showBranchForm = branchFormOpen || Boolean(editingBranch)
+    const normalizedBranchSearch = branchSearchQuery.trim().toLowerCase()
+    const visibleBranches = ui.snapshot.branches.filter((branch) => !normalizedBranchSearch || [branch.name, branch.code, branch.address].some((value) => String(value || '').toLowerCase().includes(normalizedBranchSearch)))
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Sucursales</p><h2>Locales y numeracion</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.snapshot.branches.length}</strong><span>Sucursales</span></span>
@@ -2153,7 +2157,8 @@ const branchesViewV2 = (ui) => `
       </article>` : ''}
       <article class="panel">
         <div class="panel-head"><div><h3>Sucursales</h3><p>Contexto actual del comercio</p></div><div class="settings-actions">${editingBranch ? '' : createToggleButton('branch', showBranchForm, 'Agregar sucursal')}</div></div>
-        ${dataTable(['Nombre', 'Codigo', 'Direccion', 'Actual', 'Accion'], ui.snapshot.branches.map((branch) => `<div class="data-row"><span>${branch.name}</span><span>${branch.code}</span><span>${branch.address}</span><span>${ui.currentBranch?.id === branch.id ? 'Si' : 'No'}</span><span>${branchActionButtons(branch)}</span></div>`))}
+        <div class="branch-toolbar"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-branch-search value="${escapeHtml(branchSearchQuery)}" placeholder="Buscar por nombre, código o dirección" aria-label="Buscar sucursal" /></div><span class="branch-results-count">${visibleBranches.length} de ${ui.snapshot.branches.length}</span></div>
+        ${dataTable(['Nombre', 'Codigo', 'Direccion', 'Cajas', 'Actual', 'Accion'], visibleBranches.map((branch) => { const branchRegisters = ui.snapshot.registers.filter((register) => register.branchId === branch.id); return `<div class="data-row branch-data-row"><span><strong>${branch.name}</strong></span><span>${branch.code}</span><span>${branch.address}</span><span><span class="branch-register-chips">${branchRegisters.map((register) => `<small>${register.name}</small>`).join('') || '<small>Sin cajas</small>'}</span></span><span>${ui.currentBranch?.id === branch.id ? 'Si' : 'No'}</span><span>${branchActionButtons(branch)}</span></div>` }))}
       </article>
     </section>
   </section>
@@ -4030,8 +4035,22 @@ const bindEvents = () => {
       }
     })
   }
+  for (const input of document.querySelectorAll('[data-branch-search]')) input.addEventListener('input', () => {
+    branchSearchQuery = input.value || ''
+    render()
+  })
   for (const button of document.querySelectorAll('[data-branch-action]')) {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
+      if (button.dataset.branchAction === 'delete') {
+        const branch = store.getSnapshot().branches.find((entry) => entry.id === button.dataset.id)
+        if (!branch) return
+        if (!window.confirm(`¿Eliminar la sucursal "${branch.name}"? También se quitarán sus cajas de la operación.`)) return
+        const result = await store.removeEntity('branch', button.dataset.id)
+        feedbackMessage = result.message || ''
+        branchEditingId = ''
+        render()
+        return
+      }
       if (button.dataset.branchAction === 'edit') {
         closeStructureUtilityForms()
         branchEditingId = button.dataset.id
