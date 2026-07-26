@@ -3486,11 +3486,15 @@ const bindEvents = () => {
         event.preventDefault()
         return
       }
+      button.dataset.originalLabel = button.textContent || ''
       button.disabled = true
+      button.textContent = 'Procesando…'
       button.setAttribute('aria-busy', 'true')
       window.setTimeout(() => {
         if (!button.isConnected) return
         button.disabled = false
+        button.textContent = button.dataset.originalLabel || button.textContent
+        delete button.dataset.originalLabel
         button.removeAttribute('aria-busy')
       }, 1200)
     })
