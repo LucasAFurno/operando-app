@@ -3861,8 +3861,8 @@ input, select { outline: none; }
 .pos-payment-advanced {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  padding: 0 14px 12px;
+  gap: 14px;
+  padding: 12px 14px 16px;
 }
 
 .pos-payment-advanced .compact-toggle,
@@ -3923,8 +3923,8 @@ input, select { outline: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 40px;
-  padding: 8px 14px;
+  min-height: 44px;
+  padding: 10px 14px;
   color: var(--muted);
   cursor: pointer;
   font-size: 0.78rem;
@@ -3958,13 +3958,14 @@ input, select { outline: none; }
 }
 
 .pos-payment-panel .sales-payment-detail .payment-split-grid {
-  gap: 10px;
+  gap: 14px;
   margin-top: 0;
-  padding: 0 14px 14px;
+  padding: 10px 14px 18px;
 }
 
 .pos-payment-panel .sales-payment-detail .payment-split-grid label {
-  gap: 5px;
+  gap: 7px;
+  line-height: 1.2;
   color: var(--muted);
   font-size: 0.74rem;
 }
