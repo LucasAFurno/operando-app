@@ -3167,6 +3167,12 @@ input, select { outline: none; }
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
+button[aria-busy="true"] {
+  cursor: wait;
+  opacity: .62;
+  transform: none !important;
+}
+
 .inline-action {
   border: 1px solid rgba(214, 16, 16, 0.16);
   background: color-mix(in srgb, var(--accent) 8%, var(--panel));

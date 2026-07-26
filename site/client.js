@@ -135,6 +135,7 @@ let platformSupportFilter = 'all'
 let platformSearchQuery = ''
 let pendingScrollSelector = ''
 let userDraftRoleId = 'role-cashier'
+let interactionGuardBound = false
 const pageSizeOptions = [10, 20, 50, 100, 1000]
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
@@ -3128,6 +3129,8 @@ const importData = async (event) => {
 const handleSubmit = async (event) => {
   event.preventDefault()
   const form = event.currentTarget
+  if (form.dataset.submitting === 'true') return
+  form.dataset.submitting = 'true'
   const formData = new FormData(form)
   const kind = form.dataset.form
 
@@ -3474,6 +3477,25 @@ const bindEvents = () => {
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   bindHardwareScanner()
+  if (!interactionGuardBound) {
+    document.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest('button') : null
+      if (!button || button.disabled || button.dataset.interactionGuard === 'off') return
+      const form = button.closest('form')
+      if (form?.dataset.submitting === 'true') {
+        event.preventDefault()
+        return
+      }
+      button.disabled = true
+      button.setAttribute('aria-busy', 'true')
+      window.setTimeout(() => {
+        if (!button.isConnected) return
+        button.disabled = false
+        button.removeAttribute('aria-busy')
+      }, 1200)
+    })
+    interactionGuardBound = true
+  }
   for (const form of document.querySelectorAll('form[data-form]')) form.addEventListener('submit', handleSubmit)
   const updateSaleTotals = () => {
     let subtotal = 0
