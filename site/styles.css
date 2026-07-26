@@ -3891,15 +3891,6 @@ input, select { outline: none; }
   padding: 8px 10px;
 }
 
-.pos-payment-details-title {
-  padding: 10px 14px 6px;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .pos-payment-panel .sales-payment-detail,
 .pos-payment-panel .pos-charge-button,
 .pos-payment-panel > .danger-action {
@@ -3922,6 +3913,37 @@ input, select { outline: none; }
 
 .pos-payment-panel .sales-payment-detail[open] summary {
   border-bottom: 1px solid var(--line);
+}
+
+.pos-payment-breakdown {
+  border-top: 1px solid var(--line);
+}
+
+.pos-payment-breakdown summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 14px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.pos-payment-breakdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.pos-payment-breakdown summary::after {
+  content: '+';
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.pos-payment-breakdown[open] summary::after {
+  content: '\\2212';
 }
 
 .pos-payment-panel .sales-payment-detail summary::after {

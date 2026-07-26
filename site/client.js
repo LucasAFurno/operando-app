@@ -1568,13 +1568,11 @@ const salesViewV2 = (ui) => `
                 <label class="checkbox-row compact-toggle"><input type="checkbox" name="isPaid" ${editingSale ? (editingSale.status === 'completed' ? 'checked' : '') : 'checked'} /><span>Cobrado</span></label>
               </div>
               <details class="sales-payment-detail"><summary>Mas opciones</summary>
-                <div class="pos-payment-details-title">Configuracion adicional</div>
                 <div class="pos-payment-advanced">
                   <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
                   <label class="pos-discount-field">Descuento<input type="number" min="0" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></label>
                 </div>
-                <div class="pos-payment-details-title">Detalle del cobro</div>
-                <div class="payment-split-grid">
+                <details class="pos-payment-breakdown"><summary>Desglosar cobro</summary><div class="payment-split-grid">
                 <label>Canal<select name="channel"><option ${editingSale?.channel === 'Mostrador' ? 'selected' : ''}>Mostrador</option><option ${editingSale?.channel === 'WhatsApp' ? 'selected' : ''}>WhatsApp</option><option ${editingSale?.channel === 'Transferencia' ? 'selected' : ''}>Transferencia</option><option ${editingSale?.channel === 'Mercado Libre' ? 'selected' : ''}>Mercado Libre</option></select></label>
                 <label>Monto cobrado<input type="number" min="0" name="amountPaid" value="${editingSale?.amountPaid || 0}" /></label>
                 <label>Efectivo<input type="number" min="0" name="cashAmount" value="${editingSale?.paymentBreakdown?.cash || 0}" /></label>
@@ -1584,7 +1582,8 @@ const salesViewV2 = (ui) => `
                 <label>N° e-cheq<input type="text" name="echeqNumber" /></label>
                 <label>Cuenta corriente<input type="number" min="0" name="accountAmount" value="${editingSale?.paymentBreakdown?.account || 0}" /></label>
                 <label class="full-span">Observaciones<input type="text" name="note" value="${editingSale?.note || ''}" placeholder="Opcional" /></label>
-              </div></details>
+                </div></details>
+              </details>
               <button type="submit" class="pos-charge-button" ${selectedProducts.length ? '' : 'disabled'}>${editingSale ? 'Guardar cambios' : `Cobrar ${money(cartSubtotal)}`}</button>
               ${editingSale ? '<button type="button" class="danger-action" data-action="cancel-sale-edit">Cancelar edicion</button>' : ''}
             </aside>
