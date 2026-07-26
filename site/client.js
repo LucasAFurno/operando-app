@@ -228,6 +228,9 @@ const loadCloudAccess = async (sessionPayload = null) => {
 }
 
 const money = (value) => currency.format(Number(value) || 0)
+const balanceTone = (value) => Number(value || 0) > 0 ? 'balance-due' : 'balance-clear'
+const balanceText = (value) => Number(value || 0) > 0 ? 'Debe' : 'Al dia'
+const balanceBadge = (value) => `<span class="balance-badge ${balanceTone(value)}"><strong>${money(value)}</strong><small>${balanceText(value)}</small></span>`
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -1365,7 +1368,7 @@ const customersView = (ui) => `
         </form>
       </article>
       <article class="panel"><div class="panel-head"><div><h3>Clientes</h3><p>Preparado para cuentas corrientes</p></div></div>
-        ${dataTable(['Cliente', 'Telefono', 'Email', 'Saldo', 'Accion'], ui.snapshot.customers.map((customer) => `<div class="data-row"><span>${customer.fullName}</span><span>${customer.phone || '-'}</span><span>${customer.email || '-'}</span><span>${money(customer.balance)}</span><span>${actionButton('customer', customer.id)}</span></div>`))}
+        ${dataTable(['Cliente', 'Telefono', 'Email', 'Saldo', 'Accion'], ui.snapshot.customers.map((customer) => `<div class="data-row"><span>${customer.fullName}</span><span>${customer.phone || '-'}</span><span>${customer.email || '-'}</span>${balanceBadge(customer.balance)}<span>${actionButton('customer', customer.id)}</span></div>`))}
       </article>
     </section>
   </section>
@@ -1402,7 +1405,7 @@ const customersViewV2 = (ui) => `
         </article>` : ''}
         <article class="panel"><div class="panel-head"><div><h3>${query ? 'Resultados' : 'Ultimos 10 clientes'}</h3><p>Busca por nombre, telefono, email o CUIT; hace click para editar.</p></div><div class="settings-actions">${createToggleButton('customer', customerFormOpen, 'Agregar cliente')}</div></div>
           <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-customer-search value="${escapeHtml(customerSearchQuery)}" placeholder="Buscar cliente" aria-label="Buscar cliente" /></div>
-          <div class="timeline-list">${customers.map((customer) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-customer" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin direccion')} · Saldo ${money(customer.balance)}</span></button><span class="contact-result-actions">${actionButton('customer', customer.id)}</span></div>`).join('') || '<p class="empty-state">No hay clientes para esta busqueda.</p>'}</div>
+          <div class="timeline-list">${customers.map((customer) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-customer" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin direccion')} · ${balanceText(customer.balance)} ${money(customer.balance)}</span></button><span class="contact-result-actions">${actionButton('customer', customer.id)}</span></div>`).join('') || '<p class="empty-state">No hay clientes para esta busqueda.</p>'}</div>
         </article>
       </div>
     </section>
@@ -1799,7 +1802,7 @@ const purchasesView = (ui) => `
         ${dataTable(['Proveedor', 'Producto', 'Cantidad', 'Costo', 'Accion'], ui.enrichedReceipts.map((receipt) => `<div class="data-row"><span>${receipt.supplierName}<br /><small>${receipt.documentNumber || 'Sin comprobante'}</small></span><span>${receipt.productName}${receipt.note ? `<br /><small>${receipt.note}</small>` : ''}</span><span>${receipt.quantity}</span><span>${money(receipt.totalCost)}</span><span>${purchaseActionButtons(receipt)}</span></div>`))}
       </article>
       <article class="panel"><div class="panel-head"><div><h3>Proveedores</h3><p>Saldos y categorias</p></div></div>
-        ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span><span>${money(supplier.balance)}</span><span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
+        ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span>${balanceBadge(supplier.balance)}<span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
       </article>
     </section>
   </section>
@@ -1837,7 +1840,7 @@ const purchasesViewLegacy = (ui) => `
           </article>
           <article class="panel"><div class="panel-head"><div><h3>Proveedores</h3><p>Base visible para comprar y reponer</p></div></div>
             <div class="settings-actions">${createToggleButton('supplier', supplierFormOpen, 'Agregar proveedor')}</div>
-            ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span><span>${money(supplier.balance)}</span><span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
+            ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span>${balanceBadge(supplier.balance)}<span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
           </article>
         </div>
         ${supplierFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Nuevo proveedor</h3><p>Base comercial de compras</p></div></div>
@@ -1916,7 +1919,7 @@ const purchasesViewV2 = (ui) => `
           <article class="panel">
             <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Ultimos 10 proveedores'}</h3><p>Busca y hace click para editar.</p></div></div>
             <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar proveedor" aria-label="Buscar proveedor" /></div>
-            <div class="timeline-list">${visibleSuppliers.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-supplier" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin direccion')} · Saldo ${money(supplier.balance)}</span></button><span class="contact-result-actions">${actionButton('supplier', supplier.id)}</span></div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
+            <div class="timeline-list">${visibleSuppliers.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-supplier" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin direccion')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions">${actionButton('supplier', supplier.id)}</span></div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
           </article>
         </div>
       </article>

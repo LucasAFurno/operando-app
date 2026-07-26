@@ -2942,6 +2942,37 @@ input, select { outline: none; }
   gap: 7px;
 }
 
+.balance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 5px 8px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  font-size: .76rem;
+  white-space: nowrap;
+}
+
+.balance-badge strong {
+  font-size: .8rem;
+}
+
+.balance-badge small {
+  font-size: .66rem;
+  font-weight: 700;
+}
+
+.balance-due {
+  color: #ff4b45;
+  background: rgba(255, 59, 48, .08);
+}
+
+.balance-clear {
+  color: #69cf8a;
+  background: rgba(57, 202, 108, .08);
+}
+
 .branch-toolbar {
   display: flex;
   align-items: center;
