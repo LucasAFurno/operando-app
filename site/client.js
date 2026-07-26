@@ -1581,7 +1581,7 @@ const salesViewV2 = (ui) => `
                 <label class="full-span">Observaciones<input type="text" name="note" value="${editingSale?.note || ''}" placeholder="Opcional" /></label>
                 </div></details>
               </details>
-              <button type="submit" class="pos-charge-button" ${selectedProducts.length ? '' : 'disabled'}>${editingSale ? 'Guardar cambios' : `Cobrar ${money(cartSubtotal)}`}</button>
+              <button type="submit" class="pos-charge-button" ${selectedProducts.length ? '' : 'disabled'}>${editingSale ? 'Guardar cambios' : 'Cobrar'}</button>
               ${editingSale ? '<button type="button" class="danger-action" data-action="cancel-sale-edit">Cancelar edicion</button>' : ''}
             </aside>
           </div>
