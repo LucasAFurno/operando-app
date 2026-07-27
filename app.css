@@ -2333,6 +2333,15 @@ input, select { outline: none; }
   box-shadow: 0 18px 30px rgba(214, 16, 16, 0.24);
 }
 
+.form-grid:has(> button + button) > button {
+  grid-column: auto;
+  width: fit-content;
+  min-width: 132px;
+  min-height: 44px;
+  padding: 11px 18px;
+  border-radius: 12px;
+}
+
 .module-board {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
@@ -2933,6 +2942,81 @@ input, select { outline: none; }
   gap: 7px;
 }
 
+.balance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 5px 8px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  font-size: .76rem;
+  white-space: nowrap;
+}
+
+.balance-badge strong {
+  font-size: .8rem;
+}
+
+.balance-badge small {
+  font-size: .66rem;
+  font-weight: 700;
+}
+
+.balance-due {
+  color: #ff4b45;
+  background: rgba(255, 59, 48, .08);
+}
+
+.balance-clear {
+  color: #69cf8a;
+  background: rgba(57, 202, 108, .08);
+}
+
+.branch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 14px;
+}
+
+.branch-toolbar .stock-adjustment-search {
+  flex: 1;
+}
+
+.branch-results-count {
+  color: var(--muted);
+  font-size: .75rem;
+  white-space: nowrap;
+}
+
+.branch-data-row {
+  min-height: 58px;
+}
+
+.branch-register-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.branch-register-chips small {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: .68rem;
+}
+
+.invoice-payment-panel {
+  border-color: rgba(255, 59, 48, .38);
+  box-shadow: 0 18px 42px rgba(255, 35, 28, .08);
+}
+
+.invoice-payment-panel .form-note {
+  color: var(--muted);
+}
+
 .invoice-compact-table .data-head,
 .invoice-compact-table .data-row {
   grid-template-columns: minmax(150px, 1.15fr) minmax(170px, 1.35fr) minmax(110px, .9fr) minmax(100px, .75fr) minmax(220px, auto);
@@ -2951,6 +3035,9 @@ input, select { outline: none; }
   transform: none;
   box-shadow: none;
 }
+
+.invoice-open-row { cursor: pointer; }
+.invoice-open-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .invoice-compact-table .inline-action-group {
   flex-wrap: nowrap;
@@ -3106,6 +3193,59 @@ input, select { outline: none; }
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
+}
+
+.data-row span:last-child {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
+}
+
+.data-row span:last-child .inline-action-group {
+  width: max-content;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.data-row .inline-action,
+.contact-result-actions .inline-action {
+  min-width: 0;
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: .74rem;
+  white-space: nowrap;
+}
+
+.data-table:has(.branch-data-row) .data-head,
+.data-table:has(.branch-data-row) .data-row {
+  grid-template-columns: minmax(130px, 1.1fr) minmax(110px, .9fr) minmax(150px, 1.25fr) minmax(100px, .9fr) 70px minmax(250px, auto);
+}
+
+.data-table:has([data-register-action]) .data-head,
+.data-table:has([data-register-action]) .data-row {
+  grid-template-columns: minmax(120px, 1.1fr) minmax(110px, .9fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(250px, auto);
+}
+
+.contact-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contact-result-main {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.contact-result-actions {
+  flex: 0 0 auto;
 }
 
 .sale-actions-compact {
@@ -3463,11 +3603,14 @@ input, select { outline: none; }
 }
 
 .pos-product-search {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-  padding: 9px 10px 9px 14px;
+  height: 58px;
+  min-height: 58px;
+  padding: 5px 10px 5px 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
   border-radius: 16px;
   background: color-mix(in srgb, var(--panel) 96%, transparent);
@@ -3480,12 +3623,18 @@ input, select { outline: none; }
 }
 
 .pos-product-search .scanner-input {
-  min-height: 44px;
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 40px;
   padding: 0 4px;
   border: 0;
   background: transparent;
   outline: 0;
   font-size: 1rem;
+}
+
+.pos-product-search > datalist {
+  display: none;
 }
 
 .stock-adjustment-product {
@@ -3528,6 +3677,10 @@ input, select { outline: none; }
 }
 
 .pos-search-help {
+  position: absolute;
+  left: 43px;
+  bottom: 3px;
+  pointer-events: none;
   padding: 5px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -3539,7 +3692,7 @@ input, select { outline: none; }
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.65fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .pos-cart,
@@ -3550,7 +3703,9 @@ input, select { outline: none; }
 }
 
 .pos-cart {
-  min-height: 310px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -3581,6 +3736,7 @@ input, select { outline: none; }
 }
 
 .pos-cart .cart-builder {
+  flex: 1;
   padding: 12px;
 }
 
@@ -3604,7 +3760,8 @@ input, select { outline: none; }
 }
 
 .pos-cart-empty {
-  min-height: 220px;
+  min-height: 180px;
+  flex: 1;
   display: grid;
   place-content: center;
   gap: 5px;
@@ -3614,16 +3771,55 @@ input, select { outline: none; }
 .pos-payment-panel {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
-  padding: 16px;
-  position: sticky;
-  top: 16px;
+  gap: 10px;
+  padding: 14px;
+  position: static;
   align-content: start;
 }
 
 .pos-payment-panel label {
   display: grid;
   gap: 7px;
+}
+
+.pos-payment-panel .pos-customer-field,
+.pos-payment-panel .pos-payment-field,
+.pos-payment-panel .pos-echeq-field {
+  grid-column: 1 / -1;
+}
+
+.pos-echeq-field[hidden] {
+  display: none;
+}
+
+.pos-customer-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.pos-customer-search .stock-adjustment-search {
+  min-width: 0;
+}
+
+.pos-customer-counter {
+  width: auto;
+  min-width: 104px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  color: var(--text);
+  font-size: .75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pos-customer-counter:hover {
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .pos-payment-panel .payment-split-grid {
@@ -3633,7 +3829,7 @@ input, select { outline: none; }
 .pos-payment-options {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   align-items: stretch;
 }
@@ -3641,7 +3837,7 @@ input, select { outline: none; }
 .pos-payment-options .compact-toggle,
 .pos-payment-options .pos-discount-field {
   min-width: 0;
-  min-height: 64px;
+  min-height: 58px;
   margin: 0;
 }
 
@@ -3665,6 +3861,39 @@ input, select { outline: none; }
   padding: 8px 10px;
 }
 
+.pos-payment-advanced {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 12px 14px 16px;
+}
+
+.pos-payment-advanced .compact-toggle,
+.pos-payment-advanced .pos-discount-field {
+  min-width: 0;
+  min-height: 58px;
+  margin: 0;
+}
+
+.pos-payment-advanced .compact-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+}
+
+.pos-payment-advanced .pos-discount-field {
+  justify-content: space-between;
+}
+
+.pos-payment-advanced .pos-discount-field input {
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
 .pos-payment-panel .sales-payment-detail,
 .pos-payment-panel .pos-charge-button,
 .pos-payment-panel > .danger-action {
@@ -3674,6 +3903,7 @@ input, select { outline: none; }
 .pos-payment-panel .sales-payment-detail {
   padding: 0;
   overflow: hidden;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
 }
 
 .pos-payment-panel .sales-payment-detail summary {
@@ -3682,6 +3912,41 @@ input, select { outline: none; }
   justify-content: space-between;
   min-height: 44px;
   padding: 10px 14px;
+}
+
+.pos-payment-panel .sales-payment-detail[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.pos-payment-breakdown {
+  border-top: 1px solid var(--line);
+}
+
+.pos-payment-breakdown summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 10px 14px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.pos-payment-breakdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.pos-payment-breakdown summary::after {
+  content: '+';
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.pos-payment-breakdown[open] summary::after {
+  content: '\\2212';
 }
 
 .pos-payment-panel .sales-payment-detail summary::after {
@@ -3696,11 +3961,26 @@ input, select { outline: none; }
 }
 
 .pos-payment-panel .sales-payment-detail .payment-split-grid {
-  padding: 0 14px 14px;
+  gap: 14px;
+  margin-top: 0;
+  padding: 10px 14px 18px;
+}
+
+.pos-payment-panel .sales-payment-detail .payment-split-grid label {
+  gap: 7px;
+  line-height: 1.2;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.pos-payment-panel .sales-payment-detail .payment-split-grid input,
+.pos-payment-panel .sales-payment-detail .payment-split-grid select {
+  min-height: 38px;
+  padding: 8px 10px;
 }
 
 .pos-charge-button {
-  min-height: 52px;
+  min-height: 48px;
   font-size: 1rem;
 }
 
@@ -4158,6 +4438,10 @@ input, select { outline: none; }
     grid-column: span 1;
   }
 
+  .form-grid:has(> button + button) > button {
+    width: 100%;
+  }
+
   .data-head {
     display: none;
   }
@@ -4367,14 +4651,8 @@ input, select { outline: none; }
   }
 
   .pos-product-search {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     padding: 7px 8px 7px 11px;
-  }
-
-  .pos-product-search .primary-action {
-    width: auto;
-    min-width: 76px;
-    padding-inline: 11px;
   }
 
   .pos-search-help {

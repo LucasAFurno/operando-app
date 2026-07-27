@@ -2000,7 +2000,7 @@ const invoicesViewV2 = (ui) => `
       </article>` : ''}
       <article class="panel">
         <div class="panel-head"><div><h3>Comprobantes</h3><p>Seguimiento comercial y numeracion</p></div><div class="settings-actions">${createToggleButton('invoice', showInvoiceForm, 'Agregar comprobante')}</div></div>
-        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
+        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row invoice-open-row" data-invoice-open="${invoice.id}" tabindex="0" role="button" aria-label="Abrir factura ${invoice.number}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}<br /><small>Saldo: ${money(invoiceBalance(invoice))}</small></span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
       </article>
     </section>
   </section>
@@ -4014,6 +4014,19 @@ const bindEvents = () => {
         feedbackMessage = 'Recepcion cargada para edicion.'
         render()
       }
+    })
+  }
+  for (const row of document.querySelectorAll('[data-invoice-open]')) {
+    const openInvoice = () => {
+      const completed = openInvoiceDocument(row.dataset.invoiceOpen)
+      feedbackMessage = completed ? 'Factura abierta en una nueva pestaña.' : 'No se pudo abrir la factura. Revisa que el navegador permita ventanas emergentes.'
+      render()
+    }
+    row.addEventListener('click', (event) => {
+      if (!event.target.closest('button, a, input, select, textarea, label')) openInvoice()
+    })
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openInvoice() }
     })
   }
   for (const button of document.querySelectorAll('[data-invoice-action]')) {

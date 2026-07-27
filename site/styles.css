@@ -3036,6 +3036,9 @@ input, select { outline: none; }
   box-shadow: none;
 }
 
+.invoice-open-row { cursor: pointer; }
+.invoice-open-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 .invoice-compact-table .inline-action-group {
   flex-wrap: nowrap;
   gap: 6px;

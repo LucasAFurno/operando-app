@@ -81,6 +81,7 @@ let purchaseEditingId = ''
 let invoiceEditingId = ''
 let ticketEditingId = ''
 let branchEditingId = ''
+let branchSearchQuery = ''
 let registerEditingId = ''
 let userEditingId = ''
 let reportRegisterFilter = 'all'
@@ -88,6 +89,7 @@ let reportDateFrom = ''
 let reportDateTo = ''
 let saleDraftQuantities = {}
 let saleQuickAddCode = ''
+let saleCustomerSearchQuery = ''
 let topbarSearch = ''
 let cloudSyncBusy = false
 let customerFormOpen = false
@@ -103,6 +105,7 @@ let supplierEditingId = ''
 let supplierSearchQuery = ''
 let purchaseFormOpen = false
 let invoiceFormOpen = false
+let invoicePaymentId = ''
 let ticketFormOpen = false
 let branchFormOpen = false
 let registerFormOpen = false
@@ -225,6 +228,9 @@ const loadCloudAccess = async (sessionPayload = null) => {
 }
 
 const money = (value) => currency.format(Number(value) || 0)
+const balanceTone = (value) => Number(value || 0) > 0 ? 'balance-due' : 'balance-clear'
+const balanceText = (value) => Number(value || 0) > 0 ? 'Debe' : 'Al dia'
+const balanceBadge = (value) => `<span class="balance-badge ${balanceTone(value)}"><strong>${money(value)}</strong><small>${balanceText(value)}</small></span>`
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -503,6 +509,7 @@ const closeStructureUtilityForms = () => {
 }
 const closeDocumentUtilityForms = () => {
   invoiceFormOpen = false
+  invoicePaymentId = ''
   ticketFormOpen = false
   invoiceEditingId = ''
   ticketEditingId = ''
@@ -533,7 +540,7 @@ const purchaseActionButtons = (receipt) => `
 `
 const invoiceActionButtons = (invoice) => `
   <div class="inline-action-group invoice-actions">
-    <button type="button" class="inline-action" data-invoice-action="pay" data-id="${invoice.id}" ${Number(invoice.amountPaid || 0) >= Number(invoice.totalAmount || 0) ? 'disabled' : ''}>Abonar</button>
+    <button type="button" class="inline-action is-strong" data-invoice-action="pay" data-id="${invoice.id}" ${invoiceBalance(invoice) <= 0 ? 'disabled' : ''}>Abonar ${money(invoiceBalance(invoice))}</button>
     <button type="button" class="inline-action" data-invoice-action="view" data-id="${invoice.id}">Ver</button>
     <button type="button" class="inline-action" data-invoice-action="print" data-id="${invoice.id}">Imprimir</button>
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
@@ -541,6 +548,7 @@ const invoiceActionButtons = (invoice) => `
 `
 
 const invoiceEmissionLabel = (invoice) => invoice.fiscalStatus === 'Interno' ? 'Interno' : 'ARCA'
+const invoiceBalance = (invoice) => Math.max(0, Number(invoice?.totalAmount || 0) - Number(invoice?.amountPaid || 0))
 const ticketActionButtons = (ticket) => `
   <div class="inline-action-group">
     <button type="button" class="inline-action" data-ticket-action="edit" data-id="${ticket.id}">Editar</button>
@@ -551,6 +559,7 @@ const branchActionButtons = (branch) => `
   <div class="inline-action-group">
     <button type="button" class="inline-action" data-branch-action="select" data-id="${branch.id}">Usar</button>
     <button type="button" class="inline-action" data-branch-action="edit" data-id="${branch.id}">Editar</button>
+    <button type="button" class="inline-action danger" data-branch-action="delete" data-id="${branch.id}">Eliminar</button>
   </div>
 `
 const registerActionButtons = (register) => `
@@ -1359,7 +1368,7 @@ const customersView = (ui) => `
         </form>
       </article>
       <article class="panel"><div class="panel-head"><div><h3>Clientes</h3><p>Preparado para cuentas corrientes</p></div></div>
-        ${dataTable(['Cliente', 'Telefono', 'Email', 'Saldo', 'Accion'], ui.snapshot.customers.map((customer) => `<div class="data-row"><span>${customer.fullName}</span><span>${customer.phone || '-'}</span><span>${customer.email || '-'}</span><span>${money(customer.balance)}</span><span>${actionButton('customer', customer.id)}</span></div>`))}
+        ${dataTable(['Cliente', 'Telefono', 'Email', 'Saldo', 'Accion'], ui.snapshot.customers.map((customer) => `<div class="data-row"><span>${customer.fullName}</span><span>${customer.phone || '-'}</span><span>${customer.email || '-'}</span>${balanceBadge(customer.balance)}<span>${actionButton('customer', customer.id)}</span></div>`))}
       </article>
     </section>
   </section>
@@ -1396,7 +1405,7 @@ const customersViewV2 = (ui) => `
         </article>` : ''}
         <article class="panel"><div class="panel-head"><div><h3>${query ? 'Resultados' : 'Ultimos 10 clientes'}</h3><p>Busca por nombre, telefono, email o CUIT; hace click para editar.</p></div><div class="settings-actions">${createToggleButton('customer', customerFormOpen, 'Agregar cliente')}</div></div>
           <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-customer-search value="${escapeHtml(customerSearchQuery)}" placeholder="Buscar cliente" aria-label="Buscar cliente" /></div>
-          <div class="timeline-list">${customers.map((customer) => `<button type="button" class="timeline-item contact-result" data-action="edit-customer" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin direccion')} · Saldo ${money(customer.balance)}</span></button>`).join('') || '<p class="empty-state">No hay clientes para esta busqueda.</p>'}</div>
+          <div class="timeline-list">${customers.map((customer) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-customer" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin direccion')} · ${balanceText(customer.balance)} ${money(customer.balance)}</span></button><span class="contact-result-actions">${actionButton('customer', customer.id)}</span></div>`).join('') || '<p class="empty-state">No hay clientes para esta busqueda.</p>'}</div>
         </article>
       </div>
     </section>
@@ -1513,6 +1522,7 @@ const cashView = (ui) => `
 const salesViewV2 = (ui) => `
   ${(() => {
     const editingSale = ui.snapshot.sales.find((sale) => sale.id === saleEditingId)
+    const selectedSaleCustomer = ui.snapshot.customers.find((customer) => customer.id === editingSale?.customerId)
     const showSaleForm = true
     if (editingSale && !Object.keys(saleDraftQuantities).length) {
       saleDraftQuantities = Object.fromEntries((editingSale.items || []).map((item) => [item.productId, item.quantity]))
@@ -1537,8 +1547,6 @@ const salesViewV2 = (ui) => `
             <span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span>
             <input type="text" class="scanner-input" name="quickAddCode" value="${saleQuickAddCode}" list="sale-product-options" autocomplete="off" placeholder="Buscar articulo, SKU o escanear codigo de barras" aria-label="Buscar articulo" />
             <datalist id="sale-product-options">${ui.scopedProducts.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist>
-            <button type="button" class="primary-action" data-action="quick-add-sale">Agregar</button>
-            <span class="pos-search-help">Enter</span>
           </div>
           <div class="full-span pos-checkout-layout">
             <section class="pos-cart">
@@ -1553,14 +1561,15 @@ const salesViewV2 = (ui) => `
               </div>
             </section>
             <aside class="pos-payment-panel">
-              <label class="pos-customer-field">Cliente<select name="customerId"><option value="">Mostrador</option>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}" ${editingSale?.customerId === customer.id ? 'selected' : ''}>${customer.fullName}</option>`).join('')}</select></label>
+              <label class="pos-customer-field">Cliente<div class="pos-customer-search"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente o dejar Mostrador" autocomplete="off" list="sale-customer-options" aria-label="Buscar cliente" /><datalist id="sale-customer-options">${ui.snapshot.customers.map((customer) => `<option value="${escapeHtml(customer.fullName)}">${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><button type="button" class="pos-customer-counter" data-action="set-counter-customer">Mostrador</button></div></label>
               <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
-              <div class="pos-payment-options">
-                <label class="checkbox-row compact-toggle"><input type="checkbox" name="isPaid" ${editingSale ? (editingSale.status === 'completed' ? 'checked' : '') : 'checked'} /><span>Cobrado</span></label>
-                <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
-                <label class="pos-discount-field">Descuento<input type="number" min="0" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></label>
-              </div>
-              <details class="sales-payment-detail"><summary>Mas opciones</summary><div class="payment-split-grid">
+              <label class="pos-echeq-field" data-echeq-field hidden>Número de e-cheq<input type="text" name="echeqNumber" placeholder="Ej.: 00123456" autocomplete="off" /></label>
+              <details class="sales-payment-detail"><summary>Mas opciones</summary>
+                <div class="pos-payment-advanced">
+                  <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
+                  <label class="pos-discount-field">Descuento<input type="number" min="0" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></label>
+                </div>
+                <details class="pos-payment-breakdown"><summary>Desglosar cobro</summary><div class="payment-split-grid">
                 <label>Canal<select name="channel"><option ${editingSale?.channel === 'Mostrador' ? 'selected' : ''}>Mostrador</option><option ${editingSale?.channel === 'WhatsApp' ? 'selected' : ''}>WhatsApp</option><option ${editingSale?.channel === 'Transferencia' ? 'selected' : ''}>Transferencia</option><option ${editingSale?.channel === 'Mercado Libre' ? 'selected' : ''}>Mercado Libre</option></select></label>
                 <label>Monto cobrado<input type="number" min="0" name="amountPaid" value="${editingSale?.amountPaid || 0}" /></label>
                 <label>Efectivo<input type="number" min="0" name="cashAmount" value="${editingSale?.paymentBreakdown?.cash || 0}" /></label>
@@ -1570,8 +1579,9 @@ const salesViewV2 = (ui) => `
                 <label>N° e-cheq<input type="text" name="echeqNumber" /></label>
                 <label>Cuenta corriente<input type="number" min="0" name="accountAmount" value="${editingSale?.paymentBreakdown?.account || 0}" /></label>
                 <label class="full-span">Observaciones<input type="text" name="note" value="${editingSale?.note || ''}" placeholder="Opcional" /></label>
-              </div></details>
-              <button type="submit" class="pos-charge-button" ${selectedProducts.length ? '' : 'disabled'}>${editingSale ? 'Guardar cambios' : `Cobrar ${money(cartSubtotal)}`}</button>
+                </div></details>
+              </details>
+              <button type="submit" class="pos-charge-button" ${selectedProducts.length ? '' : 'disabled'}>${editingSale ? 'Guardar cambios' : 'Cobrar'}</button>
               ${editingSale ? '<button type="button" class="danger-action" data-action="cancel-sale-edit">Cancelar edicion</button>' : ''}
             </aside>
           </div>
@@ -1791,7 +1801,7 @@ const purchasesView = (ui) => `
         ${dataTable(['Proveedor', 'Producto', 'Cantidad', 'Costo', 'Accion'], ui.enrichedReceipts.map((receipt) => `<div class="data-row"><span>${receipt.supplierName}<br /><small>${receipt.documentNumber || 'Sin comprobante'}</small></span><span>${receipt.productName}${receipt.note ? `<br /><small>${receipt.note}</small>` : ''}</span><span>${receipt.quantity}</span><span>${money(receipt.totalCost)}</span><span>${purchaseActionButtons(receipt)}</span></div>`))}
       </article>
       <article class="panel"><div class="panel-head"><div><h3>Proveedores</h3><p>Saldos y categorias</p></div></div>
-        ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span><span>${money(supplier.balance)}</span><span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
+        ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span>${balanceBadge(supplier.balance)}<span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
       </article>
     </section>
   </section>
@@ -1829,7 +1839,7 @@ const purchasesViewLegacy = (ui) => `
           </article>
           <article class="panel"><div class="panel-head"><div><h3>Proveedores</h3><p>Base visible para comprar y reponer</p></div></div>
             <div class="settings-actions">${createToggleButton('supplier', supplierFormOpen, 'Agregar proveedor')}</div>
-            ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span><span>${money(supplier.balance)}</span><span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
+            ${dataTable(['Proveedor', 'Categoria', 'Saldo', 'Ultima', 'Accion'], ui.snapshot.suppliers.map((supplier) => `<div class="data-row"><span>${supplier.name}</span><span>${supplier.category}</span>${balanceBadge(supplier.balance)}<span>${supplier.lastDelivery}</span><span>${actionButton('supplier', supplier.id)}</span></div>`))}
           </article>
         </div>
         ${supplierFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Nuevo proveedor</h3><p>Base comercial de compras</p></div></div>
@@ -1908,7 +1918,7 @@ const purchasesViewV2 = (ui) => `
           <article class="panel">
             <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Ultimos 10 proveedores'}</h3><p>Busca y hace click para editar.</p></div></div>
             <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar proveedor" aria-label="Buscar proveedor" /></div>
-            <div class="timeline-list">${visibleSuppliers.map((supplier) => `<button type="button" class="timeline-item contact-result" data-action="edit-supplier" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin direccion')} · Saldo ${money(supplier.balance)}</span></button>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
+            <div class="timeline-list">${visibleSuppliers.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-supplier" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin direccion')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions">${actionButton('supplier', supplier.id)}</span></div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
           </article>
         </div>
       </article>
@@ -1951,6 +1961,8 @@ const invoicesView = (ui) => `
 const invoicesViewV2 = (ui) => `
   ${(() => {
     const showInvoiceForm = invoiceFormOpen
+    const paymentInvoice = ui.snapshot.invoices.find((invoice) => invoice.id === invoicePaymentId)
+    const paymentBalance = invoiceBalance(paymentInvoice)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Facturacion</p><h2>Comprobantes</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.enrichedInvoices.length}</strong><span>Comprobantes</span></span>
@@ -1974,9 +1986,21 @@ const invoicesViewV2 = (ui) => `
           <button type="button" class="ghost-action" data-action="close-invoice-form">Cancelar</button>
         </form>
       </article>` : ''}
+      ${paymentInvoice ? `<article class="panel invoice-payment-panel"><div class="panel-head"><div><h3>Registrar cobro</h3><p>${paymentInvoice.number} · Saldo pendiente ${money(paymentBalance)}</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-invoice-payment">Cerrar</button></div></div>
+        <form class="form-grid compact-form" data-form="invoice-payment">
+          <input type="hidden" name="invoiceId" value="${paymentInvoice.id}" />
+          <label>Importe del abono<input type="number" name="amount" min="1" max="${paymentBalance}" step="0.01" value="${paymentBalance}" required /></label>
+          <label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="echeq">E-cheq</option></select></label>
+          <label class="full-span">Referencia (opcional)<input type="text" name="reference" placeholder="Ej.: comprobante, operación o nota" /></label>
+          <div class="form-note full-span">Podés registrar un abono parcial o pagar el saldo completo. El saldo pendiente se actualiza automáticamente.</div>
+          <button type="submit" name="paymentMode" value="partial">Registrar abono</button>
+          <button type="submit" class="primary-action" name="paymentMode" value="full">Pagar saldo completo (${money(paymentBalance)})</button>
+          <button type="button" class="ghost-action" data-action="close-invoice-payment">Cancelar</button>
+        </form>
+      </article>` : ''}
       <article class="panel">
         <div class="panel-head"><div><h3>Comprobantes</h3><p>Seguimiento comercial y numeracion</p></div><div class="settings-actions">${createToggleButton('invoice', showInvoiceForm, 'Agregar comprobante')}</div></div>
-        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
+        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row invoice-open-row" data-invoice-open="${invoice.id}" tabindex="0" role="button" aria-label="Abrir factura ${invoice.number}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}<br /><small>Saldo: ${money(invoiceBalance(invoice))}</small></span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
       </article>
     </section>
   </section>
@@ -2112,6 +2136,8 @@ const branchesViewV2 = (ui) => `
   ${(() => {
     const editingBranch = ui.snapshot.branches.find((branch) => branch.id === branchEditingId)
     const showBranchForm = branchFormOpen || Boolean(editingBranch)
+    const normalizedBranchSearch = branchSearchQuery.trim().toLowerCase()
+    const visibleBranches = ui.snapshot.branches.filter((branch) => !normalizedBranchSearch || [branch.name, branch.code, branch.address].some((value) => String(value || '').toLowerCase().includes(normalizedBranchSearch)))
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Sucursales</p><h2>Locales y numeracion</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.snapshot.branches.length}</strong><span>Sucursales</span></span>
@@ -2133,7 +2159,8 @@ const branchesViewV2 = (ui) => `
       </article>` : ''}
       <article class="panel">
         <div class="panel-head"><div><h3>Sucursales</h3><p>Contexto actual del comercio</p></div><div class="settings-actions">${editingBranch ? '' : createToggleButton('branch', showBranchForm, 'Agregar sucursal')}</div></div>
-        ${dataTable(['Nombre', 'Codigo', 'Direccion', 'Actual', 'Accion'], ui.snapshot.branches.map((branch) => `<div class="data-row"><span>${branch.name}</span><span>${branch.code}</span><span>${branch.address}</span><span>${ui.currentBranch?.id === branch.id ? 'Si' : 'No'}</span><span>${branchActionButtons(branch)}</span></div>`))}
+        <div class="branch-toolbar"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-branch-search value="${escapeHtml(branchSearchQuery)}" placeholder="Buscar por nombre, código o dirección" aria-label="Buscar sucursal" /></div><span class="branch-results-count">${visibleBranches.length} de ${ui.snapshot.branches.length}</span></div>
+        ${dataTable(['Nombre', 'Codigo', 'Direccion', 'Cajas', 'Actual', 'Accion'], visibleBranches.map((branch) => { const branchRegisters = ui.snapshot.registers.filter((register) => register.branchId === branch.id); return `<div class="data-row branch-data-row"><span><strong>${branch.name}</strong></span><span>${branch.code}</span><span>${branch.address}</span><span><span class="branch-register-chips">${branchRegisters.map((register) => `<small>${register.name}</small>`).join('') || '<small>Sin cajas</small>'}</span></span><span>${ui.currentBranch?.id === branch.id ? 'Si' : 'No'}</span><span>${branchActionButtons(branch)}</span></div>` }))}
       </article>
     </section>
   </section>
@@ -3348,6 +3375,15 @@ const handleSubmit = async (event) => {
     invoiceEditingId = ''
     invoiceFormOpen = false
   }
+  if (kind === 'invoice-payment') {
+    const invoice = store.getSnapshot().invoices.find((entry) => entry.id === formData.get('invoiceId'))
+    const amount = formData.get('paymentMode') === 'full' ? invoiceBalance(invoice) : formData.get('amount')
+    const method = String(formData.get('method') || 'transfer')
+    const reference = String(formData.get('reference') || '').trim()
+    const result = await store.registerInvoicePayment({ invoiceId: formData.get('invoiceId'), amount, method, reference, echeqDetails: method === 'echeq' ? { number: reference } : {} })
+    feedbackMessage = result.message || ''
+    invoicePaymentId = result.ok ? '' : invoicePaymentId
+  }
   if (kind === 'ticket') {
     const currentBranchId = getUiState().currentBranch?.id
     const result = formData.get('ticketId')
@@ -3412,7 +3448,16 @@ const handleSubmit = async (event) => {
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('qty_') && Number(value) > 0) items.push({ productId: key.replace('qty_', ''), quantity: Number(value) })
     }
-    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod: formData.get('paymentMethod'), isPaid: formData.get('isPaid') === 'on', autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
+    const paymentMethod = formData.get('paymentMethod')
+    const selectedProducts = getUiState().scopedProducts
+    const saleTotal = Math.max(0, items.reduce((sum, item) => sum + (Number(selectedProducts.find((product) => product.id === item.productId)?.salePrice || 0) * item.quantity), 0) - Number(formData.get('discountAmount') || 0))
+    const paymentAmounts = ['amountPaid', 'cashAmount', 'transferAmount', 'mercadoPagoAmount', 'echeqAmount', 'accountAmount'].map((key) => Number(formData.get(key) || 0)).filter((amount) => amount > 0)
+    const declaredPayment = Math.max(0, ...paymentAmounts, paymentAmounts.reduce((sum, amount) => sum + amount, 0))
+    const paidControl = form.elements.namedItem('isPaid')
+    const isPaid = paidControl
+      ? paidControl.checked
+      : paymentMethod !== 'account' && (!declaredPayment || declaredPayment >= saleTotal)
+    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
     const result = formData.get('saleId')
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
@@ -3420,6 +3465,7 @@ const handleSubmit = async (event) => {
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
+    saleCustomerSearchQuery = ''
     saleFormOpen = false
   }
 
@@ -3496,6 +3542,42 @@ const bindEvents = () => {
       }
     })
     if (activeSection === 'ventas') window.requestAnimationFrame(() => quickAddInput.focus({ preventScroll: true }))
+  }
+  for (const input of document.querySelectorAll('[data-sale-customer-search]')) {
+    const form = input.closest('form')
+    const hiddenCustomer = form?.querySelector('input[name="customerId"]')
+    const findCustomer = () => getUiState().snapshot.customers.find((customer) => customer.fullName.trim().toLowerCase() === input.value.trim().toLowerCase())
+    input.addEventListener('input', () => {
+      saleCustomerSearchQuery = input.value
+      const customer = findCustomer()
+      if (hiddenCustomer) hiddenCustomer.value = customer?.id || ''
+    })
+    input.addEventListener('change', () => {
+      const customer = findCustomer()
+      if (hiddenCustomer) hiddenCustomer.value = customer?.id || ''
+      if (!customer && input.value.trim()) feedbackMessage = 'Selecciona un cliente de la lista o deja Mostrador.'
+    })
+  }
+  for (const button of document.querySelectorAll('[data-action="set-counter-customer"]')) button.addEventListener('click', () => {
+    const form = button.closest('form')
+    const input = form?.querySelector('[data-sale-customer-search]')
+    const hiddenCustomer = form?.querySelector('input[name="customerId"]')
+    if (input) input.value = ''
+    if (hiddenCustomer) hiddenCustomer.value = ''
+    saleCustomerSearchQuery = ''
+  })
+  for (const select of document.querySelectorAll('select[name="paymentMethod"]')) {
+    const form = select.closest('form')
+    const echeqField = form?.querySelector('[data-echeq-field]')
+    const syncEcheqField = () => {
+      const isEcheq = select.value === 'echeq'
+      if (!echeqField) return
+      echeqField.hidden = !isEcheq
+      const input = echeqField.querySelector('input')
+      if (input) input.required = isEcheq
+    }
+    select.addEventListener('change', syncEcheqField)
+    syncEcheqField()
   }
   const quickSearchInput = document.querySelector('.quick-search input[name="query"]')
   const jumpToSearchMatch = (value) => {
@@ -3698,6 +3780,7 @@ const bindEvents = () => {
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
+    saleCustomerSearchQuery = ''
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-cash-form"]')) button.addEventListener('click', () => {
@@ -3770,6 +3853,10 @@ const bindEvents = () => {
   })
   for (const button of document.querySelectorAll('[data-action="close-invoice-form"]')) button.addEventListener('click', () => {
     closeDocumentUtilityForms()
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="close-invoice-payment"]')) button.addEventListener('click', () => {
+    invoicePaymentId = ''
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-ticket-form"]')) button.addEventListener('click', () => {
@@ -3929,19 +4016,26 @@ const bindEvents = () => {
       }
     })
   }
+  for (const row of document.querySelectorAll('[data-invoice-open]')) {
+    const openInvoice = () => {
+      const completed = openInvoiceDocument(row.dataset.invoiceOpen)
+      feedbackMessage = completed ? 'Factura abierta en una nueva pestaña.' : 'No se pudo abrir la factura. Revisa que el navegador permita ventanas emergentes.'
+      render()
+    }
+    row.addEventListener('click', (event) => {
+      if (!event.target.closest('button, a, input, select, textarea, label')) openInvoice()
+    })
+    row.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openInvoice() }
+    })
+  }
   for (const button of document.querySelectorAll('[data-invoice-action]')) {
     button.addEventListener('click', async () => {
       const action = button.dataset.invoiceAction
       if (action === 'pay') {
-        const invoice = store.getSnapshot().invoices.find((entry) => entry.id === button.dataset.id)
-        const amount = window.prompt(`Abono (saldo ${money(Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0)))}):`)
-        if (amount === null) return
-        const method = window.prompt('Medio: cash, transfer, mercado_pago o echeq', 'transfer')
-        if (method === null) return
-        const normalized = method.trim().toLowerCase()
-        const echeqDetails = normalized === 'echeq' ? { number: window.prompt('Número de e-cheq:') || '' } : {}
-        const result = await store.registerInvoicePayment({ invoiceId: button.dataset.id, amount, method: normalized, echeqDetails })
-        feedbackMessage = result.message || ''
+        invoicePaymentId = button.dataset.id
+        invoiceFormOpen = false
+        queueScrollToSelector('form[data-form="invoice-payment"]')
         render()
         return
       }
@@ -3965,8 +4059,22 @@ const bindEvents = () => {
       }
     })
   }
+  for (const input of document.querySelectorAll('[data-branch-search]')) input.addEventListener('input', () => {
+    branchSearchQuery = input.value || ''
+    render()
+  })
   for (const button of document.querySelectorAll('[data-branch-action]')) {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
+      if (button.dataset.branchAction === 'delete') {
+        const branch = store.getSnapshot().branches.find((entry) => entry.id === button.dataset.id)
+        if (!branch) return
+        if (!window.confirm(`¿Eliminar la sucursal "${branch.name}"? También se quitarán sus cajas de la operación.`)) return
+        const result = await store.removeEntity('branch', button.dataset.id)
+        feedbackMessage = result.message || ''
+        branchEditingId = ''
+        render()
+        return
+      }
       if (button.dataset.branchAction === 'edit') {
         closeStructureUtilityForms()
         branchEditingId = button.dataset.id
