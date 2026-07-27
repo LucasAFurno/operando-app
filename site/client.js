@@ -241,11 +241,19 @@ const loadCloudAccess = async (sessionPayload = null) => {
   return activeProfile
 }
 
+const formHasUnsavedChanges = (form) => Array.from(form.elements || []).some((field) => {
+  if (field.disabled || field.type === 'button' || field.type === 'submit' || field.type === 'reset') return false
+  if (field.type === 'file') return Boolean(field.files?.length)
+  if (field instanceof HTMLSelectElement) return Array.from(field.options).some((option) => option.selected !== option.defaultSelected)
+  if (field.type === 'checkbox' || field.type === 'radio') return field.checked !== field.defaultChecked
+  return typeof field.value === 'string' && field.value !== field.defaultValue
+})
+
 const hasPendingOperationalForm = () => Boolean(
   saleFormOpen || cashFormOpen || productFormOpen || stockAdjustmentFormOpen || stockTransferFormOpen
   || supplierFormOpen || purchaseFormOpen || invoiceFormOpen || ticketFormOpen || branchFormOpen
   || registerFormOpen || customerFormOpen || invoicePaymentId
-)
+) || Array.from(document.forms).some(formHasUnsavedChanges)
 
 const syncLiveData = async () => {
   if (liveSyncBusy || cloudSyncBusy || document.hidden || !store?.isAuthenticated?.()) return
