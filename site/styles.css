@@ -2477,6 +2477,12 @@ input, select { outline: none; }
 .purchase-summary-card .data-table { min-width: 0; }
 .purchase-summary-card .data-row { grid-template-columns: minmax(110px, 1fr) minmax(100px, 1fr) 58px 94px auto; gap: 8px; }
 .purchase-summary-card .data-row > span { min-width: 0; overflow-wrap: anywhere; }
+.purchase-summary-card .timeline-list { gap: 8px; }
+.purchase-summary-card .contact-result { min-height: 0; padding: 9px 12px; gap: 10px; }
+.purchase-summary-card .contact-result-main p,
+.purchase-summary-card .contact-result-main span { margin-top: 2px; line-height: 1.2; }
+.purchase-summary-card .contact-result-actions { display: grid; gap: 5px; }
+.purchase-summary-card .contact-result-actions .inline-action { min-height: 30px; padding: 5px 9px; }
 .purchase-payment-history { margin-top: 16px; }
 @media (max-width: 900px) { .purchase-list-grid, .purchase-actions { grid-template-columns: 1fr; } }
 
