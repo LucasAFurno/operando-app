@@ -4981,3 +4981,41 @@ input, select { outline: none; }
     text-transform: uppercase;
   }
 }
+
+/* Inicio: ventas y ranking con el mismo lenguaje visual de las listas. */
+.dashboard-operation-grid .list,
+.dashboard-operation-grid .top-list {
+  gap: 8px;
+}
+
+.dashboard-operation-grid .list-row,
+.dashboard-operation-grid .top-row {
+  min-height: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 14px 14px 0;
+}
+
+.dashboard-operation-grid .top-row {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.dashboard-operation-grid .list-row > div:first-child,
+.dashboard-operation-grid .top-row > div {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .dashboard-operation-grid .list-row,
+  .dashboard-operation-grid .top-row {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-operation-grid .list-row .right {
+    flex: 0 0 auto;
+    text-align: right;
+  }
+}
