@@ -3755,11 +3755,13 @@ input, select { outline: none; }
 }
 
 .purchase-cart { display: grid; gap: 6px; overflow-x: auto; }
-.purchase-line { display: grid; grid-template-columns: minmax(150px, 1.35fr) 110px 135px 120px 90px 92px 110px 110px 76px 100px auto; align-items: end; gap: 10px; min-width: 1330px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.purchase-line { display: grid; grid-template-columns: minmax(150px, 1.35fr) 110px 135px 120px 90px 92px 110px 110px 76px 180px; align-items: end; gap: 10px; min-width: 1330px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 .purchase-line label span { color: var(--muted); font-size: .74rem; }
 .purchase-line label { display: grid; gap: 4px; }
 .purchase-line input { min-height: 38px; padding: 7px 10px; }
 .purchase-line .inline-action { min-height: 38px; padding: 7px 12px; }
+.purchase-line-stock-action { display: flex; align-items: end; justify-content: flex-end; gap: 10px; }
+.purchase-line-stock-action label { min-width: 74px; }
 .purchase-form-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .purchase-form-actions button { width: auto; min-width: 132px; }
 @media (max-width: 850px) { .purchase-line { min-width: 1050px; } }
