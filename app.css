@@ -2597,6 +2597,14 @@ input, select { outline: none; }
 .supplier-map-preview { display: grid; flex: 0 0 100%; gap: 8px; width: 100%; padding-top: 8px; }
 .supplier-map-preview iframe { width: 100%; height: 180px; border: 0; border-radius: 10px; background: var(--panel); }
 .supplier-map-preview p { margin: 0; }
+.customer-map-preview { display: grid; flex: 0 0 100%; gap: 8px; width: 100%; padding-top: 8px; }
+.customer-map-preview iframe { width: 100%; height: 180px; border: 0; border-radius: 10px; background: var(--panel); }
+.customer-map-preview p { margin: 0; }
+.customers-board .contact-result { min-height: 0; padding: 9px 12px; gap: 10px; flex-wrap: wrap; }
+.customers-board .contact-result-main p,
+.customers-board .contact-result-main span { margin-top: 2px; line-height: 1.2; }
+.customers-board .contact-result-actions { display: grid; gap: 5px; }
+.customers-board .contact-result-actions .inline-action { min-height: 30px; padding: 5px 9px; }
 .purchase-payment-history { margin-top: 16px; }
 @media (max-width: 900px) { .purchase-list-grid, .purchase-actions { grid-template-columns: 1fr; } }
 

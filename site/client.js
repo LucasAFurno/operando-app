@@ -97,6 +97,7 @@ let liveSyncTimer = null
 let customerFormOpen = false
 let customerEditingId = ''
 let customerSearchQuery = ''
+let customerMapPreviewId = ''
 let saleFormOpen = false
 let cashFormOpen = false
 let productFormOpen = false
@@ -1487,9 +1488,9 @@ const customersViewV2 = (ui) => `
             <button type="button" class="ghost-action" data-action="close-customer-form">Cancelar</button>
           </form>
         </article>` : ''}
-        <article class="panel"><div class="panel-head"><div><h3>${query ? 'Resultados' : 'Ultimos 10 clientes'}</h3><p>Busca por nombre, telefono, email o CUIT; hace click para editar.</p></div><div class="settings-actions">${createToggleButton('customer', customerFormOpen, 'Agregar cliente')}</div></div>
+        <article class="panel"><div class="panel-head"><div><h3>${query ? 'Resultados' : 'Ultimos 10 clientes'}</h3><p>Tocá un cliente para ver su información; editá sólo cuando haga falta.</p></div><div class="settings-actions">${createToggleButton('customer', customerFormOpen, 'Agregar cliente')}</div></div>
           <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-customer-search value="${escapeHtml(customerSearchQuery)}" placeholder="Buscar cliente" aria-label="Buscar cliente" /></div>
-          <div class="timeline-list">${customers.map((customer) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-customer" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin direccion')} · ${balanceText(customer.balance)} ${money(customer.balance)}</span></button><span class="contact-result-actions">${actionButton('customer', customer.id)}</span></div>`).join('') || '<p class="empty-state">No hay clientes para esta busqueda.</p>'}</div>
+          <div class="timeline-list">${customers.map((customer) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-customer-map" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin dirección')} · ${balanceText(customer.balance)} ${money(customer.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-customer" data-id="${customer.id}">Editar</button>${actionButton('customer', customer.id)}</span>${customerMapPreviewId === customer.id ? `<div class="customer-map-preview">${customer.address ? `<iframe title="Ubicación de ${escapeHtml(customer.fullName)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(customer.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}">Abrir en Maps</a>` : '<p>Este cliente todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>`).join('') || '<p class="empty-state">No hay clientes para esta búsqueda.</p>'}</div>
         </article>
       </div>
     </section>
@@ -3941,6 +3942,7 @@ const bindEvents = () => {
     if (empty) empty.hidden = Boolean(address)
   })
   for (const button of document.querySelectorAll('[data-action="edit-customer"]')) button.addEventListener('click', () => { customerEditingId = button.dataset.id || ''; customerFormOpen = true; queueScrollToSelector('form[data-form="customer"]'); render() })
+  for (const button of document.querySelectorAll('[data-action="view-customer-map"]')) button.addEventListener('click', () => { customerMapPreviewId = customerMapPreviewId === button.dataset.id ? '' : button.dataset.id; render() })
   for (const button of document.querySelectorAll('[data-action="open-sale-form"]')) button.addEventListener('click', () => {
     saleFormOpen = true
     queueScrollToSelector('form[data-form="sale"]')
