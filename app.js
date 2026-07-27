@@ -887,6 +887,27 @@ const getUiState = () => {
       effectivePermissions: normalizeUserPermissionSet(snapshot, entry),
     }
   })
+  const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').slice(0, 8).map((log) => ({ ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema' }))
+  const auditActionLabels = {
+    created: 'Creó un registro',
+    updated: 'Actualizó un registro',
+    deleted: 'Eliminó un registro',
+    cancelled: 'Anuló una operación',
+    returned: 'Registró una devolución',
+    opened: 'Abrió una sesión',
+    closed: 'Cerró una sesión',
+    enabled: 'Habilitó una opción',
+    disabled: 'Deshabilitó una opción',
+  }
+  const recentCommerceActivity = [
+    ...filteredSales.map((sale) => ({ id: `sale-${sale.id}`, createdAt: sale.soldAt, title: 'Venta registrada', detail: `${sale.customerName} · ${money(sale.totalAmount)}` })),
+    ...enrichedScopedReceipts.map((receipt) => ({ id: `receipt-${receipt.id}`, createdAt: receipt.receivedAt, title: 'Ingreso de mercadería', detail: `${receipt.productName} · ${receipt.supplierName}` })),
+    ...scopedCashMovements.map((movement) => ({ id: `cash-${movement.id}`, createdAt: movement.createdAt, title: `Movimiento de caja · ${movement.kind === 'expense' ? 'Egreso' : 'Ingreso'}`, detail: movement.note || money(Math.abs(Number(movement.signedAmount || movement.amount || 0))) })),
+    ...scopedStockMovements.map((movement) => ({ id: `stock-${movement.id}`, createdAt: movement.createdAt, title: 'Movimiento de stock', detail: `${productMap.get(movement.productId)?.name || 'Producto'} · ${Number(movement.quantity || 0) > 0 ? '+' : ''}${movement.quantity || 0}` })),
+    ...enrichedAudit
+      .filter((log) => !['sale', 'purchase_receipt', 'cash_movement', 'stock_adjustment', 'stock_transfer'].includes(log.entityType))
+      .map((log) => ({ id: `audit-${log.id}`, createdAt: log.createdAt, title: auditActionLabels[log.action] || 'Actividad registrada', detail: `${log.actorName} · ${log.entityType}` })),
+  ].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 6)
 
   return {
     snapshot,
@@ -917,7 +938,8 @@ const getUiState = () => {
     enrichedSales: filteredSales,
     enrichedInvoices,
     enrichedTickets,
-    enrichedAudit: byRecentDate(snapshot.auditLogs, 'createdAt').slice(0, 8).map((log) => ({ ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema' })),
+    enrichedAudit,
+    recentCommerceActivity,
     enrichedUsers,
     enrichedReceipts: byRecentDate(snapshot.purchaseReceipts, 'receivedAt').map((receipt) => ({
       ...receipt,
@@ -1407,8 +1429,8 @@ const dashboardView = (ui) => `
       <article class="panel dashboard-stock-panel"><div class="panel-head"><div><h3>Stock critico</h3><p>${ui.lowStock.length ? `${ui.lowStock.length} articulos para revisar` : 'Inventario estable'}</p></div></div><div class="alert-list">
         ${ui.lowStock.length ? paginatedCardList(ui.lowStock, 'stock-critico', (product) => `<div class="alert-card"><strong>${product.name}</strong><p>Stock ${product.scopedStock} en ${ui.currentBranch?.name || 'sucursal'} / minimo ${product.minStock}</p></div>`) : '<div class="alert-card ok"><strong>Sin alertas</strong><p>No hay productos con stock bajo.</p></div>'}
       </div></article>
-      <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Auditoria</h3><p>Ultimas acciones</p></div></div><div class="timeline-list">
-        ${ui.enrichedAudit.map((log) => `<div class="timeline-item"><strong>${log.action}</strong><p>${log.actorName} - ${log.entityType}</p><span>${log.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('')}
+      <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Auditoría</h3><p>Lo último que pasó en el comercio</p></div></div><div class="timeline-list">
+        ${ui.recentCommerceActivity.map((activity) => `<div class="timeline-item"><strong>${activity.title}</strong><p>${activity.detail}</p><span>${String(activity.createdAt || '').slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
       </div></article>
     </section>
   </section>

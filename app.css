@@ -1901,17 +1901,15 @@ input, select { outline: none; }
   min-width: 0;
 }
 
-.dashboard-audit-panel {
-  grid-column: 1 / -1;
+.dashboard-audit-panel,
+.dashboard-stock-panel {
+  grid-column: auto;
+  overflow: hidden;
 }
 
 .dashboard-audit-panel .timeline-list {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.dashboard-stock-panel {
-  grid-column: 1 / -1;
-  overflow: hidden;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .dashboard-stock-panel .alert-list,
@@ -1924,6 +1922,23 @@ input, select { outline: none; }
 
 .dashboard-stock-panel .alert-card p {
   text-align: right;
+}
+
+.dashboard-stock-panel .alert-list {
+  gap: 8px;
+}
+
+.dashboard-stock-panel .alert-card,
+.dashboard-audit-panel .timeline-item {
+  min-height: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 14px 14px 0;
+}
+
+.dashboard-audit-panel .timeline-item p,
+.dashboard-audit-panel .timeline-item span {
+  margin-top: 2px;
 }
 
 .module-summary-grid {
