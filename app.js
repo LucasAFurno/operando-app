@@ -1951,7 +1951,20 @@ const purchasesViewV2 = (ui) => `
     const editingReceipt = ui.snapshot.purchaseReceipts.find((receipt) => receipt.id === purchaseEditingId)
     const editingSupplier = ui.snapshot.suppliers.find((supplier) => supplier.id === supplierEditingId)
     const supplierQuery = supplierSearchQuery.trim().toLowerCase()
-    const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.contact, supplier.phone, supplier.email, supplier.cuit].some((value) => String(value || '').toLowerCase().includes(supplierQuery))) : ui.snapshot.suppliers.slice(0, 10))
+    const normalizeSupplierSearch = (value) => String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const matchesSupplierQuery = (value) => {
+      const candidate = normalizeSupplierSearch(value)
+      const query = normalizeSupplierSearch(supplierQuery)
+      if (!query || candidate.includes(query)) return true
+      let cursor = 0
+      for (const character of query) {
+        cursor = candidate.indexOf(character, cursor)
+        if (cursor === -1) return false
+        cursor += 1
+      }
+      return true
+    }
+    const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.contact, supplier.phone, supplier.email, supplier.cuit].some(matchesSupplierQuery)) : ui.snapshot.suppliers.slice(0, 10))
     const receiptPreview = purchaseReceiptsExpanded ? ui.enrichedReceipts : ui.enrichedReceipts.slice(0, 3)
     const supplierPreview = supplierQuery ? visibleSuppliers : (purchaseSuppliersExpanded ? ui.snapshot.suppliers : ui.snapshot.suppliers.slice(0, 3))
     const debtSuppliers = ui.snapshot.suppliers.filter((supplier) => Number(supplier.balance || 0) > 0)
@@ -2018,7 +2031,7 @@ const purchasesViewV2 = (ui) => `
             <div class="timeline-list purchase-receipt-list">${receiptPreview.map((receipt) => `<div class="timeline-item purchase-receipt-card"><div><strong>${escapeHtml(receipt.supplierName)}</strong><p>${escapeHtml(receipt.productName)}</p><span>${receipt.documentNumber || 'Sin comprobante'} · Cant. ${receipt.quantity} · ${money(receipt.totalCost)}</span></div><span class="purchase-receipt-actions">${purchaseActionButtons(receipt)}</span></div>`).join('') || '<p class="empty-state">Todavía no hay recepciones.</p>'}</div>
           </article>
           <article class="panel purchase-summary-card">
-            <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Proveedores recientes'}</h3><p>${supplierQuery ? 'Coincidencias encontradas' : (purchaseSuppliersExpanded ? `Mostrando ${ui.snapshot.suppliers.length}` : 'Últimos 3 proveedores')}</p></div>${!supplierQuery && ui.snapshot.suppliers.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-suppliers">${purchaseSuppliersExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
+            <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Proveedores recientes'}</h3><p>${supplierQuery ? `${visibleSuppliers.length} coincidencia${visibleSuppliers.length === 1 ? '' : 's'} sugerida${visibleSuppliers.length === 1 ? '' : 's'}` : (purchaseSuppliersExpanded ? `Mostrando ${ui.snapshot.suppliers.length}` : 'Últimos 3 proveedores')}</p></div>${!supplierQuery && ui.snapshot.suppliers.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-suppliers">${purchaseSuppliersExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
             <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar proveedor" aria-label="Buscar proveedor" /></div>
             <div class="timeline-list">${supplierPreview.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-supplier-map" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin dirección')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-supplier" data-id="${supplier.id}">Editar</button>${actionButton('supplier', supplier.id)}</span>${supplierMapPreviewId === supplier.id ? `<div class="supplier-map-preview">${supplier.address ? `<iframe title="Ubicación de ${escapeHtml(supplier.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(supplier.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.address)}">Abrir en Maps</a>` : '<p>Este proveedor todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
           </article>
@@ -3986,7 +3999,16 @@ const bindEvents = () => {
     supplierEditingId = ''
     render()
   })
-  for (const input of document.querySelectorAll('[data-supplier-search]')) input.addEventListener('input', () => { supplierSearchQuery = input.value; render() })
+  for (const input of document.querySelectorAll('[data-supplier-search]')) input.addEventListener('input', () => {
+    const cursorPosition = input.selectionStart ?? input.value.length
+    supplierSearchQuery = input.value
+    render()
+    requestAnimationFrame(() => {
+      const nextInput = document.querySelector('[data-supplier-search]')
+      nextInput?.focus()
+      nextInput?.setSelectionRange(cursorPosition, cursorPosition)
+    })
+  })
   for (const input of document.querySelectorAll('input[name="supplierSearch"]')) input.addEventListener('input', () => { purchaseSupplierSearch = input.value })
   const addPurchaseProduct = () => {
     const input = document.querySelector('[data-purchase-product-search]')
