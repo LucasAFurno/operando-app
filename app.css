@@ -1941,6 +1941,12 @@ input, select { outline: none; }
   margin-top: 2px;
 }
 
+.dashboard-show-more {
+  width: 100%;
+  min-height: 38px;
+  justify-content: center;
+}
+
 .module-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

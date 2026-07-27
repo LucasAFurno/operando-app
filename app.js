@@ -113,6 +113,8 @@ let supplierPaymentDraft = null
 let supplierPaymentPanelOpen = false
 let purchaseReceiptsExpanded = false
 let purchaseSuppliersExpanded = false
+let dashboardStockExpanded = false
+let dashboardAuditExpanded = false
 let supplierMapPreviewId = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
@@ -907,7 +909,7 @@ const getUiState = () => {
     ...enrichedAudit
       .filter((log) => !['sale', 'purchase_receipt', 'cash_movement', 'stock_adjustment', 'stock_transfer'].includes(log.entityType))
       .map((log) => ({ id: `audit-${log.id}`, createdAt: log.createdAt, title: auditActionLabels[log.action] || 'Actividad registrada', detail: `${log.actorName} · ${log.entityType}` })),
-  ].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 6)
+  ].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 50)
 
   return {
     snapshot,
@@ -1427,10 +1429,10 @@ const dashboardView = (ui) => `
         ${ui.topProducts.length ? ui.topProducts.map(([name, qty], index) => `<div class="top-row"><span>${index + 1}</span><div><strong>${name}</strong><p>${qty} unidades vendidas</p></div></div>`).join('') : '<p class="empty-state">Todavia no hay ventas cargadas.</p>'}
       </div></article>
       <article class="panel dashboard-stock-panel"><div class="panel-head"><div><h3>Stock critico</h3><p>${ui.lowStock.length ? `${ui.lowStock.length} articulos para revisar` : 'Inventario estable'}</p></div></div><div class="alert-list">
-        ${ui.lowStock.length ? paginatedCardList(ui.lowStock, 'stock-critico', (product) => `<div class="alert-card"><strong>${product.name}</strong><p>Stock ${product.scopedStock} en ${ui.currentBranch?.name || 'sucursal'} / minimo ${product.minStock}</p></div>`) : '<div class="alert-card ok"><strong>Sin alertas</strong><p>No hay productos con stock bajo.</p></div>'}
+        ${ui.lowStock.length ? (() => { const visibleStock = dashboardStockExpanded ? ui.lowStock : ui.lowStock.slice(0, 10); return `${visibleStock.map((product) => `<div class="alert-card"><strong>${product.name}</strong><p>Stock ${product.scopedStock} en ${ui.currentBranch?.name || 'sucursal'} / minimo ${product.minStock}</p></div>`).join('')}${ui.lowStock.length > 10 ? `<button type="button" class="ghost-action dashboard-show-more" data-action="toggle-dashboard-stock">${dashboardStockExpanded ? 'Ver menos' : `Ver más (${ui.lowStock.length - 10})`}</button>` : ''}` })() : '<div class="alert-card ok"><strong>Sin alertas</strong><p>No hay productos con stock bajo.</p></div>'}
       </div></article>
       <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Auditoría</h3><p>Lo último que pasó en el comercio</p></div></div><div class="timeline-list">
-        ${ui.recentCommerceActivity.map((activity) => `<div class="timeline-item"><strong>${activity.title}</strong><p>${activity.detail}</p><span>${String(activity.createdAt || '').slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
+        ${ui.recentCommerceActivity.length ? (() => { const visibleActivity = dashboardAuditExpanded ? ui.recentCommerceActivity : ui.recentCommerceActivity.slice(0, 10); return `${visibleActivity.map((activity) => `<div class="timeline-item"><strong>${activity.title}</strong><p>${activity.detail}</p><span>${String(activity.createdAt || '').slice(0, 16).replace('T', ' ')}</span></div>`).join('')}${ui.recentCommerceActivity.length > 10 ? `<button type="button" class="ghost-action dashboard-show-more" data-action="toggle-dashboard-audit">${dashboardAuditExpanded ? 'Ver menos' : `Ver más (${ui.recentCommerceActivity.length - 10})`}</button>` : ''}` })() : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
       </div></article>
     </section>
   </section>
@@ -3798,6 +3800,14 @@ const bindEvents = () => {
     const pagination = listPagination[button.dataset.pageList]
     if (!pagination || button.disabled) return
     pagination.page += button.dataset.pageAction === 'next' ? 1 : -1
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="toggle-dashboard-stock"]')) button.addEventListener('click', () => {
+    dashboardStockExpanded = !dashboardStockExpanded
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="toggle-dashboard-audit"]')) button.addEventListener('click', () => {
+    dashboardAuditExpanded = !dashboardAuditExpanded
     render()
   })
   for (const input of document.querySelectorAll('.permission-option input')) input.addEventListener('change', () => {
