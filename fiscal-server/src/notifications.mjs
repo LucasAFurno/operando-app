@@ -18,17 +18,76 @@ const argentinaTime = (timestamp) => new Intl.DateTimeFormat('es-AR', {
   dateStyle: 'short', timeStyle: 'medium', timeZone: 'America/Argentina/Buenos_Aires',
 }).format(new Date(timestamp))
 
-const eventText = (event) => {
+const htmlEscape = (value) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+
+const asText = (value) => typeof value === 'object' ? JSON.stringify(value) : String(value)
+
+const area = (event) => event.source || 'PCLAF Control'
+
+const areaIcon = (event) => {
+  if (/arca|fiscal/i.test(area(event))) return '🧾'
+  if (/producto|operaciones/i.test(area(event))) return '📊'
+  if (/infraestructura|deploy|hosting|supabase/i.test(area(event))) return '🛠️'
+  return '🔔'
+}
+
+const statusIcon = (event) => {
+  if (event.severity === 'critical') return '🚨'
+  if (event.severity === 'warning') return '⚠️'
+  if (/iniciado|started/i.test(event.title || '')) return '🚀'
+  return '✅'
+}
+
+const embedColor = (event) => {
+  if (event.severity === 'critical') return 0xDC2626
+  if (event.severity === 'warning') return 0xF59E0B
+  if (/arca|fiscal/i.test(area(event))) return 0x7C3AED
+  if (/producto|operaciones/i.test(area(event))) return 0x0F766E
+  return 0x2563EB
+}
+
+const eventDetails = (event) => {
   const safe = sanitize(event.metadata || {})
-  const lines = [
-    `**Ambiente:** ${event.environment || config.environment}`,
-    `**Area:** ${event.source || 'PCLAF Control'}`,
-    event.entityId ? `**ID:** ${event.entityId}` : null,
-    event.correlationId ? `**Correlation ID:** ${event.correlationId}` : null,
-    ...Object.entries(safe).map(([key, value]) => `**${key}:** ${typeof value === 'object' ? JSON.stringify(value) : value}`),
-    `**Fecha:** ${argentinaTime(event.timestamp || new Date().toISOString())}`,
-  ].filter(Boolean)
-  return [event.message, ...lines].filter(Boolean).join('\n')
+  return [
+    ['Ambiente', event.environment || config.environment],
+    ['Área', area(event)],
+    event.entityId ? ['ID', event.entityId] : null,
+    event.correlationId ? ['Correlación', event.correlationId] : null,
+    ...Object.entries(safe).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+  ].filter(Boolean).map(([label, value]) => [label, asText(value)])
+}
+
+const discordEmbed = (event) => {
+  const timestamp = event.timestamp || new Date().toISOString()
+  return {
+    author: { name: `${areaIcon(event)} PCLAF Control · ${area(event)}` },
+    title: `${statusIcon(event)} ${sanitize(event.title || event.type || 'Notificación')}`,
+    description: sanitize(event.message || 'Sin detalle adicional.'),
+    color: embedColor(event),
+    fields: eventDetails(event).slice(0, 25).map(([name, value]) => ({ name, value: value.slice(0, 1024), inline: name === 'Ambiente' || name === 'Área' })),
+    footer: { text: `PCLAF Control · ${argentinaTime(timestamp)}` },
+    timestamp,
+  }
+}
+
+const telegramText = (event) => {
+  const timestamp = event.timestamp || new Date().toISOString()
+  const details = eventDetails(event)
+    .map(([label, value]) => `<b>${htmlEscape(label)}:</b> ${htmlEscape(value)}`)
+    .join('\n')
+  return [
+    `<b>${areaIcon(event)} PCLAF Control · ${htmlEscape(area(event))}</b>`,
+    `<b>${statusIcon(event)} ${htmlEscape(sanitize(event.title || event.type || 'Notificación'))}</b>`,
+    '──────────────────',
+    htmlEscape(sanitize(event.message || 'Sin detalle adicional.')),
+    '──────────────────',
+    details,
+    `<i>Fecha: ${htmlEscape(argentinaTime(timestamp))}</i>`,
+  ].filter(Boolean).join('\n')
 }
 
 export const notifyDiscord = async (destination, event) => {
@@ -37,10 +96,7 @@ export const notifyDiscord = async (destination, event) => {
   try {
     const response = await fetch(url, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ embeds: [{
-        title: `PCLAF Control | ${sanitize(event.title || event.type || 'Notificación')}`,
-        description: eventText(event), color: event.severity === 'critical' ? 0xCC0000 : event.severity === 'warning' ? 0xF59E0B : 0x2563EB,
-      }] }), signal: AbortSignal.timeout(8_000),
+      body: JSON.stringify({ embeds: [discordEmbed(event)] }), signal: AbortSignal.timeout(8_000),
     })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     return true
@@ -56,7 +112,7 @@ export const notifyTelegram = async (event) => {
   try {
     const response = await fetch(`https://api.telegram.org/bot${config.telegram.botToken}/sendMessage`, {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ chat_id: config.telegram.chatId, text: `PCLAF Control | ${sanitize(event.title || event.type)}\n${eventText(event)}` }),
+      body: JSON.stringify({ chat_id: config.telegram.chatId, text: telegramText(event), parse_mode: 'HTML', disable_web_page_preview: true }),
       signal: AbortSignal.timeout(8_000),
     })
     if (!response.ok) {
