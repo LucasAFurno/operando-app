@@ -304,6 +304,17 @@ const mapPublicAuthError = (message, context = 'login') => {
   }
   return messages[normalized] || message
 }
+
+const mapInvoicePaymentError = (message) => {
+  const normalized = String(message || '').trim().toLowerCase()
+  if (normalized.includes('invalid_payment_amount')) return 'No se registró el abono porque el importe debe ser mayor a $0 y no puede superar el saldo pendiente de esta factura. Revisá el monto e intentá otra vez.'
+  if (normalized.includes('invoice_not_found')) return 'No se registró el abono porque no encontramos la factura seleccionada. Actualizá la pantalla e intentá otra vez.'
+  if (normalized.includes('invalid_payment_method')) return 'No se registró el abono porque el medio de pago seleccionado no es válido. Elegí uno de la lista e intentá otra vez.'
+  if (normalized.includes('cash_session_required')) return 'No se registró el abono en efectivo porque la caja está cerrada. Abrí la caja de esta sucursal e intentá otra vez.'
+  if (normalized.includes('echeq_number_required')) return 'No se registró el abono porque falta el número de e-cheq.'
+  if (normalized.includes('permission_denied')) return 'No se registró el abono porque tu usuario no tiene permiso para cobrar facturas.'
+  return `No se pudo registrar el abono. ${message || 'Revisá la conexión e intentá otra vez.'}`
+}
 const applyTheme = () => { document.documentElement.dataset.theme = theme }
 const markBootComplete = () => {
   window.__pclafBooted = true
@@ -3392,7 +3403,7 @@ const handleSubmit = async (event) => {
       feedbackMessage = result.message || ''
       invoicePaymentId = result.ok ? '' : invoicePaymentId
     } catch (error) {
-      feedbackMessage = `No se pudo registrar el abono: ${error.message || 'revisá la conexión e intentá otra vez.'}`
+      feedbackMessage = mapInvoicePaymentError(error?.message)
     }
   }
   if (kind === 'ticket') {
