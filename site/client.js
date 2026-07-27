@@ -3501,6 +3501,7 @@ const handleSubmit = async (event) => {
       feedbackMessage = `${purchaseItems.length} producto${purchaseItems.length === 1 ? '' : 's'} registrado${purchaseItems.length === 1 ? '' : 's'} en la compra.`
       closePurchaseUtilityForms()
       if (!formData.get('receiptId')) supplierPaymentDraft = { supplierId, amount: purchaseTotal }
+      render()
       return
     }
     const exactProduct = products.find((item) => [item.name, item.sku, item.barcode]
