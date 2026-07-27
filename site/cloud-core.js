@@ -222,6 +222,9 @@ export const createSupabaseCoreAdapter = (config) => {
     async registerInvoicePayment(payload) {
       return rpc('app_public_register_invoice_payment', { p_session_token: getSessionToken(), p_invoice_id: payload?.invoiceId || null, p_method_key: payload?.method || 'transfer', p_amount: Number(payload?.amount || 0), p_reference: payload?.reference || '', p_echeq_details: payload?.echeqDetails || {} })
     },
+    async registerSupplierPayment(payload) {
+      return rpc('app_public_register_supplier_payment', { p_session_token: getSessionToken(), p_supplier_id: payload?.supplierId || null, p_method_key: payload?.method || 'transfer', p_amount: Number(payload?.amount || 0), p_reference: payload?.reference || '', p_branch_id: payload?.branchId || null })
+    },
     async upsertPurchaseReceipt(payload) {
       return rpc('app_public_upsert_purchase_receipt', {
         p_session_token: getSessionToken(),

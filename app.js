@@ -107,6 +107,7 @@ let purchaseFormOpen = false
 let purchaseDraftItems = {}
 let purchaseQuickAddCode = ''
 let purchaseSupplierSearch = ''
+let supplierPaymentDraft = null
 let invoiceFormOpen = false
 let invoicePaymentId = ''
 let ticketFormOpen = false
@@ -1913,6 +1914,7 @@ const purchasesViewV2 = (ui) => `
           <div class="purchase-form-actions full-span"><button type="submit" ${purchaseLines.length ? '' : 'disabled'}>${editingReceipt ? 'Guardar cambios' : 'Registrar compra'}</button>${editingReceipt ? '<button type="button" class="danger-action" data-action="cancel-purchase-edit">Cancelar edición</button>' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cancelar</button>'}</div>
         </form>
       </article>` : ''}
+      ${supplierPaymentDraft ? (() => { const supplier = ui.snapshot.suppliers.find((entry) => entry.id === supplierPaymentDraft.supplierId); const suggestedAmount = Math.min(Number(supplierPaymentDraft.amount || 0), Number(supplier?.balance || 0)); return supplier ? `<article class="panel supplier-payment-panel"><div class="panel-head"><div><h3>Registrar pago al proveedor</h3><p>${escapeHtml(supplier.name)} · Compra registrada por ${money(supplierPaymentDraft.amount)} · Saldo pendiente ${money(supplier.balance)}</p></div></div><form class="form-grid compact-form" data-form="supplier-payment"><input type="hidden" name="supplierId" value="${supplier.id}" /><label>Importe a pagar<input type="number" name="amount" min="0.01" max="${supplier.balance}" step="0.01" value="${suggestedAmount}" required /></label><label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="cheque">Cheque</option><option value="echeq">E-cheq</option><option value="mercado_pago">Mercado Pago</option><option value="other">Otro</option></select></label><label class="full-span">Referencia (opcional)<input name="reference" placeholder="Nº de transferencia, cheque o comprobante" /></label><div class="purchase-form-actions full-span"><button type="submit">Registrar pago</button><button type="button" class="ghost-action" data-action="leave-supplier-payment">Dejar pendiente</button></div></form></article>` : '' })() : ''}
       ${supplierFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>${editingSupplier ? 'Editar proveedor' : 'Nuevo proveedor'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-supplier-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="supplier">
           <input type="hidden" name="supplierId" value="${editingSupplier?.id || ''}" />
@@ -3495,8 +3497,10 @@ const handleSubmit = async (event) => {
         if (formData.get('receiptId') && purchaseItems.length === 1) await store.updatePurchaseReceipt(formData.get('receiptId'), { ...common, productId, quantity: item.quantity, unitCost: item.unitCost })
         else await store.createPurchaseReceipt({ ...common, productId, quantity: item.quantity, unitCost: item.unitCost })
       }
+      const purchaseTotal = purchaseItems.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitCost || 0)), 0)
       feedbackMessage = `${purchaseItems.length} producto${purchaseItems.length === 1 ? '' : 's'} registrado${purchaseItems.length === 1 ? '' : 's'} en la compra.`
       closePurchaseUtilityForms()
+      if (!formData.get('receiptId')) supplierPaymentDraft = { supplierId, amount: purchaseTotal }
       return
     }
     const exactProduct = products.find((item) => [item.name, item.sku, item.barcode]
@@ -3515,6 +3519,11 @@ const handleSubmit = async (event) => {
     feedbackMessage = result.message || (result.ok ? 'Recepcion registrada y stock actualizado.' : '')
     purchaseEditingId = ''
     purchaseFormOpen = false
+  }
+  if (kind === 'supplier-payment') {
+    const result = await store.registerSupplierPayment({ supplierId: formData.get('supplierId'), amount: formData.get('amount'), method: formData.get('method'), reference: formData.get('reference') })
+    feedbackMessage = result.message || ''
+    if (result.ok) supplierPaymentDraft = null
   }
   if (kind === 'sale') {
     const items = []
@@ -3907,6 +3916,7 @@ const bindEvents = () => {
     purchaseDraftItems = { ...purchaseDraftItems, [key]: { isNew: true, productId: '', name: '', sku: '', barcode: '', category: 'General', minStock: 0, quantity: 1, unitCost: 0, salePrice: 0, trackStock: true } }
     render()
   })
+  for (const button of document.querySelectorAll('[data-action="leave-supplier-payment"]')) button.addEventListener('click', () => { supplierPaymentDraft = null; feedbackMessage = 'Compra registrada a cuenta corriente.'; render() })
   const syncPurchaseDraftField = (input) => {
     const item = purchaseDraftItems[input.dataset.purchaseField]
     if (!item) return

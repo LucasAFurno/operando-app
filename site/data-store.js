@@ -296,6 +296,7 @@ const seedData = {
   ],
   cashSessions: [],
   purchaseReceipts: [],
+  supplierPayments: [],
   sales: [],
   invoices: [],
   tickets: [],
@@ -799,6 +800,7 @@ const migrateState = (source) => {
     note: receipt.note || '',
     branchId: receipt.branchId || migrated.business.currentBranchId || migrated.branches[0]?.id || null,
   }))
+  if (Array.isArray(source.supplierPayments)) migrated.supplierPayments = source.supplierPayments.map((payment) => ({ ...payment, amount: Number(payment.amount || 0) }))
 
   if (Array.isArray(source.sales)) migrated.sales = source.sales.map((sale) => {
     const items = Array.isArray(sale.items) && sale.items.length
@@ -2271,6 +2273,32 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Recepcion registrada.' }
   }
 
+  const registerSupplierPayment = async (payload) => {
+    const denied = ensurePermission(actionPermissions.purchasesWrite)
+    if (denied) return denied
+    const supplier = state.suppliers.find((entry) => entry.id === payload.supplierId)
+    if (!supplier) return { ok: false, message: 'Proveedor no encontrado.' }
+    const amount = Number(payload.amount || 0)
+    if (amount <= 0 || amount > Number(supplier.balance || 0)) return { ok: false, message: 'El pago debe ser mayor a cero y no puede superar el saldo del proveedor.' }
+    const method = String(payload.method || 'transfer').toLowerCase()
+    if (!['cash', 'transfer', 'cheque', 'echeq', 'mercado_pago', 'other'].includes(method)) return { ok: false, message: 'Medio de pago inválido.' }
+    if (cloudCoreAdapter) {
+      await cloudCoreAdapter.registerSupplierPayment({ supplierId: supplier.id, amount, method, reference: payload.reference || '', branchId: getCurrentBranch(state)?.id || null })
+      await syncFromCloud()
+      return { ok: true, message: 'Pago al proveedor registrado.' }
+    }
+    if (method === 'cash') {
+      const cashResult = await createCashMovement({ kind: 'expense', amount, note: `Pago a proveedor ${supplier.name}${payload.reference ? ` · ${payload.reference}` : ''}` })
+      if (!cashResult.ok) return cashResult
+    }
+    const payment = { id: makeId(), supplierId: supplier.id, branchId: getCurrentBranch(state)?.id || null, amount, method, reference: String(payload.reference || '').trim(), createdAt: todayIso(), createdBy: currentUser().id }
+    supplier.balance = Math.max(0, Number(supplier.balance || 0) - amount)
+    state.supplierPayments.unshift(payment)
+    pushAudit(state, currentUser().id, 'supplier_payment', payment.id, 'created', payment)
+    save()
+    return { ok: true, message: 'Pago al proveedor registrado.' }
+  }
+
   const createStockAdjustment = (payload) => {
     const denied = ensurePermission(actionPermissions.productsAdjust)
     if (denied) return denied
@@ -2793,6 +2821,7 @@ export const createBrowserDataStore = (options = {}) => {
     createInvoiceFromSale,
     createTicketFromSale,
     createPurchaseReceipt,
+    registerSupplierPayment,
     updatePurchaseReceipt,
     createInvoice,
     updateInvoice,
