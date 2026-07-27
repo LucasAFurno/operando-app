@@ -1,6 +1,6 @@
 import { loadNotifications, missingVariables, printMissingVariables } from './notification-runtime.mjs'
 
-const destinations = ['general', 'logs', 'alertas', 'arca', 'seguridad', 'backups', 'deploys', 'resumen']
+const destinations = ['general', 'logs', 'alertas', 'arca', 'seguridad', 'gcp-run', 'backups', 'deploys', 'resumen']
 const target = String(process.argv[2] || '').trim().toLowerCase()
 const destination = target.replace(/^control-/, '')
 if (!target || (destination !== 'telegram' && !destinations.includes(destination))) {
@@ -9,7 +9,12 @@ if (!target || (destination !== 'telegram' && !destinations.includes(destination
 }
 
 const enabledVariable = destination === 'telegram' ? 'PCLAF_CONTROL_TELEGRAM_ENABLED' : 'PCLAF_CONTROL_DISCORD_ENABLED'
-const webhookName = `PCLAF_CONTROL_DISCORD_${destination === 'seguridad' ? 'SEGURIDAD' : destination === 'deploys' ? 'DEPLOYS' : destination.toUpperCase()}_WEBHOOK_URL`
+const webhookNames = {
+  seguridad: 'PCLAF_CONTROL_DISCORD_SEGURIDAD_WEBHOOK_URL',
+  'gcp-run': 'PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL',
+  deploys: 'PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL',
+}
+const webhookName = webhookNames[destination] || `PCLAF_CONTROL_DISCORD_${destination.toUpperCase()}_WEBHOOK_URL`
 const required = process.env[enabledVariable] === 'true'
   ? missingVariables(destination === 'telegram' ? ['PCLAF_CONTROL_TELEGRAM_BOT_TOKEN', 'PCLAF_CONTROL_TELEGRAM_CHAT_ID'] : [webhookName])
   : []

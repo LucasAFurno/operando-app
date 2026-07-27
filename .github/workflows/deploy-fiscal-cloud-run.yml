@@ -26,12 +26,20 @@ jobs:
         env:
           PCLAF_CONTROL_DISCORD_ENABLED: "true"
           PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
+          PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
           PCLAF_CONTROL_TELEGRAM_ENABLED: ${{ vars.PCLAF_CONTROL_TELEGRAM_ENABLED }}
           PCLAF_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.PCLAF_CONTROL_TELEGRAM_BOT_TOKEN }}
           PCLAF_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.PCLAF_CONTROL_TELEGRAM_CHAT_ID }}
           FISCAL_SERVICE_TOKEN: ci-notification-only
           FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: node fiscal-server/scripts/notify-deploy.mjs started --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Notify Cloud Run deploy started
+        env:
+          PCLAF_CONTROL_DISCORD_ENABLED: "true"
+          PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
+          FISCAL_SERVICE_TOKEN: ci-notification-only
+          FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        run: node fiscal-server/scripts/notify-deploy.mjs started --destination=gcp-run --telegram=false --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       # Workload Identity Federation: no service-account JSON key is stored in GitHub.
       - uses: google-github-actions/auth@v2
@@ -102,12 +110,20 @@ jobs:
         env:
           PCLAF_CONTROL_DISCORD_ENABLED: "true"
           PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
+          PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
           PCLAF_CONTROL_TELEGRAM_ENABLED: ${{ vars.PCLAF_CONTROL_TELEGRAM_ENABLED }}
           PCLAF_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.PCLAF_CONTROL_TELEGRAM_BOT_TOKEN }}
           PCLAF_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.PCLAF_CONTROL_TELEGRAM_CHAT_ID }}
           FISCAL_SERVICE_TOKEN: ci-notification-only
           FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: node fiscal-server/scripts/notify-deploy.mjs success --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Notify Cloud Run deploy success
+        env:
+          PCLAF_CONTROL_DISCORD_ENABLED: "true"
+          PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
+          FISCAL_SERVICE_TOKEN: ci-notification-only
+          FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        run: node fiscal-server/scripts/notify-deploy.mjs success --destination=gcp-run --telegram=false --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   notify-deploy-failure:
     name: Notify failed fiscal deploy
@@ -123,9 +139,17 @@ jobs:
         env:
           PCLAF_CONTROL_DISCORD_ENABLED: "true"
           PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
+          PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
           PCLAF_CONTROL_TELEGRAM_ENABLED: ${{ vars.PCLAF_CONTROL_TELEGRAM_ENABLED }}
           PCLAF_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.PCLAF_CONTROL_TELEGRAM_BOT_TOKEN }}
           PCLAF_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.PCLAF_CONTROL_TELEGRAM_CHAT_ID }}
           FISCAL_SERVICE_TOKEN: ci-notification-only
           FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: node fiscal-server/scripts/notify-deploy.mjs failed --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} --detail="El job deploy falló; revisar el pipeline enlazado." || true
+      - name: Notify Cloud Run deploy failure
+        env:
+          PCLAF_CONTROL_DISCORD_ENABLED: "true"
+          PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
+          FISCAL_SERVICE_TOKEN: ci-notification-only
+          FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        run: node fiscal-server/scripts/notify-deploy.mjs failed --destination=gcp-run --telegram=false --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} --detail="El job deploy falló; revisar el pipeline enlazado." || true
