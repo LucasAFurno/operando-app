@@ -3085,18 +3085,19 @@ input, select { outline: none; }
   font-size: .78rem;
 }
 
-/* Comprobantes: tarjetas compactas en desktop y una columna en mobile. */
-.invoice-compact-table { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+/* Comprobantes: lista compacta, consistente con los bloques de proveedores. */
+.invoice-compact-table { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .invoice-compact-table .data-head { display: none; }
 .invoice-compact-table .data-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "document state" "customer actions" "amount actions";
-  gap: 10px 12px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(148px, auto);
+  grid-template-areas: "document state actions" "customer state actions" "amount state actions";
+  gap: 4px 14px;
   min-width: 0;
-  padding: 14px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 14px 14px 0;
   background: var(--panel);
 }
 .invoice-compact-table .data-row > span { min-width: 0; overflow-wrap: anywhere; }
@@ -3104,12 +3105,20 @@ input, select { outline: none; }
 .invoice-compact-table .data-row > span:nth-child(2) { grid-area: customer; }
 .invoice-compact-table .data-row > span:nth-child(3) { grid-area: state; text-align: right; }
 .invoice-compact-table .data-row > span:nth-child(4) { grid-area: amount; }
-.invoice-compact-table .data-row > span:nth-child(5) { grid-area: actions; align-self: end; }
-.invoice-compact-table .invoice-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.invoice-compact-table .data-row > span:nth-child(5) { grid-area: actions; align-self: center; }
+.invoice-compact-table .invoice-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; width: 148px; }
 .invoice-compact-table .invoice-actions .inline-action { width: 100%; min-width: 0; }
 @media (max-width: 720px) {
-  .invoice-compact-table { grid-template-columns: 1fr; }
-  .invoice-compact-table .data-row { grid-template-areas: "document state" "customer customer" "amount actions"; }
+  .panel-head:has(> .settings-actions) { flex-wrap: wrap; }
+  .panel-head > .settings-actions { width: 100%; }
+  .panel-head > .settings-actions .add-action { width: 100%; min-height: 42px; }
+  .invoice-compact-table .data-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "document state" "customer customer" "amount amount" "actions actions";
+    gap: 5px 12px;
+  }
+  .invoice-compact-table .data-row > span:nth-child(3) { align-self: start; }
+  .invoice-compact-table .invoice-actions { width: 100%; }
 }
 
 .data-row span:last-child {
