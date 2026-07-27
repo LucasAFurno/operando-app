@@ -2467,9 +2467,18 @@ input, select { outline: none; }
 
 .purchase-list-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
+
+.purchase-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+.purchase-actions .add-action { width: 100%; justify-content: center; }
+.purchase-summary-card { min-width: 0; }
+.purchase-summary-card .data-table { min-width: 0; }
+.purchase-summary-card .data-row { grid-template-columns: minmax(110px, 1fr) minmax(100px, 1fr) 58px 94px auto; gap: 8px; }
+.purchase-summary-card .data-row > span { min-width: 0; overflow-wrap: anywhere; }
+.purchase-payment-history { margin-top: 16px; }
+@media (max-width: 900px) { .purchase-list-grid, .purchase-actions { grid-template-columns: 1fr; } }
 
 .report-filter-shell > .panel {
   grid-column: 1 / -1;
