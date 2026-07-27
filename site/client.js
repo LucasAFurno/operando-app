@@ -1798,7 +1798,7 @@ const purchasesView = (ui) => `
       <article class="panel"><div class="panel-head"><div><h3>${editingReceipt ? 'Editar recepcion' : 'Recepcion de compra'}</h3><p>${editingReceipt ? 'Recalcula stock y saldo del proveedor' : 'Ingresa stock y costo'}</p></div></div>
         <form class="form-grid" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
-          <label>Proveedor<select name="supplierId" required>${ui.snapshot.suppliers.map((supplier) => `<option value="${supplier.id}" ${editingReceipt?.supplierId === supplier.id ? 'selected' : ''}>${supplier.name}</option>`).join('')}</select></label>
+          <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
           <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" value="${escapeHtml(ui.snapshot.products.find((product) => product.id === editingReceipt?.productId)?.name || '')}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
           <label>Cantidad<input type="number" min="1" name="quantity" value="${editingReceipt?.quantity || ''}" required /></label>
@@ -1889,7 +1889,7 @@ const purchasesViewV2 = (ui) => `
         <div class="panel-head"><div><h3>${editingReceipt ? 'Editar compra' : 'Nueva compra'}</h3><p>Ingresa stock y costo del proveedor</p></div><div class="settings-actions">${editingReceipt ? '' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cerrar</button>'}</div></div>
         <form class="form-grid compact-form" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
-          <label>Proveedor<select name="supplierId" required>${ui.snapshot.suppliers.map((supplier) => `<option value="${supplier.id}" ${editingReceipt?.supplierId === supplier.id ? 'selected' : ''}>${supplier.name}</option>`).join('')}</select></label>
+          <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
           <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" value="${escapeHtml(ui.snapshot.products.find((product) => product.id === editingReceipt?.productId)?.name || '')}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
           <label>Cantidad<input type="number" min="1" name="quantity" value="${editingReceipt?.quantity || ''}" required /></label>
@@ -3448,6 +3448,19 @@ const handleSubmit = async (event) => {
     const search = String(formData.get('productSearch') || '').trim()
     const normalizedSearch = search.toLowerCase()
     const products = getUiState().snapshot.products
+    const supplierSearch = String(formData.get('supplierSearch') || '').trim()
+    const suppliers = getUiState().snapshot.suppliers
+    const normalizedSupplierSearch = supplierSearch.toLowerCase()
+    const matchedSupplier = supplierSearch
+      ? (suppliers.find((supplier) => String(supplier.name || '').toLowerCase() === normalizedSupplierSearch) ||
+        (() => { const matches = suppliers.filter((supplier) => [supplier.name, supplier.contact, supplier.phone, supplier.email, supplier.cuit].some((value) => String(value || '').toLowerCase().includes(normalizedSupplierSearch))); return matches.length === 1 ? matches[0] : null })())
+      : null
+    const supplierId = formData.get('supplierId') || matchedSupplier?.id
+    if (!supplierId) {
+      feedbackMessage = supplierSearch ? 'Seleccioná un proveedor de las sugerencias o escribí el nombre completo.' : 'Buscá y seleccioná el proveedor de esta compra.'
+      render()
+      return
+    }
     const exactProduct = products.find((item) => [item.name, item.sku, item.barcode]
       .some((value) => String(value || '').toLowerCase() === normalizedSearch))
     const matches = products.filter((item) => [item.name, item.sku, item.barcode]
@@ -3459,8 +3472,8 @@ const handleSubmit = async (event) => {
       return
     }
     const result = formData.get('receiptId')
-      ? await store.updatePurchaseReceipt(formData.get('receiptId'), { supplierId: formData.get('supplierId'), productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
-      : await store.createPurchaseReceipt({ supplierId: formData.get('supplierId'), productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
+      ? await store.updatePurchaseReceipt(formData.get('receiptId'), { supplierId, productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
+      : await store.createPurchaseReceipt({ supplierId, productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
     feedbackMessage = result.message || (result.ok ? 'Recepcion registrada y stock actualizado.' : '')
     purchaseEditingId = ''
     purchaseFormOpen = false
