@@ -2474,15 +2474,21 @@ input, select { outline: none; }
 .purchase-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
 .purchase-actions .add-action { width: 100%; justify-content: center; }
 .purchase-summary-card { min-width: 0; }
-.purchase-summary-card .data-table { min-width: 0; }
-.purchase-summary-card .data-row { grid-template-columns: minmax(110px, 1fr) minmax(100px, 1fr) 58px 94px auto; gap: 8px; }
-.purchase-summary-card .data-row > span { min-width: 0; overflow-wrap: anywhere; }
 .purchase-summary-card .timeline-list { gap: 8px; }
-.purchase-summary-card .contact-result { min-height: 0; padding: 9px 12px; gap: 10px; }
+.purchase-summary-card .contact-result { min-height: 0; padding: 9px 12px; gap: 10px; flex-wrap: wrap; }
 .purchase-summary-card .contact-result-main p,
 .purchase-summary-card .contact-result-main span { margin-top: 2px; line-height: 1.2; }
 .purchase-summary-card .contact-result-actions { display: grid; gap: 5px; }
 .purchase-summary-card .contact-result-actions .inline-action { min-height: 30px; padding: 5px 9px; }
+.purchase-receipt-card { display: flex; align-items: center; gap: 10px; min-height: 0; padding: 10px 12px; }
+.purchase-receipt-card > div { min-width: 0; flex: 1; }
+.purchase-receipt-card p, .purchase-receipt-card span { margin-top: 2px; line-height: 1.2; }
+.purchase-receipt-actions { flex: 0 0 auto; }
+.purchase-receipt-actions .inline-action-group { display: grid; gap: 5px; }
+.purchase-receipt-actions .inline-action { min-height: 30px; padding: 5px 9px; }
+.supplier-map-preview { display: grid; flex: 0 0 100%; gap: 8px; width: 100%; padding-top: 8px; }
+.supplier-map-preview iframe { width: 100%; height: 180px; border: 0; border-radius: 10px; background: var(--panel); }
+.supplier-map-preview p { margin: 0; }
 .purchase-payment-history { margin-top: 16px; }
 @media (max-width: 900px) { .purchase-list-grid, .purchase-actions { grid-template-columns: 1fr; } }
 

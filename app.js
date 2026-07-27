@@ -111,6 +111,7 @@ let supplierPaymentDraft = null
 let supplierPaymentPanelOpen = false
 let purchaseReceiptsExpanded = false
 let purchaseSuppliersExpanded = false
+let supplierMapPreviewId = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
 let ticketFormOpen = false
@@ -1949,12 +1950,12 @@ const purchasesViewV2 = (ui) => `
         <div class="purchase-list-grid">
           <article class="panel purchase-summary-card">
             <div class="panel-head"><div><h3>Recepciones recientes</h3><p>${purchaseReceiptsExpanded ? `Mostrando ${ui.enrichedReceipts.length}` : 'Últimas 3 recepciones'}</p></div>${ui.enrichedReceipts.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-receipts">${purchaseReceiptsExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
-            ${dataTable(['Proveedor', 'Producto', 'Cantidad', 'Costo', 'Acción'], receiptPreview.map((receipt) => `<div class="data-row"><span>${receipt.supplierName}<br /><small>${receipt.documentNumber || 'Sin comprobante'}</small></span><span>${receipt.productName}${receipt.note ? `<br /><small>${receipt.note}</small>` : ''}</span><span>${receipt.quantity}</span><span>${money(receipt.totalCost)}</span><span>${purchaseActionButtons(receipt)}</span></div>`), 'is-stable purchases-receipts-table')}
+            <div class="timeline-list purchase-receipt-list">${receiptPreview.map((receipt) => `<div class="timeline-item purchase-receipt-card"><div><strong>${escapeHtml(receipt.supplierName)}</strong><p>${escapeHtml(receipt.productName)}</p><span>${receipt.documentNumber || 'Sin comprobante'} · Cant. ${receipt.quantity} · ${money(receipt.totalCost)}</span></div><span class="purchase-receipt-actions">${purchaseActionButtons(receipt)}</span></div>`).join('') || '<p class="empty-state">Todavía no hay recepciones.</p>'}</div>
           </article>
           <article class="panel purchase-summary-card">
             <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Proveedores recientes'}</h3><p>${supplierQuery ? 'Coincidencias encontradas' : (purchaseSuppliersExpanded ? `Mostrando ${ui.snapshot.suppliers.length}` : 'Últimos 3 proveedores')}</p></div>${!supplierQuery && ui.snapshot.suppliers.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-suppliers">${purchaseSuppliersExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
             <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar proveedor" aria-label="Buscar proveedor" /></div>
-            <div class="timeline-list">${supplierPreview.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="edit-supplier" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin direccion')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-supplier" data-id="${supplier.id}">Editar</button>${actionButton('supplier', supplier.id)}</span></div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
+            <div class="timeline-list">${supplierPreview.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-supplier-map" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin dirección')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-supplier" data-id="${supplier.id}">Editar</button>${actionButton('supplier', supplier.id)}</span>${supplierMapPreviewId === supplier.id ? `<div class="supplier-map-preview">${supplier.address ? `<iframe title="Ubicación de ${escapeHtml(supplier.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(supplier.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.address)}">Abrir en Maps</a>` : '<p>Este proveedor todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
           </article>
         </div>
       </article>
@@ -3959,6 +3960,7 @@ const bindEvents = () => {
   }
   for (const button of document.querySelectorAll('[data-action="remove-purchase-product"]')) button.addEventListener('click', () => { delete purchaseDraftItems[button.dataset.id]; render() })
   for (const button of document.querySelectorAll('[data-action="edit-supplier"]')) button.addEventListener('click', () => { supplierEditingId = button.dataset.id || ''; supplierFormOpen = true; queueScrollToSelector('form[data-form="supplier"]'); render() })
+  for (const button of document.querySelectorAll('[data-action="view-supplier-map"]')) button.addEventListener('click', () => { supplierMapPreviewId = supplierMapPreviewId === button.dataset.id ? '' : button.dataset.id; render() })
   for (const button of document.querySelectorAll('[data-action="open-purchase-form"]')) button.addEventListener('click', () => {
     closePurchaseUtilityForms()
     purchaseFormOpen = true
