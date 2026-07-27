@@ -1975,6 +1975,65 @@ input, select { outline: none; }
   }
 }
 
+/* Reportes: lectura por bloques y movimientos comparables en una sola vista. */
+.reports-layout {
+  gap: 16px;
+}
+
+.report-filter-shell .panel {
+  border-left: 3px solid var(--accent);
+  border-radius: 0 18px 18px 0;
+}
+
+.reports-layout .top-list,
+.reports-layout .timeline-list {
+  gap: 8px;
+}
+
+.reports-layout .top-row,
+.reports-layout .timeline-item {
+  min-height: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 14px 14px 0;
+}
+
+.reports-layout .top-row {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.reports-layout .top-row > div {
+  min-width: 0;
+}
+
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.report-summary-grid .summary-mini-card {
+  min-width: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 12px 12px 0;
+}
+
+@media (max-width: 760px) {
+  .report-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .report-balance-panel .panel-head > .settings-actions {
+    width: 100%;
+  }
+
+  .report-balance-panel .panel-head > .settings-actions .inline-action {
+    width: 100%;
+  }
+}
+
 .module-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
