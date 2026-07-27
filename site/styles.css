@@ -4934,3 +4934,50 @@ input, select { outline: none; }
   .data-table:has(.branch-data-row) .branch-data-row > span:nth-child(3)::before { content: "Dirección"; }
   .data-table:has(.branch-data-row) .branch-data-row > span:nth-child(5)::before { content: "Actual"; }
 }
+
+/* Historial de ventas: lista compacta y acciones siempre contenidas. */
+.sales-table .sales-history-row {
+  grid-template-columns: minmax(112px, .9fr) minmax(0, 1.65fr) minmax(116px, .82fr) minmax(188px, .95fr);
+  gap: 12px;
+  min-height: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 14px 14px 0;
+}
+
+.sales-table .sales-history-row > span:last-child,
+.sales-table .sales-history-row > span:last-child .sale-actions-compact {
+  width: 100%;
+}
+
+.sales-table .sales-history-row .sale-actions-compact {
+  gap: 5px;
+}
+
+@media (max-width: 760px) {
+  .sales-table .sales-history-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "customer payment"
+      "detail detail"
+      "actions actions";
+    gap: 6px 12px;
+  }
+
+  .sales-table .sales-history-row > span:nth-child(1) { grid-area: customer; }
+  .sales-table .sales-history-row > span:nth-child(2) { grid-area: detail; }
+  .sales-table .sales-history-row > span:nth-child(3) { grid-area: payment; justify-self: end; text-align: right; }
+  .sales-table .sales-history-row > span:nth-child(4) { grid-area: actions; }
+
+  .sales-table .sales-history-row > span:nth-child(3)::before {
+    content: "Cobro";
+    display: block;
+    margin-bottom: 2px;
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+}
