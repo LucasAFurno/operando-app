@@ -4,6 +4,9 @@ Los webhooks, tokens y credenciales se configuran exclusivamente en procesos ser
 
 ## Eventos y procesos activos
 
+- **Producto y operaciones:** resumenes de comercios, usuarios, clientes y ventas en Discord Resumen y Telegram.
+- **Fiscal / ARCA:** certificados, CAE, comprobantes y errores de facturacion en Discord ARCA, Alertas y Seguridad.
+- **Infraestructura:** deploys, conectividad con Supabase, Google APIs, dominio y hosting en Discord Deploys/General y Telegram.
 - **Deploys:** inicio, exito, fallo y rollback de actualizaciones tecnicas del backend fiscal mediante `npm run notify:deploy` y el workflow de Cloud Run. No representan una operacion de ARCA de un usuario. El fallo se notifica desde un job independiente para que llegue aun cuando falle el job de despliegue.
 - **Resumenes:** actividad diaria, semanal y mensual de comercios, usuarios, clientes nuevos, ventas registradas y metricas fiscales mediante `npm run notify:summary` y **Notify Operational Summaries**. Se envian a las 09:00 Argentina: diario de lunes a jueves, semanal los viernes y mensual el ultimo dia del mes. Discord y Telegram reciben el mismo resumen cuando estan habilitados.
 - **Estado operativo:** a las 09:01 Argentina, todos los dias, verifica la conectividad autenticada con Supabase, Google APIs y el dominio/hosting de PCLAF Control; informa el resultado en Discord General y Telegram.
