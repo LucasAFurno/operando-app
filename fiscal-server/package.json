@@ -11,7 +11,8 @@
     "test:notifications": "node scripts/notify-discord.mjs",
     "notify:deploy": "node scripts/notify-deploy.mjs",
     "backup:postgres": "node scripts/backup-postgres.mjs",
-    "notify:summary": "node scripts/notify-summary.mjs"
+    "notify:summary": "node scripts/notify-summary.mjs",
+    "notify:status": "node scripts/notify-system-status.mjs"
   },
   "engines": {
     "node": ">=20"

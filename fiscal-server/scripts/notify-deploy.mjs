@@ -20,10 +20,10 @@ if (required.length) {
   }))
   const title = { started: 'Deploy iniciado', success: 'Deploy exitoso', failed: 'Deploy fallido', rollback: 'Rollback iniciado' }[status]
   const message = {
-    started: 'El despliegue del servicio fiscal comenzó. Se avisará el resultado final.',
-    success: 'El servicio fiscal quedó desplegado correctamente.',
-    failed: 'El despliegue no se completó. Abrí el enlace del pipeline para ver el paso que falló.',
-    rollback: 'Se inició un rollback del servicio fiscal. Revisar el pipeline para confirmar el resultado.',
+    started: 'Se inició una actualización técnica de PCLAF Control. Se actualizará el backend fiscal y sus integraciones; se avisará el resultado final.',
+    success: 'La actualización técnica del backend fiscal de PCLAF Control quedó disponible correctamente.',
+    failed: 'La actualización técnica no se completó. Abrí el enlace del pipeline para ver el paso que falló.',
+    rollback: 'Se inició un rollback de la actualización técnica. Revisá el pipeline para confirmar el resultado.',
   }[status]
   const sent = await notifyDiscord('deploys', {
     type: `DEPLOY_${status.toUpperCase()}`,
