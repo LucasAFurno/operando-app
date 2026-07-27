@@ -3754,6 +3754,15 @@ input, select { outline: none; }
   padding: 12px;
 }
 
+.purchase-cart { display: grid; gap: 6px; }
+.purchase-line { display: grid; grid-template-columns: minmax(220px, 1fr) 110px 130px 130px auto; align-items: end; gap: 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.purchase-line-product { align-self: center; display: grid; gap: 3px; }
+.purchase-line-product small, .purchase-line label span { color: var(--muted); font-size: .74rem; }
+.purchase-line label { display: grid; gap: 4px; }
+.purchase-line input { min-height: 38px; padding: 7px 10px; }
+.purchase-line .inline-action { min-height: 38px; padding: 7px 12px; }
+@media (max-width: 850px) { .purchase-line { grid-template-columns: 1fr 100px 120px; } .purchase-line-product { grid-column: 1 / -1; } }
+
 .pos-cart .cart-line {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 92px 100px;
