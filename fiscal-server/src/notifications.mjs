@@ -74,7 +74,7 @@ export const notifyEvent = (event) => {
   const safeEvent = { ...event, title: sanitize(event.title || ''), message: sanitize(event.message || ''), timestamp: event.timestamp || new Date().toISOString(), metadata: sanitize(event.metadata || {}) }
   const destination = event.destination || (event.severity === 'critical' ? 'alertas' : 'logs')
   void notifyDiscord(destination, safeEvent)
-  if (safeEvent.severity === 'critical') void notifyTelegram(safeEvent)
+  if (safeEvent.severity === 'critical' || safeEvent.severity === 'warning') void notifyTelegram(safeEvent)
 }
 
 export const controlDestinations = Object.keys(DISCORD_DESTINATIONS)

@@ -16,6 +16,7 @@
     "notify:deploy": "node fiscal-server/scripts/notify-deploy.mjs",
     "backup:postgres": "node fiscal-server/scripts/backup-postgres.mjs",
     "notify:summary": "node fiscal-server/scripts/notify-summary.mjs",
+    "notify:status": "node fiscal-server/scripts/notify-system-status.mjs",
     "desktop:start": "npm run build && electron desktop/main.mjs",
     "desktop:pack": "npm run build && electron-builder --dir",
     "desktop:dist": "npm run build && electron-builder"
