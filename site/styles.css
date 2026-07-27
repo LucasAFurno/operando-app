@@ -3761,6 +3761,8 @@ input, select { outline: none; }
 .purchase-line label { display: grid; gap: 4px; }
 .purchase-line input { min-height: 38px; padding: 7px 10px; }
 .purchase-line .inline-action { min-height: 38px; padding: 7px 12px; }
+.purchase-form-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.purchase-form-actions button { width: auto; min-width: 132px; }
 @media (max-width: 850px) { .purchase-line { grid-template-columns: 1fr 100px 120px; } .purchase-line-product { grid-column: 1 / -1; } }
 
 .pos-cart .cart-line {

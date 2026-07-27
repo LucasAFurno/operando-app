@@ -106,6 +106,7 @@ let supplierSearchQuery = ''
 let purchaseFormOpen = false
 let purchaseDraftItems = {}
 let purchaseQuickAddCode = ''
+let purchaseSupplierSearch = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
 let ticketFormOpen = false
@@ -515,6 +516,7 @@ const closePurchaseUtilityForms = () => {
   purchaseEditingId = ''
   purchaseDraftItems = {}
   purchaseQuickAddCode = ''
+  purchaseSupplierSearch = ''
 }
 const closeStructureUtilityForms = () => {
   branchFormOpen = false
@@ -1802,7 +1804,7 @@ const purchasesView = (ui) => `
       <article class="panel"><div class="panel-head"><div><h3>${editingReceipt ? 'Editar recepcion' : 'Recepcion de compra'}</h3><p>${editingReceipt ? 'Recalcula stock y saldo del proveedor' : 'Ingresa stock y costo'}</p></div></div>
         <form class="form-grid" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
-          <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
+          <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(purchaseSupplierSearch || ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
           <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" value="${escapeHtml(ui.snapshot.products.find((product) => product.id === editingReceipt?.productId)?.name || '')}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
           <label>Cantidad<input type="number" min="1" name="quantity" value="${editingReceipt?.quantity || ''}" required /></label>
@@ -1896,13 +1898,12 @@ const purchasesViewV2 = (ui) => `
         <form class="form-grid compact-form" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
           <input type="hidden" name="purchaseItems" value="${escapeHtml(JSON.stringify(purchaseLines.map((line) => ({ productId: line.product.id, quantity: line.quantity, unitCost: line.unitCost, salePrice: line.salePrice }))))}" />
-          <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
+          <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(purchaseSupplierSearch || ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
           <label class="stock-adjustment-product">Agregar productos<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-purchase-product-search value="${escapeHtml(purchaseQuickAddCode)}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o código de barras" aria-label="Buscar producto" /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
           <div class="full-span purchase-cart">${purchaseLines.length ? purchaseLines.map((line) => { const salePrice = Number(line.salePrice ?? (line.product.salePrice || 0)); const margin = Number(line.unitCost) > 0 ? ((salePrice - Number(line.unitCost)) / Number(line.unitCost)) * 100 : 0; return `<div class="purchase-line"><div class="purchase-line-product"><strong>${line.product.name}</strong><small>Margen ${margin.toFixed(1)}%</small></div><label><span>Cantidad</span><input type="number" min="1" value="${line.quantity}" data-purchase-quantity="${line.product.id}" /></label><label><span>Costo unit.</span><input type="number" min="0" value="${line.unitCost}" data-purchase-cost="${line.product.id}" /></label><label><span>Precio venta</span><input type="number" min="0" value="${salePrice}" data-purchase-sale-price="${line.product.id}" /></label><button type="button" class="inline-action danger" data-action="remove-purchase-product" data-id="${line.product.id}">Quitar</button></div>` }).join('') : '<div class="pos-cart-empty"><strong>Compra vacía</strong><span>Buscá y agregá los productos del proveedor.</span></div>'}</div>
           <label class="full-span">Observaciones<input type="text" name="note" value="${editingReceipt?.note || ''}" placeholder="Pedido, lote o condicion" /></label>
-          <button type="submit" ${purchaseLines.length ? '' : 'disabled'}>${editingReceipt ? 'Guardar cambios' : 'Registrar compra'}</button>
-          ${editingReceipt ? '<button type="button" class="danger-action" data-action="cancel-purchase-edit">Cancelar edicion</button>' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cancelar</button>'}
+          <div class="purchase-form-actions full-span"><button type="submit" ${purchaseLines.length ? '' : 'disabled'}>${editingReceipt ? 'Guardar cambios' : 'Registrar compra'}</button>${editingReceipt ? '<button type="button" class="danger-action" data-action="cancel-purchase-edit">Cancelar edición</button>' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cancelar</button>'}</div>
         </form>
       </article>` : ''}
       ${supplierFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>${editingSupplier ? 'Editar proveedor' : 'Nuevo proveedor'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-supplier-form">Cerrar</button></div></div>
@@ -3866,6 +3867,7 @@ const bindEvents = () => {
     render()
   })
   for (const input of document.querySelectorAll('[data-supplier-search]')) input.addEventListener('input', () => { supplierSearchQuery = input.value; render() })
+  for (const input of document.querySelectorAll('input[name="supplierSearch"]')) input.addEventListener('input', () => { purchaseSupplierSearch = input.value })
   const addPurchaseProduct = () => {
     const input = document.querySelector('[data-purchase-product-search]')
     const search = String(input?.value || purchaseQuickAddCode || '').trim().toLowerCase()
