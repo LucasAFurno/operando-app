@@ -92,6 +92,8 @@ let saleQuickAddCode = ''
 let saleCustomerSearchQuery = ''
 let topbarSearch = ''
 let cloudSyncBusy = false
+let liveSyncBusy = false
+let liveSyncTimer = null
 let customerFormOpen = false
 let customerEditingId = ''
 let customerSearchQuery = ''
@@ -232,7 +234,43 @@ const loadCloudAccess = async (sessionPayload = null) => {
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
+  startLiveSync()
   return activeProfile
+}
+
+const hasPendingOperationalForm = () => Boolean(
+  saleFormOpen || cashFormOpen || productFormOpen || stockAdjustmentFormOpen || stockTransferFormOpen
+  || supplierFormOpen || purchaseFormOpen || invoiceFormOpen || ticketFormOpen || branchFormOpen
+  || registerFormOpen || customerFormOpen || invoicePaymentId
+)
+
+const syncLiveData = async () => {
+  if (liveSyncBusy || cloudSyncBusy || document.hidden || !store?.isAuthenticated?.()) return
+  liveSyncBusy = true
+  try {
+    const result = await store.syncFromCloud()
+    // No redibujamos mientras alguien está completando una operación: se evita
+    // perder lo que escribió. Los datos sí quedan listos para mostrarse al cerrar el formulario.
+    if (result?.ok && !hasPendingOperationalForm()) render()
+  } catch {
+    // Una falla momentánea de red no debe interrumpir la operación de caja.
+  } finally {
+    liveSyncBusy = false
+  }
+}
+
+const stopLiveSync = () => {
+  if (!liveSyncTimer) return
+  window.clearInterval(liveSyncTimer)
+  liveSyncTimer = null
+}
+
+const startLiveSync = () => {
+  if (liveSyncTimer) return
+  liveSyncTimer = window.setInterval(syncLiveData, 4000)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) void syncLiveData()
+  })
 }
 
 const money = (value) => currency.format(Number(value) || 0)
@@ -4099,6 +4137,7 @@ const bindEvents = () => {
   if (disconnectCloudButton) {
     disconnectCloudButton.addEventListener('click', async () => {
       if (authManager) await authManager.signOut()
+      stopLiveSync()
       const result = await store.clearCloudConnection()
       feedbackMessage = result.message || ''
       render()
@@ -4291,6 +4330,7 @@ const bindEvents = () => {
   const signOutButton = document.querySelector('[data-action="sign-out"]')
   if (signOutButton) signOutButton.addEventListener('click', async () => {
     if (authManager) await authManager.signOut()
+    stopLiveSync()
     store.signOut()
     store.clearCloudAuthSession()
     commerceContext = null
