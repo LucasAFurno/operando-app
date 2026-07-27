@@ -12,7 +12,8 @@
     "notify:deploy": "node scripts/notify-deploy.mjs",
     "backup:postgres": "node scripts/backup-postgres.mjs",
     "notify:summary": "node scripts/notify-summary.mjs",
-    "notify:status": "node scripts/notify-system-status.mjs"
+    "notify:status": "node scripts/notify-system-status.mjs",
+    "notify:gcp-run": "node scripts/notify-gcp-run-status.mjs"
   },
   "engines": {
     "node": ">=20"

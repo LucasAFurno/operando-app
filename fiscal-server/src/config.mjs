@@ -34,6 +34,7 @@ export const config = {
     alertasWebhookUrl: String(process.env.PCLAF_CONTROL_DISCORD_ALERTAS_WEBHOOK_URL || '').trim(),
     arcaWebhookUrl: String(process.env.PCLAF_CONTROL_DISCORD_ARCA_WEBHOOK_URL || '').trim(),
     securityWebhookUrl: String(process.env.PCLAF_CONTROL_DISCORD_SEGURIDAD_WEBHOOK_URL || '').trim(),
+    gcpRunWebhookUrl: String(process.env.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL || '').trim(),
     backupsWebhookUrl: String(process.env.PCLAF_CONTROL_DISCORD_BACKUPS_WEBHOOK_URL || '').trim(),
     deploysWebhookUrl: String(process.env.PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL || '').trim(),
     summaryWebhookUrl: String(process.env.PCLAF_CONTROL_DISCORD_RESUMEN_WEBHOOK_URL || '').trim(),

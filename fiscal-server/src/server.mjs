@@ -216,7 +216,7 @@ const handle = async (request, response) => {
     return json(response, 404, { error: 'not_found' })
   } catch (error) {
     audit('fiscal_request_failed', { tenantId: route.tenantId, action: route.action, message: error.message })
-    fiscalEvent(route.action === 'invoices' || route.action === 'verify' ? 'arca' : 'logs', 'FISCAL_REQUEST_FAILED', 'warning', 'Error fiscal controlado', { entityId: route.tenantId, metadata: { accion: route.action, detalle: error.message } })
+    fiscalEvent('arca', 'FISCAL_REQUEST_FAILED', 'warning', 'Error fiscal controlado', { entityId: route.tenantId, metadata: { accion: route.action, detalle: error.message } })
     return json(response, 422, { error: 'fiscal_request_failed', message: error.message })
   }
 }

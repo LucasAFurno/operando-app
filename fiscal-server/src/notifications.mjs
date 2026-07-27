@@ -3,7 +3,7 @@ import { config } from './config.mjs'
 const SENSITIVE_KEY = /password|passwordhash|token|authorization|cookie|session|secret|apikey|privatekey|certificate|bottoken|webhookurl|creditcard|cardnumber|cvv|sign|xml/i
 const DISCORD_DESTINATIONS = {
   general: 'generalWebhookUrl', logs: 'logsWebhookUrl', alertas: 'alertasWebhookUrl', arca: 'arcaWebhookUrl',
-  seguridad: 'securityWebhookUrl', backups: 'backupsWebhookUrl', deploys: 'deploysWebhookUrl', resumen: 'summaryWebhookUrl',
+  seguridad: 'securityWebhookUrl', 'gcp-run': 'gcpRunWebhookUrl', backups: 'backupsWebhookUrl', deploys: 'deploysWebhookUrl', resumen: 'summaryWebhookUrl',
 }
 
 const sanitize = (value, key = '') => {
