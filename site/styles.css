@@ -3017,6 +3017,20 @@ input, select { outline: none; }
   color: var(--muted);
 }
 
+.invoice-payment-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.invoice-payment-actions button {
+  width: auto;
+  min-width: 132px;
+  min-height: 44px;
+  padding: 11px 18px;
+}
+
 .invoice-compact-table .data-head,
 .invoice-compact-table .data-row {
   grid-template-columns: minmax(150px, 1.15fr) minmax(170px, 1.35fr) minmax(110px, .9fr) minmax(100px, .75fr) minmax(220px, auto);

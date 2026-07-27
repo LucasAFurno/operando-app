@@ -1993,9 +1993,11 @@ const invoicesViewV2 = (ui) => `
           <label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="mercado_pago">Mercado Pago</option><option value="echeq">E-cheq</option></select></label>
           <label class="full-span">Referencia (opcional)<input type="text" name="reference" placeholder="Ej.: comprobante, operación o nota" /></label>
           <div class="form-note full-span">Podés registrar un abono parcial o pagar el saldo completo. El saldo pendiente se actualiza automáticamente.</div>
-          <button type="submit" name="paymentMode" value="partial">Registrar abono</button>
-          <button type="submit" class="primary-action" name="paymentMode" value="full">Pagar saldo completo</button>
-          <button type="button" class="ghost-action" data-action="close-invoice-payment">Cancelar</button>
+          <div class="invoice-payment-actions full-span">
+            <button type="submit" name="paymentMode" value="partial">Registrar abono</button>
+            <button type="submit" class="primary-action" name="paymentMode" value="full">Pagar saldo completo</button>
+            <button type="button" class="ghost-action" data-action="close-invoice-payment">Cancelar</button>
+          </div>
         </form>
       </article>` : ''}
       <article class="panel">
@@ -3127,7 +3129,7 @@ const importData = async (event) => {
 const handleSubmit = async (event) => {
   event.preventDefault()
   const form = event.currentTarget
-  const formData = new FormData(form)
+  const formData = new FormData(form, event.submitter)
   const kind = form.dataset.form
 
   if (kind === 'login') {
@@ -3377,12 +3379,21 @@ const handleSubmit = async (event) => {
   }
   if (kind === 'invoice-payment') {
     const invoice = store.getSnapshot().invoices.find((entry) => entry.id === formData.get('invoiceId'))
+    if (!invoice) {
+      feedbackMessage = 'No se encontró la factura a cobrar. Actualizá la pantalla e intentá otra vez.'
+      render()
+      return
+    }
     const amount = formData.get('paymentMode') === 'full' ? invoiceBalance(invoice) : formData.get('amount')
     const method = String(formData.get('method') || 'transfer')
     const reference = String(formData.get('reference') || '').trim()
-    const result = await store.registerInvoicePayment({ invoiceId: formData.get('invoiceId'), amount, method, reference, echeqDetails: method === 'echeq' ? { number: reference } : {} })
-    feedbackMessage = result.message || ''
-    invoicePaymentId = result.ok ? '' : invoicePaymentId
+    try {
+      const result = await store.registerInvoicePayment({ invoiceId: formData.get('invoiceId'), amount, method, reference, echeqDetails: method === 'echeq' ? { number: reference } : {} })
+      feedbackMessage = result.message || ''
+      invoicePaymentId = result.ok ? '' : invoicePaymentId
+    } catch (error) {
+      feedbackMessage = `No se pudo registrar el abono: ${error.message || 'revisá la conexión e intentá otra vez.'}`
+    }
   }
   if (kind === 'ticket') {
     const currentBranchId = getUiState().currentBranch?.id
