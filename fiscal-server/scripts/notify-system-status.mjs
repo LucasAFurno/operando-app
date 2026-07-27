@@ -25,17 +25,21 @@ if (required.length) {
     check('Dominio y hosting web', 'https://www.pclafcontrol.com.ar/'),
   ])
   const allHealthy = checks.every((item) => item.ok)
+  const failedChecks = checks.filter((item) => !item.ok).length
+  const severity = allHealthy ? 'info' : failedChecks >= 2 ? 'critical' : 'warning'
   const message = checks.map((item) => `${item.ok ? 'OK' : 'ATENCION'} · ${item.name}${item.status ? ` (HTTP ${item.status})` : ''}`).join('\n')
   const event = {
     destination: 'general',
     type: 'DAILY_CONNECTIVITY_STATUS',
-    severity: allHealthy ? 'info' : 'warning',
+    severity,
     title: allHealthy ? 'Estado de infraestructura OK' : 'Estado de infraestructura requiere atencion',
     source: 'Infraestructura',
     environment: String(process.env.NOTIFICATIONS_ENVIRONMENT || '').trim() || undefined,
     message: `Chequeo de las 09:01 (Argentina)\n${message}`,
   }
   const [discordSent, telegramSent] = await Promise.all([notifyDiscord('general', event), notifyTelegram(event)])
+  if (severity === 'warning' || severity === 'critical') await notifyDiscord('logs', event)
+  if (severity === 'critical') await notifyDiscord('alertas', event)
   if (!discordSent) process.stdout.write('{"service":"fiscal","event":"discord_status_not_delivered"}\n')
   if (process.env.PCLAF_CONTROL_TELEGRAM_ENABLED === 'true' && !telegramSent) process.stdout.write('{"service":"fiscal","event":"telegram_status_not_delivered"}\n')
   if (!allHealthy) process.exitCode = 1

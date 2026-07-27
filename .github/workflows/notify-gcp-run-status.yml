@@ -44,5 +44,7 @@ jobs:
           CLOUD_RUN_REGION: us-central1
           PCLAF_CONTROL_DISCORD_ENABLED: ${{ vars.PCLAF_CONTROL_DISCORD_ENABLED }}
           PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
+          PCLAF_CONTROL_DISCORD_LOGS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_LOGS_WEBHOOK_URL }}
+          PCLAF_CONTROL_DISCORD_ALERTAS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_ALERTAS_WEBHOOK_URL }}
           SUMMARY_REQUIRE_MONTH_END: ${{ github.event.schedule == '1 12 28-31 * *' }}
         run: npm run notify:gcp-run -- --period="${{ inputs.period || (github.event.schedule == '1 12 * * 5' && 'weekly') || (github.event.schedule == '1 12 28-31 * *' && 'monthly') || 'daily' }}"
