@@ -36,8 +36,9 @@ if (required.length) {
     metadata: { version: input.version, commit: input.commit, rama: input.branch, autor: input.author, pipeline: input.pipeline, detalle: input.detail },
   }
   const sent = await notifyDiscord(destination, event)
-  const telegramSent = input.telegram === 'false' ? true : await notifyTelegram(event)
-  if (input.telegram !== 'false' && process.env.PCLAF_CONTROL_TELEGRAM_ENABLED === 'true' && !telegramSent) {
+  const notifyTelegramForStatus = status === 'failed' || status === 'rollback'
+  const telegramSent = !notifyTelegramForStatus || input.telegram === 'false' ? true : await notifyTelegram(event)
+  if (notifyTelegramForStatus && input.telegram !== 'false' && process.env.PCLAF_CONTROL_TELEGRAM_ENABLED === 'true' && !telegramSent) {
     process.stdout.write('{"service":"fiscal","event":"telegram_deploy_notification_not_delivered"}\n')
   }
   process.stdout.write(sent ? `Notificacion de deploy ${status} encolada en ${destination}.\n` : 'Discord deshabilitado o sin destino configurado; el deploy continua.\n')
