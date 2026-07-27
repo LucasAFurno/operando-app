@@ -1883,8 +1883,14 @@ const purchasesViewV2 = (ui) => `
     const supplierQuery = supplierSearchQuery.trim().toLowerCase()
     const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.contact, supplier.phone, supplier.email, supplier.cuit].some((value) => String(value || '').toLowerCase().includes(supplierQuery))) : ui.snapshot.suppliers.slice(0, 10))
     const showPurchaseForm = purchaseFormOpen || Boolean(editingReceipt)
-    if (editingReceipt && !Object.keys(purchaseDraftItems).length) purchaseDraftItems = { [editingReceipt.productId]: { quantity: editingReceipt.quantity, unitCost: editingReceipt.unitCost } }
-    const purchaseLines = Object.entries(purchaseDraftItems).map(([productId, detail]) => ({ product: ui.snapshot.products.find((product) => product.id === productId), ...detail })).filter((line) => line.product)
+    if (editingReceipt && !Object.keys(purchaseDraftItems).length) {
+      const product = ui.snapshot.products.find((item) => item.id === editingReceipt.productId)
+      if (product) purchaseDraftItems = { [product.id]: { productId: product.id, quantity: editingReceipt.quantity, unitCost: editingReceipt.unitCost, name: product.name, sku: product.sku || '', barcode: product.barcode || '', category: product.category || 'General', minStock: Number(product.minStock || 0), salePrice: Number(product.salePrice || 0), trackStock: product.trackStock !== false } }
+    }
+    const purchaseLines = Object.entries(purchaseDraftItems).map(([key, detail]) => {
+      const product = detail.productId ? ui.snapshot.products.find((item) => item.id === detail.productId) : ui.snapshot.products.find((item) => item.id === key)
+      return { key, product, isNew: Boolean(detail.isNew), ...detail, name: detail.name ?? product?.name ?? '', sku: detail.sku ?? product?.sku ?? '', barcode: detail.barcode ?? product?.barcode ?? '', category: detail.category ?? product?.category ?? 'General', minStock: Number(detail.minStock ?? product?.minStock ?? 0), salePrice: Number(detail.salePrice ?? product?.salePrice ?? 0), trackStock: detail.trackStock ?? product?.trackStock !== false }
+    }).filter((line) => line.isNew || line.product)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Compras</p><h2>Proveedores y recepcion</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.snapshot.suppliers.length}</strong><span>Proveedores</span></span>
@@ -1895,14 +1901,14 @@ const purchasesViewV2 = (ui) => `
     <section class="stacked-section">
       ${showPurchaseForm ? `<article class="panel">
         <div class="panel-head"><div><h3>${editingReceipt ? 'Editar compra' : 'Nueva compra'}</h3><p>Ingresa stock y costo del proveedor</p></div><div class="settings-actions">${editingReceipt ? '' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cerrar</button>'}</div></div>
-        <section class="purchase-new-product"><div class="panel-head"><div><h3>Nuevo producto para esta compra</h3><p>Usa los mismos datos que en Productos; la cantidad recibida define el stock inicial.</p></div></div><form class="form-grid compact-form" data-form="purchase-new-product"><label>Nombre<input name="name" required /></label><label>SKU<input name="sku" required /></label><label>Código de barras (opcional)<input class="scanner-input" name="barcode" placeholder="Escanear o escribir" /></label><label>Stock<input type="number" value="0" disabled /><small>Se suma al registrar la compra.</small></label><label>Precio venta<input type="number" name="salePrice" min="0" required /></label><label>Costo<input type="number" name="costPrice" min="0" required /></label><label>Mínimo<input type="number" name="minStock" min="0" value="0" required /></label><label>Categoría<input name="category" value="General" required /></label><label class="field-check full-span"><input type="checkbox" name="trackStock" checked /><span class="field-check-box" aria-hidden="true"></span><span>Controlar stock de este artículo</span></label><div class="purchase-form-actions full-span"><button type="submit">Crear y agregar a la compra</button></div></form></section>
         <form class="form-grid compact-form" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
-          <input type="hidden" name="purchaseItems" value="${escapeHtml(JSON.stringify(purchaseLines.map((line) => ({ productId: line.product.id, quantity: line.quantity, unitCost: line.unitCost, salePrice: line.salePrice }))))}" />
+          <input type="hidden" name="purchaseItems" value="${escapeHtml(JSON.stringify(purchaseLines.map((line) => ({ key: line.key, productId: line.product?.id || '', isNew: line.isNew, name: line.name, sku: line.sku, barcode: line.barcode, category: line.category, minStock: line.minStock, trackStock: line.trackStock, quantity: line.quantity, unitCost: line.unitCost, salePrice: line.salePrice }))))}" />
           <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(purchaseSupplierSearch || ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
           <label class="stock-adjustment-product">Agregar productos<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-purchase-product-search value="${escapeHtml(purchaseQuickAddCode)}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o código de barras" aria-label="Buscar producto" /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
+          <div class="settings-actions"><button type="button" class="ghost-action" data-action="add-new-purchase-product">Nuevo producto</button></div>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
-          <div class="full-span purchase-cart">${purchaseLines.length ? purchaseLines.map((line) => { const salePrice = Number(line.salePrice ?? (line.product.salePrice || 0)); const margin = Number(line.unitCost) > 0 ? ((salePrice - Number(line.unitCost)) / Number(line.unitCost)) * 100 : 0; return `<div class="purchase-line"><div class="purchase-line-product"><strong>${line.product.name}</strong><small>SKU: ${line.product.sku || '-'} · Código: ${line.product.barcode || '-'} · Categoría: ${line.product.category || 'General'} · Mínimo: ${line.product.minStock || 0} · Margen ${margin.toFixed(1)}%</small></div><label><span>Cantidad</span><input type="number" min="1" value="${line.quantity}" data-purchase-quantity="${line.product.id}" /></label><label><span>Costo unit.</span><input type="number" min="0" value="${line.unitCost}" data-purchase-cost="${line.product.id}" /></label><label><span>Precio venta</span><input type="number" min="0" value="${salePrice}" data-purchase-sale-price="${line.product.id}" /></label><button type="button" class="inline-action danger" data-action="remove-purchase-product" data-id="${line.product.id}">Quitar</button></div>` }).join('') : '<div class="pos-cart-empty"><strong>Compra vacía</strong><span>Buscá y agregá los productos del proveedor.</span></div>'}</div>
+          <div class="full-span purchase-cart">${purchaseLines.length ? purchaseLines.map((line) => { const margin = Number(line.unitCost) > 0 ? ((Number(line.salePrice) - Number(line.unitCost)) / Number(line.unitCost)) * 100 : 0; const field = (label, name, value, extra = '') => `<label><span>${label}</span><input ${extra} value="${escapeHtml(String(value ?? ''))}" data-purchase-field="${line.key}" data-field="${name}" /></label>`; return `<div class="purchase-line">${field('Producto', 'name', line.name, 'type="text" required')}${field('SKU', 'sku', line.sku, 'type="text"')}${field('Código barras', 'barcode', line.barcode, 'type="text"')}${field('Categoría', 'category', line.category, 'type="text"')}${field('Mínimo', 'minStock', line.minStock, 'type="number" min="0"')}${field('Cantidad', 'quantity', line.quantity, 'type="number" min="1" required')}${field('Costo unit.', 'unitCost', line.unitCost, 'type="number" min="0" required')}${field('Precio venta', 'salePrice', line.salePrice, 'type="number" min="0" required')}<label><span>Margen</span><output>${margin.toFixed(1)}%</output></label><label><span>Controlar stock</span><input type="checkbox" ${line.trackStock ? 'checked' : ''} data-purchase-field="${line.key}" data-field="trackStock" /></label><button type="button" class="inline-action danger" data-action="remove-purchase-product" data-id="${line.key}">Quitar</button></div>` }).join('') : '<div class="pos-cart-empty"><strong>Compra vacía</strong><span>Buscá un producto o creá uno nuevo para agregarlo a la compra.</span></div>'}</div>
           <label class="full-span">Observaciones<input type="text" name="note" value="${editingReceipt?.note || ''}" placeholder="Pedido, lote o condicion" /></label>
           <div class="purchase-form-actions full-span"><button type="submit" ${purchaseLines.length ? '' : 'disabled'}>${editingReceipt ? 'Guardar cambios' : 'Registrar compra'}</button>${editingReceipt ? '<button type="button" class="danger-action" data-action="cancel-purchase-edit">Cancelar edición</button>' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cancelar</button>'}</div>
         </form>
@@ -3452,14 +3458,6 @@ const handleSubmit = async (event) => {
     const result = await store.createCashMovement({ cashSessionId: getUiState().openCashSession?.id || null, kind: formData.get('kind'), amount: formData.get('amount'), note: formData.get('note') })
     feedbackMessage = result.message || ''
   }
-  if (kind === 'purchase-new-product') {
-    const result = await store.createProduct({ name: formData.get('name'), sku: formData.get('sku'), barcode: formData.get('barcode'), stock: 0, minStock: formData.get('minStock'), category: formData.get('category'), costPrice: formData.get('costPrice'), salePrice: formData.get('salePrice'), trackStock: formData.get('trackStock') === 'on' })
-    if (result.ok) {
-      const product = store.getSnapshot().products.find((item) => String(item.name || '').trim().toLowerCase() === String(formData.get('name') || '').trim().toLowerCase() && String(item.sku || '').trim().toLowerCase() === String(formData.get('sku') || '').trim().toLowerCase())
-      if (product) purchaseDraftItems = { ...purchaseDraftItems, [product.id]: { quantity: 1, unitCost: Number(formData.get('costPrice') || 0), salePrice: Number(formData.get('salePrice') || 0) } }
-    }
-    feedbackMessage = result.message || ''
-  }
   if (kind === 'purchase-receipt') {
     const search = String(formData.get('productSearch') || '').trim()
     const normalizedSearch = search.toLowerCase()
@@ -3479,11 +3477,24 @@ const handleSubmit = async (event) => {
     }
     const purchaseItems = (() => { try { return JSON.parse(String(formData.get('purchaseItems') || '[]')) } catch { return [] } })()
     if (purchaseItems.length) {
-      const invalidItem = purchaseItems.find((item) => !products.some((product) => product.id === item.productId) || Number(item.quantity) <= 0 || Number(item.unitCost) < 0)
+      const invalidItem = purchaseItems.find((item) => !String(item.name || '').trim() || (!item.isNew && !products.some((product) => product.id === item.productId)) || Number(item.quantity) <= 0 || Number(item.unitCost) < 0 || Number(item.salePrice) < 0 || Number(item.minStock) < 0)
       if (invalidItem) { feedbackMessage = 'Revisá cantidad y costo de cada producto antes de registrar la compra.'; render(); return }
       const common = { supplierId, documentNumber: formData.get('documentNumber'), note: formData.get('note') }
-      if (formData.get('receiptId') && purchaseItems.length === 1) await store.updatePurchaseReceipt(formData.get('receiptId'), { ...common, ...purchaseItems[0] })
-      else for (const item of purchaseItems) await store.createPurchaseReceipt({ ...common, ...item })
+      for (const item of purchaseItems) {
+        let productId = item.productId
+        if (item.isNew) {
+          const created = await store.createProduct({ name: item.name, sku: item.sku, barcode: item.barcode, stock: 0, minStock: item.minStock, category: item.category, costPrice: item.unitCost, salePrice: item.salePrice, trackStock: item.trackStock !== false })
+          if (!created.ok) { feedbackMessage = created.message || 'No se pudo crear el producto.'; render(); return }
+          const product = store.getSnapshot().products.find((entry) => String(entry.name || '').trim().toLowerCase() === String(item.name || '').trim().toLowerCase() && String(entry.sku || '').trim().toLowerCase() === String(item.sku || '').trim().toLowerCase())
+          if (!product) { feedbackMessage = 'El producto se creó, pero no se pudo asociar a la compra.'; render(); return }
+          productId = product.id
+        } else {
+          const updated = await store.updateProductFromPurchase(productId, { name: item.name, sku: item.sku, barcode: item.barcode, minStock: item.minStock, category: item.category, costPrice: item.unitCost, salePrice: item.salePrice, trackStock: item.trackStock !== false })
+          if (!updated.ok) { feedbackMessage = updated.message || 'No se pudo actualizar el producto.'; render(); return }
+        }
+        if (formData.get('receiptId') && purchaseItems.length === 1) await store.updatePurchaseReceipt(formData.get('receiptId'), { ...common, productId, quantity: item.quantity, unitCost: item.unitCost })
+        else await store.createPurchaseReceipt({ ...common, productId, quantity: item.quantity, unitCost: item.unitCost })
+      }
       feedbackMessage = `${purchaseItems.length} producto${purchaseItems.length === 1 ? '' : 's'} registrado${purchaseItems.length === 1 ? '' : 's'} en la compra.`
       closePurchaseUtilityForms()
       return
@@ -3882,7 +3893,7 @@ const bindEvents = () => {
     const search = String(input?.value || purchaseQuickAddCode || '').trim().toLowerCase()
     const product = getUiState().snapshot.products.find((item) => [item.name, item.sku, item.barcode].some((value) => String(value || '').toLowerCase() === search))
     if (!product) { feedbackMessage = search ? 'Elegí un producto de las sugerencias.' : 'Buscá un producto para agregarlo a la compra.'; render(); return }
-    purchaseDraftItems = { ...purchaseDraftItems, [product.id]: purchaseDraftItems[product.id] || { quantity: 1, unitCost: Number(product.costPrice || 0), salePrice: Number(product.salePrice || 0) } }
+    purchaseDraftItems = { ...purchaseDraftItems, [product.id]: purchaseDraftItems[product.id] || { productId: product.id, quantity: 1, unitCost: Number(product.costPrice || 0), salePrice: Number(product.salePrice || 0), name: product.name, sku: product.sku || '', barcode: product.barcode || '', category: product.category || 'General', minStock: Number(product.minStock || 0), trackStock: product.trackStock !== false } }
     purchaseQuickAddCode = ''
     render()
   }
@@ -3891,9 +3902,25 @@ const bindEvents = () => {
     input.addEventListener('change', addPurchaseProduct)
   }
   for (const button of document.querySelectorAll('[data-action="add-purchase-product"]')) button.addEventListener('click', addPurchaseProduct)
-  for (const input of document.querySelectorAll('[data-purchase-quantity]')) input.addEventListener('input', () => { const item = purchaseDraftItems[input.dataset.purchaseQuantity]; if (item) { item.quantity = Math.max(1, Number(input.value || 1)); render() } })
-  for (const input of document.querySelectorAll('[data-purchase-cost]')) input.addEventListener('input', () => { const item = purchaseDraftItems[input.dataset.purchaseCost]; if (item) { item.unitCost = Math.max(0, Number(input.value || 0)); render() } })
-  for (const input of document.querySelectorAll('[data-purchase-sale-price]')) input.addEventListener('input', () => { const item = purchaseDraftItems[input.dataset.purchaseSalePrice]; if (item) { item.salePrice = Math.max(0, Number(input.value || 0)); render() } })
+  for (const button of document.querySelectorAll('[data-action="add-new-purchase-product"]')) button.addEventListener('click', () => {
+    const key = `new-${Date.now()}`
+    purchaseDraftItems = { ...purchaseDraftItems, [key]: { isNew: true, productId: '', name: '', sku: '', barcode: '', category: 'General', minStock: 0, quantity: 1, unitCost: 0, salePrice: 0, trackStock: true } }
+    render()
+  })
+  const syncPurchaseDraftField = (input, shouldRender = false) => {
+    const item = purchaseDraftItems[input.dataset.purchaseField]
+    if (!item) return
+    const field = input.dataset.field
+    const numeric = ['quantity', 'unitCost', 'salePrice', 'minStock'].includes(field)
+    item[field] = input.type === 'checkbox' ? input.checked : (numeric ? Math.max(field === 'quantity' ? 1 : 0, Number(input.value || 0)) : input.value)
+    const hiddenItems = document.querySelector('input[name="purchaseItems"]')
+    if (hiddenItems) hiddenItems.value = JSON.stringify(Object.entries(purchaseDraftItems).map(([key, detail]) => ({ key, productId: detail.productId || '', isNew: Boolean(detail.isNew), name: detail.name || '', sku: detail.sku || '', barcode: detail.barcode || '', category: detail.category || 'General', minStock: Number(detail.minStock || 0), trackStock: detail.trackStock !== false, quantity: Number(detail.quantity || 0), unitCost: Number(detail.unitCost || 0), salePrice: Number(detail.salePrice || 0) })))
+    if (shouldRender) render()
+  }
+  for (const input of document.querySelectorAll('[data-purchase-field]')) {
+    input.addEventListener('input', () => syncPurchaseDraftField(input))
+    input.addEventListener('change', () => syncPurchaseDraftField(input, true))
+  }
   for (const button of document.querySelectorAll('[data-action="remove-purchase-product"]')) button.addEventListener('click', () => { delete purchaseDraftItems[button.dataset.id]; render() })
   for (const button of document.querySelectorAll('[data-action="edit-supplier"]')) button.addEventListener('click', () => { supplierEditingId = button.dataset.id || ''; supplierFormOpen = true; queueScrollToSelector('form[data-form="supplier"]'); render() })
   for (const button of document.querySelectorAll('[data-action="open-purchase-form"]')) button.addEventListener('click', () => {

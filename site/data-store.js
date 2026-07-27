@@ -1509,6 +1509,43 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Producto creado.' }
   }
 
+  // Las compras pueden actualizar los datos comerciales del artículo, pero el
+  // stock se mueve exclusivamente mediante la recepción de compra.
+  const updateProductFromPurchase = async (productId, payload) => {
+    const denied = ensurePermission(actionPermissions.purchasesWrite)
+    if (denied) return denied
+    const product = getProduct(state, productId)
+    if (!product) return { ok: false, message: 'Producto no encontrado.' }
+    const branchId = getCurrentBranch(state)?.id || state.branches[0]?.id || ''
+    const next = {
+      name: String(payload.name || '').trim(),
+      sku: String(payload.sku || '').trim(),
+      barcode: String(payload.barcode || '').trim(),
+      salePrice: Number(payload.salePrice || 0),
+      costPrice: Number(payload.costPrice || 0),
+      minStock: Number(payload.minStock || 0),
+      category: String(payload.category || '').trim() || 'General',
+      trackStock: payload.trackStock !== false,
+    }
+    if (!next.name) return { ok: false, message: 'Cada producto necesita un nombre.' }
+    if (cloudCoreAdapter) {
+      await cloudCoreAdapter.upsertProduct({
+        id: product.id,
+        ...next,
+        stock: getBranchStock(product, branchId, branchId),
+        branchId,
+      })
+      await syncFromCloud()
+      return { ok: true, message: 'Datos del producto actualizados.' }
+    }
+    const before = clone(product)
+    Object.assign(product, next)
+    syncProductStock(product)
+    pushAudit(state, currentUser().id, 'product', product.id, 'updated_from_purchase', product, before)
+    save()
+    return { ok: true, message: 'Datos del producto actualizados.' }
+  }
+
   const importProducts = async (rows = [], mode = 'create-only') => {
     const denied = ensurePermission(actionPermissions.productsWrite)
     if (denied) return denied
@@ -2725,6 +2762,7 @@ export const createBrowserDataStore = (options = {}) => {
     applyModulePreset,
     updateBusinessProfile,
     createProduct,
+    updateProductFromPurchase,
     importProducts,
     findProductByCode: (code) => findProductByCode(state, code),
     createSupplier,
