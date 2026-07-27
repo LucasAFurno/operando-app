@@ -540,7 +540,7 @@ const purchaseActionButtons = (receipt) => `
 `
 const invoiceActionButtons = (invoice) => `
   <div class="inline-action-group invoice-actions">
-    <button type="button" class="inline-action is-strong" data-invoice-action="pay" data-id="${invoice.id}" ${invoiceBalance(invoice) <= 0 ? 'disabled' : ''}>Abonar ${money(invoiceBalance(invoice))}</button>
+    <button type="button" class="inline-action is-strong" data-invoice-action="pay" data-id="${invoice.id}" ${invoiceBalance(invoice) <= 0 ? 'disabled' : ''}>Abonar</button>
     <button type="button" class="inline-action" data-invoice-action="view" data-id="${invoice.id}">Ver</button>
     <button type="button" class="inline-action" data-invoice-action="print" data-id="${invoice.id}">Imprimir</button>
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
@@ -1994,7 +1994,7 @@ const invoicesViewV2 = (ui) => `
           <label class="full-span">Referencia (opcional)<input type="text" name="reference" placeholder="Ej.: comprobante, operación o nota" /></label>
           <div class="form-note full-span">Podés registrar un abono parcial o pagar el saldo completo. El saldo pendiente se actualiza automáticamente.</div>
           <button type="submit" name="paymentMode" value="partial">Registrar abono</button>
-          <button type="submit" class="primary-action" name="paymentMode" value="full">Pagar saldo completo (${money(paymentBalance)})</button>
+          <button type="submit" class="primary-action" name="paymentMode" value="full">Pagar saldo completo</button>
           <button type="button" class="ghost-action" data-action="close-invoice-payment">Cancelar</button>
         </form>
       </article>` : ''}

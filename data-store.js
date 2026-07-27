@@ -2536,6 +2536,36 @@ export const createBrowserDataStore = (options = {}) => {
     const before = state[key].find((item) => item.id === id) || null
     if (!before) return { ok: false, message: 'Registro no encontrado.' }
 
+    if (entity === 'customer' || entity === 'supplier') {
+      if (cloudCoreAdapter) {
+        if (entity === 'customer') await cloudCoreAdapter.upsertCustomer({ ...before, isActive: false })
+        if (entity === 'supplier') await cloudCoreAdapter.upsertSupplier({ ...before, isActive: false })
+        await syncFromCloud()
+        return { ok: true, message: entity === 'customer' ? 'Cliente eliminado.' : 'Proveedor eliminado.' }
+      }
+    }
+
+    if (entity === 'branch') {
+      const replacement = state.branches.find((branch) => branch.id !== id)
+      if (!replacement) return { ok: false, message: 'No podes eliminar la unica sucursal del comercio.' }
+      const branchRegisters = state.registers.filter((register) => register.branchId === id)
+      if (cloudCoreAdapter) {
+        await cloudCoreAdapter.upsertBranch({ ...before, isActive: false })
+        for (const register of branchRegisters) await cloudCoreAdapter.upsertRegister({ ...register, isActive: false })
+        await syncFromCloud()
+      } else {
+        state.branches = state.branches.filter((branch) => branch.id !== id)
+        state.registers = state.registers.filter((register) => register.branchId !== id)
+        if (state.business.currentBranchId === id) {
+          state.business.currentBranchId = replacement.id
+          state.business.currentRegisterId = state.registers.find((register) => register.branchId === replacement.id)?.id || ''
+        }
+        pushAudit(state, currentUser().id, entity, id, 'deleted', null, before)
+        save()
+      }
+      return { ok: true, message: 'Sucursal eliminada de la operación.' }
+    }
+
     if (entity === 'register') {
       const hasOpenCashSession = state.cashSessions.some((session) => session.registerId === id && session.status === 'open')
       if (hasOpenCashSession) return { ok: false, message: 'No podes eliminar una caja con una sesion abierta. Cerra la caja primero.' }
@@ -2578,7 +2608,24 @@ export const createBrowserDataStore = (options = {}) => {
     if (amount <= 0 || amount > due) return { ok: false, message: 'El abono debe ser mayor a cero y no superar el saldo pendiente.' }
     if (payload.method === 'cash' && !getOpenCashSession(state)) return { ok: false, message: 'No podes registrar efectivo sin una caja abierta.' }
     if (payload.method === 'echeq' && !String(payload.echeqDetails?.number || '').trim()) return { ok: false, message: 'Indicá el número de e-cheq.' }
-    if (cloudCoreAdapter) { await cloudCoreAdapter.registerInvoicePayment(payload); await syncFromCloud(); return { ok: true, message: 'Abono registrado.' } }
+    if (cloudCoreAdapter) {
+      // La respuesta del cobro es la fuente inmediata para la factura abierta.
+      // Se conserva aun si una lectura posterior todavía no incluye el resumen.
+      const payment = await cloudCoreAdapter.registerInvoicePayment(payload)
+      const paidAmount = Number(payment?.amountPaid)
+      if (Number.isFinite(paidAmount)) {
+        invoice.amountPaid = Math.min(Number(invoice.totalAmount || 0), paidAmount)
+        invoice.status = payment?.status || (invoice.amountPaid >= Number(invoice.totalAmount || 0) ? 'Cobrada' : 'Emitida')
+      }
+      await syncFromCloud()
+      const refreshedInvoice = state.invoices.find((entry) => entry.id === payload.invoiceId)
+      if (refreshedInvoice && Number.isFinite(paidAmount) && Number(refreshedInvoice.amountPaid || 0) < paidAmount) {
+        refreshedInvoice.amountPaid = Math.min(Number(refreshedInvoice.totalAmount || 0), paidAmount)
+        refreshedInvoice.status = payment?.status || (refreshedInvoice.amountPaid >= Number(refreshedInvoice.totalAmount || 0) ? 'Cobrada' : 'Emitida')
+        persistLocalState()
+      }
+      return { ok: true, message: 'Abono registrado.' }
+    }
     invoice.amountPaid = Number(invoice.amountPaid || 0) + amount
     invoice.status = invoice.amountPaid >= Number(invoice.totalAmount || 0) ? 'Cobrada' : 'Emitida'
     const sale = state.sales.find((entry) => entry.id === invoice.saleId)

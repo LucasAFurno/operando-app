@@ -2608,7 +2608,24 @@ export const createBrowserDataStore = (options = {}) => {
     if (amount <= 0 || amount > due) return { ok: false, message: 'El abono debe ser mayor a cero y no superar el saldo pendiente.' }
     if (payload.method === 'cash' && !getOpenCashSession(state)) return { ok: false, message: 'No podes registrar efectivo sin una caja abierta.' }
     if (payload.method === 'echeq' && !String(payload.echeqDetails?.number || '').trim()) return { ok: false, message: 'Indicá el número de e-cheq.' }
-    if (cloudCoreAdapter) { await cloudCoreAdapter.registerInvoicePayment(payload); await syncFromCloud(); return { ok: true, message: 'Abono registrado.' } }
+    if (cloudCoreAdapter) {
+      // La respuesta del cobro es la fuente inmediata para la factura abierta.
+      // Se conserva aun si una lectura posterior todavía no incluye el resumen.
+      const payment = await cloudCoreAdapter.registerInvoicePayment(payload)
+      const paidAmount = Number(payment?.amountPaid)
+      if (Number.isFinite(paidAmount)) {
+        invoice.amountPaid = Math.min(Number(invoice.totalAmount || 0), paidAmount)
+        invoice.status = payment?.status || (invoice.amountPaid >= Number(invoice.totalAmount || 0) ? 'Cobrada' : 'Emitida')
+      }
+      await syncFromCloud()
+      const refreshedInvoice = state.invoices.find((entry) => entry.id === payload.invoiceId)
+      if (refreshedInvoice && Number.isFinite(paidAmount) && Number(refreshedInvoice.amountPaid || 0) < paidAmount) {
+        refreshedInvoice.amountPaid = Math.min(Number(refreshedInvoice.totalAmount || 0), paidAmount)
+        refreshedInvoice.status = payment?.status || (refreshedInvoice.amountPaid >= Number(refreshedInvoice.totalAmount || 0) ? 'Cobrada' : 'Emitida')
+        persistLocalState()
+      }
+      return { ok: true, message: 'Abono registrado.' }
+    }
     invoice.amountPaid = Number(invoice.amountPaid || 0) + amount
     invoice.status = invoice.amountPaid >= Number(invoice.totalAmount || 0) ? 'Cobrada' : 'Emitida'
     const sale = state.sales.find((entry) => entry.id === invoice.saleId)
