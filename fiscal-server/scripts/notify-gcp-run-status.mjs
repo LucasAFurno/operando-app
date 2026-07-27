@@ -84,6 +84,8 @@ if (required.length) {
     }
     const { notifyDiscord } = await loadNotifications()
     const sent = await notifyDiscord('gcp-run', event)
+    if (severity === 'warning' || severity === 'critical') await notifyDiscord('logs', event)
+    if (severity === 'critical') await notifyDiscord('alertas', event)
     if (!sent) process.exitCode = 1
     process.stdout.write(`Estado Cloud Run ${label} notificado.\n`)
   } catch (error) {
