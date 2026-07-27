@@ -3755,14 +3755,13 @@ input, select { outline: none; }
 }
 
 .purchase-cart { display: grid; gap: 6px; overflow-x: auto; }
-.purchase-line { display: grid; grid-template-columns: minmax(150px, 1.35fr) 110px 135px 120px 90px 92px 110px 120px 180px; align-items: end; gap: 10px; min-width: 1240px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.purchase-line { display: grid; grid-template-columns: minmax(200px, 1.35fr) 110px 135px 120px 90px 92px 110px 120px 92px 240px; align-items: end; gap: 10px; min-width: 1380px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
 .purchase-line label span { color: var(--muted); font-size: .74rem; }
 .purchase-line label { display: grid; gap: 4px; }
 .purchase-line input { min-height: 38px; padding: 7px 10px; }
 .purchase-line .inline-action { min-height: 38px; padding: 7px 12px; }
-.purchase-line label small { color: var(--muted); font-size: .72rem; }
 .purchase-line-stock-action { display: flex; align-items: end; justify-content: flex-end; gap: 10px; }
-.purchase-line-stock-action .compact-toggle { display: flex; align-items: center; gap: 8px; min-width: 118px; min-height: 38px; padding: 8px 10px; }
+.purchase-line-stock-action .purchase-stock-toggle { display: flex; align-items: center; gap: 8px; min-width: 145px; min-height: 40px; padding: 8px 10px; white-space: nowrap; }
 .purchase-product-add { display: flex; gap: 10px; align-items: center; }
 .purchase-product-add .stock-adjustment-search { flex: 1; }
 .purchase-product-add .ghost-action { flex: 0 0 auto; min-height: 42px; }
