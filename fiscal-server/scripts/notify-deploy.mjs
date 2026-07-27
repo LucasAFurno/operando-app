@@ -5,8 +5,13 @@ if (!['started', 'success', 'failed', 'rollback'].includes(status)) {
   throw new Error('Uso: npm run notify:deploy -- started|success|failed|rollback')
 }
 
+const input = Object.fromEntries(process.argv.slice(3).map((arg) => {
+  const [key, ...parts] = arg.replace(/^--/, '').split('=')
+  return [key, parts.join('=')]
+}))
+const destination = ['deploys', 'gcp-run'].includes(input.destination) ? input.destination : 'deploys'
 const required = process.env.PCLAF_CONTROL_DISCORD_ENABLED === 'true'
-  ? missingVariables(['PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL'])
+  ? missingVariables([destination === 'gcp-run' ? 'PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL' : 'PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL'])
   : []
 
 if (required.length) {
@@ -14,11 +19,6 @@ if (required.length) {
   process.exitCode = 1
 } else {
   const { notifyDiscord, notifyTelegram } = await loadNotifications()
-  const input = Object.fromEntries(process.argv.slice(3).map((arg) => {
-    const [key, ...parts] = arg.replace(/^--/, '').split('=')
-    return [key, parts.join('=')]
-  }))
-  const destination = ['deploys', 'gcp-run'].includes(input.destination) ? input.destination : 'deploys'
   const title = { started: 'Actualizacion de infraestructura iniciada', success: 'Actualizacion de infraestructura exitosa', failed: 'Actualizacion de infraestructura fallida', rollback: 'Rollback de infraestructura iniciado' }[status]
   const message = {
     started: 'Se inicio una actualizacion de infraestructura de PCLAF Control. Este flujo despliega el backend privado de facturacion y ARCA; no representa una operacion realizada por un usuario.',
