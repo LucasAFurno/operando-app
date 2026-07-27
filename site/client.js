@@ -1895,6 +1895,7 @@ const purchasesViewV2 = (ui) => `
     <section class="stacked-section">
       ${showPurchaseForm ? `<article class="panel">
         <div class="panel-head"><div><h3>${editingReceipt ? 'Editar compra' : 'Nueva compra'}</h3><p>Ingresa stock y costo del proveedor</p></div><div class="settings-actions">${editingReceipt ? '' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cerrar</button>'}</div></div>
+        <details class="sales-payment-detail purchase-new-product"><summary>Crear producto nuevo para esta compra</summary><form class="form-grid compact-form" data-form="purchase-new-product"><label>Nombre<input name="name" required /></label><label>SKU<input name="sku" required /></label><label>Categoría<input name="category" value="General" required /></label><label>Stock mínimo<input type="number" name="minStock" min="0" value="0" required /></label><label>Costo unitario<input type="number" name="costPrice" min="0" required /></label><label>Precio de venta<input type="number" name="salePrice" min="0" required /></label><button type="submit">Crear y agregar a la compra</button></form></details>
         <form class="form-grid compact-form" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
           <input type="hidden" name="purchaseItems" value="${escapeHtml(JSON.stringify(purchaseLines.map((line) => ({ productId: line.product.id, quantity: line.quantity, unitCost: line.unitCost, salePrice: line.salePrice }))))}" />
@@ -3449,6 +3450,14 @@ const handleSubmit = async (event) => {
   }
   if (kind === 'cash-movement') {
     const result = await store.createCashMovement({ cashSessionId: getUiState().openCashSession?.id || null, kind: formData.get('kind'), amount: formData.get('amount'), note: formData.get('note') })
+    feedbackMessage = result.message || ''
+  }
+  if (kind === 'purchase-new-product') {
+    const result = await store.createProduct({ name: formData.get('name'), sku: formData.get('sku'), barcode: '', stock: 0, minStock: formData.get('minStock'), category: formData.get('category'), costPrice: formData.get('costPrice'), salePrice: formData.get('salePrice'), trackStock: true })
+    if (result.ok) {
+      const product = store.getSnapshot().products.find((item) => String(item.name || '').trim().toLowerCase() === String(formData.get('name') || '').trim().toLowerCase() && String(item.sku || '').trim().toLowerCase() === String(formData.get('sku') || '').trim().toLowerCase())
+      if (product) purchaseDraftItems = { ...purchaseDraftItems, [product.id]: { quantity: 1, unitCost: Number(formData.get('costPrice') || 0), salePrice: Number(formData.get('salePrice') || 0) } }
+    }
     feedbackMessage = result.message || ''
   }
   if (kind === 'purchase-receipt') {
