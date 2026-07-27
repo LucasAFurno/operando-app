@@ -22,7 +22,7 @@ const eventText = (event) => {
   const safe = sanitize(event.metadata || {})
   const lines = [
     `**Ambiente:** ${event.environment || config.environment}`,
-    `**Servicio:** ${event.source || 'pclaf-control'}`,
+    `**Area:** ${event.source || 'PCLAF Control'}`,
     event.entityId ? `**ID:** ${event.entityId}` : null,
     event.correlationId ? `**Correlation ID:** ${event.correlationId}` : null,
     ...Object.entries(safe).map(([key, value]) => `**${key}:** ${typeof value === 'object' ? JSON.stringify(value) : value}`),

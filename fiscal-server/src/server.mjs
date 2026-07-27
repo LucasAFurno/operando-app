@@ -77,7 +77,7 @@ const idempotencyKey = (value) => {
 }
 
 const requestHash = (value) => createHash('sha256').update(String(value || ''), 'utf8').digest('hex')
-const fiscalEvent = (destination, type, severity, title, details = {}) => notifyEvent({ destination, type, severity, title, source: 'fiscal-server', ...details })
+const fiscalEvent = (destination, type, severity, title, details = {}) => notifyEvent({ destination, type, severity, title, source: 'Fiscal / ARCA', ...details })
 
 const fiscalRequestXml = (value) => {
   if (typeof value !== 'string' || value.length < 20 || value.length > 256 * 1024 || !value.includes('<FeCAEReq>')) {

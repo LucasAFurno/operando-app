@@ -18,19 +18,19 @@ if (required.length) {
     const [key, ...parts] = arg.replace(/^--/, '').split('=')
     return [key, parts.join('=')]
   }))
-  const title = { started: 'Deploy iniciado', success: 'Deploy exitoso', failed: 'Deploy fallido', rollback: 'Rollback iniciado' }[status]
+  const title = { started: 'Actualizacion de infraestructura iniciada', success: 'Actualizacion de infraestructura exitosa', failed: 'Actualizacion de infraestructura fallida', rollback: 'Rollback de infraestructura iniciado' }[status]
   const message = {
-    started: 'Se inició una actualización técnica de PCLAF Control. Se actualizará el backend fiscal y sus integraciones; se avisará el resultado final.',
-    success: 'La actualización técnica del backend fiscal de PCLAF Control quedó disponible correctamente.',
-    failed: 'La actualización técnica no se completó. Abrí el enlace del pipeline para ver el paso que falló.',
-    rollback: 'Se inició un rollback de la actualización técnica. Revisá el pipeline para confirmar el resultado.',
+    started: 'Se inicio una actualizacion de infraestructura de PCLAF Control. Este flujo despliega el backend privado de facturacion y ARCA; no representa una operacion realizada por un usuario.',
+    success: 'La actualizacion de infraestructura del backend privado de facturacion y ARCA quedo disponible correctamente.',
+    failed: 'La actualizacion de infraestructura no se completo. Abri el enlace del pipeline para identificar el paso que fallo.',
+    rollback: 'Se inicio un rollback de infraestructura. Revisa el pipeline para confirmar el resultado.',
   }[status]
   const sent = await notifyDiscord('deploys', {
     type: `DEPLOY_${status.toUpperCase()}`,
     severity: status === 'failed' ? 'critical' : status === 'rollback' ? 'warning' : 'info',
     title,
     message,
-    source: 'ci-cd',
+    source: 'Infraestructura',
     environment: input.environment || process.env.NODE_ENV || 'production',
     metadata: { version: input.version, commit: input.commit, rama: input.branch, autor: input.author, pipeline: input.pipeline, detalle: input.detail },
   })
@@ -39,7 +39,7 @@ if (required.length) {
     severity: status === 'failed' ? 'critical' : status === 'rollback' ? 'warning' : 'info',
     title,
     message,
-    source: 'ci-cd',
+    source: 'Infraestructura',
     environment: input.environment || process.env.NODE_ENV || 'production',
     metadata: { version: input.version, commit: input.commit, rama: input.branch, autor: input.author, pipeline: input.pipeline, detalle: input.detail },
   })

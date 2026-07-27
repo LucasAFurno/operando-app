@@ -30,8 +30,8 @@ if (required.length) {
     destination: 'general',
     type: 'DAILY_CONNECTIVITY_STATUS',
     severity: allHealthy ? 'info' : 'warning',
-    title: allHealthy ? 'Estado operativo OK' : 'Estado operativo requiere atencion',
-    source: 'pclaf-control-monitor',
+    title: allHealthy ? 'Estado de infraestructura OK' : 'Estado de infraestructura requiere atencion',
+    source: 'Infraestructura',
     environment: String(process.env.NOTIFICATIONS_ENVIRONMENT || '').trim() || undefined,
     message: `Chequeo de las 09:01 (Argentina)\n${message}`,
   }

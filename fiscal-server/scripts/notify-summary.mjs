@@ -76,7 +76,7 @@ if (required.length) {
   const periodLabel = { daily: 'diario', weekly: 'semanal', monthly: 'mensual' }[period]
   const periodDescription = period === 'daily' ? `Fecha: ${today}` : period === 'weekly' ? `Período: ${periodStartDate} a ${today}` : `Período: ${today.slice(0, 7)}`
   const message = [periodDescription, ...Object.entries(metrics).map(([label, value]) => `${label}: ${value}`)].join('\n')
-  const event = { destination: 'resumen', type: `${period.toUpperCase()}_SUMMARY`, severity: 'info', title: `Resumen ${periodLabel}`, source: 'pclaf-control', environment: String(process.env.NOTIFICATIONS_ENVIRONMENT || '').trim() || undefined, message }
+  const event = { destination: 'resumen', type: `${period.toUpperCase()}_SUMMARY`, severity: 'info', title: `Resumen de operaciones ${periodLabel}`, source: 'Producto y operaciones', environment: String(process.env.NOTIFICATIONS_ENVIRONMENT || '').trim() || undefined, message }
   const discordSent = await notifyDiscord('resumen', event)
   if (!discordSent) process.stdout.write('{"service":"fiscal","event":"discord_summary_not_delivered"}\n')
   if (config.telegram.enabled) {
