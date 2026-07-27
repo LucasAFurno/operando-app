@@ -104,6 +104,8 @@ let supplierFormOpen = false
 let supplierEditingId = ''
 let supplierSearchQuery = ''
 let purchaseFormOpen = false
+let purchaseDraftItems = {}
+let purchaseQuickAddCode = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
 let ticketFormOpen = false
@@ -511,6 +513,8 @@ const closePurchaseUtilityForms = () => {
   supplierFormOpen = false
   purchaseFormOpen = false
   purchaseEditingId = ''
+  purchaseDraftItems = {}
+  purchaseQuickAddCode = ''
 }
 const closeStructureUtilityForms = () => {
   branchFormOpen = false
@@ -1877,6 +1881,8 @@ const purchasesViewV2 = (ui) => `
     const supplierQuery = supplierSearchQuery.trim().toLowerCase()
     const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.contact, supplier.phone, supplier.email, supplier.cuit].some((value) => String(value || '').toLowerCase().includes(supplierQuery))) : ui.snapshot.suppliers.slice(0, 10))
     const showPurchaseForm = purchaseFormOpen || Boolean(editingReceipt)
+    if (editingReceipt && !Object.keys(purchaseDraftItems).length) purchaseDraftItems = { [editingReceipt.productId]: { quantity: editingReceipt.quantity, unitCost: editingReceipt.unitCost } }
+    const purchaseLines = Object.entries(purchaseDraftItems).map(([productId, detail]) => ({ product: ui.snapshot.products.find((product) => product.id === productId), ...detail })).filter((line) => line.product)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Compras</p><h2>Proveedores y recepcion</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.snapshot.suppliers.length}</strong><span>Proveedores</span></span>
@@ -1889,13 +1895,13 @@ const purchasesViewV2 = (ui) => `
         <div class="panel-head"><div><h3>${editingReceipt ? 'Editar compra' : 'Nueva compra'}</h3><p>Ingresa stock y costo del proveedor</p></div><div class="settings-actions">${editingReceipt ? '' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cerrar</button>'}</div></div>
         <form class="form-grid compact-form" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
+          <input type="hidden" name="purchaseItems" value="${escapeHtml(JSON.stringify(purchaseLines.map((line) => ({ productId: line.product.id, quantity: line.quantity, unitCost: line.unitCost }))))}" />
           <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
-          <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" value="${escapeHtml(ui.snapshot.products.find((product) => product.id === editingReceipt?.productId)?.name || '')}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div></label>
+          <label class="stock-adjustment-product">Agregar productos<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-purchase-product-search value="${escapeHtml(purchaseQuickAddCode)}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o código de barras" aria-label="Buscar producto" /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist><button type="button" class="inline-action" data-action="add-purchase-product">Agregar</button></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
-          <label>Cantidad<input type="number" min="1" name="quantity" value="${editingReceipt?.quantity || ''}" required /></label>
-          <label>Costo unitario<input type="number" min="0" name="unitCost" value="${editingReceipt?.unitCost || ''}" required /></label>
+          <div class="full-span purchase-cart">${purchaseLines.length ? purchaseLines.map((line) => { const margin = Number(line.unitCost) > 0 ? ((Number(line.product.salePrice || 0) - Number(line.unitCost)) / Number(line.unitCost)) * 100 : 0; return `<div class="cart-line"><div><strong>${line.product.name}</strong><p>Venta ${money(line.product.salePrice)} · Margen ${margin.toFixed(1)}%</p></div><label class="cart-quantity"><span>Cantidad</span><input type="number" min="1" value="${line.quantity}" data-purchase-quantity="${line.product.id}" /></label><label class="cart-quantity"><span>Costo unit.</span><input type="number" min="0" value="${line.unitCost}" data-purchase-cost="${line.product.id}" /></label><button type="button" class="inline-action danger" data-action="remove-purchase-product" data-id="${line.product.id}">Quitar</button></div>` }).join('') : '<div class="pos-cart-empty"><strong>Compra vacía</strong><span>Buscá y agregá los productos del proveedor.</span></div>'}</div>
           <label class="full-span">Observaciones<input type="text" name="note" value="${editingReceipt?.note || ''}" placeholder="Pedido, lote o condicion" /></label>
-          <button type="submit">${editingReceipt ? 'Guardar cambios' : 'Registrar compra'}</button>
+          <button type="submit" ${purchaseLines.length ? '' : 'disabled'}>${editingReceipt ? 'Guardar cambios' : 'Registrar compra'}</button>
           ${editingReceipt ? '<button type="button" class="danger-action" data-action="cancel-purchase-edit">Cancelar edicion</button>' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cancelar</button>'}
         </form>
       </article>` : ''}
@@ -3461,6 +3467,17 @@ const handleSubmit = async (event) => {
       render()
       return
     }
+    const purchaseItems = (() => { try { return JSON.parse(String(formData.get('purchaseItems') || '[]')) } catch { return [] } })()
+    if (purchaseItems.length) {
+      const invalidItem = purchaseItems.find((item) => !products.some((product) => product.id === item.productId) || Number(item.quantity) <= 0 || Number(item.unitCost) < 0)
+      if (invalidItem) { feedbackMessage = 'Revisá cantidad y costo de cada producto antes de registrar la compra.'; render(); return }
+      const common = { supplierId, documentNumber: formData.get('documentNumber'), note: formData.get('note') }
+      if (formData.get('receiptId') && purchaseItems.length === 1) await store.updatePurchaseReceipt(formData.get('receiptId'), { ...common, ...purchaseItems[0] })
+      else for (const item of purchaseItems) await store.createPurchaseReceipt({ ...common, ...item })
+      feedbackMessage = `${purchaseItems.length} producto${purchaseItems.length === 1 ? '' : 's'} registrado${purchaseItems.length === 1 ? '' : 's'} en la compra.`
+      closePurchaseUtilityForms()
+      return
+    }
     const exactProduct = products.find((item) => [item.name, item.sku, item.barcode]
       .some((value) => String(value || '').toLowerCase() === normalizedSearch))
     const matches = products.filter((item) => [item.name, item.sku, item.barcode]
@@ -3849,6 +3866,20 @@ const bindEvents = () => {
     render()
   })
   for (const input of document.querySelectorAll('[data-supplier-search]')) input.addEventListener('input', () => { supplierSearchQuery = input.value; render() })
+  const addPurchaseProduct = () => {
+    const input = document.querySelector('[data-purchase-product-search]')
+    const search = String(input?.value || purchaseQuickAddCode || '').trim().toLowerCase()
+    const product = getUiState().snapshot.products.find((item) => [item.name, item.sku, item.barcode].some((value) => String(value || '').toLowerCase() === search))
+    if (!product) { feedbackMessage = search ? 'Elegí un producto de las sugerencias.' : 'Buscá un producto para agregarlo a la compra.'; render(); return }
+    purchaseDraftItems = { ...purchaseDraftItems, [product.id]: purchaseDraftItems[product.id] || { quantity: 1, unitCost: Number(product.costPrice || 0) } }
+    purchaseQuickAddCode = ''
+    render()
+  }
+  for (const input of document.querySelectorAll('[data-purchase-product-search]')) input.addEventListener('input', () => { purchaseQuickAddCode = input.value })
+  for (const button of document.querySelectorAll('[data-action="add-purchase-product"]')) button.addEventListener('click', addPurchaseProduct)
+  for (const input of document.querySelectorAll('[data-purchase-quantity]')) input.addEventListener('input', () => { const item = purchaseDraftItems[input.dataset.purchaseQuantity]; if (item) { item.quantity = Math.max(1, Number(input.value || 1)); render() } })
+  for (const input of document.querySelectorAll('[data-purchase-cost]')) input.addEventListener('input', () => { const item = purchaseDraftItems[input.dataset.purchaseCost]; if (item) { item.unitCost = Math.max(0, Number(input.value || 0)); render() } })
+  for (const button of document.querySelectorAll('[data-action="remove-purchase-product"]')) button.addEventListener('click', () => { delete purchaseDraftItems[button.dataset.id]; render() })
   for (const button of document.querySelectorAll('[data-action="edit-supplier"]')) button.addEventListener('click', () => { supplierEditingId = button.dataset.id || ''; supplierFormOpen = true; queueScrollToSelector('form[data-form="supplier"]'); render() })
   for (const button of document.querySelectorAll('[data-action="open-purchase-form"]')) button.addEventListener('click', () => {
     closePurchaseUtilityForms()
