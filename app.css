@@ -2775,7 +2775,7 @@ input, select { outline: none; }
 
 .inventory-table {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .inventory-head,
@@ -2796,13 +2796,15 @@ input, select { outline: none; }
 
 .inventory-row {
   border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 16px 18px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 14px 14px 0;
+  padding: 10px 12px;
   background: var(--panel);
 }
 
 .inventory-row.is-low {
   border-color: rgba(214, 16, 16, 0.24);
+  border-left-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 4%, var(--panel));
 }
 
@@ -4805,5 +4807,50 @@ input, select { outline: none; }
 
   .account-menu-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Productos: misma lista compacta y alineada que el resto de los bloques. */
+@media (max-width: 760px) {
+  .inventory-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "product branchStock"
+      "code totalStock"
+      "price actions";
+    gap: 6px 12px;
+    padding: 10px 12px;
+  }
+
+  .inventory-row > span:nth-child(1) { grid-area: product; }
+  .inventory-row > span:nth-child(2) { grid-area: code; }
+  .inventory-row > span:nth-child(3) { grid-area: branchStock; justify-self: end; }
+  .inventory-row > span:nth-child(4) { grid-area: totalStock; justify-self: end; }
+  .inventory-row > span:nth-child(5) { grid-area: price; }
+  .inventory-row > span:nth-child(6) { grid-area: actions; justify-self: end; }
+
+  .inventory-row > span:nth-child(2)::before,
+  .inventory-row > span:nth-child(4)::before,
+  .inventory-row > span:nth-child(5)::before {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .inventory-row > span:nth-child(2)::before { content: "Código"; }
+  .inventory-row > span:nth-child(4)::before { content: "Total"; }
+  .inventory-row > span:nth-child(5)::before { content: "Precio"; }
+
+  .inventory-row > span:nth-child(3)::after {
+    content: "Stock suc.";
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    text-align: center;
   }
 }
