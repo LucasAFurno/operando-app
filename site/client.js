@@ -1542,6 +1542,7 @@ const dashboardViewV2 = (ui) => {
   const pendingInvoiceCount = ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').length
   const visibleActivity = dashboardAuditExpanded ? ui.recentCommerceActivity.slice(0, 10) : ui.recentCommerceActivity.slice(0, 4)
   const activityTime = (createdAt) => String(createdAt || '').slice(11, 16) || '--:--'
+  const topProductMax = Math.max(1, ...ui.topProducts.slice(0, 5).map(([, qty]) => Number(qty) || 0))
   return `
   <section class="view-section dashboard-view">
     <div class="section-header dashboard-header"><div><p class="kicker">Resumen diario</p><h2>Operación del local</h2></div><div class="dashboard-quick-actions">
@@ -1568,11 +1569,11 @@ const dashboardViewV2 = (ui) => {
       </div></article>
       <article class="panel dashboard-stock-panel"><div class="panel-head"><div><h3>Stock crítico</h3><p>${ui.lowStock.length ? 'Productos que requieren reposición' : 'Inventario estable'}</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="productos">Ver ${ui.lowStock.length || ''} productos</button></div><div class="dashboard-stock-list">
         ${ui.lowStock.length ? ui.lowStock.slice(0, 4).map((product) => `<div class="dashboard-stock-row"><strong>${escapeHtml(product.name)}</strong><span>Stock <b>${product.scopedStock}</b> · mínimo ${product.minStock}</span></div>`).join('') : '<div class="alert-card ok"><strong>Sin alertas</strong><p>No hay productos con stock bajo.</p></div>'}
-      </div></article>
+      </div>${ui.lowStock.length > 4 ? `<button type="button" class="dashboard-stock-summary" data-dashboard-section="productos"><strong>${ui.lowStock.length - 4} productos más requieren revisión</strong><span>Ver faltantes y reponer stock →</span></button>` : ''}</article>
     </section>
     <section class="dashboard-secondary-grid">
       <article class="panel dashboard-top-panel"><div class="panel-head"><div><h3>Top productos</h3><p>Ranking por unidades vendidas</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="reportes">Ver ranking</button></div><div class="dashboard-top-list">
-        ${ui.topProducts.length ? ui.topProducts.slice(0, 5).map(([name, qty], index) => `<div><span>${index + 1}</span><strong>${escapeHtml(name)}</strong><small>${qty} unidades</small></div>`).join('') : '<p class="empty-state">Todavía no hay ventas cargadas.</p>'}
+        ${ui.topProducts.length ? ui.topProducts.slice(0, 5).map(([name, qty], index) => `<div class="dashboard-top-row" style="--rank-width: ${Math.max(12, Math.round((Number(qty) / topProductMax) * 100))}%"><span>${index + 1}</span><strong>${escapeHtml(name)}</strong><small>${qty} unidades</small><i aria-hidden="true"></i></div>`).join('') : '<p class="empty-state">Todavía no hay ventas cargadas.</p>'}
       </div></article>
       <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Actividad reciente</h3><p>Últimos movimientos registrados</p></div></div><div class="dashboard-activity-list">
         ${visibleActivity.length ? visibleActivity.map((activity) => `<div class="dashboard-activity-row"><span class="dashboard-activity-icon" aria-hidden="true">${dashboardActivityIcon(activity)}</span><div><strong>${escapeHtml(activity.title)}</strong><p>${escapeHtml(activity.detail)}</p></div><time>${activityTime(activity.createdAt)}</time></div>`).join('') : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}

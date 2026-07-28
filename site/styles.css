@@ -5434,6 +5434,7 @@ input, select { outline: none; }
 .attention-status { grid-row: 1 / span 2; width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; background: var(--ok); }
 .attention-status.is-alert { background: var(--accent); }
 .dashboard-primary-grid .panel, .dashboard-secondary-grid .panel { min-width: 0; padding: 18px; }
+.dashboard-stock-panel { display: flex; flex-direction: column; }
 .dashboard-panel-link { flex: 0 0 auto; min-height: 36px; padding: 7px 12px; font-size: .8rem; }
 .dashboard-sales-list, .dashboard-stock-list, .dashboard-activity-list { display: grid; }
 .dashboard-sale-row, .dashboard-stock-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line); }
@@ -5444,12 +5445,17 @@ input, select { outline: none; }
 .dashboard-sale-row time, .dashboard-activity-row time { color: var(--muted); font-size: .76rem; white-space: nowrap; }
 .dashboard-stock-row span { color: var(--muted); text-align: right; font-size: .82rem; white-space: nowrap; }
 .dashboard-stock-row b { color: var(--accent); }
-.dashboard-top-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; min-height: 92px; margin-top: 10px; }
-.dashboard-top-list > div { display: grid; justify-items: start; gap: 5px; min-width: 0; padding: 0 12px; border-left: 1px solid var(--line); }
-.dashboard-top-list > div:first-child { padding-left: 0; border-left: 0; }
-.dashboard-top-list span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; }
-.dashboard-top-list strong { overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
-.dashboard-top-list small { color: var(--muted); }
+.dashboard-stock-summary { display: grid; gap: 4px; margin-top: auto; padding: 14px 0 0; border: 0; border-top: 1px solid var(--line); background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.dashboard-stock-summary strong { color: var(--accent); }
+.dashboard-stock-summary span { color: var(--muted); font-size: .82rem; }
+.dashboard-top-list { display: grid; gap: 0; margin-top: 10px; }
+.dashboard-top-row { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 43px; overflow: hidden; border-top: 1px solid var(--line); }
+.dashboard-top-row:first-child { border-top: 0; }
+.dashboard-top-row > span { position: relative; z-index: 1; display: grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: var(--accent); color: #fff; font-size: .8rem; font-weight: 700; }
+.dashboard-top-row strong, .dashboard-top-row small { position: relative; z-index: 1; }
+.dashboard-top-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dashboard-top-row small { color: var(--muted); white-space: nowrap; }
+.dashboard-top-row i { position: absolute; z-index: 0; left: 0; bottom: 7px; width: var(--rank-width); height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 58%, transparent); }
 .dashboard-activity-list { position: relative; }
 .dashboard-activity-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 7px 0; border-top: 1px solid var(--line); }
 .dashboard-activity-icon { position: relative; z-index: 1; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); }
@@ -5484,9 +5490,7 @@ input, select { outline: none; }
   .dashboard-sale-row strong, .dashboard-sale-row p, .dashboard-activity-row strong, .dashboard-activity-row p { white-space: normal; }
   .dashboard-stock-row { grid-template-columns: 1fr; gap: 3px; }
   .dashboard-stock-row span { text-align: left; }
-  .dashboard-top-list { grid-template-columns: repeat(5, 128px); overflow-x: auto; min-height: 96px; padding-bottom: 4px; }
-  .dashboard-top-list > div { padding-left: 12px; }
-  .dashboard-top-list > div:first-child { padding-left: 0; }
+  .dashboard-stock-summary { margin-top: 10px; }
   .dashboard-activity-row { grid-template-columns: 26px minmax(0, 1fr) auto; align-items: start; }
   .dashboard-activity-row:not(:last-child) .dashboard-activity-icon::after { height: 40px; }
 }
