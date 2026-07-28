@@ -411,8 +411,21 @@ const generateInvoiceNumber = (state, type = 'B', branchId = state.business.curr
 }
 const generateTicketNumber = (state, prefix = 'POST', branchId = state.business.currentBranchId) => {
   const branch = getBranch(state, branchId) || getCurrentBranch(state)
-  const seq = nextNumber(state, 'ticket')
-  return `${prefix}-${branch?.code || 'GEN'}-${String(seq).padStart(6, '0')}`
+  // Los documentos se crean directamente en cloud y el contador local puede
+  // quedar desactualizado entre equipos. Usamos fecha/hora y un sufijo aleatorio
+  // para que dejar el número vacío siempre genere uno sin colisionar.
+  const now = new Date()
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0'),
+    String(now.getSeconds()).padStart(2, '0'),
+    String(now.getMilliseconds()).padStart(3, '0'),
+  ].join('')
+  const suffix = Math.random().toString(36).slice(2, 6).toUpperCase()
+  return `${prefix}-${branch?.code || 'GEN'}-${stamp}-${suffix}`
 }
 const documentKindMap = {
   Factura: 'factura',
@@ -2561,13 +2574,14 @@ export const createBrowserDataStore = (options = {}) => {
     if (!branchId) return { ok: false, message: 'Seleccioná una sucursal antes de guardar el ticket.' }
     if (!getCustomer(state, customerId)) return { ok: false, message: 'El cliente seleccionado ya no está disponible. Actualizá la pantalla e intentá otra vez.' }
     if (cloudCoreAdapter) {
-      await cloudCoreAdapter.upsertDocument({
+      const number = payload.number || generateTicketNumber(state, 'TEC', branchId)
+      const saved = await cloudCoreAdapter.upsertDocument({
         id: null,
         branchId,
         saleId: payload.saleId || null,
         customerId,
         relatedDocumentId: null,
-        number: payload.number || generateTicketNumber(state, 'TEC', payload.branchId || getCurrentBranch(state)?.id),
+        number,
         kind: 'ticket',
         type: 'B',
         status: payload.status || 'Recibido',
@@ -2579,6 +2593,21 @@ export const createBrowserDataStore = (options = {}) => {
         },
       })
       await syncFromCloud()
+      // Algunas instalaciones todavía devuelven un snapshot anterior al
+      // documento recién creado. No ocultamos una operación confirmada por eso.
+      if (!state.tickets.some((ticket) => ticket.id === saved?.id)) {
+        state.tickets.unshift({
+          id: saved?.id || makeId(),
+          number: saved?.document_number || number,
+          branchId,
+          customerId,
+          device,
+          issue,
+          status: payload.status || 'Recibido',
+          updatedAt: todayIso(),
+        })
+        persistLocalState()
+      }
       return { ok: true, message: 'Ticket guardado.' }
     }
     const ticket = {
@@ -2608,13 +2637,14 @@ export const createBrowserDataStore = (options = {}) => {
     if (!branchId) return { ok: false, message: 'Seleccioná una sucursal antes de guardar el ticket.' }
     if (!getCustomer(state, customerId)) return { ok: false, message: 'El cliente seleccionado ya no está disponible. Actualizá la pantalla e intentá otra vez.' }
     if (cloudCoreAdapter) {
-      await cloudCoreAdapter.upsertDocument({
+      const number = payload.number || generateTicketNumber(state, 'TEC', branchId)
+      const saved = await cloudCoreAdapter.upsertDocument({
         id: ticketId,
         branchId,
         saleId: payload.saleId || null,
         customerId,
         relatedDocumentId: null,
-        number: payload.number || '',
+        number,
         kind: 'ticket',
         type: 'B',
         status: payload.status || 'Recibido',
@@ -2626,6 +2656,11 @@ export const createBrowserDataStore = (options = {}) => {
         },
       })
       await syncFromCloud()
+      const savedTicket = state.tickets.find((ticket) => ticket.id === saved?.id)
+      if (!savedTicket) {
+        state.tickets.unshift({ id: saved?.id || ticketId, number: saved?.document_number || number, branchId, customerId, device, issue, status: payload.status || 'Recibido', updatedAt: todayIso() })
+      }
+      persistLocalState()
       return { ok: true, message: 'Ticket actualizado.' }
     }
     const ticket = state.tickets.find((entry) => entry.id === ticketId)
