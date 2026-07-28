@@ -995,12 +995,17 @@ const getUiState = () => {
     sale: ['sales', 'cash', 'stock'], cash_movement: ['cash'], cash_session: ['cash'],
     product: ['products', 'stock'], stock_movement: ['stock', 'products'], stock_adjustment: ['stock', 'products'], stock_transfer: ['stock', 'products'],
     purchase_receipt: ['purchases', 'products', 'stock'], supplier: ['purchases'], customer: ['customers'],
-    invoice: ['invoices', 'sales'], ticket: ['tickets'], branch: ['settings'], register: ['settings', 'cash'],
+    invoice: ['invoices', 'sales'], ticket: ['tickets'], document: ['invoices'], branch: ['settings'], register: ['settings', 'cash'],
     user: ['settings'], business: ['settings'], business_module: ['settings'], business_plan: ['settings'], session: ['settings'], system: ['settings'],
   }
   const auditModuleLabels = { sales: 'Ventas', cash: 'Caja', stock: 'Stock', products: 'Productos', purchases: 'Compras', customers: 'Clientes', invoices: 'Facturación', tickets: 'Tickets', settings: 'Configuración' }
-  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', branch: 'sucursal', register: 'caja', user: 'usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
-  const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => ({ ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules: auditModuleByEntity[log.entityType] || ['settings'], moduleLabel: auditModuleLabels[(auditModuleByEntity[log.entityType] || ['settings'])[0]], entityLabel: auditEntityLabels[log.entityType] || log.entityType || 'registro' }))
+  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', document: 'comprobante', branch: 'sucursal', register: 'caja', user: 'usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
+  const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
+    const documentKind = log.afterData?.kind || log.beforeData?.kind
+    const modules = log.entityType === 'document' && documentKind === 'ticket' ? ['tickets'] : (auditModuleByEntity[log.entityType] || ['settings'])
+    const entityLabel = log.entityType === 'document' && documentKind === 'ticket' ? 'ticket' : (auditEntityLabels[log.entityType] || log.entityType || 'registro')
+    return { ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel }
+  })
   const auditActionLabels = {
     created: 'Creó un registro',
     updated: 'Actualizó un registro',
