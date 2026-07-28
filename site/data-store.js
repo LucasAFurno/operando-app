@@ -1646,6 +1646,44 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Producto actualizado.' }
   }
 
+  const updateProductFromPurchase = async (productId, payload) => {
+    const denied = ensurePermission(actionPermissions.purchasesWrite)
+    if (denied) return denied
+    const product = state.products.find((item) => item.id === productId)
+    if (!product) return { ok: false, message: 'No encontramos el producto a actualizar.' }
+    if (!String(payload.name || '').trim()) return { ok: false, message: 'El producto necesita un nombre.' }
+
+    const branchId = getCurrentBranch(state)?.id || state.branches[0]?.id || ''
+    const before = clone(product)
+    const normalized = {
+      name: String(payload.name || '').trim(),
+      sku: String(payload.sku || '').trim(),
+      barcode: String(payload.barcode || '').trim(),
+      salePrice: Number(payload.salePrice || 0),
+      costPrice: Number(payload.costPrice || 0),
+      minStock: Number(payload.minStock || 0),
+      category: String(payload.category || '').trim(),
+      trackStock: payload.trackStock !== false,
+    }
+
+    if (cloudCoreAdapter) {
+      await cloudCoreAdapter.upsertProduct({
+        id: product.id,
+        ...normalized,
+        stock: Number(product.stockByBranch?.[branchId] ?? product.stock ?? 0),
+        branchId,
+      })
+      await syncFromCloud()
+      return { ok: true, message: 'Producto actualizado desde la compra.' }
+    }
+
+    Object.assign(product, normalized)
+    syncProductStock(product)
+    pushAudit(state, currentUser().id, 'product', product.id, 'updated_from_purchase', clone(product), before)
+    save()
+    return { ok: true, message: 'Producto actualizado desde la compra.' }
+  }
+
   const importProducts = async (rows = [], mode = 'create-only') => {
     const denied = ensurePermission(actionPermissions.productsWrite)
     if (denied) return denied
@@ -2853,6 +2891,7 @@ export const createBrowserDataStore = (options = {}) => {
     updateBusinessProfile,
     createProduct,
     updateProduct,
+    updateProductFromPurchase,
     importProducts,
     findProductByCode: (code) => findProductByCode(state, code),
     createSupplier,
