@@ -752,7 +752,7 @@ const routeHardwareScan = (rawValue) => {
       [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1,
     }
     saleQuickAddCode = ''
-    feedbackMessage = `${product.name} agregado a la venta.`
+    feedbackMessage = ''
     render()
     return true
   }
@@ -887,7 +887,7 @@ const clearFeedbackSoon = () => {
   feedbackTimer = window.setTimeout(() => {
     if (feedbackMessage !== currentMessage) return
     feedbackMessage = ''
-    render()
+    document.querySelectorAll('.feedback-banner').forEach((banner) => banner.remove())
   }, 2800)
 }
 const getAllowedNav = (ui) => navItems.filter((item) => (
@@ -948,7 +948,7 @@ const getUiState = () => {
   }))
   const filteredSales = byRecentDate(enrichedSales.filter((sale) => sale.branchId === currentBranch?.id && (reportRegisterFilter === 'all' || sale.registerId === reportRegisterFilter)), 'soldAt')
   const reportScopedSales = filteredSales.filter((sale) => isWithinDateRange(sale.soldAt, reportDateFrom, reportDateTo))
-  const enrichedInvoices = byRecentDate(scopedInvoices, 'dueDate').map((invoice) => ({ ...invoice, customerName: customerMap.get(invoice.customerId)?.fullName || 'Sin cliente', branchName: branchMap.get(invoice.branchId)?.name || 'Sucursal' }))
+  const enrichedInvoices = byRecentDate(scopedInvoices, 'dueDate').map((invoice) => ({ ...invoice, customerName: customerMap.get(invoice.customerId)?.fullName || 'Consumidor final', branchName: branchMap.get(invoice.branchId)?.name || 'Sucursal' }))
   const enrichedTickets = byRecentDate(scopedTickets, 'updatedAt').map((ticket) => ({ ...ticket, customerName: customerMap.get(ticket.customerId)?.fullName || 'Sin cliente', branchName: branchMap.get(ticket.branchId)?.name || 'Sucursal' }))
   const enrichedScopedReceipts = byRecentDate(scopedReceipts, 'receivedAt').map((receipt) => ({
     ...receipt,
@@ -1732,7 +1732,7 @@ const salesViewV2 = (ui) => `
               <label class="pos-echeq-field" data-echeq-field hidden>Número de e-cheq<input type="text" name="echeqNumber" placeholder="Ej.: 00123456" autocomplete="off" /></label>
               <details class="sales-payment-detail"><summary>Mas opciones</summary>
                 <div class="pos-payment-advanced">
-                  <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
+                  <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar venta</span></label>
                   <label class="pos-discount-field"><span>Descuento</span><div class="pos-discount-control"><select name="discountMode" aria-label="Tipo de descuento"><option value="amount">$</option><option value="percent">%</option></select><input type="number" min="0" name="discountValue" value="${editingSale?.discountAmount || 0}" aria-label="Valor del descuento" /><input type="hidden" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></div><small data-discount-help>Importe en pesos</small></label>
                 </div>
                 <details class="pos-payment-breakdown"><summary>Desglosar cobro</summary><div class="payment-split-grid">
@@ -2180,7 +2180,7 @@ const invoicesView = (ui) => `
         </form>
       </article>
       <article class="panel"><div class="panel-head"><div><h3>Comprobantes</h3><p>Seguimiento comercial y fiscal</p></div></div>
-        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Accion'], ui.enrichedInvoices.map((invoice) => `<div class="data-row" data-invoice-id="${invoice.id}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'is-stable invoices-table')}
+        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Accion'], ui.enrichedInvoices.map((invoice) => `<div class="data-row" data-invoice-id="${invoice.id}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName || 'Consumidor final'}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}</span><span>${invoiceActionButtons(invoice)}</span></div>`), 'is-stable invoices-table')}
       </article>
     </section>
   </section>
@@ -2231,7 +2231,7 @@ const invoicesViewV2 = (ui) => `
       </article>` : ''}
       <article class="panel">
         <div class="panel-head"><div><h3>Comprobantes</h3><p>Seguimiento comercial y numeracion</p></div><div class="settings-actions">${createToggleButton('invoice', showInvoiceForm, 'Agregar comprobante')}</div></div>
-        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row invoice-open-row" data-invoice-open="${invoice.id}" tabindex="0" role="button" aria-label="Abrir factura ${invoice.number}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}<br /><small>Saldo: ${money(invoiceBalance(invoice))}</small></span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
+        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row invoice-open-row" data-invoice-open="${invoice.id}" tabindex="0" role="button" aria-label="Abrir factura ${invoice.number}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName || 'Consumidor final'}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}<br /><small>Saldo: ${money(invoiceBalance(invoice))}</small></span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
       </article>
     </section>
   </section>
@@ -3856,7 +3856,7 @@ const bindEvents = () => {
     }
     saleDraftQuantities = { ...readCurrentSaleQuantities(), [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1 }
     saleQuickAddCode = ''
-    feedbackMessage = `${product.name} agregado a la venta.`
+    feedbackMessage = ''
     render()
   }
   if (quickAddInput) {

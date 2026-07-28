@@ -590,7 +590,6 @@ const revertPurchaseEffects = (state, receipt) => {
   const buildInvoiceForSale = (state, saleId) => {
   const sale = state.sales.find((entry) => entry.id === saleId)
   if (!sale) return { ok: false, message: 'Venta no encontrada.' }
-  if (!sale.customerId) return { ok: false, message: 'La venta necesita cliente para facturar.' }
   if (getInvoiceBySaleId(state, saleId)) return { ok: false, message: 'Esa venta ya tiene una factura.' }
 
   const invoice = {
@@ -2011,13 +2010,13 @@ export const createBrowserDataStore = (options = {}) => {
     if (cloudCoreAdapter) {
       const currentBranch = getCurrentBranch(state)
       const currentRegister = getCurrentRegister(state)
-      await cloudCoreAdapter.createSale({
+      const result = await cloudCoreAdapter.createSale({
         ...payload,
         branchId: payload.branchId || currentBranch?.id || null,
         registerId: payload.registerId || currentRegister?.id || null,
       })
       await syncFromCloud()
-      return { ok: true, message: payload.autoInvoice ? 'Venta registrada y comprobante generado.' : 'Venta registrada.' }
+      return { ok: true, message: result?.invoice_id ? 'Venta registrada y comprobante generado.' : 'Venta registrada.' }
     }
     const items = payload.items
       .map((item) => buildSaleItem(item.productId, item.quantity, state))
@@ -2065,10 +2064,10 @@ export const createBrowserDataStore = (options = {}) => {
 
     state.sales.unshift(sale)
     applySaleEffects(state, sale)
-    if (payload.autoInvoice && amountPaid > 0 && payload.customerId) buildInvoiceForSale(state, sale.id)
+    const invoiceResult = payload.autoInvoice && amountPaid > 0 ? buildInvoiceForSale(state, sale.id) : null
     pushAudit(state, currentUser().id, 'sale', sale.id, 'created', sale)
     save()
-    return { ok: true }
+    return { ok: true, message: invoiceResult?.ok ? 'Venta registrada y comprobante generado.' : 'Venta registrada.' }
   }
 
   const updateSale = (saleId, payload) => {
@@ -2118,7 +2117,7 @@ export const createBrowserDataStore = (options = {}) => {
     sale.registerId = register?.id || null
     applySaleEffects(state, sale)
 
-    if (payload.autoInvoice && amountPaid > 0 && payload.customerId && !getInvoiceBySaleId(state, saleId)) {
+    if (payload.autoInvoice && amountPaid > 0 && !getInvoiceBySaleId(state, saleId)) {
       buildInvoiceForSale(state, saleId)
     }
 
@@ -2133,7 +2132,6 @@ export const createBrowserDataStore = (options = {}) => {
     if (cloudCoreAdapter) {
       const sale = state.sales.find((entry) => entry.id === saleId)
       if (!sale) return { ok: false, message: 'Venta no encontrada.' }
-      if (!sale.customerId) return { ok: false, message: 'La venta necesita cliente para facturar.' }
       await cloudCoreAdapter.upsertDocument({
         id: null,
         branchId: sale.branchId || getCurrentBranch(state)?.id || null,
@@ -2156,7 +2154,6 @@ export const createBrowserDataStore = (options = {}) => {
     }
     const sale = state.sales.find((entry) => entry.id === saleId)
     if (!sale) return { ok: false, message: 'Venta no encontrada.' }
-    if (!sale.customerId) return { ok: false, message: 'La venta necesita cliente para facturar.' }
     const existing = state.invoices.find((invoice) => invoice.saleId === saleId)
     if (existing) return { ok: false, message: 'Esa venta ya tiene una factura.' }
 
