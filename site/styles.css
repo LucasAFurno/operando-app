@@ -5479,6 +5479,22 @@ input, select { outline: none; }
 .audit-trace-node { left: 15px; top: -30px; z-index: 2; background: var(--panel); }.audit-trace-node::after { content: ''; position: absolute; left: 6px; top: 15px; width: 2px; height: 14px; background: var(--trace-color); }
 .audit-trace-content { border-radius: 0 14px 14px 14px; }.audit-trace::-webkit-scrollbar { height: 9px; }.audit-trace::-webkit-scrollbar-thumb { border-radius: 99px; background: color-mix(in srgb, var(--accent) 55%, var(--line)); }
 
+/* Cuatro ramas de lectura. MAIN reúne cambios de configuración y las demás
+   convergen visualmente en la misma línea de tiempo, como un grafo Git. */
+@media (min-width: 761px) {
+  .audit-trace { --lane-height: 104px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(244px, 284px); grid-template-rows: repeat(4, var(--lane-height)); align-items: center; gap: 0 18px; min-height: calc(var(--lane-height) * 4 + 20px); padding: 20px 14px 18px 142px; background: linear-gradient(to bottom, transparent 50px, color-mix(in srgb, var(--module-settings) 70%, var(--line)) 50px 53px, transparent 53px 154px, color-mix(in srgb, var(--module-sales) 70%, var(--line)) 154px 157px, transparent 157px 258px, color-mix(in srgb, var(--module-stock) 70%, var(--line)) 258px 261px, transparent 261px 362px, color-mix(in srgb, var(--module-customers) 70%, var(--line)) 362px 365px, transparent 365px); }
+  .audit-trace::before, .audit-trace::after { display: none; }
+  .audit-trace-event { z-index: 1; align-self: center; margin-left: 10px; }
+  .audit-trace-event[data-audit-lane="main"] { grid-row: 1; }.audit-trace-event[data-audit-lane="operation"] { grid-row: 2; }.audit-trace-event[data-audit-lane="inventory"] { grid-row: 3; }.audit-trace-event[data-audit-lane="relation"] { grid-row: 4; }
+  .audit-trace-node { top: -28px; }.audit-trace-node::after { height: 13px; }
+  .audit-branch-label { position: sticky; left: 0; z-index: 4; align-self: center; justify-self: start; width: 112px; margin-left: -132px; padding: 7px 10px; border-radius: 6px; color: #fff; font-family: 'Oswald', sans-serif; font-size: .75rem; letter-spacing: .05em; text-align: center; }
+  .audit-branch-main { grid-column: 1; grid-row: 1; background: var(--module-settings); }.audit-branch-operation { grid-column: 1; grid-row: 2; background: var(--module-sales); }.audit-branch-inventory { grid-column: 1; grid-row: 3; background: var(--module-stock); }.audit-branch-relation { grid-column: 1; grid-row: 4; background: var(--module-customers); }
+}
+@media (max-width: 760px) {
+  .audit-controls { margin-top: 12px; padding: 14px; }.audit-periods { gap: 6px; }.audit-filter-button { min-height: 34px; padding: 6px 10px; }.audit-overview { margin-top: 12px; }.audit-module-panel, .audit-distribution { padding: 16px; }.audit-donut-row { gap: 12px; }.audit-donut { width: 88px; height: 88px; flex-basis: 88px; }.audit-donut::before { inset: 15px; }
+  .audit-trace-panel { margin-top: 12px; padding: 16px; }.audit-trace-panel .panel-head p::after { content: ''; }.audit-trace { display: grid; overflow: visible; min-height: 0; padding: 10px 0 0 30px; gap: 12px; scroll-snap-type: none; background: none; }.audit-trace::before { display: block; top: 8px; bottom: 8px; left: 10px; right: auto; width: 2px; height: auto; background: var(--line); }.audit-trace::after, .audit-branch-label { display: none; }.audit-trace-event { width: auto; min-width: 0; flex: none; margin: 0; border-top: 0; border-left: 3px solid var(--trace-color); }.audit-trace-node { left: -29px; top: 2px; }.audit-trace-node::after { display: none; }.audit-trace-content { border-radius: 0 12px 12px 0; padding: 11px 12px; }.audit-event-topline { flex-direction: row; align-items: center; }.audit-event-topline time { white-space: nowrap; font-size: .72rem; }.audit-related-modules { gap: 6px; }
+}
+
 @media (max-width: 980px) {
   .dashboard-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-attention { grid-template-columns: repeat(3, minmax(0, 1fr)); }

@@ -4131,6 +4131,25 @@ const bindEvents = () => {
     input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); auditSearchQuery = input.value; render() } })
   }
   for (const input of document.querySelectorAll('[data-audit-date]')) input.addEventListener('change', () => { if (input.dataset.auditDate === 'from') auditDateFrom = input.value; if (input.dataset.auditDate === 'to') auditDateTo = input.value; render() })
+  const auditTrace = document.querySelector('.audit-trace')
+  if (auditTrace && !auditTrace.querySelector('.audit-branch-label')) {
+    const lanes = [
+      ['main', 'MAIN'], ['operation', 'OPERACIÓN'], ['inventory', 'INVENTARIO'], ['relation', 'RELACIÓN'],
+    ]
+    for (const [lane, label] of lanes) {
+      const branch = document.createElement('span')
+      branch.className = `audit-branch-label audit-branch-${lane}`
+      branch.textContent = label
+      auditTrace.append(branch)
+    }
+    for (const event of auditTrace.querySelectorAll('.audit-trace-event')) {
+      const classNames = event.classList
+      event.dataset.auditLane = classNames.contains('module-settings') ? 'main'
+        : (classNames.contains('module-sales') || classNames.contains('module-cash') || classNames.contains('module-invoices')) ? 'operation'
+          : (classNames.contains('module-stock') || classNames.contains('module-products') || classNames.contains('module-purchases')) ? 'inventory'
+            : 'relation'
+    }
+  }
   for (const input of document.querySelectorAll('.permission-option input')) input.addEventListener('change', () => {
     const option = input.closest('.permission-option')
     const status = option?.querySelector('small')
