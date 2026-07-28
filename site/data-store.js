@@ -237,7 +237,7 @@ const inferUserModules = (entry, enabledModules = []) => {
 
 const seedData = {
   meta: {
-    schemaVersion: 3,
+    schemaVersion: 4,
     edition: 'desktop-local',
     adapter: 'desktop-local',
     syncStatus: 'offline',
@@ -296,7 +296,6 @@ const seedData = {
   ],
   cashSessions: [],
   purchaseReceipts: [],
-  supplierPayments: [],
   sales: [],
   invoices: [],
   tickets: [],
@@ -311,6 +310,21 @@ seedData.registers = [
   { id: makeId(), branchId: seedData.branches[0].id, name: 'Caja 2', code: 'CAJA-02', cashierUserId: seedData.users[0].id, isActive: true },
 ]
 seedData.business.currentRegisterId = seedData.registers[0].id
+
+// A new local demo starts with enough master data to exercise filters and pagination.
+for (let index = seedData.customers.length; index < 100; index += 1) {
+  const number = index + 1
+  seedData.customers.push({ id: makeId(), fullName: `Cliente simulacro ${String(number).padStart(3, '0')}`, phone: `11 6000 ${String(number).padStart(4, '0')}`, email: `cliente.${number}@demo.local`, balance: 0, tag: ['Mostrador', 'Frecuente', 'Mayorista', 'Cuenta corriente'][index % 4] })
+}
+for (let index = seedData.suppliers.length; index < 100; index += 1) {
+  const number = index + 1
+  seedData.suppliers.push({ id: makeId(), name: `Proveedor simulacro ${String(number).padStart(3, '0')}`, contact: `Contacto demo ${number}`, phone: `11 7000 ${String(number).padStart(4, '0')}`, email: `proveedor.${number}@demo.local`, balance: 0, lastDelivery: '2026-07-12', category: ['Hardware', 'Insumos', 'Perifericos', 'Servicios'][index % 4] })
+}
+for (let index = seedData.products.length; index < 100; index += 1) {
+  const number = index + 1
+  const isService = index % 5 === 0
+  seedData.products.push({ id: makeId(), name: isService ? `Servicio tecnico simulacro ${String(number).padStart(3, '0')}` : `Producto simulacro ${String(number).padStart(3, '0')}`, sku: `DEMO-${String(number).padStart(4, '0')}`, barcode: `779900${String(number).padStart(7, '0')}`, stock: isService ? 0 : 150, salePrice: 8000 + (index % 12) * 3500, costPrice: isService ? 0 : 4500 + (index % 12) * 1800, minStock: isService ? 0 : 8, category: isService ? 'Servicio' : ['Hardware', 'Perifericos', 'Insumos', 'Accesorios'][index % 4], trackStock: !isService })
+}
 
 const pushAudit = (state, actorUserId, entityType, entityId, action, afterData, beforeData = null) => {
   state.auditLogs.unshift({
@@ -721,6 +735,48 @@ const revertPurchaseEffects = (state, receipt) => {
     },
   ]
 
+  const demoCustomers = state.customers.filter((customer) => customer.email?.endsWith('@demo.local'))
+  const demoSuppliers = state.suppliers.filter((supplier) => supplier.email?.endsWith('@demo.local'))
+  const demoProducts = state.products.filter((product) => product.sku?.startsWith('DEMO-'))
+  const demoServices = demoProducts.filter((product) => !product.trackStock)
+  const demoBaseDate = Date.UTC(2026, 6, 1, 12, 0, 0)
+  const demoDate = (index, hour = 12) => new Date(demoBaseDate + index * 86400000 + hour * 3600000).toISOString()
+
+  // One hundred related records for each operational module. Sales use services,
+  // so the test fixture does not consume the physical stock.
+  for (let index = 0; index < 100; index += 1) {
+    const customer = demoCustomers[index % demoCustomers.length]
+    const supplier = demoSuppliers[index % demoSuppliers.length]
+    const product = demoProducts[index % demoProducts.length]
+    const service = demoServices[index % demoServices.length]
+    const soldAt = demoDate(index, 9 + (index % 8))
+    const saleId = makeId()
+    const quantity = 1 + (index % 3)
+    const unitPrice = Number(service.salePrice || 0)
+    const totalAmount = quantity * unitPrice
+    const paymentMethod = ['cash', 'transfer', 'mercado_pago', 'account'][index % 4]
+    const amountPaid = paymentMethod === 'account' ? 0 : totalAmount
+    const branchId = state.branches[index % state.branches.length].id
+    const registerId = state.registers[index % state.registers.length].id
+
+    state.sales.unshift({ id: saleId, items: [{ id: makeId(), productId: service.id, quantity, unitPrice, lineTotal: totalAmount }], customerId: customer.id, sellerUserId: adminId, totalQuantity: quantity, subtotalAmount: totalAmount, discountAmount: 0, totalAmount, amountPaid, paymentBreakdown: getPaymentBreakdown({ paymentMethod, isPaid: amountPaid === totalAmount }, totalAmount), channel: ['Mostrador', 'WhatsApp', 'Instagram', 'Web'][index % 4], paymentMethod, status: amountPaid ? 'completed' : 'pending', note: `SIMULACRO-2026 venta ${String(index + 1).padStart(3, '0')}`, soldAt, cashSessionId: paymentMethod === 'cash' ? cashSessionId : null, branchId, registerId })
+    state.invoices.unshift({ id: makeId(), number: `B-SIM-0001-${String(index + 1).padStart(6, '0')}`, customerId: customer.id, totalAmount, status: amountPaid ? 'Cobrada' : 'Emitida', dueDate: soldAt.slice(0, 10), type: index % 5 === 0 ? 'A' : 'B', kind: 'Factura', fiscalStatus: index % 10 === 0 ? 'Pendiente' : 'Autorizado', saleId, branchId })
+    state.tickets.unshift({ id: makeId(), number: `TEC-SIM-${String(index + 1).padStart(6, '0')}`, customerId: customer.id, device: ['Notebook', 'PC escritorio', 'Impresora', 'Monitor'][index % 4], issue: `SIMULACRO-2026 diagnostico ${String(index + 1).padStart(3, '0')}`, status: ['Recibido', 'En curso', 'Esperando aprobacion', 'Listo para retirar'][index % 4], updatedAt: soldAt.slice(0, 10), branchId })
+
+    const purchaseId = makeId()
+    const purchaseQuantity = 10 + (index % 15)
+    const unitCost = Number(product.costPrice || 0)
+    state.purchaseReceipts.unshift({ id: purchaseId, supplierId: supplier.id, productId: product.id, quantity: purchaseQuantity, unitCost, totalCost: purchaseQuantity * unitCost, documentNumber: `OC-SIM-${String(index + 1).padStart(6, '0')}`, note: `SIMULACRO-2026 compra ${String(index + 1).padStart(3, '0')}`, receivedAt: soldAt, receivedBy: adminId, branchId })
+    state.stockMovements.unshift({ id: makeId(), productId: product.id, type: 'purchase', quantity: purchaseQuantity, referenceId: purchaseId, notes: 'SIMULACRO-2026 recepcion de compra', createdAt: soldAt, createdBy: adminId, branchId, registerId: null })
+    state.cashMovements.unshift({ id: makeId(), cashSessionId, branchId: state.branches[0].id, registerId: state.registers[0].id, createdBy: adminId, kind: index % 2 === 0 ? 'income' : 'expense', signedAmount: (index % 2 === 0 ? 1 : -1) * (1000 + index * 125), note: `SIMULACRO-2026 movimiento de caja ${String(index + 1).padStart(3, '0')}`, createdAt: soldAt })
+  }
+
+  for (let index = 0; index < 100; index += 1) {
+    const openingAmount = 30000 + index * 1000
+    const differenceAmount = (index % 3 - 1) * 250
+    state.cashSessions.unshift({ id: makeId(), openedBy: adminId, closedBy: adminId, openingAmount, countedAmount: openingAmount + differenceAmount, differenceAmount, status: 'closed', openedAt: demoDate(index, 8), closedAt: demoDate(index, 20), branchId: state.branches[index % state.branches.length].id, registerId: state.registers[index % state.registers.length].id })
+  }
+
   pushAudit(state, adminId, 'system', null, 'seed_initialized', { message: 'Demo inicial cargada' })
   return state
 }
@@ -730,6 +786,16 @@ const defaultState = buildSeedTransactions()
 const migrateState = (source) => {
   const migrated = clone(defaultState)
   if (!source || typeof source !== 'object') return migrated
+
+  // Upgrade the built-in local demo once. Real businesses and cloud data are
+  // never replaced: this only recognizes the old, small "Demo local" fixture.
+  if (
+    source.meta?.edition === 'desktop-local'
+    && Number(source.meta?.schemaVersion || 0) < 4
+    && source.business?.organization === 'Demo local'
+    && Array.isArray(source.customers)
+    && source.customers.length < 100
+  ) return migrated
 
   migrated.meta = { ...migrated.meta, ...(source.meta || {}) }
   migrated.business = { ...migrated.business, ...(source.business || {}) }
@@ -800,7 +866,6 @@ const migrateState = (source) => {
     note: receipt.note || '',
     branchId: receipt.branchId || migrated.business.currentBranchId || migrated.branches[0]?.id || null,
   }))
-  if (Array.isArray(source.supplierPayments)) migrated.supplierPayments = source.supplierPayments.map((payment) => ({ ...payment, amount: Number(payment.amount || 0) }))
 
   if (Array.isArray(source.sales)) migrated.sales = source.sales.map((sale) => {
     const items = Array.isArray(sale.items) && sale.items.length
@@ -840,8 +905,6 @@ const migrateState = (source) => {
     number: invoice.number,
     customerId: invoice.customerId || null,
     totalAmount: Number(invoice.totalAmount || invoice.total || 0),
-    amountPaid: Number(invoice.amountPaid || 0),
-    paymentHistory: Array.isArray(invoice.paymentHistory) ? invoice.paymentHistory : [],
     status: invoice.status || 'Emitida',
     dueDate: invoice.dueDate || todayDate(),
     type: invoice.type || 'B',
@@ -1511,41 +1574,42 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Producto creado.' }
   }
 
-  // Las compras pueden actualizar los datos comerciales del artículo, pero el
-  // stock se mueve exclusivamente mediante la recepción de compra.
-  const updateProductFromPurchase = async (productId, payload) => {
-    const denied = ensurePermission(actionPermissions.purchasesWrite)
+  const updateProduct = async (productId, payload) => {
+    const denied = ensurePermission(actionPermissions.productsWrite)
     if (denied) return denied
-    const product = getProduct(state, productId)
-    if (!product) return { ok: false, message: 'Producto no encontrado.' }
+    const product = state.products.find((item) => item.id === productId)
+    if (!product) return { ok: false, message: 'No encontramos el producto a actualizar.' }
+    if (!String(payload.name || '').trim()) return { ok: false, message: 'El producto necesita un nombre.' }
+
     const branchId = getCurrentBranch(state)?.id || state.branches[0]?.id || ''
-    const next = {
+    const before = clone(product)
+    const normalized = {
       name: String(payload.name || '').trim(),
       sku: String(payload.sku || '').trim(),
       barcode: String(payload.barcode || '').trim(),
       salePrice: Number(payload.salePrice || 0),
       costPrice: Number(payload.costPrice || 0),
       minStock: Number(payload.minStock || 0),
-      category: String(payload.category || '').trim() || 'General',
+      category: String(payload.category || '').trim(),
       trackStock: payload.trackStock !== false,
     }
-    if (!next.name) return { ok: false, message: 'Cada producto necesita un nombre.' }
+
     if (cloudCoreAdapter) {
       await cloudCoreAdapter.upsertProduct({
         id: product.id,
-        ...next,
-        stock: getBranchStock(product, branchId, branchId),
+        ...normalized,
+        stock: Number(product.stockByBranch?.[branchId] ?? product.stock ?? 0),
         branchId,
       })
       await syncFromCloud()
-      return { ok: true, message: 'Datos del producto actualizados.' }
+      return { ok: true, message: 'Producto actualizado.' }
     }
-    const before = clone(product)
-    Object.assign(product, next)
+
+    Object.assign(product, normalized)
     syncProductStock(product)
-    pushAudit(state, currentUser().id, 'product', product.id, 'updated_from_purchase', product, before)
+    pushAudit(state, currentUser().id, 'product', product.id, 'updated', clone(product), before)
     save()
-    return { ok: true, message: 'Datos del producto actualizados.' }
+    return { ok: true, message: 'Producto actualizado.' }
   }
 
   const importProducts = async (rows = [], mode = 'create-only') => {
@@ -2273,32 +2337,6 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Recepcion registrada.' }
   }
 
-  const registerSupplierPayment = async (payload) => {
-    const denied = ensurePermission(actionPermissions.purchasesWrite)
-    if (denied) return denied
-    const supplier = state.suppliers.find((entry) => entry.id === payload.supplierId)
-    if (!supplier) return { ok: false, message: 'Proveedor no encontrado.' }
-    const amount = Number(payload.amount || 0)
-    if (amount <= 0 || amount > Number(supplier.balance || 0)) return { ok: false, message: 'El pago debe ser mayor a cero y no puede superar el saldo del proveedor.' }
-    const method = String(payload.method || 'transfer').toLowerCase()
-    if (!['cash', 'transfer', 'cheque', 'echeq', 'mercado_pago', 'other'].includes(method)) return { ok: false, message: 'Medio de pago inválido.' }
-    if (cloudCoreAdapter) {
-      await cloudCoreAdapter.registerSupplierPayment({ supplierId: supplier.id, amount, method, reference: payload.reference || '', branchId: getCurrentBranch(state)?.id || null })
-      await syncFromCloud()
-      return { ok: true, message: 'Pago al proveedor registrado.' }
-    }
-    if (method === 'cash') {
-      const cashResult = await createCashMovement({ kind: 'expense', amount, note: `Pago a proveedor ${supplier.name}${payload.reference ? ` · ${payload.reference}` : ''}` })
-      if (!cashResult.ok) return cashResult
-    }
-    const payment = { id: makeId(), supplierId: supplier.id, branchId: getCurrentBranch(state)?.id || null, amount, method, reference: String(payload.reference || '').trim(), createdAt: todayIso(), createdBy: currentUser().id }
-    supplier.balance = Math.max(0, Number(supplier.balance || 0) - amount)
-    state.supplierPayments.unshift(payment)
-    pushAudit(state, currentUser().id, 'supplier_payment', payment.id, 'created', payment)
-    save()
-    return { ok: true, message: 'Pago al proveedor registrado.' }
-  }
-
   const createStockAdjustment = (payload) => {
     const denied = ensurePermission(actionPermissions.productsAdjust)
     if (denied) return denied
@@ -2603,36 +2641,6 @@ export const createBrowserDataStore = (options = {}) => {
     const before = state[key].find((item) => item.id === id) || null
     if (!before) return { ok: false, message: 'Registro no encontrado.' }
 
-    if (entity === 'customer' || entity === 'supplier') {
-      if (cloudCoreAdapter) {
-        if (entity === 'customer') await cloudCoreAdapter.upsertCustomer({ ...before, isActive: false })
-        if (entity === 'supplier') await cloudCoreAdapter.upsertSupplier({ ...before, isActive: false })
-        await syncFromCloud()
-        return { ok: true, message: entity === 'customer' ? 'Cliente eliminado.' : 'Proveedor eliminado.' }
-      }
-    }
-
-    if (entity === 'branch') {
-      const replacement = state.branches.find((branch) => branch.id !== id)
-      if (!replacement) return { ok: false, message: 'No podes eliminar la unica sucursal del comercio.' }
-      const branchRegisters = state.registers.filter((register) => register.branchId === id)
-      if (cloudCoreAdapter) {
-        await cloudCoreAdapter.upsertBranch({ ...before, isActive: false })
-        for (const register of branchRegisters) await cloudCoreAdapter.upsertRegister({ ...register, isActive: false })
-        await syncFromCloud()
-      } else {
-        state.branches = state.branches.filter((branch) => branch.id !== id)
-        state.registers = state.registers.filter((register) => register.branchId !== id)
-        if (state.business.currentBranchId === id) {
-          state.business.currentBranchId = replacement.id
-          state.business.currentRegisterId = state.registers.find((register) => register.branchId === replacement.id)?.id || ''
-        }
-        pushAudit(state, currentUser().id, entity, id, 'deleted', null, before)
-        save()
-      }
-      return { ok: true, message: 'Sucursal eliminada de la operación.' }
-    }
-
     if (entity === 'register') {
       const hasOpenCashSession = state.cashSessions.some((session) => session.registerId === id && session.status === 'open')
       if (hasOpenCashSession) return { ok: false, message: 'No podes eliminar una caja con una sesion abierta. Cerra la caja primero.' }
@@ -2675,24 +2683,7 @@ export const createBrowserDataStore = (options = {}) => {
     if (amount <= 0 || amount > due) return { ok: false, message: 'El abono debe ser mayor a cero y no superar el saldo pendiente.' }
     if (payload.method === 'cash' && !getOpenCashSession(state)) return { ok: false, message: 'No podes registrar efectivo sin una caja abierta.' }
     if (payload.method === 'echeq' && !String(payload.echeqDetails?.number || '').trim()) return { ok: false, message: 'Indicá el número de e-cheq.' }
-    if (cloudCoreAdapter) {
-      // La respuesta del cobro es la fuente inmediata para la factura abierta.
-      // Se conserva aun si una lectura posterior todavía no incluye el resumen.
-      const payment = await cloudCoreAdapter.registerInvoicePayment(payload)
-      const paidAmount = Number(payment?.amountPaid)
-      if (Number.isFinite(paidAmount)) {
-        invoice.amountPaid = Math.min(Number(invoice.totalAmount || 0), paidAmount)
-        invoice.status = payment?.status || (invoice.amountPaid >= Number(invoice.totalAmount || 0) ? 'Cobrada' : 'Emitida')
-      }
-      await syncFromCloud()
-      const refreshedInvoice = state.invoices.find((entry) => entry.id === payload.invoiceId)
-      if (refreshedInvoice && Number.isFinite(paidAmount) && Number(refreshedInvoice.amountPaid || 0) < paidAmount) {
-        refreshedInvoice.amountPaid = Math.min(Number(refreshedInvoice.totalAmount || 0), paidAmount)
-        refreshedInvoice.status = payment?.status || (refreshedInvoice.amountPaid >= Number(refreshedInvoice.totalAmount || 0) ? 'Cobrada' : 'Emitida')
-        persistLocalState()
-      }
-      return { ok: true, message: 'Abono registrado.' }
-    }
+    if (cloudCoreAdapter) { await cloudCoreAdapter.registerInvoicePayment(payload); await syncFromCloud(); return { ok: true, message: 'Abono registrado.' } }
     invoice.amountPaid = Number(invoice.amountPaid || 0) + amount
     invoice.status = invoice.amountPaid >= Number(invoice.totalAmount || 0) ? 'Cobrada' : 'Emitida'
     const sale = state.sales.find((entry) => entry.id === invoice.saleId)
@@ -2790,7 +2781,7 @@ export const createBrowserDataStore = (options = {}) => {
     applyModulePreset,
     updateBusinessProfile,
     createProduct,
-    updateProductFromPurchase,
+    updateProduct,
     importProducts,
     findProductByCode: (code) => findProductByCode(state, code),
     createSupplier,
@@ -2821,7 +2812,6 @@ export const createBrowserDataStore = (options = {}) => {
     createInvoiceFromSale,
     createTicketFromSale,
     createPurchaseReceipt,
-    registerSupplierPayment,
     updatePurchaseReceipt,
     createInvoice,
     updateInvoice,

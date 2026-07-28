@@ -1745,7 +1745,7 @@ const appHtml = `<!doctype html>
     <meta name="robots" content="noindex,nofollow" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co wss://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
     <link rel="canonical" href="${siteOrigin}${appPath}" />
     <link rel="icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />

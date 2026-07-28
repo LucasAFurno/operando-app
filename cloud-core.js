@@ -18,6 +18,26 @@ export const createSupabaseCoreAdapter = (config) => {
   const baseUrl = normalizeUrl(config?.url)
   const anonKey = String(config?.anonKey || '').trim()
   const readSessionToken = typeof config?.getAccessToken === 'function' ? config.getAccessToken : () => ''
+  const notifyMutation = typeof config?.onMutation === 'function' ? config.onMutation : () => {}
+  const mutationRpcNames = new Set([
+    'app_public_update_commerce_profile',
+    'app_public_update_commerce_runtime',
+    'app_public_upsert_customer',
+    'app_public_upsert_branch',
+    'app_public_upsert_register',
+    'app_public_upsert_supplier',
+    'app_public_upsert_user',
+    'app_public_platform_update_commerce',
+    'app_public_toggle_user_active',
+    'app_public_upsert_product',
+    'app_public_open_cash_session',
+    'app_public_close_cash_session',
+    'app_public_create_cash_movement',
+    'app_public_create_sale',
+    'app_public_register_invoice_payment',
+    'app_public_upsert_purchase_receipt',
+    'app_public_upsert_document',
+  ])
 
   if (!baseUrl || !anonKey) return null
 
@@ -29,6 +49,7 @@ export const createSupabaseCoreAdapter = (config) => {
     })
     const payload = await safeJson(response)
     if (!response.ok) throw new Error(payload?.message || payload?.hint || payload?.details || `${fnName} failed (${response.status})`)
+    if (mutationRpcNames.has(fnName)) notifyMutation()
     return payload
   }
 

@@ -1,5 +1,6 @@
-import { createBrowserDataStore } from './data-store.js?v=20260720l'
+import { createBrowserDataStore } from './data-store.js?v=20260727-realtime'
 import { createCloudAuthManager } from './cloud-auth.js?v=20260720l'
+import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
@@ -91,7 +92,10 @@ let saleCustomerSearchQuery = ''
 let topbarSearch = ''
 let cloudSyncBusy = false
 let liveSyncBusy = false
-let liveSyncTimer = null
+let liveSyncDebounceTimer = null
+let operationalRealtimeClient = null
+let operationalRealtimeChannel = null
+let unsubscribeOperationalChanges = null
 let customerFormOpen = false
 let customerEditingId = ''
 let customerSearchQuery = ''
@@ -235,7 +239,7 @@ const loadCloudAccess = async (sessionPayload = null) => {
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
-  startLiveSync()
+  startOperationalRealtime()
   return activeProfile
 }
 
@@ -268,15 +272,43 @@ const syncLiveData = async () => {
   }
 }
 
-const stopLiveSync = () => {
-  if (!liveSyncTimer) return
-  window.clearInterval(liveSyncTimer)
-  liveSyncTimer = null
+const queueLiveSync = () => {
+  if (liveSyncDebounceTimer) window.clearTimeout(liveSyncDebounceTimer)
+  liveSyncDebounceTimer = window.setTimeout(() => {
+    liveSyncDebounceTimer = null
+    void syncLiveData()
+  }, 120)
 }
 
-const startLiveSync = () => {
-  if (liveSyncTimer) return
-  liveSyncTimer = window.setInterval(syncLiveData, 4000)
+const stopOperationalRealtime = () => {
+  if (liveSyncDebounceTimer) window.clearTimeout(liveSyncDebounceTimer)
+  liveSyncDebounceTimer = null
+  unsubscribeOperationalChanges?.()
+  unsubscribeOperationalChanges = null
+  if (operationalRealtimeClient && operationalRealtimeChannel) void operationalRealtimeClient.removeChannel(operationalRealtimeChannel)
+  operationalRealtimeChannel = null
+  operationalRealtimeClient = null
+}
+
+const startOperationalRealtime = () => {
+  if (operationalRealtimeChannel || !store?.subscribeToOperationalChanges) return
+  const cloud = store.getCloudConnection()
+  const commerceId = String(commerceContext?.commerce_id || '').trim()
+  if (!cloud?.url || !cloud?.anonKey || !commerceId) return
+
+  operationalRealtimeClient = createSupabaseRealtimeClient(cloud.url, cloud.anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  })
+  operationalRealtimeChannel = operationalRealtimeClient
+    .channel(`commerce:${commerceId}:operations`, { config: { private: false, broadcast: { self: false, ack: false } } })
+    .on('broadcast', { event: 'core_changed' }, queueLiveSync)
+    .subscribe()
+
+  unsubscribeOperationalChanges = store.subscribeToOperationalChanges(() => {
+    if (!operationalRealtimeChannel) return
+    void operationalRealtimeChannel.send({ type: 'broadcast', event: 'core_changed', payload: {} })
+  })
+
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) void syncLiveData()
   })
@@ -1835,7 +1867,7 @@ const productsView = (ui) => `
         </article>` : ''}
         <article class="panel inventory-panel">
           <div class="panel-head inventory-headline">
-            <div><h3>Inventario</h3><p>Stock actual y precio de venta</p></div>
+            <div><h3>Inventario</h3><p>Edita los datos del articulo y usa acciones de stock sin salir de la lista</p></div>
           </div>
           <div class="inventory-action-bar">
             ${createToggleButton('product', productFormOpen, 'Agregar producto')}
@@ -1843,16 +1875,30 @@ const productsView = (ui) => `
             ${createToggleButton('stock-transfer', stockTransferFormOpen, 'Transferencia')}
           </div>
           <div class="bulk-import-card"><div class="bulk-import-copy"><strong>Carga masiva de productos</strong><span>Descarga la plantilla, completala en Excel y subila. Las columnas ya estan ordenadas para importar sin duplicar productos.</span><small>Campos obligatorios: Nombre, SKU y Precio de venta.</small></div><div class="bulk-import-actions"><button type="button" class="inline-action" data-action="download-product-template">Descargar plantilla Excel</button><label class="primary-action bulk-upload-action">Subir planilla<input type="file" data-input="bulk-product-import" accept=".csv,text/csv,.txt,text/plain" hidden /></label><button type="button" class="text-action" data-action="request-bulk-import">Prefiero que lo hagan por mi</button></div></div>
-          ${paginatedInventoryTable(ui.scopedProducts, 'productos', (product) => `
-            <div class="inventory-row ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}" data-product-id="${product.id}">
-              <span class="inventory-product">${product.name}<small>${product.sku}</small></span>
-              <span>${product.barcode || '-'}</span>
-              <span><span class="stock-pill">${product.scopedStock}</span></span>
-              <span>${product.totalStock}</span>
-              <span>${money(product.salePrice)}</span>
-              <span class="inventory-actions">${actionButton('product', product.id)}</span>
-            </div>
-          `)}
+          <div class="product-list" aria-label="Articulos del inventario">
+            ${paginatedCardList(ui.scopedProducts, 'productos', (product) => {
+              const margin = Number(product.salePrice || 0) > 0 ? ((Number(product.salePrice || 0) - Number(product.costPrice || 0)) / Number(product.salePrice || 0)) * 100 : 0
+              return `<form class="product-item ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}" data-form="product-inline">
+                <input type="hidden" name="productId" value="${product.id}" />
+                <label class="product-name-field">Producto<input type="text" name="name" value="${escapeHtml(product.name)}" required /></label>
+                <label>SKU<input type="text" name="sku" value="${escapeHtml(product.sku || '')}" /></label>
+                <label>Codigo de barras<input type="text" name="barcode" value="${escapeHtml(product.barcode || '')}" /></label>
+                <label>Categoria<input type="text" name="category" value="${escapeHtml(product.category || '')}" /></label>
+                <label>Minimo<input type="number" name="minStock" min="0" value="${Number(product.minStock || 0)}" /></label>
+                <label>Stock suc.<span class="product-stock-value"><strong>${Number(product.scopedStock || 0)}</strong><small>Se ajusta con la accion</small></span></label>
+                <label>Costo unit.<input type="number" name="costPrice" min="0" step="0.01" value="${Number(product.costPrice || 0)}" /></label>
+                <label>Precio venta<input type="number" name="salePrice" min="0" step="0.01" value="${Number(product.salePrice || 0)}" /></label>
+                <label>Margen %<span class="product-margin-value">${margin.toFixed(1)}%</span></label>
+                <label class="field-check product-track-stock"><input type="checkbox" name="trackStock" ${product.trackStock ? 'checked' : ''} /><span class="field-check-box" aria-hidden="true"></span><span>Controlar stock</span></label>
+                <div class="product-item-actions">
+                  <button type="submit" class="primary-action">Guardar</button>
+                  <button type="button" class="inline-action" data-action="adjust-product-stock" data-id="${product.id}">Ajustar stock</button>
+                  <button type="button" class="inline-action" data-action="transfer-product-stock" data-id="${product.id}">Transferir</button>
+                  <button type="button" class="danger-action" data-delete="product" data-id="${product.id}">Quitar</button>
+                </div>
+              </form>`
+            })}
+          </div>
         </article>
       </div>
     </section>
@@ -3460,6 +3506,19 @@ const handleSubmit = async (event) => {
     feedbackMessage = result.message || ''
     productFormOpen = false
   }
+  if (kind === 'product-inline') {
+    const result = await store.updateProduct(formData.get('productId'), {
+      name: formData.get('name'),
+      sku: formData.get('sku'),
+      barcode: formData.get('barcode'),
+      salePrice: formData.get('salePrice'),
+      costPrice: formData.get('costPrice'),
+      minStock: formData.get('minStock'),
+      category: formData.get('category'),
+      trackStock: formData.get('trackStock') === 'on',
+    })
+    feedbackMessage = result.message || ''
+  }
   if (kind === 'stock-adjustment') {
     const search = String(formData.get('productSearch') || '').trim()
     const normalizedSearch = search.toLowerCase()
@@ -4102,6 +4161,15 @@ const bindEvents = () => {
     stockAdjustmentFormOpen = false
     render()
   })
+  for (const button of document.querySelectorAll('[data-action="adjust-product-stock"]')) button.addEventListener('click', () => {
+    closeProductUtilityForms()
+    stockAdjustmentFormOpen = true
+    render()
+    const product = getUiState().scopedProducts.find((item) => item.id === button.dataset.id)
+    const input = document.querySelector('form[data-form="stock-adjustment"] [name="productSearch"]')
+    if (input && product) input.value = product.name
+    queueScrollToSelector('form[data-form="stock-adjustment"]')
+  })
   for (const button of document.querySelectorAll('[data-action="open-stock-transfer-form"]')) button.addEventListener('click', () => {
     closeProductUtilityForms()
     stockTransferFormOpen = true
@@ -4121,6 +4189,15 @@ const bindEvents = () => {
   for (const button of document.querySelectorAll('[data-action="close-invoice-form"]')) button.addEventListener('click', () => {
     closeDocumentUtilityForms()
     render()
+  })
+  for (const button of document.querySelectorAll('[data-action="transfer-product-stock"]')) button.addEventListener('click', () => {
+    closeProductUtilityForms()
+    stockTransferFormOpen = true
+    render()
+    const product = getUiState().scopedProducts.find((item) => item.id === button.dataset.id)
+    const input = document.querySelector('form[data-form="stock-transfer"] [name="productSearch"]')
+    if (input && product) input.value = product.name
+    queueScrollToSelector('form[data-form="stock-transfer"]')
   })
   for (const button of document.querySelectorAll('[data-action="close-invoice-payment"]')) button.addEventListener('click', () => {
     invoicePaymentId = ''
@@ -4220,7 +4297,7 @@ const bindEvents = () => {
   if (disconnectCloudButton) {
     disconnectCloudButton.addEventListener('click', async () => {
       if (authManager) await authManager.signOut()
-      stopLiveSync()
+      stopOperationalRealtime()
       const result = await store.clearCloudConnection()
       feedbackMessage = result.message || ''
       render()
@@ -4413,7 +4490,7 @@ const bindEvents = () => {
   const signOutButton = document.querySelector('[data-action="sign-out"]')
   if (signOutButton) signOutButton.addEventListener('click', async () => {
     if (authManager) await authManager.signOut()
-    stopLiveSync()
+    stopOperationalRealtime()
     store.signOut()
     store.clearCloudAuthSession()
     commerceContext = null
