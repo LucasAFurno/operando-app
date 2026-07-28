@@ -389,12 +389,16 @@ const documentCounterKey = (kind, letter = 'B') => {
 const generateDocumentNumber = (state, kind = 'Factura', letter = 'B', branchId = state.business.currentBranchId) => {
   const branch = getBranch(state, branchId) || getCurrentBranch(state)
   const seq = nextNumber(state, documentCounterKey(kind, letter))
-  if (kind === 'Factura') return `${letter}-${branch?.code || 'GEN'}-0001-${String(seq).padStart(6, '0')}`
+  if (kind === 'Factura') return `${letter}-${branch?.code || 'GEN'}-0001-${String(seq).padStart(8, '0')}`
   if (kind === 'Nota de credito') return `NC-${letter}-${branch?.code || 'GEN'}-${String(seq).padStart(6, '0')}`
   if (kind === 'Presupuesto') return `PRES-${branch?.code || 'GEN'}-${String(seq).padStart(6, '0')}`
   if (kind === 'Remito') return `REM-${branch?.code || 'GEN'}-${String(seq).padStart(6, '0')}`
   if (kind === 'Ticket') return `TCK-${branch?.code || 'GEN'}-${String(seq).padStart(6, '0')}`
   return `${letter}-${branch?.code || 'GEN'}-0001-${String(seq).padStart(6, '0')}`
+}
+const generateInternalInvoiceNumber = (state, branchId = state.business.currentBranchId) => {
+  const seq = nextNumber(state, `internalInvoice:${branchId || 'default'}`)
+  return `INT-0001-${String(seq).padStart(8, '0')}`
 }
 const generateInvoiceNumber = (state, type = 'B', branchId = state.business.currentBranchId) => {
   return generateDocumentNumber(state, 'Factura', type, branchId)
@@ -603,14 +607,14 @@ const revertPurchaseEffects = (state, receipt) => {
 
   const invoice = {
     id: makeId(),
-    number: generateDocumentNumber(state, 'Factura', 'B', sale.branchId),
+    number: generateInternalInvoiceNumber(state, sale.branchId),
     customerId: sale.customerId,
     totalAmount: sale.totalAmount,
     status: sale.status === 'completed' ? 'Cobrada' : 'Emitida',
     dueDate: todayDate(),
-    type: 'B',
+    type: 'X',
     kind: 'Factura',
-    fiscalStatus: 'Pendiente',
+    fiscalStatus: 'Interno',
     saleId,
     branchId: sale.branchId || getCurrentBranch(state)?.id || null,
   }
@@ -2148,11 +2152,11 @@ export const createBrowserDataStore = (options = {}) => {
         saleId: sale.id,
         customerId: sale.customerId,
         relatedDocumentId: null,
-        number: generateDocumentNumber(state, 'Factura', 'B', sale.branchId),
+        number: generateInternalInvoiceNumber(state, sale.branchId),
         kind: 'factura',
-        type: 'B',
+        type: 'X',
         status: sale.status === 'completed' ? 'Cobrada' : 'Emitida',
-        fiscalStatus: 'Pendiente',
+        fiscalStatus: 'Interno',
         totalAmount: Number(sale.totalAmount || 0),
         payloadJson: {
           source: 'sale',

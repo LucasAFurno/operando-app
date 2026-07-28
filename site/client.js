@@ -702,7 +702,7 @@ const invoiceActionButtons = (invoice) => `
   </div>
 `
 
-const invoiceEmissionLabel = (invoice) => invoice.fiscalStatus === 'Interno' ? 'Interno' : 'ARCA'
+const invoiceEmissionLabel = (invoice) => invoice.fiscalStatus === 'Interno' ? 'Interno · no fiscal' : 'ARCA'
 const invoiceBalance = (invoice) => Math.max(0, Number(invoice?.totalAmount || 0) - Number(invoice?.amountPaid || 0))
 const ticketActionButtons = (ticket) => `
   <div class="inline-action-group">
