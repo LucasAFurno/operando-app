@@ -5469,6 +5469,16 @@ input, select { outline: none; }
 @media (max-width: 760px) { .audit-controls { align-items: stretch; flex-direction: column; }.audit-overview { grid-template-columns: 1fr; }.audit-search input { min-width: 0; width: 100%; }.audit-filter-fields { display: grid; grid-template-columns: 1fr 1fr; }.audit-search { grid-column: 1 / -1; }.audit-donut-row { align-items: flex-start; }.audit-event-topline { align-items: flex-start; flex-direction: column; gap: 4px; } }
 .audit-related-modules span.module-sales { color: var(--module-sales); }.audit-related-modules span.module-cash { color: var(--module-cash); }.audit-related-modules span.module-stock { color: var(--module-stock); }.audit-related-modules span.module-products { color: var(--module-products); }.audit-related-modules span.module-purchases { color: var(--module-purchases); }.audit-related-modules span.module-customers { color: var(--module-customers); }.audit-related-modules span.module-invoices { color: var(--module-invoices); }.audit-related-modules span.module-tickets { color: var(--module-tickets); }.audit-related-modules span.module-settings { color: var(--module-settings); }
 
+/* Mapa tipo Git: MAIN es la línea horizontal y cada operación se ramifica
+   con el color de su módulo. El recorrido se navega desplazando en horizontal. */
+.audit-trace-panel .panel-head p::after { content: ' Deslizá horizontalmente para recorrer el historial.'; }
+.audit-trace { display: flex; gap: 14px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 42px 8px 12px 34px; min-height: 182px; }
+.audit-trace::before { top: 24px; bottom: auto; left: 30px; right: 8px; width: auto; height: 3px; background: color-mix(in srgb, var(--accent) 72%, var(--line)); }
+.audit-trace::after { content: 'MAIN'; position: sticky; left: 0; top: 0; z-index: 3; align-self: flex-start; margin: -34px 0 0 -28px; padding: 3px 7px; border-radius: 5px; color: #fff; background: var(--accent); font-family: 'Oswald', sans-serif; font-size: .72rem; letter-spacing: .08em; }
+.audit-trace-event { flex: 0 0 min(280px, 76vw); scroll-snap-align: start; border-left: 0; border-top: 3px solid var(--trace-color); padding: 0; margin-top: 0; }
+.audit-trace-node { left: 15px; top: -30px; z-index: 2; background: var(--panel); }.audit-trace-node::after { content: ''; position: absolute; left: 6px; top: 15px; width: 2px; height: 14px; background: var(--trace-color); }
+.audit-trace-content { border-radius: 0 14px 14px 14px; }.audit-trace::-webkit-scrollbar { height: 9px; }.audit-trace::-webkit-scrollbar-thumb { border-radius: 99px; background: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+
 @media (max-width: 980px) {
   .dashboard-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-attention { grid-template-columns: repeat(3, minmax(0, 1fr)); }
