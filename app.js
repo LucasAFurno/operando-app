@@ -2330,10 +2330,10 @@ const ticketsView = (ui) => `
         <form class="form-grid" data-form="ticket">
           <input type="hidden" name="ticketId" value="${editingTicket?.id || ''}" />
           <label>Numero<input type="text" name="number" value="${editingTicket?.number || ''}" placeholder="Se autogenera si lo dejas vacio" /></label>
-          <label>Cliente<select name="customerId" required>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}" ${editingTicket?.customerId === customer.id ? 'selected' : ''}>${customer.fullName}</option>`).join('')}</select></label>
-          <label>Equipo<input type="text" name="device" value="${editingTicket?.device || ''}" required /></label>
+          <label>Cliente *<select name="customerId" required>${editingTicket ? '' : '<option value="" selected disabled>Seleccioná un cliente</option>'}${ui.snapshot.customers.map((customer) => `<option value="${customer.id}" ${editingTicket?.customerId === customer.id ? 'selected' : ''}>${customer.fullName}</option>`).join('')}</select></label>
+          <label>Equipo *<input type="text" name="device" value="${editingTicket?.device || ''}" required /></label>
           <label>Estado<select name="status"><option ${editingTicket?.status === 'Recibido' || !editingTicket ? 'selected' : ''}>Recibido</option><option ${editingTicket?.status === 'En curso' ? 'selected' : ''}>En curso</option><option ${editingTicket?.status === 'Esperando aprobacion' ? 'selected' : ''}>Esperando aprobacion</option><option ${editingTicket?.status === 'Listo para entregar' ? 'selected' : ''}>Listo para entregar</option></select></label>
-          <label class="full-span">Detalle<input type="text" name="issue" value="${editingTicket?.issue || ''}" required /></label>
+          <label class="full-span">Detalle *<input type="text" name="issue" value="${editingTicket?.issue || ''}" required /></label>
           <button type="submit">${editingTicket ? 'Guardar cambios' : 'Guardar ticket'}</button>
           ${editingTicket ? '<button type="button" class="danger-action" data-action="cancel-ticket-edit">Cancelar edicion</button>' : ''}
         </form>
@@ -3755,12 +3755,31 @@ const handleSubmit = async (event) => {
   }
   if (kind === 'ticket') {
     const currentBranchId = getUiState().currentBranch?.id
+    const customerId = String(formData.get('customerId') || '').trim()
+    const device = String(formData.get('device') || '').trim()
+    const issue = String(formData.get('issue') || '').trim()
+    if (!customerId || !device || !issue) {
+      feedbackMessage = 'Completá los campos obligatorios: cliente, equipo y detalle.'
+      ticketFormOpen = true
+      render()
+      return
+    }
+    if (!currentBranchId) {
+      feedbackMessage = 'Seleccioná una sucursal antes de guardar el ticket.'
+      ticketFormOpen = true
+      render()
+      return
+    }
     const result = formData.get('ticketId')
-      ? await store.updateTicket(formData.get('ticketId'), { number: formData.get('number'), customerId: formData.get('customerId'), device: formData.get('device'), issue: formData.get('issue'), status: formData.get('status'), branchId: currentBranchId })
-      : await store.createTicket({ number: formData.get('number'), customerId: formData.get('customerId'), device: formData.get('device'), issue: formData.get('issue'), status: formData.get('status'), branchId: currentBranchId })
+      ? await store.updateTicket(formData.get('ticketId'), { number: String(formData.get('number') || '').trim(), customerId, device, issue, status: formData.get('status'), branchId: currentBranchId })
+      : await store.createTicket({ number: String(formData.get('number') || '').trim(), customerId, device, issue, status: formData.get('status'), branchId: currentBranchId })
     feedbackMessage = result.message || ''
-    ticketEditingId = ''
-    ticketFormOpen = false
+    if (result.ok) {
+      ticketEditingId = ''
+      ticketFormOpen = false
+    } else {
+      ticketFormOpen = true
+    }
   }
   if (kind === 'platform-commerce') {
     const result = await store.updatePlatformCommerce({

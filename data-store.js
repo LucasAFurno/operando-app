@@ -2272,7 +2272,7 @@ export const createBrowserDataStore = (options = {}) => {
         customerId: sale.customerId,
         relatedDocumentId: null,
         number: generateTicketNumber(state, 'POST', sale.branchId),
-        kind: 'postventa',
+        kind: 'ticket',
         type: 'B',
         status: 'Recibido',
         fiscalStatus: 'Interno',
@@ -2553,22 +2553,29 @@ export const createBrowserDataStore = (options = {}) => {
   const createTicket = async (payload) => {
     const denied = ensurePermission(actionPermissions.ticketsWrite)
     if (denied) return denied
+    const customerId = String(payload?.customerId || '').trim()
+    const device = String(payload?.device || '').trim()
+    const issue = String(payload?.issue || '').trim()
+    const branchId = payload?.branchId || getCurrentBranch(state)?.id || null
+    if (!customerId || !device || !issue) return { ok: false, message: 'Completá cliente, equipo y detalle para guardar el ticket.' }
+    if (!branchId) return { ok: false, message: 'Seleccioná una sucursal antes de guardar el ticket.' }
+    if (!getCustomer(state, customerId)) return { ok: false, message: 'El cliente seleccionado ya no está disponible. Actualizá la pantalla e intentá otra vez.' }
     if (cloudCoreAdapter) {
       await cloudCoreAdapter.upsertDocument({
         id: null,
-        branchId: payload.branchId || getCurrentBranch(state)?.id || null,
+        branchId,
         saleId: payload.saleId || null,
-        customerId: payload.customerId || null,
+        customerId,
         relatedDocumentId: null,
         number: payload.number || generateTicketNumber(state, 'TEC', payload.branchId || getCurrentBranch(state)?.id),
-        kind: 'postventa',
+        kind: 'ticket',
         type: 'B',
         status: payload.status || 'Recibido',
         fiscalStatus: 'Interno',
         totalAmount: 0,
         payloadJson: {
-          device: payload.device || '',
-          issue: payload.issue || '',
+          device,
+          issue,
         },
       })
       await syncFromCloud()
@@ -2577,10 +2584,10 @@ export const createBrowserDataStore = (options = {}) => {
     const ticket = {
       id: makeId(),
       number: payload.number || generateTicketNumber(state, 'TEC', payload.branchId || getCurrentBranch(state)?.id),
-      branchId: payload.branchId || getCurrentBranch(state)?.id || null,
-      customerId: payload.customerId || null,
-      device: payload.device,
-      issue: payload.issue,
+      branchId,
+      customerId,
+      device,
+      issue,
       status: payload.status,
       updatedAt: todayDate(),
     }
@@ -2593,22 +2600,29 @@ export const createBrowserDataStore = (options = {}) => {
   const updateTicket = async (ticketId, payload) => {
     const denied = ensurePermission(actionPermissions.ticketsWrite)
     if (denied) return denied
+    const customerId = String(payload?.customerId || '').trim()
+    const device = String(payload?.device || '').trim()
+    const issue = String(payload?.issue || '').trim()
+    const branchId = payload?.branchId || getCurrentBranch(state)?.id || null
+    if (!customerId || !device || !issue) return { ok: false, message: 'Completá cliente, equipo y detalle para guardar el ticket.' }
+    if (!branchId) return { ok: false, message: 'Seleccioná una sucursal antes de guardar el ticket.' }
+    if (!getCustomer(state, customerId)) return { ok: false, message: 'El cliente seleccionado ya no está disponible. Actualizá la pantalla e intentá otra vez.' }
     if (cloudCoreAdapter) {
       await cloudCoreAdapter.upsertDocument({
         id: ticketId,
-        branchId: payload.branchId || getCurrentBranch(state)?.id || null,
+        branchId,
         saleId: payload.saleId || null,
-        customerId: payload.customerId || null,
+        customerId,
         relatedDocumentId: null,
         number: payload.number || '',
-        kind: 'postventa',
+        kind: 'ticket',
         type: 'B',
         status: payload.status || 'Recibido',
         fiscalStatus: 'Interno',
         totalAmount: 0,
         payloadJson: {
-          device: payload.device || '',
-          issue: payload.issue || '',
+          device,
+          issue,
         },
       })
       await syncFromCloud()
@@ -2618,10 +2632,10 @@ export const createBrowserDataStore = (options = {}) => {
     if (!ticket) return { ok: false, message: 'Ticket no encontrado.' }
     const before = clone(ticket)
     ticket.number = payload.number || ticket.number
-    ticket.branchId = payload.branchId || ticket.branchId || getCurrentBranch(state)?.id || null
-    ticket.customerId = payload.customerId || null
-    ticket.device = payload.device
-    ticket.issue = payload.issue
+    ticket.branchId = branchId
+    ticket.customerId = customerId
+    ticket.device = device
+    ticket.issue = issue
     ticket.status = payload.status
     ticket.updatedAt = todayDate()
     pushAudit(state, currentUser().id, 'ticket', ticket.id, 'updated', ticket, before)
