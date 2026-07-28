@@ -4161,7 +4161,8 @@ const bindEvents = () => {
     auditTrace.innerHTML = [...groups.values()].map((group) => {
       const root = group.find((entry) => ['sale', 'purchase_receipt', 'cash_session'].includes(entry.entityType)) || group[0]
       const children = group.filter((entry) => entry !== root)
-      return `<article class="audit-causal-group"><div class="audit-main-node module-${root.modules[0]}"><span>MAIN</span><strong>${actionLabel(root)} ${root.entityLabel}</strong><small>${String(root.createdAt).slice(0, 16).replace('T', ' · ')}</small></div>${children.length ? `<div class="audit-causal-branches">${children.map((entry) => `<div class="audit-causal-branch module-${entry.modules[0]}"><i></i><strong>${entry.moduleLabel}</strong><span>${actionLabel(entry)} ${entry.entityLabel}</span></div>`).join('')}</div>` : '<div class="audit-causal-branches is-empty"><span>Sin efectos vinculados.</span></div>'}</article>`
+      const detail = (entry) => encodeURIComponent(JSON.stringify({ title: `${actionLabel(entry)} ${entry.entityLabel}`, actor: entry.actorName, time: String(entry.createdAt).slice(0, 16).replace('T', ' · '), before: entry.beforeData, after: entry.afterData }))
+      return `<article class="audit-causal-group"><button type="button" class="audit-main-node module-${root.modules[0]}" data-audit-detail="${detail(root)}"><span>MAIN</span><strong>${actionLabel(root)} ${root.entityLabel}</strong><small>${String(root.createdAt).slice(0, 16).replace('T', ' · ')}</small></button>${children.length ? `<div class="audit-causal-branches">${children.map((entry) => `<button type="button" class="audit-causal-branch module-${entry.modules[0]}" data-audit-detail="${detail(entry)}"><i></i><strong>${entry.moduleLabel}</strong><span>${actionLabel(entry)} ${entry.entityLabel}</span></button>`).join('')}</div>` : '<div class="audit-causal-branches is-empty"><span>Sin efectos vinculados.</span></div>'}</article>`
     }).join('') || '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'
   }
   if (auditTrace?.querySelector('.audit-trace-event') && !auditTrace.querySelector('.audit-branch-label')) {
@@ -4182,6 +4183,14 @@ const bindEvents = () => {
             : 'relation'
     }
   }
+  for (const node of document.querySelectorAll('[data-audit-detail]')) node.addEventListener('click', () => {
+    const detail = JSON.parse(decodeURIComponent(node.dataset.auditDetail || ''))
+    const panel = document.querySelector('.audit-detail-panel') || document.createElement('aside')
+    panel.className = 'audit-detail-panel panel'
+    panel.innerHTML = `<button type="button" aria-label="Cerrar detalle">×</button><strong>${escapeHtml(detail.title)}</strong><p>${escapeHtml(detail.actor || 'Sistema')} · ${escapeHtml(detail.time)}</p><pre>${escapeHtml(JSON.stringify(detail.after || detail.before || {}, null, 2))}</pre>`
+    auditTrace?.closest('.panel')?.after(panel)
+    panel.querySelector('button')?.addEventListener('click', () => panel.remove())
+  })
   for (const input of document.querySelectorAll('.permission-option input')) input.addEventListener('change', () => {
     const option = input.closest('.permission-option')
     const status = option?.querySelector('small')
