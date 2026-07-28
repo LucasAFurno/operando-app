@@ -127,6 +127,7 @@ const permissionCatalog = {
   invoices: 'invoices:view',
   tickets: 'tickets:view',
   reports: 'reports:view',
+  audit: 'audit:view',
   settings: 'settings:view',
 }
 
@@ -158,13 +159,14 @@ const moduleCatalog = {
   invoices: { key: 'invoices', name: 'Facturacion', description: 'Comprobantes y numeracion' },
   tickets: { key: 'tickets', name: 'Tickets', description: 'Seguimiento postventa o tecnico' },
   reports: { key: 'reports', name: 'Reportes', description: 'Reportes y exportes' },
+  audit: { key: 'audit', name: 'Auditoría', description: 'Trazabilidad de operaciones y cambios' },
   settings: { key: 'settings', name: 'Ajustes', description: 'Configuracion del sistema' },
 }
 
 const modulePresets = {
-  basic: ['dashboard', 'products', 'purchases', 'invoices', 'settings'],
-  retail: ['dashboard', 'customers', 'sales', 'cash', 'products', 'invoices', 'settings'],
-  full: ['dashboard', 'customers', 'sales', 'cash', 'products', 'purchases', 'invoices', 'reports', 'settings'],
+  basic: ['dashboard', 'products', 'purchases', 'invoices', 'audit', 'settings'],
+  retail: ['dashboard', 'customers', 'sales', 'cash', 'products', 'invoices', 'audit', 'settings'],
+  full: ['dashboard', 'customers', 'sales', 'cash', 'products', 'purchases', 'invoices', 'reports', 'audit', 'settings'],
   multi: Object.keys(moduleCatalog),
 }
 
@@ -226,6 +228,7 @@ const inferUserPermissionSet = (entry) => {
   const roleKey = roleKeysById[entry?.roleId]
   if (entry?.isPlatformAdmin || entry?.isOwner || roleKey === 'admin') {
     if (!permissions.includes(permissionCatalog.dashboard)) permissions.push(permissionCatalog.dashboard)
+    if (!permissions.includes(permissionCatalog.audit)) permissions.push(permissionCatalog.audit)
     if (!permissions.includes(permissionCatalog.settings)) permissions.push(permissionCatalog.settings)
   }
   return permissions
@@ -240,6 +243,7 @@ const inferUserModules = (entry, enabledModules = []) => {
     : [...availableModules]
   if (!isAdministrator) return scopedModules.filter((moduleKey) => moduleKey !== 'settings')
   if (!scopedModules.includes('dashboard')) scopedModules.unshift('dashboard')
+  if (!scopedModules.includes('audit')) scopedModules.push('audit')
   if (!scopedModules.includes('settings')) scopedModules.push('settings')
   return scopedModules
 }

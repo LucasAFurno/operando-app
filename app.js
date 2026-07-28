@@ -63,6 +63,7 @@ const navItems = [
   { id: 'facturacion', moduleKey: 'invoices', label: 'Facturas', permission: 'invoices:view', icon: icon('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6"/><path d="M10 16h6"/>') },
   { id: 'tickets', moduleKey: 'tickets', label: 'Tickets', permission: 'tickets:view', icon: icon('<rect x="4" y="5" width="16" height="10" rx="2"/><path d="M8 19h8"/><path d="M10 15v4"/><path d="M14 15v4"/>') },
   { id: 'reportes', moduleKey: 'reports', label: 'Reportes', permission: 'reports:view', icon: icon('<path d="M5 19V9"/><path d="M12 19V5"/><path d="M19 19v-8"/><path d="M3 19h18"/>') },
+  { id: 'auditoria', moduleKey: 'audit', label: 'Auditoría', permission: 'audit:view', icon: icon('<path d="M12 3v9l5 3"/><circle cx="12" cy="12" r="9"/><path d="M3 12h2M19 12h2"/>') },
   { id: 'mi-admin', moduleKey: 'settings', label: 'Mi admin', permission: 'settings:view', platformOnly: true, icon: icon('<path d="M4 19.5v-9l8-5 8 5v9"/><path d="M9 19.5v-4h6v4"/><path d="M8 9h8"/><path d="M12 3v3"/>') },
   { id: 'ajustes', moduleKey: 'settings', label: 'Ajustes', permission: 'settings:view', icon: icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-.33-1A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.33H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1-.33A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 .33 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 8a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .33H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1 .33 1.65 1.65 0 0 0-.51 1.34Z"/>') },
 ]
@@ -132,6 +133,11 @@ let purchaseReceiptsExpanded = false
 let purchaseSuppliersExpanded = false
 let dashboardStockExpanded = false
 let dashboardAuditExpanded = false
+let auditModuleFilter = 'all'
+let auditPeriodFilter = 'today'
+let auditSearchQuery = ''
+let auditDateFrom = ''
+let auditDateTo = ''
 let supplierMapPreviewId = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
@@ -296,7 +302,7 @@ const sectionDomains = {
   clientes: ['customers', 'sales'], ventas: ['sales', 'cash', 'stock', 'customers', 'invoices'], caja: ['cash', 'sales'],
   sucursales: ['branches'], cajeros: ['registers'], productos: ['products', 'stock'],
   compras: ['purchases', 'products', 'stock', 'suppliers'], facturacion: ['invoices', 'sales', 'customers'],
-  tickets: ['tickets', 'sales', 'customers'], reportes: ['sales', 'cash', 'stock', 'purchases', 'invoices'],
+  tickets: ['tickets', 'sales', 'customers'], reportes: ['sales', 'cash', 'stock', 'purchases', 'invoices'], auditoria: ['audit', 'sales', 'cash', 'stock', 'purchases', 'products', 'invoices', 'settings'],
   ajustes: ['settings', 'branches', 'registers'], 'mi-admin': ['platform'],
 }
 
@@ -567,6 +573,7 @@ const modulePermissionMap = {
   invoices: 'invoices:view',
   tickets: 'tickets:view',
   reports: 'reports:view',
+  audit: 'audit:view',
   settings: 'settings:view',
 }
 
@@ -581,6 +588,7 @@ const normalizeUserModuleScope = (snapshot, entry = {}, fallbackRoleId = '') => 
   const businessModules = Array.isArray(snapshot.business?.enabledModules) ? [...snapshot.business.enabledModules] : []
   if (isAdministrator) {
     if (!businessModules.includes('dashboard')) businessModules.unshift('dashboard')
+    if (!businessModules.includes('audit')) businessModules.push('audit')
     if (!businessModules.includes('settings')) businessModules.push('settings')
   }
   const overrides = Array.isArray(entry.allowedModules) ? entry.allowedModules.filter(Boolean) : []
@@ -588,6 +596,7 @@ const normalizeUserModuleScope = (snapshot, entry = {}, fallbackRoleId = '') => 
     const scopedModules = businessModules.filter((moduleKey) => overrides.includes(moduleKey))
     if (isAdministrator) {
       if (!scopedModules.includes('dashboard')) scopedModules.unshift('dashboard')
+      if (!scopedModules.includes('audit')) scopedModules.push('audit')
       if (!scopedModules.includes('settings')) scopedModules.push('settings')
     }
     if (scopedModules.length) return isAdministrator ? scopedModules : scopedModules.filter((moduleKey) => moduleKey !== 'settings')
@@ -982,7 +991,16 @@ const getUiState = () => {
       effectivePermissions: normalizeUserPermissionSet(snapshot, entry),
     }
   })
-  const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').slice(0, 8).map((log) => ({ ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema' }))
+  const auditModuleByEntity = {
+    sale: ['sales', 'cash', 'stock'], cash_movement: ['cash'], cash_session: ['cash'],
+    product: ['products', 'stock'], stock_adjustment: ['stock', 'products'], stock_transfer: ['stock', 'products'],
+    purchase_receipt: ['purchases', 'products', 'stock'], supplier: ['purchases'], customer: ['customers'],
+    invoice: ['invoices', 'sales'], ticket: ['tickets'], branch: ['settings'], register: ['settings', 'cash'],
+    user: ['settings'], business: ['settings'], business_module: ['settings'], business_plan: ['settings'], session: ['settings'], system: ['settings'],
+  }
+  const auditModuleLabels = { sales: 'Ventas', cash: 'Caja', stock: 'Stock', products: 'Productos', purchases: 'Compras', customers: 'Clientes', invoices: 'Facturación', tickets: 'Tickets', settings: 'Configuración' }
+  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', branch: 'sucursal', register: 'caja', user: 'usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
+  const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => ({ ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules: auditModuleByEntity[log.entityType] || ['settings'], moduleLabel: auditModuleLabels[(auditModuleByEntity[log.entityType] || ['settings'])[0]], entityLabel: auditEntityLabels[log.entityType] || log.entityType || 'registro' }))
   const auditActionLabels = {
     created: 'Creó un registro',
     updated: 'Actualizó un registro',
@@ -1034,6 +1052,7 @@ const getUiState = () => {
     enrichedInvoices,
     enrichedTickets,
     enrichedAudit,
+    auditModuleLabels,
     recentCommerceActivity,
     enrichedUsers,
     enrichedReceipts: byRecentDate(snapshot.purchaseReceipts, 'receivedAt').map((receipt) => ({
@@ -1577,7 +1596,7 @@ const dashboardViewV2 = (ui) => {
       </div></article>
       <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Actividad reciente</h3><p>Últimos movimientos registrados</p></div></div><div class="dashboard-activity-list">
         ${visibleActivity.length ? visibleActivity.map((activity) => `<div class="dashboard-activity-row"><span class="dashboard-activity-icon" aria-hidden="true">${dashboardActivityIcon(activity)}</span><div><strong>${escapeHtml(activity.title)}</strong><p>${escapeHtml(activity.detail)}</p></div><time>${activityTime(activity.createdAt)}</time></div>`).join('') : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
-      </div>${ui.recentCommerceActivity.length > 4 ? `<button type="button" class="dashboard-audit-link" data-action="toggle-dashboard-audit">${dashboardAuditExpanded ? 'Ver menos' : 'Ver auditoría'} <span aria-hidden="true">→</span></button>` : ''}</article>
+      </div>${ui.recentCommerceActivity.length ? '<button type="button" class="dashboard-audit-link" data-dashboard-section="auditoria">Abrir auditoría <span aria-hidden="true">→</span></button>' : ''}</article>
     </section>
   </section>
 `
@@ -2559,6 +2578,20 @@ const registersViewV2 = (ui) => `
 `})()}
 `
 
+const auditView = (ui) => {
+  const moduleColors = { sales: '#f87171', cash: '#fbbf24', stock: '#60a5fa', products: '#a78bfa', purchases: '#34d399', customers: '#fb7185', invoices: '#22d3ee', tickets: '#c084fc', settings: '#94a3b8' }
+  const actionLabels = { created: 'Creó', updated: 'Actualizó', deleted: 'Eliminó', cancelled: 'Anuló', returned: 'Registró una devolución', opened: 'Abrió', closed: 'Cerró', enabled: 'Habilitó', disabled: 'Deshabilitó', created_from_sale: 'Generó desde una venta', created_from_return: 'Generó desde una devolución', imported: 'Importó', reset: 'Restableció', registered: 'Registró', deactivated: 'Desactivó', seed_initialized: 'Inicializó' }
+  const now = new Date(); const beginningOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const periodStart = auditPeriodFilter === 'today' ? beginningOfDay : auditPeriodFilter === 'week' ? new Date(beginningOfDay.getTime() - (6 * 86400000)) : auditPeriodFilter === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : null
+  const query = auditSearchQuery.trim().toLocaleLowerCase()
+  const entries = ui.enrichedAudit.filter((entry) => { const createdAt = new Date(entry.createdAt); if (periodStart && createdAt < periodStart) return false; if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false; if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false; if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false; return !query || [entry.actorName, entry.entityLabel, entry.action, entry.entityId, entry.moduleLabel].join(' ').toLocaleLowerCase().includes(query) })
+  const counts = Object.keys(ui.auditModuleLabels).map((key) => ({ key, label: ui.auditModuleLabels[key], count: entries.filter((entry) => entry.modules.includes(key)).length })).filter((item) => item.count)
+  const total = Math.max(1, counts.reduce((sum, item) => sum + item.count, 0)); let offset = 0
+  const donut = counts.map((item) => { const start = Math.round((offset / total) * 100); offset += item.count; return `${moduleColors[item.key]} ${start}% ${Math.round((offset / total) * 100)}%` }).join(', ') || '#334155 0 100%'
+  const sensitiveCount = entries.filter((entry) => ['deleted', 'cancelled', 'returned', 'reset', 'deactivated'].includes(entry.action)).length
+  return `<section class="view-section audit-view"><div class="section-header"><div><p class="kicker">Control y trazabilidad</p><h2>Auditoría</h2><p class="section-description">Seguí cada cambio entre módulos, desde la operación que lo originó.</p></div><div class="panel-inline-stats section-inline-stats"><span class="panel-inline-stat"><strong>${entries.length}</strong><span>Eventos</span></span><span class="panel-inline-stat"><strong>${sensitiveCount}</strong><span>Para revisar</span></span></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel audit-controls"><div class="audit-periods" aria-label="Período de auditoría">${[['today', 'Hoy'], ['week', '7 días'], ['month', 'Este mes'], ['custom', 'Personalizado']].map(([key, label]) => `<button type="button" class="audit-filter-button ${auditPeriodFilter === key ? 'is-active' : ''}" data-audit-period="${key}">${label}</button>`).join('')}</div><div class="audit-filter-fields"><label class="audit-search"><span>Buscar</span><input type="search" data-audit-search value="${escapeHtml(auditSearchQuery)}" placeholder="Usuario, operación o módulo" /></label>${auditPeriodFilter === 'custom' ? `<label>Desde<input type="date" data-audit-date="from" value="${auditDateFrom}" /></label><label>Hasta<input type="date" data-audit-date="to" value="${auditDateTo}" /></label>` : ''}</div></section><section class="audit-overview"><article class="panel audit-module-panel"><div class="panel-head"><div><h3>Ramas por módulo</h3><p>Elegí un módulo para seguir su recorrido.</p></div></div><div class="audit-module-filters"><button type="button" class="audit-module-chip ${auditModuleFilter === 'all' ? 'is-active' : ''}" data-audit-module="all">Todos <b>${entries.length}</b></button>${counts.map((item) => `<button type="button" class="audit-module-chip module-${item.key} ${auditModuleFilter === item.key ? 'is-active' : ''}" data-audit-module="${item.key}"><i></i>${item.label} <b>${item.count}</b></button>`).join('')}</div></article><article class="panel audit-distribution"><div class="panel-head"><div><h3>Distribución</h3><p>Eventos del período seleccionado</p></div></div><div class="audit-donut-row"><div class="audit-donut" style="--audit-donut: conic-gradient(${donut})"><strong>${entries.length}</strong><span>eventos</span></div><div class="audit-legend">${counts.slice(0, 5).map((item) => `<span class="module-${item.key}"><i></i>${item.label}<b>${item.count}</b></span>`).join('') || '<span>Sin actividad en este período.</span>'}</div></div></article></section><section class="panel audit-trace-panel"><div class="panel-head"><div><h3>Línea de trazabilidad</h3><p>Los puntos de color muestran los módulos relacionados con cada acción.</p></div></div><div class="audit-trace">${entries.length ? entries.map((entry) => `<article class="audit-trace-event module-${entry.modules[0]}"><div class="audit-trace-node"><i></i></div><div class="audit-trace-content"><div class="audit-event-topline"><span class="audit-module-tag module-${entry.modules[0]}">${entry.moduleLabel}</span><time>${String(entry.createdAt || '').slice(0, 16).replace('T', ' · ')}</time></div><strong>${actionLabels[entry.action] || 'Registró'} ${entry.entityLabel}</strong><p>Por ${escapeHtml(entry.actorName)}${entry.entityId ? ` · Ref. ${escapeHtml(String(entry.entityId).slice(0, 8))}` : ''}</p><div class="audit-related-modules">${entry.modules.map((module) => `<span class="module-${module}" title="${ui.auditModuleLabels[module]}"><i></i>${ui.auditModuleLabels[module]}</span>`).join('')}</div></div></article>`).join('') : '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'}</div></section></section>`
+}
+
 const reportsView = (ui) => `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Reportes</p><h2>Indicadores y movimientos</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${money(ui.reportScopedSales.reduce((sum, sale) => sum + sale.totalAmount, 0))}</strong><span>Ventas filtradas</span></span>
@@ -2929,6 +2962,7 @@ const renderCurrentView = (ui) => {
     case 'facturacion': return invoicesViewV2(ui)
     case 'tickets': return ticketsViewV2(ui)
     case 'reportes': return reportsView(ui)
+    case 'auditoria': return auditView(ui)
     case 'mi-admin': return ui.user?.isPlatformAdmin ? ownerAdminViewV2(ui) : settingsViewV2(ui)
     case 'ajustes': return canManageCommerceSettings ? settingsViewV2(ui) : basicSettingsView(ui)
     default: return dashboardViewV2(ui)
@@ -4066,6 +4100,13 @@ const bindEvents = () => {
     dashboardAuditExpanded = !dashboardAuditExpanded
     render()
   })
+  for (const button of document.querySelectorAll('[data-audit-period]')) button.addEventListener('click', () => { auditPeriodFilter = button.dataset.auditPeriod || 'today'; render() })
+  for (const button of document.querySelectorAll('[data-audit-module]')) button.addEventListener('click', () => { auditModuleFilter = button.dataset.auditModule || 'all'; render() })
+  for (const input of document.querySelectorAll('[data-audit-search]')) {
+    input.addEventListener('change', () => { auditSearchQuery = input.value; render() })
+    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); auditSearchQuery = input.value; render() } })
+  }
+  for (const input of document.querySelectorAll('[data-audit-date]')) input.addEventListener('change', () => { if (input.dataset.auditDate === 'from') auditDateFrom = input.value; if (input.dataset.auditDate === 'to') auditDateTo = input.value; render() })
   for (const input of document.querySelectorAll('.permission-option input')) input.addEventListener('change', () => {
     const option = input.closest('.permission-option')
     const status = option?.querySelector('small')
