@@ -4117,17 +4117,19 @@ input, select { outline: none; }
   display: grid;
   grid-template-columns: minmax(0, 1fr) 92px 100px;
   padding: 13px 14px;
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-color: var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 15px 15px 0;
   background: color-mix(in srgb, var(--panel) 97%, #000);
 }
 
 .pos-cart .sale-cart-line {
-  animation: sale-line-glow 5.6s ease-in-out infinite;
+  animation: sale-line-edge-pulse 5.6s ease-in-out infinite;
 }
 
-@keyframes sale-line-glow {
-  0%, 100% { border-color: color-mix(in srgb, var(--accent) 26%, var(--line)); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
-  50% { border-color: color-mix(in srgb, var(--accent) 66%, var(--line)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 9%, transparent), 0 7px 20px rgba(0,0,0,.11); }
+@keyframes sale-line-edge-pulse {
+  0%, 100% { border-left-color: color-mix(in srgb, var(--accent) 46%, var(--line)); box-shadow: none; }
+  50% { border-left-color: var(--accent); box-shadow: -3px 0 12px color-mix(in srgb, var(--accent) 30%, transparent); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4281,6 +4283,11 @@ input, select { outline: none; }
   min-height: 38px;
   padding: 8px 10px;
 }
+
+.pos-payment-advanced .pos-discount-field { display: grid; gap: 5px; }
+.pos-discount-control { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 7px; }
+.pos-discount-control select { min-height: 38px; padding: 8px; }
+.pos-discount-field small { color: var(--muted); font-size: .7rem; }
 
 .pos-payment-panel .sales-payment-detail,
 .pos-payment-panel .pos-charge-button,

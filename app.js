@@ -96,6 +96,7 @@ let liveSyncDebounceTimer = null
 let operationalRealtimeClient = null
 let operationalRealtimeChannel = null
 let unsubscribeOperationalChanges = null
+const pendingOperationalDomains = new Set()
 let customerFormOpen = false
 let customerEditingId = ''
 let customerSearchQuery = ''
@@ -259,14 +260,48 @@ const hasPendingOperationalForm = () => Boolean(
   || registerFormOpen || customerFormOpen || invoicePaymentId
 ) || Array.from(document.forms).some(formHasUnsavedChanges)
 
+const operationDomains = {
+  app_public_create_sale: ['sales', 'cash', 'stock', 'customers', 'invoices', 'audit'],
+  app_public_register_invoice_payment: ['sales', 'cash', 'customers', 'invoices', 'audit'],
+  app_public_open_cash_session: ['cash', 'audit'],
+  app_public_close_cash_session: ['cash', 'audit'],
+  app_public_create_cash_movement: ['cash', 'audit'],
+  app_public_upsert_product: ['products', 'stock', 'audit'],
+  app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock', 'suppliers', 'audit'],
+  app_public_upsert_customer: ['customers', 'sales', 'audit'],
+  app_public_upsert_supplier: ['suppliers', 'purchases', 'audit'],
+  app_public_upsert_branch: ['branches', 'registers', 'audit'],
+  app_public_upsert_register: ['registers', 'cash', 'audit'],
+  app_public_upsert_document: ['invoices', 'tickets', 'audit'],
+  app_public_update_commerce_profile: ['settings'],
+  app_public_update_commerce_runtime: ['settings'],
+  app_public_upsert_user: ['settings'],
+  app_public_toggle_user_active: ['settings'],
+  app_public_platform_update_commerce: ['platform'],
+}
+
+const sectionDomains = {
+  dashboard: ['sales', 'cash', 'stock', 'customers', 'invoices', 'purchases', 'audit'],
+  clientes: ['customers', 'sales'], ventas: ['sales', 'cash', 'stock', 'customers', 'invoices'], caja: ['cash', 'sales'],
+  sucursales: ['branches'], cajeros: ['registers'], productos: ['products', 'stock'],
+  compras: ['purchases', 'products', 'stock', 'suppliers'], facturacion: ['invoices', 'sales', 'customers'],
+  tickets: ['tickets', 'sales', 'customers'], reportes: ['sales', 'cash', 'stock', 'purchases', 'invoices'],
+  ajustes: ['settings', 'branches', 'registers'], 'mi-admin': ['platform'],
+}
+
+const isCurrentSectionAffected = () => (sectionDomains[activeSection] || []).some((domain) => pendingOperationalDomains.has(domain))
+
 const syncLiveData = async () => {
-  if (liveSyncBusy || cloudSyncBusy || document.hidden || !store?.isAuthenticated?.()) return
+  if (liveSyncBusy || cloudSyncBusy || document.hidden || !store?.isAuthenticated?.() || hasPendingOperationalForm()) return
   liveSyncBusy = true
   try {
     const result = await store.syncFromCloud()
     // No redibujamos mientras alguien está completando una operación: se evita
     // perder lo que escribió. Los datos sí quedan listos para mostrarse al cerrar el formulario.
-    if (result?.ok && !hasPendingOperationalForm()) render()
+    if (result?.ok) {
+      pendingOperationalDomains.clear()
+      render()
+    }
   } catch {
     // Una falla momentánea de red no debe interrumpir la operación de caja.
   } finally {
@@ -280,6 +315,12 @@ const queueLiveSync = () => {
     liveSyncDebounceTimer = null
     void syncLiveData()
   }, 120)
+}
+
+const receiveOperationalChange = (payload = {}) => {
+  const domains = operationDomains[payload.operation] || []
+  domains.forEach((domain) => pendingOperationalDomains.add(domain))
+  if (isCurrentSectionAffected()) queueLiveSync()
 }
 
 const stopOperationalRealtime = () => {
@@ -303,12 +344,12 @@ const startOperationalRealtime = () => {
   })
   operationalRealtimeChannel = operationalRealtimeClient
     .channel(`commerce:${commerceId}:operations`, { config: { private: false, broadcast: { self: false, ack: false } } })
-    .on('broadcast', { event: 'core_changed' }, queueLiveSync)
+    .on('broadcast', { event: 'core_changed' }, (message) => receiveOperationalChange(message?.payload))
     .subscribe()
 
-  unsubscribeOperationalChanges = store.subscribeToOperationalChanges(() => {
+  unsubscribeOperationalChanges = store.subscribeToOperationalChanges((operation) => {
     if (!operationalRealtimeChannel) return
-    void operationalRealtimeChannel.send({ type: 'broadcast', event: 'core_changed', payload: {} })
+    void operationalRealtimeChannel.send({ type: 'broadcast', event: 'core_changed', payload: { operation } })
   })
 
   document.addEventListener('visibilitychange', () => {
@@ -1692,7 +1733,7 @@ const salesViewV2 = (ui) => `
               <details class="sales-payment-detail"><summary>Mas opciones</summary>
                 <div class="pos-payment-advanced">
                   <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
-                  <label class="pos-discount-field">Descuento<input type="number" min="0" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></label>
+                  <label class="pos-discount-field"><span>Descuento</span><div class="pos-discount-control"><select name="discountMode" aria-label="Tipo de descuento"><option value="amount">$</option><option value="percent">%</option></select><input type="number" min="0" name="discountValue" value="${editingSale?.discountAmount || 0}" aria-label="Valor del descuento" /><input type="hidden" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></div><small data-discount-help>Importe en pesos</small></label>
                 </div>
                 <details class="pos-payment-breakdown"><summary>Desglosar cobro</summary><div class="payment-split-grid">
                 <label>Canal<select name="channel"><option ${editingSale?.channel === 'Mostrador' ? 'selected' : ''}>Mostrador</option><option ${editingSale?.channel === 'WhatsApp' ? 'selected' : ''}>WhatsApp</option><option ${editingSale?.channel === 'Transferencia' ? 'selected' : ''}>Transferencia</option><option ${editingSale?.channel === 'Mercado Libre' ? 'selected' : ''}>Mercado Libre</option></select></label>
@@ -3772,7 +3813,13 @@ const bindEvents = () => {
       const lineTotal = input.closest('.cart-line')?.querySelector('.cart-line-total')
       if (lineTotal) lineTotal.textContent = money(quantity * price)
     }
-    const discount = Math.max(0, Number(document.querySelector('input[name="discountAmount"]')?.value || 0))
+    const discountValue = Math.max(0, Number(document.querySelector('input[name="discountValue"]')?.value || 0))
+    const discountMode = document.querySelector('select[name="discountMode"]')?.value || 'amount'
+    const discount = discountMode === 'percent' ? Math.min(subtotal, subtotal * Math.min(100, discountValue) / 100) : Math.min(subtotal, discountValue)
+    const discountAmountInput = document.querySelector('input[name="discountAmount"]')
+    if (discountAmountInput) discountAmountInput.value = String(discount)
+    const discountHelp = document.querySelector('[data-discount-help]')
+    if (discountHelp) discountHelp.textContent = discountMode === 'percent' ? `${discountValue}% = ${money(discount)}` : 'Importe en pesos'
     const total = Math.max(0, subtotal - discount)
     const totalOutput = document.querySelector('[data-sale-total]')
     if (totalOutput) totalOutput.textContent = money(total)
@@ -3791,8 +3838,10 @@ const bindEvents = () => {
       updateSaleTotals()
     })
   }
-  const saleDiscountInput = document.querySelector('input[name="discountAmount"]')
+  const saleDiscountInput = document.querySelector('input[name="discountValue"]')
   if (saleDiscountInput) saleDiscountInput.addEventListener('input', updateSaleTotals)
+  const saleDiscountMode = document.querySelector('select[name="discountMode"]')
+  if (saleDiscountMode) saleDiscountMode.addEventListener('change', updateSaleTotals)
   const quickAddInput = document.querySelector('input[name="quickAddCode"]')
   const runQuickAdd = () => {
     const currentCode = String(quickAddInput?.value || '').trim()
@@ -3900,6 +3949,7 @@ const bindEvents = () => {
     // arriba, que facilita empezar cada vista desde su encabezado.
     if (window.matchMedia('(max-width: 880px)').matches) requestScrollTop()
     render()
+    if (isCurrentSectionAffected()) queueLiveSync()
   })
   for (const button of document.querySelectorAll('[data-settings-panel]')) {
     button.addEventListener('click', () => {
