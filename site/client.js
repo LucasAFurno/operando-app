@@ -89,6 +89,17 @@ let reportDateTo = ''
 let saleDraftQuantities = {}
 let saleQuickAddCode = ''
 let saleCustomerSearchQuery = ''
+let saleOperationId = ''
+let saleSubmissionInFlight = false
+const makeSaleOperationId = () => {
+  try {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
+  } catch {
+    // The fallback preserves the UUID format accepted by the cloud RPC.
+  }
+  const randomHex = () => Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0')
+  return `${randomHex()}-${randomHex().slice(0, 4)}-4${randomHex().slice(0, 3)}-8${randomHex().slice(0, 3)}-${randomHex()}${randomHex().slice(0, 4)}`
+}
 let topbarSearch = ''
 let cloudSyncBusy = false
 let liveSyncBusy = false
@@ -3765,6 +3776,7 @@ const handleSubmit = async (event) => {
     if (result.ok) supplierPaymentDraft = null
   }
   if (kind === 'sale') {
+    if (!formData.get('saleId') && saleSubmissionInFlight) return
     const items = []
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('qty_') && Number(value) > 0) items.push({ productId: key.replace('qty_', ''), quantity: Number(value) })
@@ -3778,7 +3790,16 @@ const handleSubmit = async (event) => {
     const isPaid = paidControl
       ? paidControl.checked
       : paymentMethod !== 'account' && (!declaredPayment || declaredPayment >= saleTotal)
-    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
+    if (!formData.get('saleId')) {
+      saleOperationId ||= makeSaleOperationId()
+      saleSubmissionInFlight = true
+      const submitButton = form.querySelector('button[type="submit"]')
+      if (submitButton) {
+        submitButton.disabled = true
+        submitButton.textContent = 'Registrando venta…'
+      }
+    }
+    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items, operationId: formData.get('saleId') ? null : saleOperationId }
     const result = formData.get('saleId')
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
@@ -3787,11 +3808,14 @@ const handleSubmit = async (event) => {
     saleDraftQuantities = {}
     saleQuickAddCode = ''
     saleCustomerSearchQuery = ''
+    saleOperationId = ''
+    saleSubmissionInFlight = false
     saleFormOpen = false
   }
 
   form.reset()
   } catch (error) {
+    if (kind === 'sale') saleSubmissionInFlight = false
     feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo completar la accion.', kind === 'instance-setup' ? 'signup' : 'login')
   }
   render()

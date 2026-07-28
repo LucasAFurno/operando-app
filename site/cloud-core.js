@@ -220,7 +220,7 @@ export const createSupabaseCoreAdapter = (config) => {
       })
     },
     async createSale(payload) {
-      return rpc('app_public_create_sale', {
+      const request = {
         p_session_token: getSessionToken(),
         p_customer_id: payload?.customerId || null,
         p_channel: payload?.channel || 'Mostrador',
@@ -238,7 +238,17 @@ export const createSupabaseCoreAdapter = (config) => {
         p_items: Array.isArray(payload?.items) ? payload.items : [],
         p_branch_id: payload?.branchId || null,
         p_register_id: payload?.registerId || null,
-      })
+        p_operation_id: payload?.operationId || null,
+      }
+      try {
+        return await rpc('app_public_create_sale', request)
+      } catch (error) {
+        // Permite publicar cliente y migracion en cualquier orden. La proteccion
+        // se activa apenas la base conoce p_operation_id.
+        if (!payload?.operationId || !/p_operation_id|could not find.*app_public_create_sale/i.test(String(error?.message || ''))) throw error
+        const { p_operation_id: _ignored, ...legacyRequest } = request
+        return rpc('app_public_create_sale', legacyRequest)
+      }
     },
     async registerInvoicePayment(payload) {
       return rpc('app_public_register_invoice_payment', { p_session_token: getSessionToken(), p_invoice_id: payload?.invoiceId || null, p_method_key: payload?.method || 'transfer', p_amount: Number(payload?.amount || 0), p_reference: payload?.reference || '', p_echeq_details: payload?.echeqDetails || {} })
