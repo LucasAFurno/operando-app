@@ -89,6 +89,17 @@ let reportDateTo = ''
 let saleDraftQuantities = {}
 let saleQuickAddCode = ''
 let saleCustomerSearchQuery = ''
+let saleOperationId = ''
+let saleSubmissionInFlight = false
+const makeSaleOperationId = () => {
+  try {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
+  } catch {
+    // The fallback preserves the UUID format accepted by the cloud RPC.
+  }
+  const randomHex = () => Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0')
+  return `${randomHex()}-${randomHex().slice(0, 4)}-4${randomHex().slice(0, 3)}-8${randomHex().slice(0, 3)}-${randomHex()}${randomHex().slice(0, 4)}`
+}
 let topbarSearch = ''
 let cloudSyncBusy = false
 let liveSyncBusy = false
@@ -1727,12 +1738,11 @@ const salesViewV2 = (ui) => `
               </div>
             </section>
             <aside class="pos-payment-panel">
-              <label class="pos-customer-field">Cliente<div class="pos-customer-search"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente o dejar Mostrador" autocomplete="off" list="sale-customer-options" aria-label="Buscar cliente" /><datalist id="sale-customer-options">${ui.snapshot.customers.map((customer) => `<option value="${escapeHtml(customer.fullName)}">${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><button type="button" class="pos-customer-counter" data-action="set-counter-customer">Mostrador</button></div></label>
+              <label class="pos-customer-field">Cliente<div class="pos-customer-search"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente o dejar Mostrador" autocomplete="off" list="sale-customer-options" aria-label="Buscar cliente" /><datalist id="sale-customer-options">${ui.snapshot.customers.map((customer) => `<option value="${escapeHtml(customer.fullName)}">${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div><label class="pos-invoice-toggle" title="Generar comprobante interno al cobrar"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><button type="button" class="pos-customer-counter" data-action="set-counter-customer">Mostrador</button></div></label>
               <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
               <label class="pos-echeq-field" data-echeq-field hidden>Número de e-cheq<input type="text" name="echeqNumber" placeholder="Ej.: 00123456" autocomplete="off" /></label>
               <details class="sales-payment-detail"><summary>Mas opciones</summary>
                 <div class="pos-payment-advanced">
-                  <label class="checkbox-row compact-toggle"><input type="checkbox" name="autoInvoice" /><span>Facturar venta</span></label>
                   <label class="pos-discount-field"><span>Descuento</span><div class="pos-discount-control"><select name="discountMode" aria-label="Tipo de descuento"><option value="amount">$</option><option value="percent">%</option></select><input type="number" min="0" name="discountValue" value="${editingSale?.discountAmount || 0}" aria-label="Valor del descuento" /><input type="hidden" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></div><small data-discount-help>Importe en pesos</small></label>
                 </div>
                 <details class="pos-payment-breakdown"><summary>Desglosar cobro</summary><div class="payment-split-grid">
@@ -3765,6 +3775,7 @@ const handleSubmit = async (event) => {
     if (result.ok) supplierPaymentDraft = null
   }
   if (kind === 'sale') {
+    if (!formData.get('saleId') && saleSubmissionInFlight) return
     const items = []
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('qty_') && Number(value) > 0) items.push({ productId: key.replace('qty_', ''), quantity: Number(value) })
@@ -3778,7 +3789,16 @@ const handleSubmit = async (event) => {
     const isPaid = paidControl
       ? paidControl.checked
       : paymentMethod !== 'account' && (!declaredPayment || declaredPayment >= saleTotal)
-    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items }
+    if (!formData.get('saleId')) {
+      saleOperationId ||= makeSaleOperationId()
+      saleSubmissionInFlight = true
+      const submitButton = form.querySelector('button[type="submit"]')
+      if (submitButton) {
+        submitButton.disabled = true
+        submitButton.textContent = 'Registrando venta…'
+      }
+    }
+    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items, operationId: formData.get('saleId') ? null : saleOperationId }
     const result = formData.get('saleId')
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
@@ -3787,11 +3807,14 @@ const handleSubmit = async (event) => {
     saleDraftQuantities = {}
     saleQuickAddCode = ''
     saleCustomerSearchQuery = ''
+    saleOperationId = ''
+    saleSubmissionInFlight = false
     saleFormOpen = false
   }
 
   form.reset()
   } catch (error) {
+    if (kind === 'sale') saleSubmissionInFlight = false
     feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo completar la accion.', kind === 'instance-setup' ? 'signup' : 'login')
   }
   render()

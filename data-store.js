@@ -14,6 +14,15 @@ const makeId = () => {
   }
   return fallbackId()
 }
+const makeOperationId = () => {
+  try {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID()
+  } catch {
+    // The fallback below keeps the UUID shape required by the cloud RPC.
+  }
+  const randomHex = () => Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, '0')
+  return `${randomHex()}-${randomHex().slice(0, 4)}-4${randomHex().slice(0, 3)}-8${randomHex().slice(0, 3)}-${randomHex()}${randomHex().slice(0, 4)}`
+}
 const todayIso = () => new Date().toISOString()
 const todayDate = () => todayIso().slice(0, 10)
 const contactDetailsFromNotes = (value) => {
@@ -2016,6 +2025,7 @@ export const createBrowserDataStore = (options = {}) => {
       const currentRegister = getCurrentRegister(state)
       const result = await cloudCoreAdapter.createSale({
         ...payload,
+        operationId: payload.operationId || makeOperationId(),
         branchId: payload.branchId || currentBranch?.id || null,
         registerId: payload.registerId || currentRegister?.id || null,
       })

@@ -4184,7 +4184,7 @@ input, select { outline: none; }
 
 .pos-customer-search {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 7px;
   align-items: center;
 }
@@ -4210,6 +4210,54 @@ input, select { outline: none; }
 .pos-customer-counter:hover {
   border-color: var(--accent);
   color: #fff;
+}
+
+.pos-invoice-toggle {
+  display: grid;
+  grid-template-columns: 18px auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #151515;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.pos-invoice-toggle:has(input:checked) {
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--line));
+  color: #fff;
+  background: color-mix(in srgb, var(--accent) 13%, #151515);
+}
+
+.pos-invoice-toggle input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 1px solid var(--muted);
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+}
+
+.pos-invoice-toggle input:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.pos-invoice-toggle input:checked::after {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translate(1px, -1px);
 }
 
 .pos-payment-panel .payment-split-grid {
