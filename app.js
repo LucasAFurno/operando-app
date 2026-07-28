@@ -4162,7 +4162,18 @@ const bindEvents = () => {
       const root = group.find((entry) => ['sale', 'purchase_receipt', 'cash_session'].includes(entry.entityType)) || group[0]
       const children = group.filter((entry) => entry !== root)
       const detail = (entry) => encodeURIComponent(JSON.stringify({ title: `${actionLabel(entry)} ${entry.entityLabel}`, actor: entry.actorName, time: String(entry.createdAt).slice(0, 16).replace('T', ' · '), before: entry.beforeData, after: entry.afterData }))
-      return `<article class="audit-causal-group"><button type="button" class="audit-main-node module-${root.modules[0]}" data-audit-detail="${detail(root)}"><span>MAIN</span><strong>${actionLabel(root)} ${root.entityLabel}</strong><small>${String(root.createdAt).slice(0, 16).replace('T', ' · ')}</small></button>${children.length ? `<div class="audit-causal-branches">${children.map((entry) => `<button type="button" class="audit-causal-branch module-${entry.modules[0]}" data-audit-detail="${detail(entry)}"><i></i><strong>${entry.moduleLabel}</strong><span>${actionLabel(entry)} ${entry.entityLabel}</span></button>`).join('')}</div>` : '<div class="audit-causal-branches is-empty"><span>Sin efectos vinculados.</span></div>'}</article>`
+      const groupWidth = Math.max(216, children.length * 112 + 32)
+      const branchNodes = children.map((entry, index) => {
+        const left = ((index + 1) / (children.length + 1)) * 100
+        const title = `${actionLabel(entry)} ${entry.entityLabel}`
+        return `<div class="audit-effect" style="--effect-left:${left}%"><span class="audit-node-label">${escapeHtml(entry.moduleLabel)}</span><button type="button" class="audit-effect-node module-${entry.modules[0]}" data-audit-detail="${detail(entry)}" aria-label="${escapeHtml(title)}" title="${escapeHtml(title)}"></button><span class="audit-node-action">${escapeHtml(title)}</span></div>`
+      }).join('')
+      const curves = children.map((_, index) => {
+        const x = ((index + 1) / (children.length + 1)) * 100
+        return `<path d="M 50 63 C 50 106 ${x} 106 ${x} 141" />`
+      }).join('')
+      const rootTitle = `${actionLabel(root)} ${root.entityLabel}`
+      return `<article class="audit-causal-group" style="--group-width:${groupWidth}px"><span class="audit-node-label audit-main-label">${escapeHtml(root.moduleLabel)}</span><button type="button" class="audit-main-node module-${root.modules[0]}" data-audit-detail="${detail(root)}" aria-label="${escapeHtml(rootTitle)}" title="${escapeHtml(rootTitle)}"></button><span class="audit-node-action audit-main-action">${escapeHtml(rootTitle)}</span>${children.length ? `<svg class="audit-causal-curves" viewBox="0 0 100 190" preserveAspectRatio="none" aria-hidden="true">${curves}</svg>${branchNodes}` : ''}</article>`
     }).join('') || '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'
   }
   if (auditTrace?.querySelector('.audit-trace-event') && !auditTrace.querySelector('.audit-branch-label')) {
