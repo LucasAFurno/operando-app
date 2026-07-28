@@ -103,6 +103,8 @@ let customerMapPreviewId = ''
 let saleFormOpen = false
 let cashFormOpen = false
 let productFormOpen = false
+let productEditingId = ''
+let productSearchQuery = ''
 let stockAdjustmentFormOpen = false
 let stockTransferFormOpen = false
 let supplierFormOpen = false
@@ -1820,7 +1822,47 @@ const cashViewV2 = (ui) => `
 `})()}
 `
 
-const productsView = (ui) => `
+const productsView = (ui) => {
+  const search = productSearchQuery.trim().toLowerCase()
+  const lastSoldAtByProduct = new Map()
+  for (const sale of ui.enrichedSales) {
+    for (const item of sale.items || []) {
+      if (!lastSoldAtByProduct.has(item.productId)) lastSoldAtByProduct.set(item.productId, sale.soldAt)
+    }
+  }
+  const matchingProducts = ui.scopedProducts.filter((product) => [product.name, product.sku, product.barcode, product.category].some((value) => String(value || '').toLowerCase().includes(search)))
+  const visibleProducts = search
+    ? matchingProducts
+    : [...ui.scopedProducts].sort((left, right) => String(lastSoldAtByProduct.get(right.id) || '').localeCompare(String(lastSoldAtByProduct.get(left.id) || ''))).slice(0, 10)
+  const productRow = (product) => {
+    const margin = Number(product.salePrice || 0) > 0 ? ((Number(product.salePrice || 0) - Number(product.costPrice || 0)) / Number(product.salePrice || 0)) * 100 : 0
+    if (productEditingId !== product.id) return `<article class="product-summary-row ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}">
+      <div class="product-summary-main"><strong>${escapeHtml(product.name)}</strong><span>${escapeHtml(product.sku || product.barcode || 'Sin codigo')}</span></div>
+      <div class="product-summary-meta"><strong>${money(product.salePrice)}</strong><span>${product.category || 'Sin categoria'} · stock ${Number(product.scopedStock || 0)}</span></div>
+      <div class="product-summary-actions"><button type="button" class="inline-action" data-action="edit-product-inline" data-id="${product.id}">Editar</button></div>
+    </article>`
+    return `<form class="product-item ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}" data-form="product-inline">
+      <input type="hidden" name="productId" value="${product.id}" />
+      <label class="product-name-field">Producto<input type="text" name="name" value="${escapeHtml(product.name)}" required /></label>
+      <label>SKU<input type="text" name="sku" value="${escapeHtml(product.sku || '')}" /></label>
+      <label>Codigo de barras<input type="text" name="barcode" value="${escapeHtml(product.barcode || '')}" /></label>
+      <label>Categoria<input type="text" name="category" value="${escapeHtml(product.category || '')}" /></label>
+      <label>Minimo<input type="number" name="minStock" min="0" value="${Number(product.minStock || 0)}" /></label>
+      <label>Stock suc.<span class="product-stock-value"><strong>${Number(product.scopedStock || 0)}</strong><small>Se ajusta con la accion</small></span></label>
+      <label>Costo unit.<input type="number" name="costPrice" min="0" step="0.01" value="${Number(product.costPrice || 0)}" /></label>
+      <label>Precio venta<input type="number" name="salePrice" min="0" step="0.01" value="${Number(product.salePrice || 0)}" /></label>
+      <label>Margen %<span class="product-margin-value">${margin.toFixed(1)}%</span></label>
+      <label class="field-check product-track-stock"><input type="checkbox" name="trackStock" ${product.trackStock ? 'checked' : ''} /><span class="field-check-box" aria-hidden="true"></span><span>Controlar stock</span></label>
+      <div class="product-item-actions">
+        <button type="submit" class="primary-action">Guardar</button>
+        <button type="button" class="inline-action" data-action="adjust-product-stock" data-id="${product.id}">Ajustar stock</button>
+        <button type="button" class="inline-action" data-action="transfer-product-stock" data-id="${product.id}">Transferir</button>
+        <button type="button" class="ghost-action" data-action="cancel-product-inline-edit">Cancelar</button>
+        <button type="button" class="danger-action" data-delete="product" data-id="${product.id}">Quitar</button>
+      </div>
+    </form>`
+  }
+  return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Productos</p><h2>Catalogo y stock</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.scopedProducts.length}</strong><span>Productos</span></span>
       <span class="panel-inline-stat"><strong>${ui.lowStock.length}</strong><span>Stock bajo</span></span>
@@ -1867,7 +1909,7 @@ const productsView = (ui) => `
         </article>` : ''}
         <article class="panel inventory-panel">
           <div class="panel-head inventory-headline">
-            <div><h3>Inventario</h3><p>Edita los datos del articulo y usa acciones de stock sin salir de la lista</p></div>
+            <div><h3>Inventario</h3><p>${search ? `${visibleProducts.length} resultado${visibleProducts.length === 1 ? '' : 's'}` : 'Ultimos 10 productos vendidos'}</p></div>
           </div>
           <div class="inventory-action-bar">
             ${createToggleButton('product', productFormOpen, 'Agregar producto')}
@@ -1875,35 +1917,14 @@ const productsView = (ui) => `
             ${createToggleButton('stock-transfer', stockTransferFormOpen, 'Transferencia')}
           </div>
           <div class="bulk-import-card"><div class="bulk-import-copy"><strong>Carga masiva de productos</strong><span>Descarga la plantilla, completala en Excel y subila. Las columnas ya estan ordenadas para importar sin duplicar productos.</span><small>Campos obligatorios: Nombre, SKU y Precio de venta.</small></div><div class="bulk-import-actions"><button type="button" class="inline-action" data-action="download-product-template">Descargar plantilla Excel</button><label class="primary-action bulk-upload-action">Subir planilla<input type="file" data-input="bulk-product-import" accept=".csv,text/csv,.txt,text/plain" hidden /></label><button type="button" class="text-action" data-action="request-bulk-import">Prefiero que lo hagan por mi</button></div></div>
-          <div class="product-list" aria-label="Articulos del inventario">
-            ${paginatedCardList(ui.scopedProducts, 'productos', (product) => {
-              const margin = Number(product.salePrice || 0) > 0 ? ((Number(product.salePrice || 0) - Number(product.costPrice || 0)) / Number(product.salePrice || 0)) * 100 : 0
-              return `<form class="product-item ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}" data-form="product-inline">
-                <input type="hidden" name="productId" value="${product.id}" />
-                <label class="product-name-field">Producto<input type="text" name="name" value="${escapeHtml(product.name)}" required /></label>
-                <label>SKU<input type="text" name="sku" value="${escapeHtml(product.sku || '')}" /></label>
-                <label>Codigo de barras<input type="text" name="barcode" value="${escapeHtml(product.barcode || '')}" /></label>
-                <label>Categoria<input type="text" name="category" value="${escapeHtml(product.category || '')}" /></label>
-                <label>Minimo<input type="number" name="minStock" min="0" value="${Number(product.minStock || 0)}" /></label>
-                <label>Stock suc.<span class="product-stock-value"><strong>${Number(product.scopedStock || 0)}</strong><small>Se ajusta con la accion</small></span></label>
-                <label>Costo unit.<input type="number" name="costPrice" min="0" step="0.01" value="${Number(product.costPrice || 0)}" /></label>
-                <label>Precio venta<input type="number" name="salePrice" min="0" step="0.01" value="${Number(product.salePrice || 0)}" /></label>
-                <label>Margen %<span class="product-margin-value">${margin.toFixed(1)}%</span></label>
-                <label class="field-check product-track-stock"><input type="checkbox" name="trackStock" ${product.trackStock ? 'checked' : ''} /><span class="field-check-box" aria-hidden="true"></span><span>Controlar stock</span></label>
-                <div class="product-item-actions">
-                  <button type="submit" class="primary-action">Guardar</button>
-                  <button type="button" class="inline-action" data-action="adjust-product-stock" data-id="${product.id}">Ajustar stock</button>
-                  <button type="button" class="inline-action" data-action="transfer-product-stock" data-id="${product.id}">Transferir</button>
-                  <button type="button" class="danger-action" data-delete="product" data-id="${product.id}">Quitar</button>
-                </div>
-              </form>`
-            })}
-          </div>
+          <div class="product-search-row"><label class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-product-search value="${escapeHtml(productSearchQuery)}" placeholder="Buscar producto, SKU, codigo o categoria" aria-label="Buscar productos" /></label>${search ? '<button type="button" class="ghost-action" data-action="clear-product-search">Limpiar</button>' : ''}</div>
+          <div class="product-list" aria-label="Articulos del inventario">${visibleProducts.length ? visibleProducts.map(productRow).join('') : '<p class="empty-state">No encontramos productos con esa busqueda.</p>'}</div>
         </article>
       </div>
     </section>
   </section>
 `
+}
 
 const purchasesView = (ui) => `
   ${(() => {
@@ -3518,6 +3539,7 @@ const handleSubmit = async (event) => {
       trackStock: formData.get('trackStock') === 'on',
     })
     feedbackMessage = result.message || ''
+    if (result.ok) productEditingId = ''
   }
   if (kind === 'stock-adjustment') {
     const search = String(formData.get('productSearch') || '').trim()
@@ -4068,6 +4090,10 @@ const bindEvents = () => {
     productFormOpen = false
     render()
   })
+  for (const input of document.querySelectorAll('[data-product-search]')) input.addEventListener('input', () => { productSearchQuery = input.value || ''; productEditingId = ''; render() })
+  for (const button of document.querySelectorAll('[data-action="clear-product-search"]')) button.addEventListener('click', () => { productSearchQuery = ''; productEditingId = ''; render() })
+  for (const button of document.querySelectorAll('[data-action="edit-product-inline"]')) button.addEventListener('click', () => { productEditingId = button.dataset.id || ''; render() })
+  for (const button of document.querySelectorAll('[data-action="cancel-product-inline-edit"]')) button.addEventListener('click', () => { productEditingId = ''; render() })
   for (const button of document.querySelectorAll('[data-action="open-supplier-form"]')) button.addEventListener('click', () => {
     closePurchaseUtilityForms()
     supplierEditingId = ''
