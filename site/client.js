@@ -993,13 +993,13 @@ const getUiState = () => {
   })
   const auditModuleByEntity = {
     sale: ['sales', 'cash', 'stock'], cash_movement: ['cash'], cash_session: ['cash'],
-    product: ['products', 'stock'], stock_adjustment: ['stock', 'products'], stock_transfer: ['stock', 'products'],
+    product: ['products', 'stock'], stock_movement: ['stock', 'products'], stock_adjustment: ['stock', 'products'], stock_transfer: ['stock', 'products'],
     purchase_receipt: ['purchases', 'products', 'stock'], supplier: ['purchases'], customer: ['customers'],
     invoice: ['invoices', 'sales'], ticket: ['tickets'], branch: ['settings'], register: ['settings', 'cash'],
     user: ['settings'], business: ['settings'], business_module: ['settings'], business_plan: ['settings'], session: ['settings'], system: ['settings'],
   }
   const auditModuleLabels = { sales: 'Ventas', cash: 'Caja', stock: 'Stock', products: 'Productos', purchases: 'Compras', customers: 'Clientes', invoices: 'Facturación', tickets: 'Tickets', settings: 'Configuración' }
-  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', branch: 'sucursal', register: 'caja', user: 'usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
+  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', branch: 'sucursal', register: 'caja', user: 'usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
   const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => ({ ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules: auditModuleByEntity[log.entityType] || ['settings'], moduleLabel: auditModuleLabels[(auditModuleByEntity[log.entityType] || ['settings'])[0]], entityLabel: auditEntityLabels[log.entityType] || log.entityType || 'registro' }))
   const auditActionLabels = {
     created: 'Creó un registro',

@@ -73,6 +73,16 @@ export const createSupabaseCoreAdapter = (config) => {
         // despliega la migración de pagos en una instancia existente.
         if (!String(error?.message || '').includes('app_public_get_invoice_payment_summaries')) throw error
       }
+      try {
+        // La auditoría se lee por una RPC propia para que el historial no quede
+        // reducido por las vistas operativas resumidas de instalaciones antiguas.
+        const auditLogs = await rpc('app_public_load_audit_logs', { p_session_token: getSessionToken() })
+        state.auditLogs = Array.isArray(auditLogs) ? auditLogs : []
+      } catch (error) {
+        // Compatibilidad durante el despliegue: la pantalla conservará lo que
+        // devuelva el estado principal hasta que la migración esté aplicada.
+        if (!String(error?.message || '').includes('app_public_load_audit_logs')) throw error
+      }
       return state
     },
     async updateCommerceProfile(payload) {
