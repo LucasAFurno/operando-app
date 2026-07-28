@@ -226,6 +226,7 @@ const inferUserPermissionSet = (entry) => {
   const blocked = new Set(normalizeStringList(entry?.blockedPermissions, validPermissionKeys))
   const permissions = basePermissions.filter((permission) => !blocked.has(permission))
   const roleKey = roleKeysById[entry?.roleId]
+  if (!permissions.includes(permissionCatalog.audit)) permissions.push(permissionCatalog.audit)
   if (entry?.isPlatformAdmin || entry?.isOwner || roleKey === 'admin') {
     if (!permissions.includes(permissionCatalog.dashboard)) permissions.push(permissionCatalog.dashboard)
     if (!permissions.includes(permissionCatalog.audit)) permissions.push(permissionCatalog.audit)
@@ -241,6 +242,7 @@ const inferUserModules = (entry, enabledModules = []) => {
   const scopedModules = overrides.length
     ? availableModules.filter((moduleKey) => overrides.includes(moduleKey))
     : [...availableModules]
+  if (!scopedModules.includes('audit')) scopedModules.push('audit')
   if (!isAdministrator) return scopedModules.filter((moduleKey) => moduleKey !== 'settings')
   if (!scopedModules.includes('dashboard')) scopedModules.unshift('dashboard')
   if (!scopedModules.includes('audit')) scopedModules.push('audit')
