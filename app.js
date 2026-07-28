@@ -57,8 +57,6 @@ const navItems = [
   { id: 'clientes', moduleKey: 'customers', label: 'Clientes', permission: 'customers:view', icon: icon('<path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3"/><path d="M20 8v6"/><path d="M17 11h6"/>') },
   { id: 'ventas', moduleKey: 'sales', label: 'Ventas', permission: 'sales:view', icon: icon('<path d="M4 17h16"/><path d="M7 17V9"/><path d="M12 17V5"/><path d="M17 17v-6"/>') },
   { id: 'caja', moduleKey: 'cash', label: 'Caja', permission: 'cash:view', icon: icon('<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16"/><path d="M16 14h2"/>') },
-  { id: 'sucursales', moduleKey: 'branches', label: 'Sucursales', permission: 'branches:view', icon: icon('<path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/><path d="M4 10h16"/>') },
-  { id: 'cajeros', moduleKey: 'registers', label: 'Cajas', permission: 'registers:view', icon: icon('<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8"/><path d="M9 12h1"/><path d="M12 12h1"/><path d="M15 12h1"/><path d="M9 15h1"/><path d="M12 15h4"/>') },
   { id: 'productos', moduleKey: 'products', label: 'Productos', permission: 'products:view', icon: icon('<path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 7.5V16.5L12 21l9-4.5V7.5"/>') },
   { id: 'compras', moduleKey: 'purchases', label: 'Compras', permission: 'purchases:view', icon: icon('<circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/><path d="M3 4h2l2.4 10.5h10.8L21 8H8"/>') },
   { id: 'facturacion', moduleKey: 'invoices', label: 'Facturas', permission: 'invoices:view', icon: icon('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6"/><path d="M10 16h6"/>') },
@@ -795,8 +793,8 @@ const buildQuickSearchTargets = (ui) => {
   for (const supplier of ui.snapshot.suppliers) pushTarget('compras', supplier.name, [supplier.contact, supplier.phone, supplier.category])
   for (const invoice of ui.snapshot.invoices) pushTarget('facturacion', invoice.number, [invoice.kind, invoice.type, invoice.status])
   for (const ticket of ui.snapshot.tickets) pushTarget('tickets', ticket.number, [ticket.device, ticket.issue, ticket.status])
-  for (const branch of ui.snapshot.branches) pushTarget('sucursales', branch.name, [branch.code, branch.address])
-  for (const register of ui.snapshot.registers) pushTarget('cajeros', register.name, [register.code])
+  for (const branch of ui.snapshot.branches) pushTarget('ajustes', branch.name, [branch.code, branch.address, 'sucursales'])
+  for (const register of ui.snapshot.registers) pushTarget('ajustes', register.name, [register.code, 'puestos de cobro', 'cajas'])
   return normalizedEntries
 }
 const clearFeedbackSoon = () => {
@@ -2605,6 +2603,12 @@ const settingsViewV2 = (ui) => `
   ${(() => {
     const editingUser = ui.snapshot.users.find((entry) => entry.id === userEditingId)
     const canManageUsers = Boolean(ui.user?.isPlatformAdmin || ui.user?.isOwner || ui.role?.key === 'admin')
+    const canViewBranches = store.canAccessModule('branches', 'branches:view')
+    const canViewRegisters = store.canAccessModule('registers', 'registers:view')
+    const editingBranch = ui.snapshot.branches.find((branch) => branch.id === branchEditingId)
+    const editingRegister = ui.snapshot.registers.find((register) => register.id === registerEditingId)
+    const showBranchForm = branchFormOpen || Boolean(editingBranch)
+    const showRegisterForm = registerFormOpen || Boolean(editingRegister)
     const syncLabel = ui.snapshot.meta.syncStatus === 'online'
       ? 'Base operativa'
       : ui.snapshot.meta.syncStatus === 'syncing'
@@ -2634,6 +2638,8 @@ const settingsViewV2 = (ui) => `
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'commerce' ? 'is-active' : ''}" data-settings-panel="commerce" aria-expanded="${settingsPanelOpen === 'commerce' ? 'true' : 'false'}"><strong>Datos del comercio</strong><span>Nombre, razon social y propietario</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'users' ? 'is-active' : ''}" data-settings-panel="users" aria-expanded="${settingsPanelOpen === 'users' ? 'true' : 'false'}"><strong>Usuarios y permisos</strong><span>${ui.enrichedUsers.length} cuentas del negocio</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'modules' ? 'is-active' : ''}" data-settings-panel="modules" aria-expanded="${settingsPanelOpen === 'modules' ? 'true' : 'false'}"><strong>Plan y modulos</strong><span>${ui.snapshot.business.enabledModules.length} modulos activos</span></button>
+        ${canViewBranches ? `<button type="button" class="settings-section-trigger ${settingsPanelOpen === 'branches' ? 'is-active' : ''}" data-settings-panel="branches" aria-expanded="${settingsPanelOpen === 'branches' ? 'true' : 'false'}"><strong>Sucursales</strong><span>${ui.snapshot.branches.length} locales configurados</span></button>` : ''}
+        ${canViewRegisters ? `<button type="button" class="settings-section-trigger ${settingsPanelOpen === 'registers' ? 'is-active' : ''}" data-settings-panel="registers" aria-expanded="${settingsPanelOpen === 'registers' ? 'true' : 'false'}"><strong>Puestos de cobro</strong><span>${ui.enrichedRegisters.length} cajas configuradas</span></button>` : ''}
         <button type="button" class="settings-section-trigger arca-status-trigger ${arcaConnected ? 'is-connected' : 'is-attention'} ${settingsPanelOpen === 'arca' ? 'is-active' : ''}" data-settings-panel="arca" aria-expanded="${settingsPanelOpen === 'arca' ? 'true' : 'false'}"><strong>Facturacion ARCA <i class="arca-status-dot" aria-hidden="true"></i></strong><span>${arcaConnected ? 'Conexion fiscal activa' : 'Requiere configuracion o verificacion'}</span></button>
       </nav>
       ${settingsPanelOpen === 'commerce' ? `<article class="panel settings-expand-panel" data-settings-content="commerce">
@@ -2685,6 +2691,14 @@ const settingsViewV2 = (ui) => `
           </div>
           <div class="settings-audit-column"><div class="panel-note"><strong>Actividad reciente</strong><span>Ultimos cambios del comercio.</span></div><div class="timeline-list compact-timeline">${ui.enrichedAudit.slice(0, 8).map((log) => `<div class="timeline-item"><strong>${log.action}</strong><p>${log.actorName} - ${log.entityType}${log.entityId ? ` #${String(log.entityId).slice(0, 8)}` : ''}</p><span>${log.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavia no hay actividad registrada.</p>'}</div></div>
         </div>
+      </article>` : ''}
+      ${settingsPanelOpen === 'branches' && canViewBranches ? `<article class="panel settings-expand-panel" data-settings-content="branches"><div class="panel-head"><div><h3>Sucursales</h3><p>Locales, direccion y numeracion del comercio</p></div><div class="settings-actions">${editingBranch ? '' : createToggleButton('branch', showBranchForm, 'Agregar sucursal')}</div></div>
+        ${showBranchForm ? `<form class="form-grid" data-form="branch"><input type="hidden" name="branchId" value="${editingBranch?.id || ''}" /><label>Nombre<input type="text" name="name" value="${editingBranch?.name || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label><label>Codigo<input type="text" name="code" value="${editingBranch?.code || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label><label class="full-span">Direccion<input type="text" name="address" value="${editingBranch?.address || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label><button type="submit" ${canManageUsers ? '' : 'disabled'}>${editingBranch ? 'Guardar cambios' : 'Guardar sucursal'}</button>${editingBranch ? '<button type="button" class="danger-action" data-action="cancel-branch-edit">Cancelar edicion</button>' : '<button type="button" class="ghost-action" data-action="close-branch-form">Cancelar</button>'}</form>` : ''}
+        ${dataTable(['Nombre', 'Codigo', 'Direccion', 'Actual', 'Accion'], ui.snapshot.branches.map((branch) => `<div class="data-row"><span>${branch.name}</span><span>${branch.code}</span><span>${branch.address}</span><span>${ui.currentBranch?.id === branch.id ? 'Si' : 'No'}</span><span>${branchActionButtons(branch)}</span></div>`))}
+      </article>` : ''}
+      ${settingsPanelOpen === 'registers' && canViewRegisters ? `<article class="panel settings-expand-panel" data-settings-content="registers"><div class="panel-head"><div><h3>Puestos de cobro</h3><p>Cajas asignadas a cada sucursal y cajero</p></div><div class="settings-actions">${editingRegister ? '' : createToggleButton('register', showRegisterForm, 'Agregar caja')}</div></div>
+        ${showRegisterForm ? `<form class="form-grid" data-form="register"><input type="hidden" name="registerId" value="${editingRegister?.id || ''}" /><label>Sucursal<select name="branchId" ${canManageUsers ? 'required' : 'disabled'}>${ui.snapshot.branches.map((branch) => `<option value="${branch.id}" ${editingRegister?.branchId === branch.id ? 'selected' : ''}>${branch.name}</option>`).join('')}</select></label><label>Nombre<input type="text" name="name" value="${editingRegister?.name || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label><label>Codigo<input type="text" name="code" value="${editingRegister?.code || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label><label>Cajero<select name="cashierUserId" ${canManageUsers ? '' : 'disabled'}>${ui.snapshot.users.map((user) => `<option value="${user.id}" ${editingRegister?.cashierUserId === user.id ? 'selected' : ''}>${user.fullName}</option>`).join('')}</select></label><button type="submit" ${canManageUsers ? '' : 'disabled'}>${editingRegister ? 'Guardar cambios' : 'Guardar caja'}</button>${editingRegister ? '<button type="button" class="danger-action" data-action="cancel-register-edit">Cancelar edicion</button>' : '<button type="button" class="ghost-action" data-action="close-register-form">Cancelar</button>'}</form>` : ''}
+        ${dataTable(['Caja', 'Codigo', 'Sucursal', 'Cajero', 'Accion'], ui.enrichedRegisters.map((register) => `<div class="data-row"><span>${register.name}</span><span>${register.code}</span><span>${register.branchName}</span><span>${register.cashierName}</span><span class="inline-action-group"><button type="button" class="inline-action" data-register-action="select" data-id="${register.id}">Usar</button>${registerActionButtons(register)}</span></div>`))}
       </article>` : ''}
       ${settingsPanelOpen === 'arca' ? `<article class="panel settings-expand-panel" data-settings-content="arca"><div class="panel-head"><div><h3>${arcaConnected ? 'Facturacion ARCA activa' : 'Activar facturacion ARCA'}</h3><p>Configuracion guiada y segura para emitir comprobantes electronicos</p></div><span class="badge ${arcaConnected ? 'is-success' : 'is-warning'}">${arcaConnected ? 'Conexion activa' : 'Demo visual'}</span></div>
         <div class="info-strip ${arcaConnected ? 'is-success' : 'is-warning'}"><strong>${arcaConnected ? 'ARCA conectada y lista para facturar' : 'Configuracion fiscal pendiente'}</strong><span>${arcaConnected ? 'Certificado, WSAA y punto de venta validados. PCLAF puede emitir comprobantes con CAE.' : 'Los datos se envian al servicio fiscal privado de PCLAF. Tu Clave Fiscal nunca se solicita.'}</span></div>
