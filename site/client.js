@@ -1531,6 +1531,57 @@ const dashboardView = (ui) => `
   </section>
 `
 
+const dashboardActivityIcon = (activity) => {
+  if (activity.id.startsWith('sale-')) return icon('<path d="M4 6h16l-2 8H6z"/><path d="M8 14v4h8v-4"/><path d="M9 10h.01M15 10h.01"/>')
+  if (activity.id.startsWith('cash-')) return icon('<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16"/><path d="M16 14h2"/>')
+  if (activity.id.startsWith('stock-') || activity.id.startsWith('receipt-')) return icon('<path d="m12 3 8 4.5-8 4.5-8-4.5z"/><path d="M4 7.5V16.5l8 4.5 8-4.5V7.5"/>')
+  return icon('<circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 1.5"/>')
+}
+
+const dashboardViewV2 = (ui) => {
+  const pendingInvoiceCount = ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').length
+  const visibleActivity = dashboardAuditExpanded ? ui.recentCommerceActivity.slice(0, 10) : ui.recentCommerceActivity.slice(0, 4)
+  const activityTime = (createdAt) => String(createdAt || '').slice(11, 16) || '--:--'
+  return `
+  <section class="view-section dashboard-view">
+    <div class="section-header dashboard-header"><div><p class="kicker">Resumen diario</p><h2>Operación del local</h2></div><div class="dashboard-quick-actions">
+      <button type="button" class="primary-action" data-dashboard-section="ventas">Nueva venta</button>
+      <button type="button" class="ghost-action" data-dashboard-section="facturacion">Cobro</button>
+      <button type="button" class="ghost-action" data-dashboard-section="caja">Ingreso de caja</button>
+    </div></div>
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    <section class="dashboard-kpi-grid" aria-label="Resumen de operación">
+      <button type="button" class="dashboard-kpi-card" data-dashboard-section="ventas"><span>Ventas</span><strong>${money(ui.totalSales)}</strong><small>Hoy</small></button>
+      <button type="button" class="dashboard-kpi-card" data-dashboard-section="caja"><span>Caja</span><strong>${ui.openCashSession ? money(ui.expectedCash) : 'Cerrada'}</strong><small>${ui.openCashSession ? 'Sesión actual' : 'Abrir caja para operar'}</small></button>
+      <button type="button" class="dashboard-kpi-card" data-dashboard-section="facturacion"><span>Por cobrar</span><strong>${money(ui.unpaidSales)}</strong><small>Ventas pendientes</small></button>
+      <button type="button" class="dashboard-kpi-card" data-dashboard-section="facturacion"><span>Facturas pendientes</span><strong>${money(ui.pendingInvoices)}</strong><small>${pendingInvoiceCount} comprobante${pendingInvoiceCount === 1 ? '' : 's'}</small></button>
+    </section>
+    <section class="dashboard-attention" aria-label="Atención hoy">
+      <p>Atención hoy</p>
+      <button type="button" data-dashboard-section="caja"><span class="attention-status ${ui.openCashSession ? 'is-ok' : 'is-alert'}"></span><strong>Caja ${ui.openCashSession ? 'abierta' : 'cerrada'}</strong><small>${ui.openCashSession ? 'Lista para operar' : 'Requiere apertura'}</small></button>
+      <button type="button" data-dashboard-section="productos"><span class="attention-status ${ui.lowStock.length ? 'is-alert' : 'is-ok'}"></span><strong>${ui.lowStock.length} producto${ui.lowStock.length === 1 ? '' : 's'} crítico${ui.lowStock.length === 1 ? '' : 's'}</strong><small>${ui.lowStock.length ? 'Requieren reposición' : 'Inventario estable'}</small></button>
+      <button type="button" data-dashboard-section="facturacion"><span class="attention-status ${pendingInvoiceCount ? 'is-alert' : 'is-ok'}"></span><strong>${pendingInvoiceCount} factura${pendingInvoiceCount === 1 ? '' : 's'} pendiente${pendingInvoiceCount === 1 ? '' : 's'}</strong><small>${pendingInvoiceCount ? `Por ${money(ui.pendingInvoices)}` : 'Sin comprobantes pendientes'}</small></button>
+    </section>
+    <section class="dashboard-primary-grid">
+      <article class="panel dashboard-sales-panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Últimas operaciones registradas</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="ventas">Ver todas</button></div><div class="dashboard-sales-list">
+        ${ui.enrichedSales.length ? ui.enrichedSales.slice(0, 5).map((sale) => `<div class="dashboard-sale-row"><div><strong>${escapeHtml(sale.itemSummary)}</strong><p>${escapeHtml(sale.customerName)} · ${escapeHtml(sale.paymentMethod || 'Sin medio de pago')}</p></div><div><strong>${money(sale.totalAmount)}</strong><time>${activityTime(sale.soldAt)}</time></div></div>`).join('') : '<p class="empty-state">Todavía no hay ventas registradas.</p>'}
+      </div></article>
+      <article class="panel dashboard-stock-panel"><div class="panel-head"><div><h3>Stock crítico</h3><p>${ui.lowStock.length ? 'Productos que requieren reposición' : 'Inventario estable'}</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="productos">Ver ${ui.lowStock.length || ''} productos</button></div><div class="dashboard-stock-list">
+        ${ui.lowStock.length ? ui.lowStock.slice(0, 4).map((product) => `<div class="dashboard-stock-row"><strong>${escapeHtml(product.name)}</strong><span>Stock <b>${product.scopedStock}</b> · mínimo ${product.minStock}</span></div>`).join('') : '<div class="alert-card ok"><strong>Sin alertas</strong><p>No hay productos con stock bajo.</p></div>'}
+      </div></article>
+    </section>
+    <section class="dashboard-secondary-grid">
+      <article class="panel dashboard-top-panel"><div class="panel-head"><div><h3>Top productos</h3><p>Ranking por unidades vendidas</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="reportes">Ver ranking</button></div><div class="dashboard-top-list">
+        ${ui.topProducts.length ? ui.topProducts.slice(0, 5).map(([name, qty], index) => `<div><span>${index + 1}</span><strong>${escapeHtml(name)}</strong><small>${qty} unidades</small></div>`).join('') : '<p class="empty-state">Todavía no hay ventas cargadas.</p>'}
+      </div></article>
+      <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Actividad reciente</h3><p>Últimos movimientos registrados</p></div></div><div class="dashboard-activity-list">
+        ${visibleActivity.length ? visibleActivity.map((activity) => `<div class="dashboard-activity-row"><span class="dashboard-activity-icon" aria-hidden="true">${dashboardActivityIcon(activity)}</span><div><strong>${escapeHtml(activity.title)}</strong><p>${escapeHtml(activity.detail)}</p></div><time>${activityTime(activity.createdAt)}</time></div>`).join('') : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
+      </div>${ui.recentCommerceActivity.length > 4 ? `<button type="button" class="dashboard-audit-link" data-action="toggle-dashboard-audit">${dashboardAuditExpanded ? 'Ver menos' : 'Ver auditoría'} <span aria-hidden="true">→</span></button>` : ''}</article>
+    </section>
+  </section>
+`
+}
+
 const customersView = (ui) => `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Clientes</p><h2>Base comercial</h2></div></div>
     <section class="content-grid single-focus">
@@ -2879,7 +2930,7 @@ const renderCurrentView = (ui) => {
     case 'reportes': return reportsView(ui)
     case 'mi-admin': return ui.user?.isPlatformAdmin ? ownerAdminViewV2(ui) : settingsViewV2(ui)
     case 'ajustes': return canManageCommerceSettings ? settingsViewV2(ui) : basicSettingsView(ui)
-    default: return dashboardView(ui)
+    default: return dashboardViewV2(ui)
   }
 }
 
@@ -3971,6 +4022,15 @@ const bindEvents = () => {
     // a volver a recorrer toda la pantalla. En mobile mantenemos el salto
     // arriba, que facilita empezar cada vista desde su encabezado.
     if (window.matchMedia('(max-width: 880px)').matches) requestScrollTop()
+    render()
+    if (isCurrentSectionAffected()) queueLiveSync()
+  })
+  for (const button of document.querySelectorAll('[data-dashboard-section]')) button.addEventListener('click', () => {
+    const nextSection = button.dataset.dashboardSection
+    if (!nextSection || !getAllowedNav(getUiState()).some((item) => item.id === nextSection)) return
+    activeSection = nextSection
+    saveSection()
+    requestScrollTop()
     render()
     if (isCurrentSectionAffected()) queueLiveSync()
   })
