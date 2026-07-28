@@ -3448,6 +3448,7 @@ input, select { outline: none; }
 
 .feedback-banner {
   position: fixed;
+  pointer-events: none;
   top: 18px;
   left: 50%;
   z-index: 120;

@@ -752,7 +752,7 @@ const routeHardwareScan = (rawValue) => {
       [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1,
     }
     saleQuickAddCode = ''
-    feedbackMessage = `${product.name} agregado a la venta.`
+    feedbackMessage = ''
     render()
     return true
   }
@@ -887,7 +887,7 @@ const clearFeedbackSoon = () => {
   feedbackTimer = window.setTimeout(() => {
     if (feedbackMessage !== currentMessage) return
     feedbackMessage = ''
-    render()
+    document.querySelectorAll('.feedback-banner').forEach((banner) => banner.remove())
   }, 2800)
 }
 const getAllowedNav = (ui) => navItems.filter((item) => (
@@ -3848,7 +3848,7 @@ const bindEvents = () => {
     }
     saleDraftQuantities = { ...readCurrentSaleQuantities(), [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1 }
     saleQuickAddCode = ''
-    feedbackMessage = `${product.name} agregado a la venta.`
+    feedbackMessage = ''
     render()
   }
   if (quickAddInput) {
