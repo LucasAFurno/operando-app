@@ -4187,7 +4187,10 @@ const bindEvents = () => {
     const detail = JSON.parse(decodeURIComponent(node.dataset.auditDetail || ''))
     const panel = document.querySelector('.audit-detail-panel') || document.createElement('aside')
     panel.className = 'audit-detail-panel panel'
-    panel.innerHTML = `<button type="button" aria-label="Cerrar detalle">×</button><strong>${escapeHtml(detail.title)}</strong><p>${escapeHtml(detail.actor || 'Sistema')} · ${escapeHtml(detail.time)}</p><pre>${escapeHtml(JSON.stringify(detail.after || detail.before || {}, null, 2))}</pre>`
+    const data = detail.after || detail.before || {}
+    const labels = { name: 'Producto', full_name: 'Cliente', sku: 'Código', category: 'Categoría', sale_price: 'Precio de venta', cost_price: 'Costo', quantity: 'Cantidad', amount: 'Importe', signed_amount: 'Movimiento de caja', opening_amount: 'Monto inicial', counted_amount: 'Monto contado', difference_amount: 'Diferencia', note: 'Detalle', status: 'Estado' }
+    const rows = Object.entries(data).filter(([key, value]) => labels[key] && value !== '' && value != null).map(([key, value]) => `<div><span>${labels[key]}</span><strong>${typeof value === 'boolean' ? (value ? 'Sí' : 'No') : escapeHtml(String(value))}</strong></div>`).join('')
+    panel.innerHTML = `<button type="button" aria-label="Cerrar detalle">×</button><p class="audit-detail-kicker">${escapeHtml(detail.actor || 'Sistema')} · ${escapeHtml(detail.time)}</p><strong>${escapeHtml(detail.title)}</strong><div class="audit-detail-fields">${rows || '<span>Acción registrada correctamente.</span>'}</div>`
     auditTrace?.closest('.panel')?.after(panel)
     panel.querySelector('button')?.addEventListener('click', () => panel.remove())
   })
