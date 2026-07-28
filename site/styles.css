@@ -5478,9 +5478,9 @@ input, select { outline: none; }
   .dashboard-quick-actions button { flex: 1 1 130px; }
   .dashboard-kpi-card { min-height: 104px; padding: 14px; }
   .dashboard-kpi-card strong { font-size: 1.35rem; }
-  .dashboard-attention { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; }
-  .dashboard-attention > p { display: none; }
-  .dashboard-attention button { flex: 0 0 220px; scroll-snap-align: start; border-left: 1px solid var(--line); }
+  .dashboard-attention { display: grid; grid-template-columns: 1fr; overflow: hidden; }
+  .dashboard-attention > p { display: flex; padding: 14px 16px 8px; }
+  .dashboard-attention button { min-height: 62px; border-top: 1px solid var(--line); border-left: 0; }
   .dashboard-primary-grid, .dashboard-secondary-grid { grid-template-columns: 1fr; }
   .dashboard-primary-grid .panel, .dashboard-secondary-grid .panel { padding: 14px; }
   .dashboard-primary-grid .panel-head, .dashboard-secondary-grid .panel-head { align-items: flex-start; gap: 8px; }
