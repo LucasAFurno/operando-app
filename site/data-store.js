@@ -994,8 +994,8 @@ export const createBrowserDataStore = (options = {}) => {
   let cloudAccessToken = ''
   let platformAdminData = null
   const operationalChangeListeners = new Set()
-  const notifyOperationalChange = () => {
-    for (const listener of operationalChangeListeners) listener()
+  const notifyOperationalChange = (operation) => {
+    for (const listener of operationalChangeListeners) listener(operation)
   }
   const createCloudCoreAdapter = () => createSupabaseCoreAdapter({
     ...cloudConfig,

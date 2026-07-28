@@ -49,7 +49,7 @@ export const createSupabaseCoreAdapter = (config) => {
     })
     const payload = await safeJson(response)
     if (!response.ok) throw new Error(payload?.message || payload?.hint || payload?.details || `${fnName} failed (${response.status})`)
-    if (mutationRpcNames.has(fnName)) notifyMutation()
+    if (mutationRpcNames.has(fnName)) notifyMutation(fnName)
     return payload
   }
 
