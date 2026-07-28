@@ -4132,7 +4132,39 @@ const bindEvents = () => {
   }
   for (const input of document.querySelectorAll('[data-audit-date]')) input.addEventListener('change', () => { if (input.dataset.auditDate === 'from') auditDateFrom = input.value; if (input.dataset.auditDate === 'to') auditDateTo = input.value; render() })
   const auditTrace = document.querySelector('.audit-trace')
-  if (auditTrace && !auditTrace.querySelector('.audit-branch-label')) {
+  if (auditTrace) {
+    const ui = getUiState()
+    const auditNow = new Date()
+    const auditStart = auditPeriodFilter === 'today' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), auditNow.getDate()) : auditPeriodFilter === 'week' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), auditNow.getDate() - 6) : auditPeriodFilter === 'month' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), 1) : null
+    const term = auditSearchQuery.trim().toLowerCase()
+    const entries = ui.enrichedAudit.filter((entry) => {
+      if (auditStart && new Date(entry.createdAt) < auditStart) return false
+      if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false
+      if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false
+      if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false
+      return !term || [entry.actorName, entry.entityLabel, entry.action, entry.entityId, entry.moduleLabel].join(' ').toLowerCase().includes(term)
+    })
+    const traceKey = (entry) => {
+      const data = entry.afterData || entry.beforeData || {}
+      if (entry.entityType === 'sale') return `sale:${entry.entityId}`
+      if (entry.entityType === 'stock_movement' && data.referenceId) return `${data.referenceType || 'stock'}:${data.referenceId}`
+      if (entry.entityType === 'document' && data.sale_id) return `sale:${data.sale_id}`
+      if (entry.entityType === 'cash_movement' && data.cash_session_id) return `cash:${data.cash_session_id}`
+      if (entry.entityType === 'cash_session') return `cash:${entry.entityId}`
+      if (entry.entityType === 'purchase_receipt') return `purchase:${entry.entityId}`
+      return `${entry.entityType}:${entry.entityId}`
+    }
+    const groups = new Map()
+    for (const entry of entries) { const key = traceKey(entry); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(entry) }
+    const actionLabel = (entry) => ({ opened: 'Abrió', closed: 'Cerró', created: 'Creó', updated: 'Actualizó', deleted: 'Eliminó', cancelled: 'Anuló' }[entry.action] || 'Registró')
+    auditTrace.classList.add('audit-causal-graph')
+    auditTrace.innerHTML = [...groups.values()].map((group) => {
+      const root = group.find((entry) => ['sale', 'purchase_receipt', 'cash_session'].includes(entry.entityType)) || group[0]
+      const children = group.filter((entry) => entry !== root)
+      return `<article class="audit-causal-group"><div class="audit-main-node module-${root.modules[0]}"><span>MAIN</span><strong>${actionLabel(root)} ${root.entityLabel}</strong><small>${String(root.createdAt).slice(0, 16).replace('T', ' · ')}</small></div>${children.length ? `<div class="audit-causal-branches">${children.map((entry) => `<div class="audit-causal-branch module-${entry.modules[0]}"><i></i><strong>${entry.moduleLabel}</strong><span>${actionLabel(entry)} ${entry.entityLabel}</span></div>`).join('')}</div>` : '<div class="audit-causal-branches is-empty"><span>Sin efectos vinculados.</span></div>'}</article>`
+    }).join('') || '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'
+  }
+  if (auditTrace?.querySelector('.audit-trace-event') && !auditTrace.querySelector('.audit-branch-label')) {
     const lanes = [
       ['main', 'MAIN'], ['operation', 'OPERACIÓN'], ['inventory', 'INVENTARIO'], ['relation', 'RELACIÓN'],
     ]
