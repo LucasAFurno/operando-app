@@ -4158,11 +4158,13 @@ const bindEvents = () => {
     for (const entry of entries) { const key = traceKey(entry); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(entry) }
     const actionLabel = (entry) => ({ opened: 'Abrió', closed: 'Cerró', created: 'Creó', updated: 'Actualizó', deleted: 'Eliminó', cancelled: 'Anuló' }[entry.action] || 'Registró')
     auditTrace.classList.add('audit-causal-graph')
-    auditTrace.innerHTML = [...groups.values()].map((group) => {
+    const causalGroups = [...groups.values()]
+    const baseGroupWidth = Math.max(76, 148 - causalGroups.length * 7)
+    auditTrace.innerHTML = causalGroups.map((group) => {
       const root = group.find((entry) => ['sale', 'purchase_receipt', 'cash_session'].includes(entry.entityType)) || group[0]
       const children = group.filter((entry) => entry !== root)
       const detail = (entry) => encodeURIComponent(JSON.stringify({ title: `${actionLabel(entry)} ${entry.entityLabel}`, actor: entry.actorName, time: String(entry.createdAt).slice(0, 16).replace('T', ' · '), before: entry.beforeData, after: entry.afterData }))
-      const groupWidth = Math.max(136, children.length * 84 + 24)
+      const groupWidth = Math.max(baseGroupWidth, children.length * 72 + 18)
       const branchNodes = children.map((entry, index) => {
         const left = ((index + 1) / (children.length + 1)) * 100
         const title = `${actionLabel(entry)} ${entry.entityLabel}`
