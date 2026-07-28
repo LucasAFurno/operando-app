@@ -1,4 +1,4 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=20260720l'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=20260727-realtime'
 
 const dataStorageKey = 'pclaf-control-data'
 const cloudConfigStorageKey = 'pclaf-control-cloud-config'
@@ -993,10 +993,16 @@ export const createBrowserDataStore = (options = {}) => {
   let cloudConfig = readCloudConfig()
   let cloudAccessToken = ''
   let platformAdminData = null
-  let cloudCoreAdapter = createSupabaseCoreAdapter({
+  const operationalChangeListeners = new Set()
+  const notifyOperationalChange = () => {
+    for (const listener of operationalChangeListeners) listener()
+  }
+  const createCloudCoreAdapter = () => createSupabaseCoreAdapter({
     ...cloudConfig,
     getAccessToken: () => cloudAccessToken,
+    onMutation: notifyOperationalChange,
   })
+  let cloudCoreAdapter = createCloudCoreAdapter()
   let cloudAuthProfile = null
 
   const normalizeCloudUser = (entry) => {
@@ -1189,10 +1195,7 @@ export const createBrowserDataStore = (options = {}) => {
 
   const setCloudAccessToken = (token = '') => {
     cloudAccessToken = String(token || '').trim()
-    cloudCoreAdapter = createSupabaseCoreAdapter({
-      ...cloudConfig,
-      getAccessToken: () => cloudAccessToken,
-    })
+    cloudCoreAdapter = createCloudCoreAdapter()
     applyCloudMeta(cloudCoreAdapter ? 'pending' : 'required')
   }
 
@@ -2723,10 +2726,7 @@ export const createBrowserDataStore = (options = {}) => {
 
   const setCloudConnection = async (config) => {
     cloudConfig = writeCloudConfig(config)
-    cloudCoreAdapter = createSupabaseCoreAdapter({
-      ...cloudConfig,
-      getAccessToken: () => cloudAccessToken,
-    })
+    cloudCoreAdapter = createCloudCoreAdapter()
     applyCloudMeta(cloudCoreAdapter ? 'pending' : 'offline')
     save()
     return { ok: true, message: cloudCoreAdapter ? 'Conexion cloud guardada.' : 'Conexion cloud desactivada.' }
@@ -2764,6 +2764,11 @@ export const createBrowserDataStore = (options = {}) => {
     isAuthenticated,
     isCloudRequired: () => requireCloud,
     isCloudReady: () => isDesktop || !requireCloud || Boolean(cloudCoreAdapter),
+    subscribeToOperationalChanges: (listener) => {
+      if (typeof listener !== 'function') return () => {}
+      operationalChangeListeners.add(listener)
+      return () => operationalChangeListeners.delete(listener)
+    },
     authenticateUser,
     signOut,
     openCashSession,

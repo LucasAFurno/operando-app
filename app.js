@@ -1675,10 +1675,10 @@ const salesViewV2 = (ui) => `
           </div>
           <div class="full-span pos-checkout-layout">
             <section class="pos-cart">
-              <div class="pos-cart-head"><div><strong>Articulos</strong><span>${cartUnits} unidades</span></div><output class="pos-total" data-sale-total>${money(Math.max(0, cartSubtotal - Number(editingSale?.discountAmount || 0)))}</output></div>
+              <div class="pos-cart-head"><div><strong>Articulos</strong><span>${cartUnits} unidades</span></div><div class="pos-total"><span>Total</span><output data-sale-total>${money(Math.max(0, cartSubtotal - Number(editingSale?.discountAmount || 0)))}</output></div></div>
               <div class="cart-builder">
                 ${selectedProducts.length ? selectedProducts.map((product) => `
-                  <div class="cart-line ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}">
+                  <div class="cart-line sale-cart-line ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}">
                     <div><strong>${product.name}</strong><p>${money(product.salePrice)} c/u · stock ${product.scopedStock}</p></div>
                     <label class="cart-quantity"><span>Cantidad</span><input type="number" min="0" max="${product.trackStock ? product.scopedStock : 999999}" value="${quantities.get(product.id) || 0}" name="qty_${product.id}" data-sale-price="${Number(product.salePrice || 0)}" /></label>
                     <strong class="cart-line-total">${money(Number(quantities.get(product.id) || 0) * Number(product.salePrice || 0))}</strong>
