@@ -3204,11 +3204,33 @@ input[type='search'] { color: var(--text); }
 
 .invoices-table .data-head,
 .invoices-table .data-row,
-.tickets-table .data-head,
-.tickets-table .data-row,
 .settings-users-table .data-head,
 .settings-users-table .data-row {
   grid-template-columns: minmax(150px, 1.2fr) minmax(180px, 1.4fr) minmax(120px, 1fr) minmax(110px, 0.9fr) 36px;
+}
+
+.tickets-table .data-head,
+.tickets-table .data-row {
+  grid-template-columns: minmax(175px, 1.25fr) minmax(130px, .9fr) minmax(110px, .8fr) minmax(118px, .9fr) 36px;
+}
+
+.tickets-table .ticket-number {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.tickets-table .ticket-updated {
+  white-space: nowrap;
+}
+
+.tickets-table .ticket-updated small {
+  display: inline-block;
+  margin-top: 3px;
+  color: var(--muted);
 }
 
 .address-map {

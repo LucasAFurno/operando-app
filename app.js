@@ -384,6 +384,16 @@ const escapeHtml = (value) => String(value ?? '')
   .replaceAll('>', '&gt;')
   .replaceAll('"', '&quot;')
   .replaceAll("'", '&#39;')
+const formatTicketUpdatedAt = (value) => {
+  const raw = String(value || '').trim()
+  if (!raw) return 'Sin actualizaciones'
+  const normalized = raw.replace(/(\.\d{3})\d+(?=[+-]\d{2}:\d{2}$)/, '$1')
+  const date = new Date(normalized)
+  if (Number.isNaN(date.getTime())) return escapeHtml(raw.replace('T', ' ').slice(0, 16))
+  const day = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '')
+  const time = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  return `${day}<br /><small>${time}</small>`
+}
 const maskEmail = (value) => {
   const email = String(value || '').trim().toLowerCase()
   if (!email || !email.includes('@')) return ''
@@ -2333,7 +2343,7 @@ const ticketsView = (ui) => `
         </form>
       </article>
       <article class="panel"><div class="panel-head"><div><h3>Tickets activos</h3><p>Historial rapido</p></div></div>
-        ${dataTable(['Ticket', 'Cliente', 'Sucursal', 'Actualizado', 'Accion'], ui.enrichedTickets.map((ticket) => `<div class="data-row"><span>${ticket.number}</span><span>${ticket.customerName}</span><span>${ticket.branchName}</span><span>${ticket.updatedAt}</span><span>${ticketActionButtons(ticket)}</span></div>`))}
+        ${dataTable(['Ticket', 'Cliente', 'Sucursal', 'Actualizado', 'Acciones'], ui.enrichedTickets.map((ticket) => `<div class="data-row"><span class="ticket-cell"><strong class="ticket-number" title="${escapeHtml(ticket.number)}">${escapeHtml(ticket.number)}</strong></span><span>${ticket.customerName}</span><span>${ticket.branchName}</span><span class="ticket-updated">${formatTicketUpdatedAt(ticket.updatedAt)}</span><span>${ticketActionButtons(ticket)}</span></div>`))}
       </article>
     </section>
   </section>
@@ -2367,7 +2377,7 @@ const ticketsViewV2 = (ui) => `
       </article>` : ''}
       <article class="panel">
         <div class="panel-head"><div><h3>Tickets activos</h3><p>Vista rapida del flujo operativo</p></div><div class="settings-actions">${editingTicket ? '' : createToggleButton('ticket', showTicketForm, 'Agregar ticket')}</div></div>
-        ${dataTable(['Ticket', 'Cliente', 'Sucursal', 'Actualizado', 'Accion'], ui.enrichedTickets.map((ticket) => `<div class="data-row"><span>${ticket.number}<br /><small>${ticket.device || 'Equipo sin detalle'}</small></span><span>${ticket.customerName}<br /><small>${ticket.status}</small></span><span>${ticket.branchName}</span><span>${ticket.updatedAt}</span><span>${ticketActionButtons(ticket)}</span></div>`), 'is-stable tickets-table')}
+        ${dataTable(['Ticket', 'Cliente', 'Sucursal', 'Actualizado', 'Acciones'], ui.enrichedTickets.map((ticket) => `<div class="data-row"><span class="ticket-cell"><strong class="ticket-number" title="${escapeHtml(ticket.number)}">${escapeHtml(ticket.number)}</strong><br /><small>${ticket.device || 'Equipo sin detalle'}</small></span><span>${ticket.customerName}<br /><small>${ticket.status}</small></span><span>${ticket.branchName}</span><span class="ticket-updated">${formatTicketUpdatedAt(ticket.updatedAt)}</span><span>${ticketActionButtons(ticket)}</span></div>`), 'is-stable tickets-table')}
       </article>
     </section>
   </section>
