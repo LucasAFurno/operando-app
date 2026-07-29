@@ -651,6 +651,12 @@ const renderUserScopeSelector = (ui, editingUser, canManageUsers) => {
 }
 
 const actionButton = (entity, id) => `<button type="button" class="inline-action" data-delete="${entity}" data-id="${id}">Eliminar</button>`
+const rowActionsMenu = (label, actions) => `
+  <details class="row-more-menu">
+    <summary aria-label="${label}" title="${label}"><span aria-hidden="true">&#8942;</span></summary>
+    <div class="row-more-popover">${actions}</div>
+  </details>
+`
 const createToggleButton = (key, isOpen, label = 'Agregar') => `<button type="button" class="add-action${isOpen ? ' is-open' : ''}" data-action="${isOpen ? `close-${key}-form` : `open-${key}-form`}" aria-label="${isOpen ? 'Cerrar' : label}"><span class="add-action-icon" aria-hidden="true">${isOpen ? '&times;' : '+'}</span><span>${isOpen ? 'Cerrar' : label}</span></button>`
 const closeProductUtilityForms = () => {
   productFormOpen = false
@@ -678,47 +684,34 @@ const closeDocumentUtilityForms = () => {
   invoiceEditingId = ''
   ticketEditingId = ''
 }
-const saleActionButtons = (sale) => `
-  <div class="inline-action-group sale-actions-compact">
+const saleActionButtons = (sale) => rowActionsMenu('Acciones de venta', `
     <button type="button" class="inline-action is-strong" data-sale-action="edit" data-id="${sale.id}">Editar</button>
     <button type="button" class="inline-action" data-sale-action="invoice" data-id="${sale.id}">Factura</button>
-    <details class="sale-more-menu">
-      <summary>Mas</summary>
-      <div class="sale-more-popover">
-        <button type="button" class="inline-action" data-sale-action="ticket" data-id="${sale.id}">Ticket</button>
-        <button type="button" class="inline-action" data-sale-action="receipt-80" data-id="${sale.id}">Ticket 80 mm</button>
-        <button type="button" class="inline-action" data-sale-action="receipt-58" data-id="${sale.id}">Ticket 58 mm</button>
-        <button type="button" class="inline-action" data-sale-action="export" data-id="${sale.id}">Exportar</button>
-        <button type="button" class="inline-action" data-sale-action="return" data-id="${sale.id}">Devolver</button>
-        <button type="button" class="inline-action" data-sale-action="cancel" data-id="${sale.id}">Anular</button>
-        <button type="button" class="inline-action danger sale-delete-action" data-delete="sale" data-id="${sale.id}">Eliminar venta</button>
-      </div>
-    </details>
-  </div>
-`
-const purchaseActionButtons = (receipt) => `
-  <div class="inline-action-group">
+    <button type="button" class="inline-action" data-sale-action="ticket" data-id="${sale.id}">Ticket</button>
+    <button type="button" class="inline-action" data-sale-action="receipt-80" data-id="${sale.id}">Ticket 80 mm</button>
+    <button type="button" class="inline-action" data-sale-action="receipt-58" data-id="${sale.id}">Ticket 58 mm</button>
+    <button type="button" class="inline-action" data-sale-action="export" data-id="${sale.id}">Exportar</button>
+    <button type="button" class="inline-action" data-sale-action="return" data-id="${sale.id}">Devolver</button>
+    <button type="button" class="inline-action" data-sale-action="cancel" data-id="${sale.id}">Anular</button>
+    <button type="button" class="inline-action danger" data-delete="sale" data-id="${sale.id}">Eliminar venta</button>
+  `)
+const purchaseActionButtons = (receipt) => rowActionsMenu('Acciones de recepción', `
     <button type="button" class="inline-action" data-purchase-action="edit" data-id="${receipt.id}">Editar</button>
     <button type="button" class="inline-action danger" data-delete="purchase_receipt" data-id="${receipt.id}">Eliminar</button>
-  </div>
-`
-const invoiceActionButtons = (invoice) => `
-  <div class="inline-action-group invoice-actions">
+  `)
+const invoiceActionButtons = (invoice) => rowActionsMenu('Acciones de comprobante', `
     <button type="button" class="inline-action is-strong" data-invoice-action="pay" data-id="${invoice.id}" ${invoiceBalance(invoice) <= 0 ? 'disabled' : ''}>Abonar</button>
     <button type="button" class="inline-action" data-invoice-action="view" data-id="${invoice.id}">Ver</button>
     <button type="button" class="inline-action" data-invoice-action="print" data-id="${invoice.id}">Imprimir</button>
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
-  </div>
-`
+  `)
 
 const invoiceEmissionLabel = (invoice) => invoice.fiscalStatus === 'Interno' ? 'Interno · no fiscal' : 'ARCA'
 const invoiceBalance = (invoice) => Math.max(0, Number(invoice?.totalAmount || 0) - Number(invoice?.amountPaid || 0))
-const ticketActionButtons = (ticket) => `
-  <div class="inline-action-group">
+const ticketActionButtons = (ticket) => rowActionsMenu('Acciones de ticket', `
     <button type="button" class="inline-action" data-ticket-action="edit" data-id="${ticket.id}">Editar</button>
     <button type="button" class="inline-action danger" data-delete="ticket" data-id="${ticket.id}">Eliminar</button>
-  </div>
-`
+  `)
 const branchActionButtons = (branch) => `
   <div class="inline-action-group">
     <button type="button" class="inline-action" data-branch-action="select" data-id="${branch.id}">Usar</button>
@@ -2229,7 +2222,7 @@ const purchasesViewV2 = (ui) => `
           <article class="panel purchase-summary-card">
             <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Proveedores recientes'}</h3><p>${supplierQuery ? `${visibleSuppliers.length} coincidencia${visibleSuppliers.length === 1 ? '' : 's'} sugerida${visibleSuppliers.length === 1 ? '' : 's'}` : (purchaseSuppliersExpanded ? `Mostrando ${ui.snapshot.suppliers.length}` : 'Últimos 3 proveedores')}</p></div>${!supplierQuery && ui.snapshot.suppliers.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-suppliers">${purchaseSuppliersExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
             <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar por proveedor, contacto o dirección" aria-label="Buscar proveedor" /></div>
-            <div class="timeline-list">${supplierPreview.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-supplier-map" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin dirección')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-supplier" data-id="${supplier.id}">Editar</button>${actionButton('supplier', supplier.id)}</span>${supplierMapPreviewId === supplier.id ? `<div class="supplier-map-preview">${supplier.address ? `<iframe title="Ubicación de ${escapeHtml(supplier.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(supplier.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.address)}">Abrir en Maps</a>` : '<p>Este proveedor todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
+            <div class="timeline-list">${supplierPreview.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-supplier-map" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin dirección')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions">${rowActionsMenu('Acciones de proveedor', `<button type="button" class="inline-action" data-action="edit-supplier" data-id="${supplier.id}">Editar</button>${actionButton('supplier', supplier.id)}`)}</span>${supplierMapPreviewId === supplier.id ? `<div class="supplier-map-preview">${supplier.address ? `<iframe title="Ubicación de ${escapeHtml(supplier.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(supplier.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.address)}">Abrir en Maps</a>` : '<p>Este proveedor todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
           </article>
         </div>
       </article>
@@ -4756,10 +4749,10 @@ const bindEvents = () => {
       render()
     }
     row.addEventListener('click', (event) => {
-      if (!event.target.closest('button, a, input, select, textarea, label')) openInvoice()
+      if (!event.target.closest('button, a, input, select, textarea, label, summary, details')) openInvoice()
     })
     row.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openInvoice() }
+      if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('button, a, input, select, textarea, label, summary, details')) { event.preventDefault(); openInvoice() }
     })
   }
   for (const button of document.querySelectorAll('[data-invoice-action]')) {
