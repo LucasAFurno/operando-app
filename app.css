@@ -3588,6 +3588,7 @@ input[type='search'] { color: var(--text); }
 .row-more-menu {
   position: relative;
   flex: 0 0 auto;
+  z-index: 1;
 }
 
 .row-more-menu summary {
@@ -3618,6 +3619,16 @@ input[type='search'] { color: var(--text); }
   background: color-mix(in srgb, var(--accent) 12%, var(--panel));
 }
 
+.timeline-item:has(.row-more-menu[open]),
+.data-row:has(.row-more-menu[open]) {
+  position: relative;
+  z-index: 10;
+}
+
+.row-more-menu[open] {
+  z-index: 50;
+}
+
 .row-more-popover {
   position: absolute;
   z-index: 40;
@@ -3629,7 +3640,7 @@ input[type='search'] { color: var(--text); }
   padding: 6px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: var(--panel-soft);
+  background: color-mix(in srgb, var(--panel) 96%, #000);
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.38);
 }
 
@@ -3639,6 +3650,15 @@ input[type='search'] { color: var(--text); }
   min-height: 34px;
   padding: 7px 10px;
   text-align: left;
+}
+
+.row-more-menu--sales .row-more-popover {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(248px, calc(100vw - 40px));
+}
+
+.row-more-menu--sales .sale-delete-action {
+  grid-column: 1 / -1;
 }
 
 .scanner-row {

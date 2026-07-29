@@ -651,8 +651,8 @@ const renderUserScopeSelector = (ui, editingUser, canManageUsers) => {
 }
 
 const actionButton = (entity, id) => `<button type="button" class="inline-action" data-delete="${entity}" data-id="${id}">Eliminar</button>`
-const rowActionsMenu = (label, actions) => `
-  <details class="row-more-menu">
+const rowActionsMenu = (label, actions, variant = '') => `
+  <details class="row-more-menu${variant ? ` ${variant}` : ''}">
     <summary aria-label="${label}" title="${label}"><span aria-hidden="true">&#8942;</span></summary>
     <div class="row-more-popover">${actions}</div>
   </details>
@@ -693,8 +693,8 @@ const saleActionButtons = (sale) => rowActionsMenu('Acciones de venta', `
     <button type="button" class="inline-action" data-sale-action="export" data-id="${sale.id}">Exportar</button>
     <button type="button" class="inline-action" data-sale-action="return" data-id="${sale.id}">Devolver</button>
     <button type="button" class="inline-action" data-sale-action="cancel" data-id="${sale.id}">Anular</button>
-    <button type="button" class="inline-action danger" data-delete="sale" data-id="${sale.id}">Eliminar venta</button>
-  `)
+    <button type="button" class="inline-action danger sale-delete-action" data-delete="sale" data-id="${sale.id}">Eliminar venta</button>
+  `, 'row-more-menu--sales')
 const purchaseActionButtons = (receipt) => rowActionsMenu('Acciones de recepción', `
     <button type="button" class="inline-action" data-purchase-action="edit" data-id="${receipt.id}">Editar</button>
     <button type="button" class="inline-action danger" data-delete="purchase_receipt" data-id="${receipt.id}">Eliminar</button>
@@ -3950,6 +3950,14 @@ const bindEvents = () => {
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   bindHardwareScanner()
+  for (const menu of document.querySelectorAll('.row-more-menu')) {
+    menu.addEventListener('toggle', () => {
+      if (!menu.open) return
+      for (const otherMenu of document.querySelectorAll('.row-more-menu[open]')) {
+        if (otherMenu !== menu) otherMenu.open = false
+      }
+    })
+  }
   for (const form of document.querySelectorAll('form[data-form]')) form.addEventListener('submit', handleSubmit)
   const updateSaleTotals = () => {
     let subtotal = 0
