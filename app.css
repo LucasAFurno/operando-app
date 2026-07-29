@@ -3599,10 +3599,10 @@ input[type='search'] { color: var(--text); }
   min-height: 36px;
   padding: 0;
   box-sizing: border-box;
-  border: 1px solid rgba(214, 16, 16, 0.22);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(214, 16, 16, 0.06);
-  color: var(--accent);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--muted);
   font-size: 1.28rem;
   line-height: 1;
   font-weight: 700;
@@ -3615,8 +3615,9 @@ input[type='search'] { color: var(--text); }
 }
 
 .row-more-menu[open] summary {
-  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
-  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  border-color: color-mix(in srgb, var(--text) 28%, var(--line));
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
 }
 
 .timeline-item:has(.row-more-menu[open]),
