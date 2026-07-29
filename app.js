@@ -3931,6 +3931,16 @@ const handleSubmit = async (event) => {
 }
 
 const bindEvents = () => {
+  const rerenderSearchKeepingFocus = (input, selector) => {
+    const caret = input.selectionStart ?? input.value.length
+    render()
+    window.requestAnimationFrame(() => {
+      const nextInput = document.querySelector(selector)
+      if (!nextInput) return
+      nextInput.focus({ preventScroll: true })
+      nextInput.setSelectionRange(caret, caret)
+    })
+  }
   const scrollToAuthBlock = (selector) => {
     const element = document.querySelector(selector)
     element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -4295,7 +4305,7 @@ const bindEvents = () => {
   })
   for (const input of document.querySelectorAll('[data-platform-search]')) input.addEventListener('input', () => {
     platformSearchQuery = input.value || ''
-    render()
+    rerenderSearchKeepingFocus(input, '[data-platform-search]')
   })
   for (const select of document.querySelectorAll('[data-platform-filter]')) select.addEventListener('change', () => {
     if (select.dataset.platformFilter === 'status') platformCommerceFilter = select.value || 'all'
@@ -4321,7 +4331,10 @@ const bindEvents = () => {
     customerEditingId = ''
     render()
   })
-  for (const input of document.querySelectorAll('[data-customer-search]')) input.addEventListener('input', () => { customerSearchQuery = input.value; render() })
+  for (const input of document.querySelectorAll('[data-customer-search]')) input.addEventListener('input', () => {
+    customerSearchQuery = input.value
+    rerenderSearchKeepingFocus(input, '[data-customer-search]')
+  })
   for (const input of document.querySelectorAll('[data-address-map-input]')) input.addEventListener('input', () => {
     const address = input.value.trim()
     const form = input.closest('form')
@@ -4365,7 +4378,7 @@ const bindEvents = () => {
     productFormOpen = false
     render()
   })
-  for (const input of document.querySelectorAll('[data-product-search]')) input.addEventListener('input', () => { productSearchQuery = input.value || ''; productEditingId = ''; render() })
+  for (const input of document.querySelectorAll('[data-product-search]')) input.addEventListener('input', () => { productSearchQuery = input.value || ''; productEditingId = ''; rerenderSearchKeepingFocus(input, '[data-product-search]') })
   for (const button of document.querySelectorAll('[data-action="clear-product-search"]')) button.addEventListener('click', () => { productSearchQuery = ''; productEditingId = ''; render() })
   for (const button of document.querySelectorAll('[data-action="edit-product-inline"]')) button.addEventListener('click', () => { productEditingId = button.dataset.id || ''; render() })
   for (const button of document.querySelectorAll('[data-action="cancel-product-inline-edit"]')) button.addEventListener('click', () => { productEditingId = ''; render() })
@@ -4382,14 +4395,8 @@ const bindEvents = () => {
     render()
   })
   for (const input of document.querySelectorAll('[data-supplier-search]')) input.addEventListener('input', () => {
-    const cursorPosition = input.selectionStart ?? input.value.length
     supplierSearchQuery = input.value
-    render()
-    requestAnimationFrame(() => {
-      const nextInput = document.querySelector('[data-supplier-search]')
-      nextInput?.focus()
-      nextInput?.setSelectionRange(cursorPosition, cursorPosition)
-    })
+    rerenderSearchKeepingFocus(input, '[data-supplier-search]')
   })
   for (const input of document.querySelectorAll('input[name="supplierSearch"]')) input.addEventListener('input', () => { purchaseSupplierSearch = input.value })
   const addPurchaseProduct = () => {

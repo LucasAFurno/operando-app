@@ -52,6 +52,7 @@ body { margin: 0; min-width: 320px; background: var(--workspace); }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 input, select { outline: none; }
+input[type='search'] { color: var(--text); }
 #app { min-height: 100vh; }
 
 .login-shell {
@@ -4014,6 +4015,7 @@ input, select { outline: none; }
   padding: 0;
   border: 0;
   background: transparent;
+  color: var(--text);
   outline: 0;
 }
 
