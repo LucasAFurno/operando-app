@@ -2584,13 +2584,28 @@ const registersViewV2 = (ui) => `
 `})()}
 `
 
+const getAuditLinkedContext = (ui, entry) => {
+  const data = entry.afterData || entry.beforeData || {}
+  const saleId = entry.entityType === 'sale' ? entry.entityId : (data.saleId || data.sale_id || data.referenceId || '')
+  const invoiceId = entry.entityType === 'invoice' ? entry.entityId : (data.invoiceId || data.invoice_id || '')
+  const invoice = ui.enrichedInvoices?.find((item) => item.id === invoiceId || item.saleId === saleId)
+  const sale = ui.enrichedSales?.find((item) => item.id === saleId || (invoice?.saleId && item.id === invoice.saleId))
+  const itemNames = (sale?.items || []).map((item) => ui.snapshot.products.find((product) => product.id === item.productId)?.name || item.productName || 'Artículo')
+  return { sale, invoice, itemNames, data }
+}
+
+const auditSearchText = (ui, entry) => {
+  const context = getAuditLinkedContext(ui, entry)
+  return [entry.actorName, entry.entityLabel, entry.action, entry.entityId, entry.moduleLabel, context.sale?.customerName, context.sale?.itemSummary, context.sale?.totalAmount, context.invoice?.number, context.invoice?.customerName, context.invoice?.totalAmount, ...context.itemNames, ...Object.values(context.data || {})].join(' ').toLocaleLowerCase()
+}
+
 const auditView = (ui) => {
   const moduleColors = { sales: '#f87171', cash: '#fbbf24', stock: '#60a5fa', products: '#a78bfa', purchases: '#34d399', customers: '#fb7185', invoices: '#22d3ee', tickets: '#c084fc', settings: '#94a3b8' }
   const actionLabels = { created: 'Creó', updated: 'Actualizó', deleted: 'Eliminó', cancelled: 'Anuló', returned: 'Registró una devolución', opened: 'Abrió', closed: 'Cerró', enabled: 'Habilitó', disabled: 'Deshabilitó', created_from_sale: 'Generó desde una venta', created_from_return: 'Generó desde una devolución', imported: 'Importó', reset: 'Restableció', registered: 'Registró', deactivated: 'Desactivó', seed_initialized: 'Inicializó' }
   const now = new Date(); const beginningOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const periodStart = auditPeriodFilter === 'today' ? beginningOfDay : auditPeriodFilter === 'week' ? new Date(beginningOfDay.getTime() - (6 * 86400000)) : auditPeriodFilter === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : null
   const query = auditSearchQuery.trim().toLocaleLowerCase()
-  const entries = ui.enrichedAudit.filter((entry) => { const createdAt = new Date(entry.createdAt); if (periodStart && createdAt < periodStart) return false; if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false; if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false; if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false; return !query || [entry.actorName, entry.entityLabel, entry.action, entry.entityId, entry.moduleLabel].join(' ').toLocaleLowerCase().includes(query) })
+  const entries = ui.enrichedAudit.filter((entry) => { const createdAt = new Date(entry.createdAt); if (periodStart && createdAt < periodStart) return false; if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false; if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false; if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false; return !query || auditSearchText(ui, entry).includes(query) })
   const counts = Object.keys(ui.auditModuleLabels).map((key) => ({ key, label: ui.auditModuleLabels[key], count: entries.filter((entry) => entry.modules.includes(key)).length })).filter((item) => item.count)
   const total = Math.max(1, counts.reduce((sum, item) => sum + item.count, 0)); let offset = 0
   const donut = counts.map((item) => { const start = Math.round((offset / total) * 100); offset += item.count; return `${moduleColors[item.key]} ${start}% ${Math.round((offset / total) * 100)}%` }).join(', ') || '#334155 0 100%'
@@ -4138,6 +4153,8 @@ const bindEvents = () => {
   for (const button of document.querySelectorAll('[data-audit-period]')) button.addEventListener('click', () => { auditPeriodFilter = button.dataset.auditPeriod || 'today'; render() })
   for (const button of document.querySelectorAll('[data-audit-module]')) button.addEventListener('click', () => { auditModuleFilter = button.dataset.auditModule || 'all'; render() })
   for (const input of document.querySelectorAll('[data-audit-search]')) {
+    input.placeholder = 'Buscar venta, factura, cliente, producto o usuario'
+    input.addEventListener('input', () => { auditSearchQuery = input.value; rerenderSearchKeepingFocus(input, '[data-audit-search]') })
     input.addEventListener('change', () => { auditSearchQuery = input.value; render() })
     input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); auditSearchQuery = input.value; render() } })
   }
@@ -4158,6 +4175,45 @@ const bindEvents = () => {
   const auditTrace = auditTraceOpen ? auditTraceElement : null
   if (auditTrace) {
     auditTrace.classList.add('audit-timeline-drawer')
+    const auditUi = getUiState()
+    const auditNow = new Date()
+    const auditStart = auditPeriodFilter === 'today' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), auditNow.getDate()) : auditPeriodFilter === 'week' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), auditNow.getDate() - 6) : auditPeriodFilter === 'month' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), 1) : null
+    const auditTerm = auditSearchQuery.trim().toLocaleLowerCase()
+    const visibleEntries = auditUi.enrichedAudit.filter((entry) => {
+      if (auditStart && new Date(entry.createdAt) < auditStart) return false
+      if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false
+      if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false
+      if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false
+      return !auditTerm || auditSearchText(auditUi, entry).includes(auditTerm)
+    })
+    for (const [index, event] of [...auditTrace.querySelectorAll('.audit-trace-event')].entries()) {
+      const entry = visibleEntries[index]
+      if (!entry) continue
+      const context = getAuditLinkedContext(auditUi, entry)
+      const content = event.querySelector('.audit-trace-content')
+      const detail = document.createElement('div')
+      detail.className = 'audit-event-detail'
+      const saleDetail = context.sale ? `<span><b>Venta</b> ${escapeHtml(context.itemNames.slice(0, 3).join(', ') || context.sale.itemSummary || 'Sin detalle')} · ${money(context.sale.totalAmount)}</span>` : ''
+      const invoiceDetail = context.invoice ? `<span><b>Factura</b> ${escapeHtml(context.invoice.number || 'sin número')} · ${money(context.invoice.totalAmount)}</span>` : ''
+      const productDetail = !context.sale && !context.invoice && context.data?.name ? `<span><b>Detalle</b> ${escapeHtml(String(context.data.name))}</span>` : ''
+      detail.innerHTML = `${saleDetail}${invoiceDetail}${productDetail}`
+      if (detail.textContent?.trim()) content?.append(detail)
+      const actions = document.createElement('div')
+      actions.className = 'audit-event-actions'
+      if (context.sale) {
+        const button = document.createElement('button')
+        button.type = 'button'; button.className = 'inline-action'; button.textContent = 'Abrir venta'
+        button.addEventListener('click', () => { activeSection = 'ventas'; saleEditingId = context.sale.id; saleFormOpen = true; saleDraftQuantities = Object.fromEntries((context.sale.items || []).map((item) => [item.productId, item.quantity])); queueScrollToSelector('form[data-form="sale"]'); saveSection(); render() })
+        actions.append(button)
+      }
+      if (context.invoice) {
+        const button = document.createElement('button')
+        button.type = 'button'; button.className = 'inline-action'; button.textContent = 'Abrir factura'
+        button.addEventListener('click', () => { const opened = openInvoiceDocument(context.invoice.id); feedbackMessage = opened ? 'Factura abierta en una nueva pestaña.' : 'No se pudo abrir la factura.'; if (!opened) render() })
+        actions.append(button)
+      }
+      if (actions.childElementCount) content?.append(actions)
+    }
     let previousDate = ''
     for (const event of auditTrace.querySelectorAll('.audit-trace-event')) {
       const date = String(event.querySelector('time')?.textContent || '').slice(0, 10)
