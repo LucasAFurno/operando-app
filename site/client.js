@@ -138,7 +138,6 @@ let auditPeriodFilter = 'today'
 let auditSearchQuery = ''
 let auditDateFrom = ''
 let auditDateTo = ''
-let auditTraceOpen = false
 let supplierMapPreviewId = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
@@ -4164,18 +4163,7 @@ const bindEvents = () => {
   for (const input of document.querySelectorAll('[data-audit-date]')) input.addEventListener('change', () => { if (input.dataset.auditDate === 'from') auditDateFrom = input.value; if (input.dataset.auditDate === 'to') auditDateTo = input.value; render() })
   const auditTracePanel = document.querySelector('.audit-trace-panel')
   const auditTraceElement = auditTracePanel?.querySelector('.audit-trace')
-  if (auditTracePanel && auditTraceElement) {
-    auditTraceElement.hidden = !auditTraceOpen
-    const panelHead = auditTracePanel.querySelector('.panel-head')
-    const toggle = document.createElement('button')
-    toggle.type = 'button'
-    toggle.className = 'audit-trace-toggle ghost-action'
-    toggle.setAttribute('aria-expanded', String(auditTraceOpen))
-    toggle.textContent = auditTraceOpen ? 'Cerrar línea temporal' : 'Abrir línea temporal'
-    toggle.addEventListener('click', () => { auditTraceOpen = !auditTraceOpen; render() })
-    panelHead?.append(toggle)
-  }
-  const auditTrace = auditTraceOpen ? auditTraceElement : null
+  const auditTrace = auditTraceElement
   if (auditTrace) {
     auditTrace.classList.add('audit-timeline-drawer')
     const auditUi = getUiState()

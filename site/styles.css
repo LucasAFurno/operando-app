@@ -5608,3 +5608,6 @@ input[type='search'] { color: var(--text); }
 .dashboard-activity-row.module-sales { --activity-color: #f87171; }.dashboard-activity-row.module-cash { --activity-color: #fbbf24; }.dashboard-activity-row.module-stock { --activity-color: #60a5fa; }.dashboard-activity-row.module-products { --activity-color: #a78bfa; }.dashboard-activity-row.module-purchases { --activity-color: #34d399; }.dashboard-activity-row.module-customers { --activity-color: #fb7185; }.dashboard-activity-row.module-invoices { --activity-color: #22d3ee; }.dashboard-activity-row.module-tickets { --activity-color: #c084fc; }
 .dashboard-activity-row .dashboard-activity-icon { color: var(--activity-color); background: color-mix(in srgb, var(--activity-color) 16%, var(--panel)); }
 .dashboard-activity-row:not(:last-child) .dashboard-activity-icon::after { background: color-mix(in srgb, var(--activity-color) 42%, var(--line)); }
+
+/* La exploración de auditoría se resuelve con período y módulos, sin búsqueda redundante. */
+.audit-search { display: none; }
