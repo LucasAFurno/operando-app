@@ -678,7 +678,9 @@ const closeDocumentUtilityForms = () => {
   invoiceEditingId = ''
   ticketEditingId = ''
 }
-const saleActionButtons = (sale) => `
+const saleActionButtons = (sale) => {
+  const canReverse = !['cancelled', 'returned'].includes(sale.status) && Number(sale.amountPaid || 0) === 0
+  return `
   <div class="inline-action-group sale-actions-compact">
     <button type="button" class="inline-action is-strong" data-sale-action="edit" data-id="${sale.id}">Editar</button>
     <button type="button" class="inline-action" data-sale-action="invoice" data-id="${sale.id}">Factura</button>
@@ -689,8 +691,8 @@ const saleActionButtons = (sale) => `
         <button type="button" class="inline-action" data-sale-action="receipt-80" data-id="${sale.id}">Ticket 80 mm</button>
         <button type="button" class="inline-action" data-sale-action="receipt-58" data-id="${sale.id}">Ticket 58 mm</button>
         <button type="button" class="inline-action" data-sale-action="export" data-id="${sale.id}">Exportar</button>
-        <button type="button" class="inline-action" data-sale-action="return" data-id="${sale.id}">Devolver</button>
-        <button type="button" class="inline-action" data-sale-action="cancel" data-id="${sale.id}">Anular</button>
+        <button type="button" class="inline-action" data-sale-action="return" data-id="${sale.id}" ${canReverse ? '' : 'disabled'}>Devolver</button>
+        <button type="button" class="inline-action" data-sale-action="cancel" data-id="${sale.id}" ${canReverse ? '' : 'disabled'}>Anular</button>
         <button type="button" class="inline-action danger sale-delete-action" data-delete="sale" data-id="${sale.id}">Eliminar venta</button>
       </div>
     </details>
@@ -1604,7 +1606,7 @@ const dashboardViewV2 = (ui) => {
       </div>${ui.recentCommerceActivity.length ? '<button type="button" class="dashboard-audit-link" data-dashboard-section="auditoria">Abrir auditoría <span aria-hidden="true">→</span></button>' : ''}</article>
     </section>
   </section>
-`
+`}
 }
 
 const customersView = (ui) => `
@@ -1828,7 +1830,7 @@ const salesViewV2 = (ui) => `
                 <label>Transferencia<input type="number" min="0" name="transferAmount" value="${editingSale?.paymentBreakdown?.transfer || 0}" /></label>
                 <label>Mercado Pago<input type="number" min="0" name="mercadoPagoAmount" value="${editingSale?.paymentBreakdown?.mercadoPago || 0}" /></label>
                 <label>E-cheq<input type="number" min="0" name="echeqAmount" value="${editingSale?.paymentBreakdown?.echeq || 0}" /></label>
-                <label>N° e-cheq<input type="text" name="echeqNumber" /></label>
+                <label>N° e-cheq<input type="text" name="mixedEcheqNumber" /></label>
                 <label>Cuenta corriente<input type="number" min="0" name="accountAmount" value="${editingSale?.paymentBreakdown?.account || 0}" /></label>
                 <label class="full-span">Observaciones<input type="text" name="note" value="${editingSale?.note || ''}" placeholder="Opcional" /></label>
                 </div></details>
@@ -3697,7 +3699,7 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
+    const result = await store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
     feedbackMessage = result.message || ''
   }
   if (kind === 'stock-transfer') {
@@ -3714,7 +3716,7 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
+    const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
     feedbackMessage = result.message || ''
   }
   if (kind === 'supplier') {
@@ -3908,7 +3910,8 @@ const handleSubmit = async (event) => {
         submitButton.textContent = 'Registrando venta…'
       }
     }
-    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items, operationId: formData.get('saleId') ? null : saleOperationId }
+    const echeqNumber = paymentMethod === 'mixed' ? formData.get('mixedEcheqNumber') : formData.get('echeqNumber')
+    const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: echeqNumber }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items, operationId: formData.get('saleId') ? null : saleOperationId }
     const result = formData.get('saleId')
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
@@ -4535,6 +4538,7 @@ const bindEvents = () => {
     render()
   })
   for (const button of document.querySelectorAll('[data-delete]')) button.addEventListener('click', async () => {
+    if (!window.confirm('¿Eliminar este registro? Esta acción puede revertir movimientos asociados.')) return
     try {
       const result = await store.removeEntity(button.dataset.delete, button.dataset.id)
       feedbackMessage = result?.message || 'Registro eliminado y movimientos revertidos cuando correspondia.'
@@ -4606,6 +4610,7 @@ const bindEvents = () => {
   }
   for (const button of document.querySelectorAll('[data-sale-action]')) {
     button.addEventListener('click', async () => {
+      if (button.disabled) return
       if (button.dataset.saleAction === 'edit') {
         saleEditingId = button.dataset.id
         saleFormOpen = true
@@ -4639,13 +4644,15 @@ const bindEvents = () => {
         exportThermalReceipt(button.dataset.id, '80')
         return
       }
-      const result = button.dataset.saleAction === 'invoice'
+      const action = button.dataset.saleAction
+      if ((action === 'cancel' || action === 'return') && !window.confirm(`¿Confirmás ${action === 'cancel' ? 'la anulación' : 'la devolución'} de esta venta?`)) return
+      const result = action === 'invoice'
         ? await store.createInvoiceFromSale(button.dataset.id)
-        : button.dataset.saleAction === 'ticket'
+        : action === 'ticket'
           ? await store.createTicketFromSale(button.dataset.id)
-          : button.dataset.saleAction === 'cancel'
-            ? store.cancelSale(button.dataset.id)
-            : store.createReturnFromSale(button.dataset.id)
+          : action === 'cancel'
+            ? await store.cancelSale(button.dataset.id)
+            : await store.createReturnFromSale(button.dataset.id)
       feedbackMessage = result.message || ''
       render()
     })

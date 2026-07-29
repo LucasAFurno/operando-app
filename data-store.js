@@ -1646,6 +1646,18 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Producto actualizado.' }
   }
 
+  const persistLocalMutationToCloud = async () => {
+    if (!cloudCoreAdapter) return
+    try {
+      await cloudCoreAdapter.saveSnapshot(state)
+      await syncFromCloud()
+    } catch (error) {
+      // Nunca dejamos una mutación sólo visual si la persistencia falla.
+      await syncFromCloud().catch(() => {})
+      throw error
+    }
+  }
+
   const updateProductFromPurchase = async (productId, payload) => {
     const denied = ensurePermission(actionPermissions.purchasesWrite)
     if (denied) return denied
@@ -2141,7 +2153,7 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: invoiceResult?.ok ? 'Venta registrada y comprobante generado.' : 'Venta registrada.' }
   }
 
-  const updateSale = (saleId, payload) => {
+  const updateSale = async (saleId, payload) => {
     const denied = ensurePermission(actionPermissions.salesWrite)
     if (denied) return denied
     const sale = state.sales.find((entry) => entry.id === saleId)
@@ -2163,6 +2175,8 @@ export const createBrowserDataStore = (options = {}) => {
     const subtotalAmount = items.reduce((sum, item) => sum + item.lineTotal, 0)
     const discountAmount = Math.max(0, Math.min(Number(payload.discountAmount || 0), subtotalAmount))
     const totalAmount = subtotalAmount - discountAmount
+    const linkedInvoice = getInvoiceBySaleId(state, saleId)
+    if (linkedInvoice && Number(linkedInvoice.amountPaid || 0) > totalAmount) return { ok: false, message: 'No podes reducir la venta por debajo de lo ya cobrado en su factura.' }
     const effectiveBreakdown = getPaymentBreakdown(payload, totalAmount)
     const rawPaid = payload.isPaid ? totalAmount : Object.values(effectiveBreakdown).reduce((sum, value) => sum + Number(value || 0), 0)
     const amountPaid = Math.max(0, Math.min(rawPaid, totalAmount))
@@ -2187,12 +2201,14 @@ export const createBrowserDataStore = (options = {}) => {
     sale.branchId = branchId
     sale.registerId = register?.id || null
     applySaleEffects(state, sale)
+    if (linkedInvoice) { linkedInvoice.totalAmount = totalAmount; linkedInvoice.customerId = sale.customerId; linkedInvoice.branchId = sale.branchId; linkedInvoice.status = Number(linkedInvoice.amountPaid || 0) >= totalAmount ? 'Cobrada' : 'Emitida' }
 
     if (payload.autoInvoice && amountPaid > 0 && !getInvoiceBySaleId(state, saleId)) {
       buildInvoiceForSale(state, saleId)
     }
 
     pushAudit(state, currentUser().id, 'sale', sale.id, 'updated', sale, before)
+    await persistLocalMutationToCloud()
     save()
     return { ok: true, message: 'Venta actualizada.' }
   }
@@ -2233,12 +2249,13 @@ export const createBrowserDataStore = (options = {}) => {
     return result
   }
 
-  const cancelSale = (saleId, reason = 'Anulacion manual') => {
+  const cancelSale = async (saleId, reason = 'Anulacion manual') => {
     const denied = ensurePermission(actionPermissions.salesWrite)
     if (denied) return denied
     const sale = state.sales.find((entry) => entry.id === saleId)
     if (!sale) return { ok: false, message: 'Venta no encontrada.' }
     if (sale.status === 'cancelled') return { ok: false, message: 'La venta ya esta anulada.' }
+    if (sale.status === 'returned' || Number(sale.amountPaid || 0) > 0) return { ok: false, message: 'No se puede anular una venta devuelta o con cobros; registrá primero el reintegro.' }
     const before = clone(sale)
     revertSaleEffects(state, sale)
     sale.status = 'cancelled'
@@ -2247,16 +2264,18 @@ export const createBrowserDataStore = (options = {}) => {
     sale.note = [sale.note, `Anulada: ${reason}`].filter(Boolean).join(' | ')
     state.invoices = state.invoices.map((invoice) => invoice.saleId === sale.id ? { ...invoice, status: 'Anulada', fiscalStatus: 'Anulado' } : invoice)
     pushAudit(state, currentUser().id, 'sale', sale.id, 'cancelled', sale, before)
+    await persistLocalMutationToCloud()
     save()
     return { ok: true, message: 'Venta anulada y movimientos revertidos.' }
   }
 
-  const createReturnFromSale = (saleId, reason = 'Devolucion total') => {
+  const createReturnFromSale = async (saleId, reason = 'Devolucion total') => {
     const denied = ensurePermission(actionPermissions.salesWrite)
     if (denied) return denied
     const sale = state.sales.find((entry) => entry.id === saleId)
     if (!sale) return { ok: false, message: 'Venta no encontrada.' }
     if (sale.status === 'returned') return { ok: false, message: 'La venta ya fue devuelta.' }
+    if (sale.status === 'cancelled' || Number(sale.amountPaid || 0) > 0) return { ok: false, message: 'No se puede devolver una venta anulada o con cobros; registrá primero el reintegro.' }
     for (const item of sale.items || []) {
       const product = getProduct(state, item.productId)
       if (product?.trackStock) {
@@ -2299,6 +2318,7 @@ export const createBrowserDataStore = (options = {}) => {
     sale.note = [sale.note, `Devuelta: ${reason}`].filter(Boolean).join(' | ')
     pushAudit(state, currentUser().id, 'sale', sale.id, 'returned', sale, before)
     pushAudit(state, currentUser().id, 'invoice', note.id, 'created_from_return', note)
+    await persistLocalMutationToCloud()
     save()
     return { ok: true, message: 'Devolucion registrada y nota de credito generada.' }
   }
@@ -2408,7 +2428,7 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Recepcion registrada.' }
   }
 
-  const createStockAdjustment = (payload) => {
+  const createStockAdjustment = async (payload) => {
     const denied = ensurePermission(actionPermissions.productsAdjust)
     if (denied) return denied
     const product = getProduct(state, payload.productId)
@@ -2432,11 +2452,12 @@ export const createBrowserDataStore = (options = {}) => {
     }
     state.stockMovements.unshift(movement)
     pushAudit(state, currentUser().id, 'stock_adjustment', movement.id, 'created', movement)
+    await persistLocalMutationToCloud()
     save()
     return { ok: true, message: 'Ajuste de stock aplicado.' }
   }
 
-  const transferStock = (payload) => {
+  const transferStock = async (payload) => {
     const denied = ensurePermission(actionPermissions.productsTransfer)
     if (denied) return denied
     const product = getProduct(state, payload.productId)
@@ -2478,6 +2499,7 @@ export const createBrowserDataStore = (options = {}) => {
       registerId: null,
     })
     pushAudit(state, currentUser().id, 'stock_transfer', transferId, 'created', { productId: product.id, quantity, fromBranchId: fromBranch.id, toBranchId: toBranch.id, note: payload.note || '' })
+    await persistLocalMutationToCloud()
     save()
     return { ok: true, message: 'Transferencia registrada entre sucursales.' }
   }

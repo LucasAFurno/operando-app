@@ -85,6 +85,9 @@ export const createSupabaseCoreAdapter = (config) => {
       }
       return state
     },
+    async saveSnapshot(state) {
+      return rpc('app_public_save_snapshot', { p_session_token: getSessionToken(), p_state_json: state })
+    },
     async updateCommerceProfile(payload) {
       return rpc('app_public_update_commerce_profile', {
         p_session_token: getSessionToken(),
