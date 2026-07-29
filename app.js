@@ -2158,16 +2158,9 @@ const purchasesViewV2 = (ui) => `
     const matchesSupplierQuery = (value) => {
       const candidate = normalizeSupplierSearch(value)
       const query = normalizeSupplierSearch(supplierQuery)
-      if (!query || candidate.includes(query)) return true
-      let cursor = 0
-      for (const character of query) {
-        cursor = candidate.indexOf(character, cursor)
-        if (cursor === -1) return false
-        cursor += 1
-      }
-      return true
+      return !query || candidate.includes(query)
     }
-    const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.contact, supplier.phone, supplier.email, supplier.cuit].some(matchesSupplierQuery)) : ui.snapshot.suppliers.slice(0, 10))
+    const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.fantasyName, supplier.tradeName, supplier.contact, supplier.phone, supplier.email, supplier.cuit, supplier.address].some(matchesSupplierQuery)) : ui.snapshot.suppliers.slice(0, 10))
     const receiptPreview = purchaseReceiptsExpanded ? ui.enrichedReceipts : ui.enrichedReceipts.slice(0, 3)
     const supplierPreview = supplierQuery ? visibleSuppliers : (purchaseSuppliersExpanded ? ui.snapshot.suppliers : ui.snapshot.suppliers.slice(0, 3))
     const debtSuppliers = ui.snapshot.suppliers.filter((supplier) => Number(supplier.balance || 0) > 0)
@@ -2235,7 +2228,7 @@ const purchasesViewV2 = (ui) => `
           </article>
           <article class="panel purchase-summary-card">
             <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Proveedores recientes'}</h3><p>${supplierQuery ? `${visibleSuppliers.length} coincidencia${visibleSuppliers.length === 1 ? '' : 's'} sugerida${visibleSuppliers.length === 1 ? '' : 's'}` : (purchaseSuppliersExpanded ? `Mostrando ${ui.snapshot.suppliers.length}` : 'Últimos 3 proveedores')}</p></div>${!supplierQuery && ui.snapshot.suppliers.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-suppliers">${purchaseSuppliersExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
-            <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar proveedor" aria-label="Buscar proveedor" /></div>
+            <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-supplier-search value="${escapeHtml(supplierSearchQuery)}" placeholder="Buscar por proveedor, contacto o dirección" aria-label="Buscar proveedor" /></div>
             <div class="timeline-list">${supplierPreview.map((supplier) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-supplier-map" data-id="${supplier.id}"><strong>${escapeHtml(supplier.name)}</strong><p>${escapeHtml(supplier.contact || supplier.phone || supplier.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(supplier.address || 'Sin dirección')} · ${balanceText(supplier.balance)} ${money(supplier.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-supplier" data-id="${supplier.id}">Editar</button>${actionButton('supplier', supplier.id)}</span>${supplierMapPreviewId === supplier.id ? `<div class="supplier-map-preview">${supplier.address ? `<iframe title="Ubicación de ${escapeHtml(supplier.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(supplier.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.address)}">Abrir en Maps</a>` : '<p>Este proveedor todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>`).join('') || '<p class="empty-state">No hay proveedores para esta busqueda.</p>'}</div>
           </article>
         </div>
