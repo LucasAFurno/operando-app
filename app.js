@@ -394,6 +394,17 @@ const formatTicketUpdatedAt = (value) => {
   const time = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
   return `${day}<br /><small>${time}</small>`
 }
+const formatCashHistoryDate = (value, withTime = false) => {
+  const raw = String(value || '').trim()
+  if (!raw) return 'Sin fecha'
+  const normalized = raw.replace(/(\.\d{3})\d+(?=[+-]\d{2}:\d{2}$)/, '$1')
+  const date = new Date(normalized)
+  if (Number.isNaN(date.getTime())) return escapeHtml(raw.replace('T', ' ').slice(0, withTime ? 16 : 10))
+  const day = date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '')
+  if (!withTime) return day
+  const time = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  return `${day} · ${time}`
+}
 const maskEmail = (value) => {
   const email = String(value || '').trim().toLowerCase()
   if (!email || !email.includes('@')) return ''
@@ -1944,10 +1955,10 @@ const cashViewV2 = (ui) => `
       </article>
       <section class="cash-history-grid">
       <article class="panel"><div class="panel-head"><div><h3>Ultimos cierres</h3><p>Diferencias y arqueo</p></div></div><div class="timeline-list">
-          ${byRecentDate(ui.scopedCashSessions.filter((session) => session.status === 'closed'), 'closedAt').slice(0, 5).map((session) => `<div class="timeline-item"><strong>Cierre ${session.closedAt?.slice(0, 10) || '-'}</strong><p>Contado ${money(session.countedAmount || 0)} / diferencia ${money(session.differenceAmount || 0)}</p><span>${ui.enrichedRegisters.find((register) => register.id === session.registerId)?.name || 'Caja'} / fondo ${money(session.openingAmount || 0)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay cierres para este filtro.</p>'}
+          ${byRecentDate(ui.scopedCashSessions.filter((session) => session.status === 'closed'), 'closedAt').slice(0, 5).map((session) => `<div class="timeline-item"><strong>Cierre · ${formatCashHistoryDate(session.closedAt)}</strong><p>Contado ${money(session.countedAmount || 0)} · Diferencia ${money(session.differenceAmount || 0)}</p><span>${ui.enrichedRegisters.find((register) => register.id === session.registerId)?.name || 'Caja'} · Fondo ${money(session.openingAmount || 0)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay cierres para este filtro.</p>'}
         </div></article>
       <article class="panel"><div class="panel-head"><div><h3>Bitacora de caja</h3><p>Impacta en el arqueo esperado</p></div></div><div class="timeline-list">
-          ${ui.enrichedCashMovements.slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note}</p><span>${movement.registerName} / ${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
+          ${ui.enrichedCashMovements.slice(0, 5).map((movement) => { const label = cashMovementKindLabel(movement.kind); const note = String(movement.note || '').trim(); const hasDistinctNote = note && note.toLocaleLowerCase('es-AR') !== label.toLocaleLowerCase('es-AR'); return `<div class="timeline-item"><strong>${label}</strong><p>${escapeHtml(movement.registerName || 'Caja')} · ${money(movement.signedAmount)} · ${formatCashHistoryDate(movement.createdAt, true)}</p>${hasDistinctNote ? `<span>${escapeHtml(note)}</span>` : ''}</div>` }).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
         </div></article>
       </section>
     </section>
