@@ -4157,6 +4157,31 @@ const bindEvents = () => {
   }
   const auditTrace = auditTraceOpen ? auditTraceElement : null
   if (auditTrace) {
+    auditTrace.classList.add('audit-timeline-drawer')
+    let previousDate = ''
+    for (const event of auditTrace.querySelectorAll('.audit-trace-event')) {
+      const date = String(event.querySelector('time')?.textContent || '').slice(0, 10)
+      if (!date || date === previousDate) continue
+      previousDate = date
+      const [year, month, day] = date.split('-').map(Number)
+      const label = new Date(year, month - 1, day, 12).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+      const heading = document.createElement('h4')
+      heading.className = 'audit-trace-date'
+      heading.textContent = date === new Date().toISOString().slice(0, 10) ? `Hoy · ${label}` : label
+      event.before(heading)
+    }
+    let dragStartY = 0; let dragStartScroll = 0
+    auditTrace.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || event.target.closest('button, input, a')) return
+      dragStartY = event.clientY; dragStartScroll = auditTrace.scrollTop
+      auditTrace.classList.add('is-dragging'); auditTrace.setPointerCapture(event.pointerId)
+    })
+    auditTrace.addEventListener('pointermove', (event) => { if (auditTrace.classList.contains('is-dragging')) auditTrace.scrollTop = dragStartScroll - (event.clientY - dragStartY) })
+    const stopTraceDrag = () => auditTrace.classList.remove('is-dragging')
+    auditTrace.addEventListener('pointerup', stopTraceDrag)
+    auditTrace.addEventListener('pointercancel', stopTraceDrag)
+  }
+  if (false && auditTrace) {
     const ui = getUiState()
     const auditNow = new Date()
     const auditStart = auditPeriodFilter === 'today' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), auditNow.getDate()) : auditPeriodFilter === 'week' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), auditNow.getDate() - 6) : auditPeriodFilter === 'month' ? new Date(auditNow.getFullYear(), auditNow.getMonth(), 1) : null
@@ -4202,7 +4227,7 @@ const bindEvents = () => {
       return `<article class="audit-causal-group module-${root.modules[0]}" style="--group-width:${groupWidth}px"><span class="audit-node-label audit-main-label">${escapeHtml(root.moduleLabel)}</span><button type="button" class="audit-main-node module-${root.modules[0]}" data-audit-detail="${detail(root)}" aria-label="${escapeHtml(rootTitle)}" title="${escapeHtml(rootTitle)}"></button>${children.length ? `<svg class="audit-causal-curves" viewBox="0 0 100 190" preserveAspectRatio="none" aria-hidden="true">${curves}</svg>${branchNodes}` : ''}</article>`
     }).join('') || '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'
   }
-  if (auditTrace?.querySelector('.audit-trace-event') && !auditTrace.querySelector('.audit-branch-label')) {
+  if (false && auditTrace?.querySelector('.audit-trace-event') && !auditTrace.querySelector('.audit-branch-label')) {
     const lanes = [
       ['main', 'MAIN'], ['operation', 'OPERACIÓN'], ['inventory', 'INVENTARIO'], ['relation', 'RELACIÓN'],
     ]
