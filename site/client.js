@@ -1019,13 +1019,13 @@ const getUiState = () => {
     disabled: 'Deshabilitó una opción',
   }
   const recentCommerceActivity = [
-    ...filteredSales.map((sale) => ({ id: `sale-${sale.id}`, createdAt: sale.soldAt, title: 'Venta registrada', detail: `${sale.customerName} · ${money(sale.totalAmount)}` })),
-    ...enrichedScopedReceipts.map((receipt) => ({ id: `receipt-${receipt.id}`, createdAt: receipt.receivedAt, title: 'Ingreso de mercadería', detail: `${receipt.productName} · ${receipt.supplierName}` })),
-    ...scopedCashMovements.map((movement) => ({ id: `cash-${movement.id}`, createdAt: movement.createdAt, title: `Movimiento de caja · ${movement.kind === 'expense' ? 'Egreso' : 'Ingreso'}`, detail: movement.note || money(Math.abs(Number(movement.signedAmount || movement.amount || 0))) })),
-    ...scopedStockMovements.map((movement) => ({ id: `stock-${movement.id}`, createdAt: movement.createdAt, title: 'Movimiento de stock', detail: `${productMap.get(movement.productId)?.name || 'Producto'} · ${Number(movement.quantity || 0) > 0 ? '+' : ''}${movement.quantity || 0}` })),
+    ...filteredSales.map((sale) => ({ id: `sale-${sale.id}`, module: 'sales', createdAt: sale.soldAt, title: 'Venta registrada', detail: `${sale.customerName} · ${money(sale.totalAmount)}` })),
+    ...enrichedScopedReceipts.map((receipt) => ({ id: `receipt-${receipt.id}`, module: 'purchases', createdAt: receipt.receivedAt, title: 'Ingreso de mercadería', detail: `${receipt.productName} · ${receipt.supplierName}` })),
+    ...scopedCashMovements.map((movement) => ({ id: `cash-${movement.id}`, module: 'cash', createdAt: movement.createdAt, title: `Movimiento de caja · ${movement.kind === 'expense' ? 'Egreso' : 'Ingreso'}`, detail: movement.note || money(Math.abs(Number(movement.signedAmount || movement.amount || 0))) })),
+    ...scopedStockMovements.map((movement) => ({ id: `stock-${movement.id}`, module: 'stock', createdAt: movement.createdAt, title: 'Movimiento de stock', detail: `${productMap.get(movement.productId)?.name || 'Producto'} · ${Number(movement.quantity || 0) > 0 ? '+' : ''}${movement.quantity || 0}` })),
     ...enrichedAudit
       .filter((log) => !['sale', 'purchase_receipt', 'cash_movement', 'stock_adjustment', 'stock_transfer'].includes(log.entityType))
-      .map((log) => ({ id: `audit-${log.id}`, createdAt: log.createdAt, title: auditActionLabels[log.action] || 'Actividad registrada', detail: `${log.actorName} · ${log.entityType}` })),
+      .map((log) => ({ id: `audit-${log.id}`, module: log.modules[0] || 'settings', createdAt: log.createdAt, title: auditActionLabels[log.action] || 'Actividad registrada', detail: `${log.actorName} · ${log.entityType}` })),
   ].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 50)
 
   return {
@@ -1557,6 +1557,9 @@ const dashboardView = (ui) => `
 `
 
 const dashboardActivityIcon = (activity) => {
+  if (activity.module === 'invoices') return icon('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6M10 16h6"/>')
+  if (activity.module === 'customers') return icon('<circle cx="12" cy="8" r="3"/><path d="M5 21c.5-4 3-6 7-6s6.5 2 7 6"/>')
+  if (activity.module === 'products') return icon('<path d="m12 3 8 4.5-8 4.5-8-4.5z"/><path d="M4 7.5V16.5l8 4.5 8-4.5V7.5"/>')
   if (activity.id.startsWith('sale-')) return icon('<path d="M4 6h16l-2 8H6z"/><path d="M8 14v4h8v-4"/><path d="M9 10h.01M15 10h.01"/>')
   if (activity.id.startsWith('cash-')) return icon('<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16"/><path d="M16 14h2"/>')
   if (activity.id.startsWith('stock-') || activity.id.startsWith('receipt-')) return icon('<path d="m12 3 8 4.5-8 4.5-8-4.5z"/><path d="M4 7.5V16.5l8 4.5 8-4.5V7.5"/>')
@@ -1565,7 +1568,7 @@ const dashboardActivityIcon = (activity) => {
 
 const dashboardViewV2 = (ui) => {
   const pendingInvoiceCount = ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').length
-  const visibleActivity = dashboardAuditExpanded ? ui.recentCommerceActivity.slice(0, 10) : ui.recentCommerceActivity.slice(0, 4)
+  const visibleActivity = ui.recentCommerceActivity.slice(0, 4)
   const activityTime = (createdAt) => String(createdAt || '').slice(11, 16) || '--:--'
   const topProductMax = Math.max(1, ...ui.topProducts.slice(0, 5).map(([, qty]) => Number(qty) || 0))
   return `
@@ -1601,7 +1604,7 @@ const dashboardViewV2 = (ui) => {
         ${ui.topProducts.length ? ui.topProducts.slice(0, 5).map(([name, qty], index) => `<div class="dashboard-top-row" style="--rank-width: ${Math.max(12, Math.round((Number(qty) / topProductMax) * 100))}%"><span>${index + 1}</span><strong>${escapeHtml(name)}</strong><small>${qty} unidades</small><i aria-hidden="true"></i></div>`).join('') : '<p class="empty-state">Todavía no hay ventas cargadas.</p>'}
       </div></article>
       <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Actividad reciente</h3><p>Últimos movimientos registrados</p></div></div><div class="dashboard-activity-list">
-        ${visibleActivity.length ? visibleActivity.map((activity) => `<div class="dashboard-activity-row"><span class="dashboard-activity-icon" aria-hidden="true">${dashboardActivityIcon(activity)}</span><div><strong>${escapeHtml(activity.title)}</strong><p>${escapeHtml(activity.detail)}</p></div><time>${activityTime(activity.createdAt)}</time></div>`).join('') : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
+        ${visibleActivity.length ? visibleActivity.map((activity) => `<div class="dashboard-activity-row module-${activity.module || 'settings'}"><span class="dashboard-activity-icon" aria-hidden="true">${dashboardActivityIcon(activity)}</span><div><strong>${escapeHtml(activity.title)}</strong><p>${escapeHtml(activity.detail)}</p></div><time>${activityTime(activity.createdAt)}</time></div>`).join('') : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
       </div>${ui.recentCommerceActivity.length ? '<button type="button" class="dashboard-audit-link" data-dashboard-section="auditoria">Abrir auditoría <span aria-hidden="true">→</span></button>' : ''}</article>
     </section>
   </section>

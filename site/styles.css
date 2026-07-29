@@ -5602,3 +5602,9 @@ input[type='search'] { color: var(--text); }
 .audit-event-actions .inline-action { min-height: 30px; }
 @media (min-width: 761px) { .audit-trace.audit-timeline-drawer .audit-event-detail { grid-column: 1 / -1; }.audit-trace.audit-timeline-drawer .audit-event-actions { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .audit-filter-fields { justify-content: stretch; }.audit-search { min-width: 0; }.audit-event-detail span { white-space: normal; } }
+
+/* Resumen de Inicio: misma semántica visual que la auditoría. */
+.dashboard-activity-row { --activity-color: #94a3b8; }
+.dashboard-activity-row.module-sales { --activity-color: #f87171; }.dashboard-activity-row.module-cash { --activity-color: #fbbf24; }.dashboard-activity-row.module-stock { --activity-color: #60a5fa; }.dashboard-activity-row.module-products { --activity-color: #a78bfa; }.dashboard-activity-row.module-purchases { --activity-color: #34d399; }.dashboard-activity-row.module-customers { --activity-color: #fb7185; }.dashboard-activity-row.module-invoices { --activity-color: #22d3ee; }.dashboard-activity-row.module-tickets { --activity-color: #c084fc; }
+.dashboard-activity-row .dashboard-activity-icon { color: var(--activity-color); background: color-mix(in srgb, var(--activity-color) 16%, var(--panel)); }
+.dashboard-activity-row:not(:last-child) .dashboard-activity-icon::after { background: color-mix(in srgb, var(--activity-color) 42%, var(--line)); }
