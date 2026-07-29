@@ -4108,7 +4108,7 @@ const bindEvents = () => {
     // En PC conservamos la posicion para que cambiar de modulo no obligue
     // a volver a recorrer toda la pantalla. En mobile mantenemos el salto
     // arriba, que facilita empezar cada vista desde su encabezado.
-    if (window.matchMedia('(max-width: 880px)').matches) requestScrollTop()
+    if (nextSection === 'auditoria' || window.matchMedia('(max-width: 880px)').matches) requestScrollTop()
     render()
     if (isCurrentSectionAffected()) queueLiveSync()
   })
@@ -4227,6 +4227,7 @@ const bindEvents = () => {
     const stopTraceDrag = () => auditTrace.classList.remove('is-dragging')
     auditTrace.addEventListener('pointerup', stopTraceDrag)
     auditTrace.addEventListener('pointercancel', stopTraceDrag)
+    window.requestAnimationFrame(() => { auditTrace.scrollTop = 0 })
   }
   if (false && auditTrace) {
     const ui = getUiState()
