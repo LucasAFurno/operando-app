@@ -138,6 +138,7 @@ let auditPeriodFilter = 'today'
 let auditSearchQuery = ''
 let auditDateFrom = ''
 let auditDateTo = ''
+let auditTraceOpen = false
 let supplierMapPreviewId = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
@@ -4141,7 +4142,20 @@ const bindEvents = () => {
     input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); auditSearchQuery = input.value; render() } })
   }
   for (const input of document.querySelectorAll('[data-audit-date]')) input.addEventListener('change', () => { if (input.dataset.auditDate === 'from') auditDateFrom = input.value; if (input.dataset.auditDate === 'to') auditDateTo = input.value; render() })
-  const auditTrace = document.querySelector('.audit-trace')
+  const auditTracePanel = document.querySelector('.audit-trace-panel')
+  const auditTraceElement = auditTracePanel?.querySelector('.audit-trace')
+  if (auditTracePanel && auditTraceElement) {
+    auditTraceElement.hidden = !auditTraceOpen
+    const panelHead = auditTracePanel.querySelector('.panel-head')
+    const toggle = document.createElement('button')
+    toggle.type = 'button'
+    toggle.className = 'audit-trace-toggle ghost-action'
+    toggle.setAttribute('aria-expanded', String(auditTraceOpen))
+    toggle.textContent = auditTraceOpen ? 'Cerrar línea temporal' : 'Abrir línea temporal'
+    toggle.addEventListener('click', () => { auditTraceOpen = !auditTraceOpen; render() })
+    panelHead?.append(toggle)
+  }
+  const auditTrace = auditTraceOpen ? auditTraceElement : null
   if (auditTrace) {
     const ui = getUiState()
     const auditNow = new Date()
@@ -4714,7 +4728,7 @@ const bindEvents = () => {
   }
   for (const input of document.querySelectorAll('[data-branch-search]')) input.addEventListener('input', () => {
     branchSearchQuery = input.value || ''
-    render()
+    rerenderSearchKeepingFocus(input, '[data-branch-search]')
   })
   for (const button of document.querySelectorAll('[data-branch-action]')) {
     button.addEventListener('click', async () => {
