@@ -45,14 +45,14 @@ Deno.serve(async (request) => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ secret, response: turnstileToken, remoteip: ip }),
     })
-    if (!verificationResponse.ok) return json({ error: 'access_denied' }, 403, headers)
+    if (!verificationResponse.ok) return json({ error: 'turnstile_unavailable' }, 503, headers)
     const verify = await verificationResponse.json()
-    if (!verify.success || verify.action !== 'turnstile-spin-v2' || !allowedTurnstileHostnames().includes(String(verify.hostname || '').toLowerCase())) return json({ error: 'access_denied' }, 403, headers)
+    if (!verify.success || verify.action !== 'turnstile-spin-v2' || !allowedTurnstileHostnames().includes(String(verify.hostname || '').toLowerCase())) return json({ error: 'turnstile_failed' }, 403, headers)
     const key = await digest(`${Deno.env.get('AUTH_RATE_LIMIT_PEPPER') || ''}:${ip}`)
     const rpc = async (name: string, payload: object) => fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify(payload) })
     const mode = body.mode === 'recovery' ? 'recovery' : 'login'
     const limited = await rpc('app_auth_rate_limit', { p_key: key, p_action: mode }).then((response) => response.json())
-    if (!limited?.allowed) return json({ error: 'access_denied' }, 429, headers)
+    if (!limited?.allowed) return json({ error: 'login_rate_limited' }, 429, headers)
     if (mode === 'recovery') {
       const email = String(body.email || '').trim().toLowerCase()
       const redirectTo = allowedRedirect(body.redirectTo)
