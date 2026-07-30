@@ -3099,11 +3099,30 @@ const renderApp = (ui) => {
   `
 }
 
+const renderTurnstileWidget = (attempt = 0) => {
+  const target = app.querySelector('.cf-turnstile')
+  if (!target || target.querySelector('iframe')) return
+  if (!globalThis.turnstile?.render) {
+    if (attempt < 40) window.setTimeout(() => renderTurnstileWidget(attempt + 1), 50)
+    return
+  }
+  try {
+    globalThis.turnstile.render(target, {
+      sitekey: String(target.dataset.sitekey || ''),
+      action: 'turnstile-spin-v2',
+      size: 'flexible',
+    })
+  } catch {
+    // The script may have auto-rendered the element between the checks above.
+  }
+}
+
 const render = () => {
   const ui = getUiState()
   app.innerHTML = ui.cloudConnection.required && !ui.cloudConnection.enabled
     ? cloudActivationView(ui)
     : (ui.isAuthenticated ? renderApp(ui) : loginView(ui))
+  renderTurnstileWidget()
   applyFieldGuidance()
   markBootComplete()
   bindEvents()
