@@ -252,7 +252,7 @@ const loadCloudAccess = async (sessionPayload = null) => {
   if (!currentSession?.sessionToken) throw new Error('No hay sesion valida para sincronizar.')
   commerceContext = currentSession.commerceContext || null
   store.setCloudAccessToken(currentSession.sessionToken)
-  await store.syncFromCloud()
+  await store.syncFromCloud(['dashboard'])
   const activeProfile = store.setCloudAuthSession(currentSession.profile, [])
   if (!activeProfile) {
     commerceContext = null
@@ -312,7 +312,7 @@ const syncLiveData = async () => {
   if (liveSyncBusy || cloudSyncBusy || document.hidden || !store?.isAuthenticated?.() || hasPendingOperationalForm()) return
   liveSyncBusy = true
   try {
-    const result = await store.syncFromCloud()
+    const result = await store.syncFromCloud(sectionDomains[activeSection] || ['dashboard'])
     // No redibujamos mientras alguien está completando una operación: se evita
     // perder lo que escribió. Los datos sí quedan listos para mostrarse al cerrar el formulario.
     if (result?.ok) {
@@ -430,6 +430,16 @@ const getRequestedPublicView = () => {
 }
 
 const isStandaloneAppRoute = () => /^\/app(?:\/|$)/i.test(window.location.pathname || '')
+const appSectionPaths = { dashboard: '', clientes: 'clientes', ventas: 'ventas', caja: 'caja-diaria', productos: 'productos', compras: 'compras', facturacion: 'facturacion', tickets: 'tickets', reportes: 'reportes', auditoria: 'auditoria', ajustes: 'ajustes', 'mi-admin': 'mi-admin', sucursales: 'sucursales', cajeros: 'cajeros' }
+const sectionFromPath = () => {
+  const segment = String(window.location.pathname || '').replace(/^\/app\/?/i, '').split('/')[0].toLowerCase()
+  return Object.entries(appSectionPaths).find(([, path]) => path === segment)?.[0] || 'dashboard'
+}
+const syncSectionPath = () => {
+  if (!isStandaloneAppRoute()) return
+  const target = appSectionPaths[activeSection] ? `/app/${appSectionPaths[activeSection]}/` : '/app/'
+  if (window.location.pathname !== target) window.history.pushState({ section: activeSection }, '', target)
+}
 const mapPublicAuthError = (message, context = 'login') => {
   const normalized = String(message || '').trim().toLowerCase()
   if (!normalized) return context === 'signup' ? 'No se pudo crear la cuenta.' : 'No se pudo iniciar sesion.'
@@ -1140,7 +1150,7 @@ const standaloneAuthView = (ui) => `
             <p>Ingresa con tu correo y tu clave para abrir tu comercio.</p>
           </div>
           <form class="login-form" data-form="login" autocomplete="on">
-            <label>Email<input type="email" name="identifier" value="" placeholder="tu@email.com" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
+            <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
             <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
             ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
             ${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}
@@ -3248,6 +3258,7 @@ const bootstrap = async () => {
   const initialCloudConfig = await readSiteCloudConfig()
   window.__pclafTurnstileSiteKey = String(initialCloudConfig?.turnstileSiteKey || '')
   authViewMode = getRequestedPublicView() || (window.__pclafAppEntry ? 'login' : authViewMode)
+  activeSection = sectionFromPath()
   if (!window.pclafDesktop) {
     safeStorage.removeItem(dataStorageKey)
     safeStorage.removeItem(cloudConfigStorageKey)
@@ -3555,7 +3566,7 @@ const handleSubmit = async (event) => {
       persistInstanceKey(sessionPayload?.commerceContext?.instance_key || requestedInstanceKey || authInstanceKey)
       setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
       await loadCloudAccess(sessionPayload)
-      activeSection = 'dashboard'
+      activeSection = sectionFromPath()
       saveSection()
       feedbackMessage = 'Sesion iniciada correctamente.'
       requestScrollTop()
@@ -3610,7 +3621,7 @@ const handleSubmit = async (event) => {
       })
       setupStatus = await authManager.getSetupStatus({ instanceKey })
       await loadCloudAccess(sessionPayload)
-      activeSection = 'dashboard'
+      activeSection = sectionFromPath()
       saveSection()
       feedbackMessage = 'Cuenta creada y lista para operar.'
       requestScrollTop()
@@ -4131,6 +4142,7 @@ const bindEvents = () => {
     activeSection = match.section
     topbarSearch = ''
     saveSection()
+    syncSectionPath()
     requestScrollTop()
     render()
   }
@@ -4156,21 +4168,23 @@ const bindEvents = () => {
     if (nextSection === 'ajustes' && activeSection !== 'ajustes') settingsPanelOpen = ''
     activeSection = nextSection
     saveSection()
+    syncSectionPath()
     // En PC conservamos la posicion para que cambiar de modulo no obligue
     // a volver a recorrer toda la pantalla. En mobile mantenemos el salto
     // arriba, que facilita empezar cada vista desde su encabezado.
     if (nextSection === 'auditoria' || window.matchMedia('(max-width: 880px)').matches) requestScrollTop()
     render()
-    if (isCurrentSectionAffected()) queueLiveSync()
+    void syncLiveData()
   })
   for (const button of document.querySelectorAll('[data-dashboard-section]')) button.addEventListener('click', () => {
     const nextSection = button.dataset.dashboardSection
     if (!nextSection || !getAllowedNav(getUiState()).some((item) => item.id === nextSection)) return
     activeSection = nextSection
     saveSection()
+    syncSectionPath()
     requestScrollTop()
     render()
-    if (isCurrentSectionAffected()) queueLiveSync()
+    void syncLiveData()
   })
   for (const button of document.querySelectorAll('[data-settings-panel]')) {
     button.addEventListener('click', () => {
@@ -5061,6 +5075,12 @@ const bindEvents = () => {
 }
 
 applyTheme()
+window.addEventListener('popstate', () => {
+  if (!store?.isAuthenticated?.()) return
+  activeSection = sectionFromPath()
+  render()
+  void syncLiveData()
+})
 bootstrap()
 
 

@@ -41,6 +41,14 @@ export const createSupabaseCoreAdapter = (config) => {
 
   if (!baseUrl || !anonKey) return null
 
+  let pendingModules = null
+  const mutationModules = {
+    app_public_upsert_customer: ['customers'], app_public_upsert_supplier: ['purchases'], app_public_upsert_product: ['products', 'stock'],
+    app_public_open_cash_session: ['cash'], app_public_close_cash_session: ['cash'], app_public_create_cash_movement: ['cash'],
+    app_public_create_sale: ['sales', 'cash', 'products', 'customers', 'invoices'], app_public_register_invoice_payment: ['invoices', 'sales', 'cash', 'customers'],
+    app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock'], app_public_upsert_document: ['invoices', 'tickets', 'sales'],
+    app_public_upsert_branch: ['settings', 'cash'], app_public_upsert_register: ['settings', 'cash'], app_public_upsert_user: ['settings'], app_public_toggle_user_active: ['settings'],
+  }
   const rpc = async (fnName, body) => {
     const response = await fetch(`${baseUrl}/rest/v1/rpc/${fnName}`, {
       method: 'POST',
@@ -49,7 +57,7 @@ export const createSupabaseCoreAdapter = (config) => {
     })
     const payload = await safeJson(response)
     if (!response.ok) throw new Error(payload?.message || payload?.hint || payload?.details || `${fnName} failed (${response.status})`)
-    if (mutationRpcNames.has(fnName)) notifyMutation(fnName)
+    if (mutationRpcNames.has(fnName)) { pendingModules = mutationModules[fnName] || ['dashboard']; notifyMutation(fnName) }
     return payload
   }
 
@@ -60,7 +68,8 @@ export const createSupabaseCoreAdapter = (config) => {
   }
 
   return {
-    async loadState() {
+    async loadState({ modules = [] } = {}) {
+      try { return await rpc('app_public_load_runtime_state', { p_session_token: getSessionToken(), p_modules: modules }) } catch (error) { if (!/app_public_load_runtime_state|function .* does not exist/i.test(String(error?.message || ''))) throw error }
       const state = await rpc('app_public_load_core_state', {
         p_session_token: getSessionToken(),
       })
@@ -84,6 +93,10 @@ export const createSupabaseCoreAdapter = (config) => {
         if (!String(error?.message || '').includes('app_public_load_audit_logs')) throw error
       }
       return state
+    },
+    consumePendingModules: () => { const modules = pendingModules; pendingModules = null; return modules },
+    async saveSnapshot(state) {
+      return rpc('app_public_save_snapshot', { p_session_token: getSessionToken(), p_state_json: state })
     },
     async updateCommerceProfile(payload) {
       return rpc('app_public_update_commerce_profile', {

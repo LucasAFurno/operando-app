@@ -1120,6 +1120,7 @@ export const createBrowserDataStore = (options = {}) => {
   }
 
   let state = readState()
+  let cloudStateLoaded = false
   const applyCloudMeta = (mode = 'offline', syncedAt = '') => {
     state.meta = {
       ...state.meta,
@@ -1181,12 +1182,21 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'La web ya opera directo sobre la base real.' }
   }
 
-  const syncFromCloud = async () => {
+  const mergeCloudState = (payload) => {
+    const emptyCollections = { customers: [], products: [], suppliers: [], cashSessions: [], cashMovements: [], sales: [], purchaseReceipts: [], invoices: [], tickets: [], stockMovements: [], auditLogs: [] }
+    const next = cloudStateLoaded ? { ...state, ...payload } : { ...state, ...emptyCollections, ...payload }
+    for (const [key, value] of Object.entries(payload || {})) {
+      if (value && typeof value === 'object' && !Array.isArray(value) && state[key] && typeof state[key] === 'object' && !Array.isArray(state[key])) next[key] = { ...state[key], ...value }
+    }
+    cloudStateLoaded = true
+    return migrateState(next)
+  }
+  const syncFromCloud = async (modules = null) => {
     if (!cloudCoreAdapter) return { ok: false, message: 'Sin conexion cloud configurada.' }
     applyCloudMeta('syncing')
-    const payload = await cloudCoreAdapter.loadState()
+    const payload = await cloudCoreAdapter.loadState({ modules: modules || cloudCoreAdapter.consumePendingModules?.() || ['dashboard'] })
     if (payload) {
-      state = migrateState(payload)
+      state = mergeCloudState(payload)
       platformAdminData = null
       const platformUser = cloudAuthProfile || currentUserFromState(state)
       if (platformUser?.isPlatformAdmin && cloudCoreAdapter?.loadPlatformOverview) {
