@@ -1043,6 +1043,7 @@ export const createBrowserDataStore = (options = {}) => {
       id: entry.id,
       fullName: entry.full_name || entry.fullName || 'Usuario',
       email: String(entry.email || '').trim().toLowerCase(),
+      loginName: String(entry.login_name || entry.loginName || '').trim().toLowerCase(),
       roleKey,
       roleId: roleIds[roleKey] || roleIds.cashier,
       pin: '',
@@ -1273,6 +1274,7 @@ export const createBrowserDataStore = (options = {}) => {
       entry.isActive
       && (
         entry.id === identifier
+        || String(entry.loginName || '').trim().toLowerCase() === normalized
         || String(entry.email || '').trim().toLowerCase() === normalized
         || String(entry.email || '').trim().toLowerCase().split('@')[0] === normalized
         || String(entry.fullName || '').trim().toLowerCase() === normalized
@@ -1822,20 +1824,21 @@ export const createBrowserDataStore = (options = {}) => {
     const denied = ensurePermission(actionPermissions.settingsManage)
     if (denied) return denied
     await migrateLegacyPinsIfNeeded()
-    const normalizedEmail = String(payload.email || '').trim().toLowerCase()
+    const normalizedLoginName = String(payload.loginName || '').trim().toLowerCase()
     const rawPin = String(payload.pin || '')
     if (!payload.fullName) return { ok: false, message: 'El usuario necesita un nombre.' }
-    if (!normalizedEmail) return { ok: false, message: 'El usuario necesita un email.' }
-    if (!rawPin || rawPin.length < 4) return { ok: false, message: 'El PIN debe tener al menos 4 digitos.' }
-    if (normalizedEmail && state.users.some((user) => String(user.email || '').trim().toLowerCase() === normalizedEmail)) {
-      return { ok: false, message: 'Ya existe un usuario con ese email.' }
+    if (!normalizedLoginName) return { ok: false, message: 'El usuario necesita un nombre de acceso.' }
+    if (!rawPin || rawPin.length < 6) return { ok: false, message: 'La clave debe tener al menos 6 caracteres.' }
+    if (state.users.some((user) => String(user.loginName || '').trim().toLowerCase() === normalizedLoginName)) {
+      return { ok: false, message: 'Ya existe un usuario con ese nombre de acceso.' }
     }
     if (!state.roles.some((role) => role.id === payload.roleId)) return { ok: false, message: 'Rol invalido.' }
     const userDraft = {
       id: makeId(),
       fullName: String(payload.fullName || '').trim(),
       roleId: payload.roleId,
-      email: normalizedEmail,
+      email: '',
+      loginName: normalizedLoginName,
       allowedModules: normalizeStringList(payload.allowedModules, validModuleKeys),
       blockedPermissions: normalizeStringList(payload.blockedPermissions, validPermissionKeys),
       ...(await buildSecuredPinFields(String(payload.pin))),
@@ -1847,7 +1850,7 @@ export const createBrowserDataStore = (options = {}) => {
         id: null,
         fullName: userDraft.fullName,
         roleKey,
-        email: userDraft.email,
+        loginName: userDraft.loginName,
         pin: rawPin,
         isActive: userDraft.isActive,
         allowedModules: userDraft.allowedModules,
@@ -1859,6 +1862,7 @@ export const createBrowserDataStore = (options = {}) => {
       id: remoteUser.id || userDraft.id,
       full_name: remoteUser.full_name || userDraft.fullName,
       email: remoteUser.email || userDraft.email,
+      login_name: remoteUser.login_name || userDraft.loginName,
       role_key: remoteUser.role_key || roleKey,
       status: remoteUser.status || (userDraft.isActive ? 'active' : 'disabled'),
       is_owner: remoteUser.is_owner || false,
@@ -1905,11 +1909,11 @@ export const createBrowserDataStore = (options = {}) => {
     await migrateLegacyPinsIfNeeded()
     const user = state.users.find((entry) => entry.id === userId)
     if (!user) return { ok: false, message: 'Usuario no encontrado.' }
-    const normalizedEmail = String(payload.email || '').trim().toLowerCase()
+    const normalizedLoginName = String(payload.loginName || '').trim().toLowerCase()
     if (!payload.fullName) return { ok: false, message: 'El usuario necesita un nombre.' }
-    if (!normalizedEmail) return { ok: false, message: 'El usuario necesita un email.' }
-    if (normalizedEmail && state.users.some((entry) => entry.id !== userId && String(entry.email || '').trim().toLowerCase() === normalizedEmail)) {
-      return { ok: false, message: 'Ya existe otro usuario con ese email.' }
+    if (!normalizedLoginName) return { ok: false, message: 'El usuario necesita un nombre de acceso.' }
+    if (state.users.some((entry) => entry.id !== userId && String(entry.loginName || '').trim().toLowerCase() === normalizedLoginName)) {
+      return { ok: false, message: 'Ya existe otro usuario con ese nombre de acceso.' }
     }
     if (!state.roles.some((role) => role.id === payload.roleId)) return { ok: false, message: 'Rol invalido.' }
     if (state.session.userId === user.id && payload.isActive === false) return { ok: false, message: 'No podes desactivar la sesion actual.' }
@@ -1921,12 +1925,12 @@ export const createBrowserDataStore = (options = {}) => {
     const before = { ...clone(user), pin: '****' }
     user.fullName = payload.fullName
     user.roleId = payload.roleId
-    user.email = normalizedEmail
+    user.loginName = normalizedLoginName
     user.isActive = payload.isActive !== false
     user.allowedModules = normalizeStringList(payload.allowedModules, validModuleKeys)
     user.blockedPermissions = normalizeStringList(payload.blockedPermissions, validPermissionKeys)
     if (payload.pin) {
-      if (String(payload.pin).length < 4) return { ok: false, message: 'El PIN debe tener al menos 4 digitos.' }
+      if (String(payload.pin).length < 6) return { ok: false, message: 'La clave debe tener al menos 6 caracteres.' }
       Object.assign(user, await buildSecuredPinFields(String(payload.pin)))
     }
     if (cloudCoreAdapter) {
@@ -1934,7 +1938,7 @@ export const createBrowserDataStore = (options = {}) => {
         id: userId,
         fullName: user.fullName,
         roleKey: roleKeysById[user.roleId] || 'cashier',
-        email: user.email,
+        loginName: user.loginName,
         pin: payload.pin ? String(payload.pin) : null,
         isActive: user.isActive,
         allowedModules: user.allowedModules,

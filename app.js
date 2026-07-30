@@ -450,7 +450,9 @@ const mapPublicAuthError = (message, context = 'login') => {
     invalid_pin: 'La clave no coincide. Pruebala de nuevo o recupera el acceso.',
     login_locked: 'Por seguridad bloqueamos el acceso durante 15 minutos después de 3 claves incorrectas. Puedes esperar y volver a intentarlo, o recuperar tu clave ahora.',
     owner_email_already_exists: 'Ya existe una cuenta con ese correo. Puedes entrar o recuperar la clave.',
-    login_name_already_exists: 'Ese acceso ya existe. Prueba con otro correo o inicia sesion.',
+    login_name_already_exists: 'Ese nombre de usuario ya está en uso. Elegí otro.',
+    login_name_required: 'Escribí un nombre de usuario para continuar.',
+    invalid_login_name: 'El usuario debe tener entre 3 y 32 caracteres y solo puede usar letras, números, punto, guion o guion bajo.',
     instance_already_initialized: 'Ese comercio ya existe. Inicia sesion con la cuenta principal.',
     instance_not_initialized: 'Ese acceso todavia no tiene una cuenta activa. Crea tu comercio o pide ayuda.',
     commerce_name_required: 'Escribe el nombre comercial para continuar.',
@@ -1292,7 +1294,7 @@ const loginView = (ui) => {
             <h2>Entrar</h2>
             <p class="login-copy">Ingresa con tu correo y tu clave para seguir trabajando.</p>
             <form class="login-form" data-form="login" autocomplete="off">
-              <label>Email de acceso<input type="email" name="identifier" value="" placeholder="tu@email.com" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
+              <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
               <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
               ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
               ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
@@ -1448,7 +1450,7 @@ const loginViewV2 = (ui) => `
           <h2>Entrar</h2>
           <p class="login-copy">Ingresa con tu correo y tu clave para volver a tu panel.</p>
           <form class="login-form" data-form="login" autocomplete="off">
-            <label>Email de acceso<input type="email" name="identifier" value="" placeholder="tu@email.com" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" required /></label>
+            <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" data-lpignore="true" required /></label>
             <label>Clave<input type="password" name="pin" placeholder="Tu clave" autocomplete="current-password" required /></label>
             <input type="hidden" name="instanceKey" value="${ui.cloudConnection.environment === 'development' ? (ui.cloudConnection.instanceKey || 'pclaf-dev') : ''}" />
             ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
@@ -2917,7 +2919,7 @@ const settingsViewV2 = (ui) => `
           <form class="form-grid" data-form="user">
             <input type="hidden" name="userId" value="${editingUser?.id || ''}" />
             <label>Nombre completo<input type="text" name="fullName" value="${editingUser?.fullName || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label>
-            <label>Email<input type="email" name="email" value="${editingUser?.email || ''}" placeholder="usuario@negocio.com" ${canManageUsers ? 'required' : 'disabled'} /></label>
+            <label>Usuario de acceso<input type="text" name="loginName" value="${editingUser?.loginName || ''}" placeholder="ej. caja-centro" autocomplete="username" autocapitalize="off" spellcheck="false" ${canManageUsers ? 'required' : 'disabled'} /><small>Sin correo. Usalo junto con la clave para iniciar sesión.</small></label>
             <label>Clave${editingUser ? ' nueva' : ''}<input type="password" name="pin" placeholder="${editingUser ? 'Solo si queres cambiarla' : 'Minimo 6 caracteres'}" ${editingUser ? (canManageUsers ? '' : 'disabled') : (canManageUsers ? 'required' : 'disabled')} /></label>
             <label>Rol<select name="roleId" ${canManageUsers ? 'required' : 'disabled'}>${ui.snapshot.roles.map((role) => `<option value="${role.id}" ${(editingUser ? editingUser.roleId : (userDraftRoleId || 'role-cashier')) === role.id ? 'selected' : ''}>${role.name}</option>`).join('')}</select></label>
             <label class="field-check full-span"><input type="checkbox" name="isActive" ${editingUser ? (editingUser.isActive ? 'checked' : '') : 'checked'} ${canManageUsers ? '' : 'disabled'} /><span class="field-check-box" aria-hidden="true"></span><span>Cuenta habilitada</span></label>
@@ -2925,7 +2927,7 @@ const settingsViewV2 = (ui) => `
             <button type="submit" ${canManageUsers ? '' : 'disabled'}>${editingUser ? 'Guardar permisos' : 'Crear usuario'}</button>
             ${editingUser ? '<button type="button" class="danger-action" data-action="cancel-user-edit">Cancelar edicion</button>' : ''}
           </form>
-          ${dataTable(['Usuario', 'Perfil', 'Estado', 'Acceso', 'Gestion'], ui.enrichedUsers.map((entry) => `<div class="data-row"><span>${entry.fullName}${entry.isOwner ? ' <small>/ Propietario</small>' : ''}<br /><small>${entry.email || 'Sin email'}</small></span><span>${entry.roleName}</span><span>${entry.status === 'active' ? 'Activo' : entry.status === 'pending' ? 'Pendiente' : 'Deshabilitado'}</span><span>${entry.id === ui.user.id ? 'Sesion actual' : entry.isOwner ? 'Control total' : `${entry.moduleScopeCount} modulos / ${entry.blockedPermissionsCount} bloqueos`}</span><span>${userActionButtons(entry)}</span></div>`), 'is-stable settings-users-table')}
+          ${dataTable(['Usuario', 'Perfil', 'Estado', 'Acceso', 'Gestion'], ui.enrichedUsers.map((entry) => `<div class="data-row"><span>${entry.fullName}${entry.isOwner ? ' <small>/ Propietario</small>' : ''}<br /><small>${entry.loginName ? `Usuario: ${entry.loginName}` : (entry.email || 'Sin usuario')}</small></span><span>${entry.roleName}</span><span>${entry.status === 'active' ? 'Activo' : entry.status === 'pending' ? 'Pendiente' : 'Deshabilitado'}</span><span>${entry.id === ui.user.id ? 'Sesion actual' : entry.isOwner ? 'Control total' : `${entry.moduleScopeCount} modulos / ${entry.blockedPermissionsCount} bloqueos`}</span><span>${userActionButtons(entry)}</span></div>`), 'is-stable settings-users-table')}
       </article>` : ''}
       ${settingsPanelOpen === 'modules' ? `<article class="panel settings-expand-panel" data-settings-content="modules"><div class="panel-head"><div><h3>Plan y modulos</h3><p>Activa solo lo que el cliente necesita</p></div></div>
         <form class="form-grid compact-form" data-form="module-preset">
@@ -3648,7 +3650,7 @@ const handleSubmit = async (event) => {
       ? await store.updateUser(formData.get('userId'), {
         fullName: String(formData.get('fullName') || '').trim(),
         roleId: formData.get('roleId'),
-        email: String(formData.get('email') || '').trim(),
+        loginName: String(formData.get('loginName') || '').trim(),
         pin: String(formData.get('pin') || ''),
         isActive: formData.get('isActive') === 'on',
         allowedModules: formData.getAll('allowedModules'),
@@ -3657,7 +3659,7 @@ const handleSubmit = async (event) => {
       : await store.createUser({
         fullName: String(formData.get('fullName') || '').trim(),
         roleId: formData.get('roleId'),
-        email: String(formData.get('email') || '').trim(),
+        loginName: String(formData.get('loginName') || '').trim(),
         pin: String(formData.get('pin') || ''),
         isActive: formData.get('isActive') === 'on',
         allowedModules: formData.getAll('allowedModules'),

@@ -156,7 +156,7 @@ export const createSupabaseCoreAdapter = (config) => {
         p_user_id: payload?.id || null,
         p_full_name: payload?.fullName || '',
         p_role_key: payload?.roleKey || 'cashier',
-        p_email: payload?.email || '',
+        p_login_name: payload?.loginName || '',
         p_pin: payload?.pin || null,
         p_is_active: payload?.isActive !== false,
         p_allowed_modules: Array.isArray(payload?.allowedModules) ? payload.allowedModules : null,
