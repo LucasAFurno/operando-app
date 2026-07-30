@@ -1019,14 +1019,14 @@ const getUiState = () => {
     product: ['products', 'stock'], stock_movement: ['stock', 'products'], stock_adjustment: ['stock', 'products'], stock_transfer: ['stock', 'products'],
     purchase_receipt: ['purchases', 'products', 'stock'], supplier: ['purchases'], customer: ['customers'],
     invoice: ['invoices', 'sales'], ticket: ['tickets'], document: ['invoices'], branch: ['settings'], register: ['settings', 'cash'],
-    user: ['settings'], business: ['settings'], business_module: ['settings'], business_plan: ['settings'], session: ['settings'], system: ['settings'],
+    user: ['settings'], user_assignment: ['settings'], business: ['settings'], business_module: ['settings'], business_plan: ['settings'], session: ['settings'], system: ['settings'],
   }
   const auditModuleLabels = { sales: 'Ventas', cash: 'Caja', stock: 'Stock', products: 'Productos', purchases: 'Compras', customers: 'Clientes', invoices: 'Facturación', tickets: 'Tickets', settings: 'Configuración' }
-  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', document: 'comprobante', branch: 'sucursal', register: 'caja', user: 'usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
+  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', document: 'comprobante', branch: 'sucursal', register: 'caja', user: 'usuario', user_assignment: 'acceso de usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
   const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
     const documentKind = log.afterData?.kind || log.beforeData?.kind
     const modules = log.entityType === 'document' && documentKind === 'ticket' ? ['tickets'] : (auditModuleByEntity[log.entityType] || ['settings'])
-    const entityLabel = log.entityType === 'document' && documentKind === 'ticket' ? 'ticket' : (auditEntityLabels[log.entityType] || log.entityType || 'registro')
+    const entityLabel = log.entityType === 'user_assignment' && (log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name) ? `acceso de ${log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name}` : (log.entityType === 'document' && documentKind === 'ticket' ? 'ticket' : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
     return { ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel }
   })
   const auditActionLabels = {
@@ -1037,6 +1037,10 @@ const getUiState = () => {
     returned: 'Registró una devolución',
     opened: 'Abrió una sesión',
     closed: 'Cerró una sesión',
+    signed_in: 'Inició sesión',
+    signed_out: 'Cerró sesión',
+    assigned: 'Asignó un usuario',
+    unassigned: 'Quitó un usuario',
     enabled: 'Habilitó una opción',
     disabled: 'Deshabilitó una opción',
   }
@@ -2621,7 +2625,7 @@ const auditSearchText = (ui, entry) => {
 
 const auditView = (ui) => {
   const moduleColors = { sales: '#f87171', cash: '#fbbf24', stock: '#60a5fa', products: '#a78bfa', purchases: '#34d399', customers: '#fb7185', invoices: '#22d3ee', tickets: '#c084fc', settings: '#94a3b8' }
-  const actionLabels = { created: 'Creó', updated: 'Actualizó', deleted: 'Eliminó', cancelled: 'Anuló', returned: 'Registró una devolución', opened: 'Abrió', closed: 'Cerró', enabled: 'Habilitó', disabled: 'Deshabilitó', created_from_sale: 'Generó desde una venta', created_from_return: 'Generó desde una devolución', imported: 'Importó', reset: 'Restableció', registered: 'Registró', deactivated: 'Desactivó', seed_initialized: 'Inicializó' }
+  const actionLabels = { created: 'Creó', updated: 'Actualizó', deleted: 'Eliminó', cancelled: 'Anuló', returned: 'Registró una devolución', opened: 'Abrió', closed: 'Cerró', signed_in: 'Inició', signed_out: 'Cerró', assigned: 'Asignó', unassigned: 'Quitó', enabled: 'Habilitó', disabled: 'Deshabilitó', created_from_sale: 'Generó desde una venta', created_from_return: 'Generó desde una devolución', imported: 'Importó', reset: 'Restableció', registered: 'Registró', deactivated: 'Desactivó', seed_initialized: 'Inicializó' }
   const now = new Date(); const beginningOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const periodStart = auditPeriodFilter === 'today' ? beginningOfDay : auditPeriodFilter === 'week' ? new Date(beginningOfDay.getTime() - (6 * 86400000)) : auditPeriodFilter === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : null
   const query = auditSearchQuery.trim().toLocaleLowerCase()
