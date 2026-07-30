@@ -1,20 +1,53 @@
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers } })
-const cors = (request: Request) => ({ 'access-control-allow-origin': request.headers.get('origin') || '*', 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type, apikey, authorization' })
+const configuredOrigins = () => (Deno.env.get('AUTH_ALLOWED_ORIGINS') || 'https://www.pclafcontrol.com.ar')
+  .split(',').map((value) => value.trim().replace(/\/$/, '')).filter(Boolean)
+const requestOrigin = (request: Request) => String(request.headers.get('origin') || '').trim().replace(/\/$/, '')
+const cors = (request: Request) => {
+  const origin = requestOrigin(request)
+  return configuredOrigins().includes(origin)
+    ? { 'access-control-allow-origin': origin, vary: 'Origin', 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type, apikey, authorization' }
+    : {}
+}
+const allowedRequestOrigin = (request: Request) => configuredOrigins().includes(requestOrigin(request))
+const allowedTurnstileHostnames = () => configuredOrigins().map((origin) => {
+  try {
+    return new URL(origin).hostname
+  } catch {
+    return ''
+  }
+}).filter(Boolean)
+const allowedRedirect = (value: unknown) => {
+  try {
+    const redirect = new URL(String(value || ''))
+    return configuredOrigins().includes(redirect.origin) && redirect.pathname.startsWith('/app/') ? redirect.toString() : ''
+  } catch {
+    return ''
+  }
+}
 const digest = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))).map((byte) => byte.toString(16).padStart(2, '0')).join('')
 
 Deno.serve(async (request) => {
   const headers = cors(request)
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers })
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, headers)
+  if (!allowedRequestOrigin(request)) return json({ error: 'origin_not_allowed' }, 403)
   try {
     const body = await request.json()
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    const secret = Deno.env.get('TURNSTILE_SECRET_KEY') || ''
+    const secret = Deno.env.get('TURNSTILE_SECRET') || ''
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
     if (!supabaseUrl || !serviceKey || !secret) return json({ error: 'security_not_configured' }, 503, headers)
-    const verify = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ secret, response: String(body.turnstileToken || ''), remoteip: ip }) }).then((response) => response.json())
-    if (!verify.success || verify.action !== 'login') return json({ error: 'access_denied' }, 403, headers)
+    const turnstileToken = String(body.turnstileToken || '').trim()
+    if (!turnstileToken) return json({ error: 'access_denied' }, 403, headers)
+    const verificationResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret, response: turnstileToken, remoteip: ip }),
+    })
+    if (!verificationResponse.ok) return json({ error: 'access_denied' }, 403, headers)
+    const verify = await verificationResponse.json()
+    if (!verify.success || verify.action !== 'turnstile-spin-v2' || !allowedTurnstileHostnames().includes(String(verify.hostname || '').toLowerCase())) return json({ error: 'access_denied' }, 403, headers)
     const key = await digest(`${Deno.env.get('AUTH_RATE_LIMIT_PEPPER') || ''}:${ip}`)
     const rpc = async (name: string, payload: object) => fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify(payload) })
     const mode = body.mode === 'recovery' ? 'recovery' : 'login'
@@ -22,7 +55,9 @@ Deno.serve(async (request) => {
     if (!limited?.allowed) return json({ error: 'access_denied' }, 429, headers)
     if (mode === 'recovery') {
       const email = String(body.email || '').trim().toLowerCase()
-      if (email) await fetch(`${supabaseUrl}/auth/v1/otp`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify({ email, create_user: false, options: { email_redirect_to: String(body.redirectTo || '') } }) })
+      const redirectTo = allowedRedirect(body.redirectTo)
+      if (!redirectTo) return json({ error: 'invalid_redirect' }, 422, headers)
+      if (email) await fetch(`${supabaseUrl}/auth/v1/otp`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify({ email, create_user: false, options: { email_redirect_to: redirectTo } }) })
       return json({ ok: true, message: 'Si existe una cuenta con ese correo, te enviamos un enlace para recuperar el acceso.' }, 200, headers)
     }
     const deviceHash = await digest(String(body.deviceId || 'unknown-device'))
@@ -32,5 +67,5 @@ Deno.serve(async (request) => {
       await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${Deno.env.get('RESEND_API_KEY')}`, 'content-type': 'application/json' }, body: JSON.stringify({ from: Deno.env.get('SECURITY_EMAIL_FROM') || 'PCLAF Control <security@pclaf.com>', to: [login.profile?.email], subject: 'Nuevo inicio de sesión en PCLAF Control', text: `Detectamos un nuevo dispositivo iniciando sesión en tu cuenta el ${new Date().toLocaleString('es-AR')}. Si no fuiste vos, recuperá tu clave inmediatamente.` }) })
     }
     return json(login, 200, headers)
-  } catch { return json({ error: 'access_denied' }, 400, headers) }
+  } catch { return json({ error: 'access_denied' }, 403, headers) }
 })

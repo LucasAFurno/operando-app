@@ -437,6 +437,7 @@ const mapPublicAuthError = (message, context = 'login') => {
     user_not_found: 'No pudimos iniciar sesion. Revisa tus datos o recupera el acceso.',
     invalid_credentials: 'No pudimos iniciar sesion. Revisa tus datos o recupera el acceso.',
     access_denied: 'No pudimos iniciar sesion. Revisa tus datos o recupera el acceso.',
+    security_not_configured: 'El acceso seguro todavia no esta configurado. Contacta a soporte.',
     turnstile_required: 'Completa la verificacion de seguridad antes de continuar.',
     invalid_pin: 'La clave no coincide. Pruebala de nuevo o recupera el acceso.',
     login_locked: 'Por seguridad bloqueamos el acceso durante 15 minutos después de 3 claves incorrectas. Puedes esperar y volver a intentarlo, o recuperar tu clave ahora.',
@@ -1127,7 +1128,7 @@ const standaloneAuthView = (ui) => `
           <form class="login-form" data-form="login" autocomplete="on">
             <label>Email<input type="email" name="identifier" value="" placeholder="tu@email.com" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
             <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
-            ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="login" data-size="flexible"></div>` : ''}
+            ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
             ${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}
             ${loginMessage?.includes('15 minutos') ? '<button type="button" class="auth-text-action" data-action="recover-password">Recuperar mi clave ahora</button>' : ''}
             <button type="submit">Ingresar</button>
@@ -1281,6 +1282,7 @@ const loginView = (ui) => {
             <form class="login-form" data-form="login" autocomplete="off">
               <label>Email de acceso<input type="email" name="identifier" value="" placeholder="tu@email.com" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
               <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
+              ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
               ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
               <button type="submit">Ingresar</button>
             </form>
@@ -1437,6 +1439,7 @@ const loginViewV2 = (ui) => `
             <label>Email de acceso<input type="email" name="identifier" value="" placeholder="tu@email.com" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" required /></label>
             <label>Clave<input type="password" name="pin" placeholder="Tu clave" autocomplete="current-password" required /></label>
             <input type="hidden" name="instanceKey" value="${ui.cloudConnection.environment === 'development' ? (ui.cloudConnection.instanceKey || 'pclaf-dev') : ''}" />
+            ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
             <p class="login-hints">Si no recuerdas tu clave, puedes pedir recuperacion o hablar con soporte.</p>
             ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
             <button type="submit">Ingresar</button>

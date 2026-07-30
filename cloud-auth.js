@@ -27,31 +27,24 @@ const normalizeSessionPayload = (payload) => {
 }
 
 const readTurnstileToken = () => String(globalThis.document?.querySelector('input[name="cf-turnstile-response"]')?.value || '')
+const resetTurnstile = () => {
+  try {
+    globalThis.turnstile?.reset()
+  } catch {
+    // A retry will render a fresh widget if the Turnstile API is unavailable.
+  }
+}
 
 export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev', turnstileSiteKey = '' }) => {
   const baseUrl = normalizeUrl(url)
   const publishableKey = String(anonKey || '').trim()
   const currentInstanceKey = String(instanceKey || 'pclaf-dev').trim().toLowerCase()
   const turnstileEnabled = Boolean(String(turnstileSiteKey || '').trim())
-  const sessionStorageKey = `pclaf-control-cloud-session:${baseUrl}`
-
   if (!baseUrl || !publishableKey) {
     return null
   }
-
-  const readPersistedSession = () => {
-    try {
-      const raw = globalThis.localStorage?.getItem(sessionStorageKey)
-      if (!raw) return null
-      const parsed = JSON.parse(raw)
-      if (parsed?.sessionToken && parsed?.profile) return parsed
-      return normalizeSessionPayload(parsed)
-    } catch {
-      return null
-    }
-  }
-
-  let session = readPersistedSession()
+  // Custom PCLAF sessions are memory-only; no bearer credential is persisted.
+  let session = null
   const supabase = createClient(baseUrl, publishableKey, {
     auth: {
       persistSession: false,
@@ -61,14 +54,6 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
   })
 
   let recoveryState = null
-  const persistSession = () => {
-    try {
-      if (session?.sessionToken) globalThis.localStorage?.setItem(sessionStorageKey, JSON.stringify(session))
-      else globalThis.localStorage?.removeItem(sessionStorageKey)
-    } catch {
-      // La sesión sigue funcionando durante la pestaña aunque el navegador bloquee storage.
-    }
-  }
   const readSession = () => session
   const persistRecovery = (payload) => {
     recoveryState = payload || null
@@ -103,7 +88,6 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
 
   const setSession = (payload) => {
     session = normalizeSessionPayload(payload)
-    persistSession()
     return session
   }
 
@@ -135,40 +119,26 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
   }
 
   const signIn = async ({ instanceKey: requestedInstanceKey, identifier, pin }) => {
-    if (!turnstileEnabled) {
-      const payload = await rpc('app_public_sign_in', { p_instance_key: normalizeOptionalInstanceKey(requestedInstanceKey), p_identifier: identifier, p_pin: pin })
-      if (payload?.error) throw new Error(payload.error)
-      const nextSession = setSession(payload)
-      if (!nextSession) throw new Error('signin_failed')
-      return nextSession
-    }
-    let deviceId = globalThis.localStorage?.getItem('pclaf-control-device-id')
-    if (!deviceId) { deviceId = crypto.randomUUID(); globalThis.localStorage?.setItem('pclaf-control-device-id', deviceId) }
+    if (!turnstileEnabled) throw new Error('security_not_configured')
+    const deviceId = crypto.randomUUID()
     const turnstileToken = readTurnstileToken()
     if (!turnstileToken) throw new Error('turnstile_required')
     const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, { method: 'POST', headers: buildHeaders(publishableKey), body: JSON.stringify({ instanceKey: normalizeOptionalInstanceKey(requestedInstanceKey), identifier, pin, deviceId, turnstileToken }) })
     const payload = await safeJson(response)
-    if (!response.ok) throw new Error(payload?.error || 'invalid_credentials')
-    if (payload?.error) throw new Error(payload.error)
+    if (!response.ok) {
+      resetTurnstile()
+      throw new Error(payload?.error || 'invalid_credentials')
+    }
+    if (payload?.error) {
+      resetTurnstile()
+      throw new Error(payload.error)
+    }
     const nextSession = setSession(payload)
     if (!nextSession) throw new Error('signin_failed')
     return nextSession
   }
 
-  const restoreSession = async () => {
-    const restored = readSession()
-    if (!restored?.sessionToken) return null
-    try {
-      const payload = await rpc('app_public_restore_session', {
-        p_session_token: restored.sessionToken,
-      })
-      return setSession(payload)
-    } catch {
-      session = null
-      persistSession()
-      return null
-    }
-  }
+  const restoreSession = async () => null
 
   const signOut = async () => {
     const token = session?.sessionToken || ''
@@ -180,26 +150,18 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
       }
     }
     session = null
-    persistSession()
   }
-
-  const requestPasswordReset = async ({ email }) => rpc('app_public_request_password_reset', {
-    p_email: String(email || '').trim().toLowerCase(),
-  })
 
   const sendRecoveryMagicLink = async ({ email, redirectTo }) => {
     const normalizedEmail = String(email || '').trim().toLowerCase()
-    if (!turnstileEnabled) {
-      await requestPasswordReset({ email: normalizedEmail })
-      const { error } = await supabase.auth.signInWithOtp({ email: normalizedEmail, options: { emailRedirectTo: redirectTo, shouldCreateUser: true } })
-      if (error) throw error
-      persistRecovery({ email: normalizedEmail, requestedAt: new Date().toISOString() })
-      return { ok: true, message: 'Te enviamos un enlace para recuperar el acceso. Revisa tu correo y luego define una clave nueva.' }
-    }
+    if (!turnstileEnabled) throw new Error('security_not_configured')
     const token = readTurnstileToken()
     if (!token) throw new Error('turnstile_required')
     const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, { method: 'POST', headers: buildHeaders(publishableKey), body: JSON.stringify({ mode: 'recovery', email: normalizedEmail, redirectTo, turnstileToken: token }) })
-    if (!response.ok) throw new Error('access_denied')
+    if (!response.ok) {
+      resetTurnstile()
+      throw new Error('access_denied')
+    }
     persistRecovery({ email: normalizedEmail, requestedAt: new Date().toISOString() })
     return {
       ok: true,
@@ -261,7 +223,6 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     getSetupStatus,
     setupInstance,
     signIn,
-    requestPasswordReset,
     sendRecoveryMagicLink,
     consumeRecoverySession,
     completeRecovery,
