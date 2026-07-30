@@ -1858,10 +1858,12 @@ pageEntries.push({
   filePath: 'app/index.html',
   cacheControl: 'no-store',
 })
+const appModuleRoutes = ['clientes', 'ventas', 'caja-diaria', 'productos', 'compras', 'facturacion', 'tickets', 'reportes', 'auditoria', 'ajustes', 'mi-admin', 'sucursales', 'cajeros']
+for (const route of appModuleRoutes) pageEntries.push({ pathname: `${appPath}${route}/`, html: appHtml, filePath: `app/${route}/index.html`, cacheControl: 'no-store' })
 
 const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pageEntries.filter((entry) => entry.pathname !== appPath).map((entry) => `  <url>
+${pageEntries.filter((entry) => !entry.pathname.startsWith(appPath)).map((entry) => `  <url>
     <loc>${siteOrigin}${entry.pathname}</loc>
     <changefreq>${entry.pathname === '/' ? 'weekly' : 'monthly'}</changefreq>
     <priority>${entry.pathname === '/' ? '1.0' : '0.8'}</priority>
