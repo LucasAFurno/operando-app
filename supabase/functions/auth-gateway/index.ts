@@ -52,7 +52,10 @@ Deno.serve(async (request) => {
     const rpc = async (name: string, payload: object) => fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify(payload) })
     const mode = body.mode === 'recovery' ? 'recovery' : 'login'
     const limited = await rpc('app_auth_rate_limit', { p_key: key, p_action: mode }).then((response) => response.json())
-    if (!limited?.allowed) return json({ error: 'login_rate_limited' }, 429, headers)
+    if (!limited?.allowed) {
+      const retryAfterSeconds = Math.max(1, Number(limited?.retry_after_seconds || 60))
+      return json({ error: 'login_rate_limited', retry_after_seconds: retryAfterSeconds }, 429, { ...headers, 'retry-after': String(retryAfterSeconds) })
+    }
     if (mode === 'recovery') {
       const email = String(body.email || '').trim().toLowerCase()
       const redirectTo = allowedRedirect(body.redirectTo)

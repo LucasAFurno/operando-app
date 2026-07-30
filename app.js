@@ -433,6 +433,11 @@ const isStandaloneAppRoute = () => /^\/app(?:\/|$)/i.test(window.location.pathna
 const mapPublicAuthError = (message, context = 'login') => {
   const normalized = String(message || '').trim().toLowerCase()
   if (!normalized) return context === 'signup' ? 'No se pudo crear la cuenta.' : 'No se pudo iniciar sesion.'
+  const rateLimit = normalized.match(/^login_rate_limited:(\d+)$/)
+  if (rateLimit) {
+    const minutes = Math.ceil(Number(rateLimit[1]) / 60)
+    return `Por seguridad espera ${minutes} minuto${minutes === 1 ? '' : 's'} antes de volver a intentarlo.`
+  }
   const messages = {
     user_not_found: 'No pudimos iniciar sesion. Revisa tus datos o recupera el acceso.',
     invalid_credentials: 'No pudimos iniciar sesion. Revisa tus datos o recupera el acceso.',

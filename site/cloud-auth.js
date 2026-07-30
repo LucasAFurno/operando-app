@@ -35,6 +35,12 @@ const resetTurnstile = () => {
   }
 }
 
+const apiError = (payload, fallback) => {
+  const code = String(payload?.error || fallback)
+  const retryAfterSeconds = Number(payload?.retry_after_seconds || 0)
+  return retryAfterSeconds > 0 ? `${code}:${Math.ceil(retryAfterSeconds)}` : code
+}
+
 export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev', turnstileSiteKey = '' }) => {
   const baseUrl = normalizeUrl(url)
   const publishableKey = String(anonKey || '').trim()
@@ -127,11 +133,11 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     const payload = await safeJson(response)
     if (!response.ok) {
       resetTurnstile()
-      throw new Error(payload?.error || 'invalid_credentials')
+      throw new Error(apiError(payload, 'invalid_credentials'))
     }
     if (payload?.error) {
       resetTurnstile()
-      throw new Error(payload.error)
+      throw new Error(apiError(payload, 'invalid_credentials'))
     }
     const nextSession = setSession(payload)
     if (!nextSession) throw new Error('signin_failed')
@@ -160,7 +166,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, { method: 'POST', headers: buildHeaders(publishableKey), body: JSON.stringify({ mode: 'recovery', email: normalizedEmail, redirectTo, turnstileToken: token }) })
     if (!response.ok) {
       resetTurnstile()
-      throw new Error('access_denied')
+      throw new Error(apiError(payload, 'access_denied'))
     }
     persistRecovery({ email: normalizedEmail, requestedAt: new Date().toISOString() })
     return {
