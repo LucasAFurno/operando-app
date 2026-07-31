@@ -1038,7 +1038,7 @@ const getUiState = () => {
   const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
     const documentKind = log.afterData?.kind || log.beforeData?.kind
     const modules = log.entityType === 'document' && documentKind === 'ticket' ? ['tickets'] : (auditModuleByEntity[log.entityType] || ['settings'])
-    const entityLabel = log.entityType === 'user_assignment' && (log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name) ? `acceso de ${log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name}` : (log.entityType === 'document' && documentKind === 'ticket' ? 'ticket' : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
+    const entityLabel = log.entityType === 'user_assignment' && (log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name) ? `acceso de ${log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name}` : (log.entityType === 'document' ? (documentKind === 'ticket' ? 'ticket' : (documentKind === 'factura' ? 'factura' : 'comprobante')) : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
     return { ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel }
   })
   const auditActionLabels = {
