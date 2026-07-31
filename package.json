@@ -12,6 +12,7 @@
     "build:prod": "node scripts/build.mjs prod",
     "build:dev": "node scripts/build.mjs dev",
     "preview": "vite preview",
+    "test": "node --test",
     "test:notifications": "node fiscal-server/scripts/notify-discord.mjs",
     "notify:deploy": "node fiscal-server/scripts/notify-deploy.mjs",
     "backup:postgres": "node fiscal-server/scripts/backup-postgres.mjs",

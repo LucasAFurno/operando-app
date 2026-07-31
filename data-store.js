@@ -2107,19 +2107,18 @@ export const createBrowserDataStore = (options = {}) => {
       .map((item) => buildSaleItem(item.productId, item.quantity, state))
       .filter(Boolean)
     if (!items.length) return { ok: false, message: 'Cargá al menos un articulo.' }
-    const paymentBreakdown = getPaymentBreakdown(payload, 0)
-    if (getCashPortion(paymentBreakdown) > 0 && !getOpenCashSession(state)) {
-      return { ok: false, message: 'No podes cobrar en efectivo sin una caja abierta.' }
-    }
-    const openSession = getOpenCashSession(state)
     const currentBranch = getCurrentBranch(state)
-    const branchId = getCashPortion(paymentBreakdown) > 0 ? (openSession?.branchId || currentBranch?.id || null) : (currentBranch?.id || null)
-    const stockCheck = ensureSaleStock(state, items, branchId)
+    const stockCheck = ensureSaleStock(state, items, currentBranch?.id || null)
     if (!stockCheck.ok) return stockCheck
     const subtotalAmount = items.reduce((sum, item) => sum + item.lineTotal, 0)
     const discountAmount = Math.max(0, Math.min(Number(payload.discountAmount || 0), subtotalAmount))
     const totalAmount = subtotalAmount - discountAmount
     const effectiveBreakdown = getPaymentBreakdown(payload, totalAmount)
+    const openSession = getOpenCashSession(state)
+    if (getCashPortion(effectiveBreakdown) > 0 && !openSession) {
+      return { ok: false, message: 'No podes cobrar en efectivo sin una caja abierta.' }
+    }
+    const branchId = getCashPortion(effectiveBreakdown) > 0 ? (openSession.branchId || currentBranch?.id || null) : (currentBranch?.id || null)
     const rawPaid = payload.isPaid ? totalAmount : Object.values(effectiveBreakdown).reduce((sum, value) => sum + Number(value || 0), 0)
     const amountPaid = Math.max(0, Math.min(rawPaid, totalAmount))
     if (rawPaid > totalAmount) return { ok: false, message: 'El monto cobrado no puede superar el total.' }
