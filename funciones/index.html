@@ -586,6 +586,15 @@
         color: #6f6a62;
         font-size: 0.82rem;
       }
+      .marketing-free-notice {
+        margin: 0;
+        padding: 10px 16px;
+        border-bottom: 1px solid #ded9d0;
+        background: #fff3cd;
+        color: #5c3f00;
+        text-align: center;
+        font-size: 0.92rem;
+      }
       .marketing-nav a,
       .marketing-auth-links a:not(.is-primary) {
         color: #4f4b45;
@@ -878,6 +887,11 @@
           min-height: 70px;
           gap: 10px;
         }
+        .marketing-free-notice {
+          padding: 9px 12px;
+          font-size: 0.83rem;
+          line-height: 1.4;
+        }
         .marketing-brand img {
           width: 40px;
         }
@@ -936,14 +950,23 @@
         }
         .marketing-story,
         .marketing-story.is-reverse {
-          padding: 52px 0;
+          gap: 26px;
+          padding: 44px 0;
+        }
+        /* The hero already presents sales and cash. On mobile, skip the
+           repeated image and move directly to the benefit. */
+        .marketing-home-rows .marketing-story:first-child {
+          gap: 0;
+        }
+        .marketing-home-rows .marketing-story:first-child .marketing-story-media {
+          display: none;
         }
         .marketing-story-media {
           padding: 10px;
           border-radius: 16px;
         }
         .marketing-story-copy h2 {
-          font-size: 2.45rem;
+          font-size: clamp(2rem, 9vw, 2.45rem);
         }
         .marketing-home-cta {
           margin-inline: -11px;
@@ -965,7 +988,7 @@
       }
 </style>
     
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PCLAF Control","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://www.pclafcontrol.com.ar/funciones/","image":"https://www.pclafcontrol.com.ar/og-pclaf-control.svg","screenshot":["https://www.pclafcontrol.com.ar/pantalla-ventas-pclaf-control.svg","https://www.pclafcontrol.com.ar/control-stock-por-sucursal.svg","https://www.pclafcontrol.com.ar/cierre-caja-comercio.svg"],"softwareVersion":"18374bfed6c3","description":"Conoce todas las funciones de PCLAF Control: ventas, caja, stock, compras, clientes, tickets, facturacion, sucursales y reportes.","featureList":["Ventas","Caja","Stock","Clientes","Compras","Facturacion","Tickets","Reportes"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","description":"Prueba gratis y planes comerciales para comercios.","url":"https://www.pclafcontrol.com.ar/precios/"}}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"PCLAF Control","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://www.pclafcontrol.com.ar/funciones/","image":"https://www.pclafcontrol.com.ar/og-pclaf-control.svg","screenshot":["https://www.pclafcontrol.com.ar/pantalla-ventas-pclaf-control.svg","https://www.pclafcontrol.com.ar/control-stock-por-sucursal.svg","https://www.pclafcontrol.com.ar/cierre-caja-comercio.svg"],"softwareVersion":"97b4aeaa37a8","description":"Conoce todas las funciones de PCLAF Control: ventas, caja, stock, compras, clientes, tickets, facturacion, sucursales y reportes.","featureList":["Ventas","Caja","Stock","Clientes","Compras","Facturacion","Tickets","Reportes"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","description":"PCLAF Control esta gratis hasta nuevo aviso.","url":"https://www.pclafcontrol.com.ar/precios/"}}</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"PCLAF Control","url":"https://www.pclafcontrol.com.ar","logo":"https://www.pclafcontrol.com.ar/pclaf-logo.png","contactPoint":{"@type":"ContactPoint","contactType":"sales","url":"https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20quiero%20informacion%20de%20PCLAF%20Control.","availableLanguage":["es-AR","es"]}}</script>
     
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.pclafcontrol.com.ar"},{"@type":"ListItem","position":2,"name":"funciones","item":"https://www.pclafcontrol.com.ar/funciones/"}]}</script>
@@ -983,13 +1006,14 @@
       </div>
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
-      <a href="/funciones/" data-analytics="nav_funciones">Funciones</a><a href="/preguntas-frecuentes/" data-analytics="nav_faq">FAQ</a>
+      <a href="/funciones/" data-analytics="nav_funciones">Funciones</a><a href="/precios/" data-analytics="nav_gratis">Gratis</a><a href="/preguntas-frecuentes/" data-analytics="nav_faq">FAQ</a>
     </nav>
     <div class="marketing-auth-links">
       <a href="/app/?view=login" data-analytics="header_login">Iniciar sesion</a>
       <a class="is-primary" href="/app/?view=signup" data-analytics="header_signup">Probar gratis</a>
     </div>
   </header>
+  <p class="marketing-free-notice" role="status"><strong>Gratis hasta nuevo aviso.</strong> Crea tu cuenta y empieza a usar PCLAF Control sin costo.</p>
 
       <main>
         <section class="marketing-hero">
@@ -1063,6 +1087,17 @@
       <nav>
         <a href="/app/?view=login" data-analytics="footer_login">Iniciar sesion</a>
         <a href="/app/?view=signup" data-analytics="footer_signup_primary">Crear cuenta</a>
+      </nav>
+    </div>
+    <div class="marketing-footer-links">
+      <p class="marketing-footer-title">Soluciones</p>
+      <nav>
+        <a href="/sistema-de-ventas/" data-analytics="footer_sales">Ventas y caja</a>
+        <a href="/control-de-stock/" data-analytics="footer_stock">Stock</a>
+        <a href="/sistema-de-compras/" data-analytics="footer_purchases">Compras</a>
+        <a href="/facturacion/" data-analytics="footer_invoices">Facturacion</a>
+        <a href="/sistema-de-tickets/" data-analytics="footer_tickets">Tickets</a>
+        <a href="/reportes/" data-analytics="footer_reports">Reportes</a>
       </nav>
     </div>
     <div class="marketing-footer-links">

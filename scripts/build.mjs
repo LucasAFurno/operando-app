@@ -91,6 +91,7 @@ const buildArticleJsonLd = (page) => {
 
 const topLinks = [
   { href: '/funciones/', label: 'Funciones' },
+  { href: '/precios/', label: 'Gratis' },
   { href: '/preguntas-frecuentes/', label: 'FAQ' },
 ]
 
@@ -225,21 +226,22 @@ const marketingPages = [
   },
   {
     slug: 'precios',
-    seoTitle: 'Planes y modulos | PCLAF Control',
-    description: 'Descubre los planes de PCLAF Control para comercios que necesitan ventas, caja, stock, clientes, compras y sucursales.',
-    kicker: 'Planes',
-    h1: 'Elige los modulos que necesita tu comercio, sin abrumarte con todo de entrada',
-    lead: 'Los planes se piensan por necesidad operativa. Puedes comenzar con un negocio simple y luego sumar cajas, sucursales, usuarios o herramientas mas avanzadas.',
+    seoTitle: 'PCLAF Control gratis hasta nuevo aviso | Planes y modulos',
+    description: 'PCLAF Control esta gratis hasta nuevo aviso. Gestiona ventas, caja, stock, clientes, compras y sucursales desde una sola web.',
+    kicker: 'Gratis hasta nuevo aviso',
+    h1: 'PCLAF Control esta gratis hasta nuevo aviso',
+    lead: 'Crea tu cuenta y usa las herramientas para ventas, caja, stock y operacion comercial sin costo durante esta etapa. Si la modalidad cambia, lo comunicaremos antes.',
     image: '/cierre-caja-comercio.svg',
     imageAlt: 'Resumen de caja y cierre operativo de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero conocer los planes y modulos de PCLAF Control.',
+    primaryCta: { href: `${appPath}?view=signup`, label: 'Crear cuenta gratis' },
+    whatsAppPrompt: 'Hola PCLAF, quiero crear una cuenta gratis en PCLAF Control.',
     sections: [
       { title: 'Gestion Base', body: 'Clientes, productos, ventas simples y comprobantes para negocios que quieren dejar Excel y empezar ordenados.' },
       { title: 'Mostrador', body: 'Caja diaria, cobros mixtos, apertura y cierre, ticket rapido y operadores para puestos de venta.' },
       { title: 'Operacion', body: 'Compras, proveedores, stock por sucursal, facturas, reportes y mejores controles del negocio.' },
       { title: 'Multi Sucursal', body: 'Varias sucursales, cajas, transferencias, usuarios por puesto y reportes separados por local.' },
     ],
-    featureList: ['Prueba gratis', 'Sin instalar', 'Escalable por modulos', 'Acceso web desde PC o celular'],
+    featureList: ['Gratis hasta nuevo aviso', 'Sin instalar', 'Modulos para crecer', 'Acceso web desde PC o celular'],
   },
   {
     slug: 'sistema-de-ventas',
@@ -257,6 +259,74 @@ const marketingPages = [
       { title: 'Comprobantes listos', body: 'Relaciona la venta con ticket o factura y sigue lo cobrado o pendiente.' },
     ],
     featureList: ['Ventas', 'Cobros', 'Caja', 'Facturas', 'Historial comercial'],
+  },
+  {
+    slug: 'sistema-de-compras',
+    seoTitle: 'Sistema de compras y proveedores | PCLAF Control',
+    description: 'Registra compras, proveedores, costos y recepcion de mercaderia para mantener ordenados stock y caja.',
+    kicker: 'Compras y proveedores',
+    h1: 'Compras y proveedores en la misma operacion comercial',
+    lead: 'Registra ingresos de mercaderia, consulta proveedores y conecta los costos con tus productos sin trabajar en planillas separadas.',
+    image: '/control-stock-por-sucursal.svg',
+    imageAlt: 'Control de productos y stock en PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF, quiero ordenar las compras y proveedores de mi comercio.',
+    sections: [
+      { title: 'Recepcion de compras', body: 'Carga productos, cantidades y costos para registrar la entrada de mercaderia de forma ordenada.' },
+      { title: 'Proveedores centralizados', body: 'Conserva los datos comerciales de cada proveedor y consulta el historial desde la misma plataforma.' },
+      { title: 'Impacto en stock', body: 'Las compras se integran con productos y existencias para que el inventario refleje la operacion real.' },
+    ],
+    featureList: ['Compras', 'Proveedores', 'Costos', 'Productos', 'Stock'],
+  },
+  {
+    slug: 'facturacion',
+    seoTitle: 'Facturacion y comprobantes para comercios | PCLAF Control',
+    description: 'Organiza comprobantes y facturas relacionadas con tus ventas desde la misma plataforma comercial.',
+    kicker: 'Facturacion',
+    h1: 'Comprobantes y facturas asociados a cada venta',
+    lead: 'Mantiene la relacion entre ventas, cobros, clientes y comprobantes para que puedas consultar la operacion comercial con mas claridad.',
+    image: '/pantalla-ventas-pclaf-control.svg',
+    imageAlt: 'Pantalla de ventas y comprobantes de PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF, quiero conocer la facturacion y comprobantes del sistema.',
+    sections: [
+      { title: 'Comprobantes por venta', body: 'Relaciona cada venta con sus comprobantes para seguir lo emitido, cobrado o pendiente.' },
+      { title: 'Clientes y saldos', body: 'Consulta los comprobantes junto con el historial comercial del cliente cuando lo necesites.' },
+      { title: 'Consulta operativa', body: 'Encuentra ventas y facturas en una misma base sin duplicar la informacion comercial.' },
+    ],
+    featureList: ['Facturas', 'Comprobantes', 'Ventas', 'Clientes', 'Historial'],
+  },
+  {
+    slug: 'sistema-de-tickets',
+    seoTitle: 'Sistema de tickets para servicio tecnico | PCLAF Control',
+    description: 'Registra tickets, equipos, estados y clientes para seguir reparaciones y servicios desde una sola web.',
+    kicker: 'Tickets y seguimiento',
+    h1: 'Sistema de tickets para ordenar servicios y reparaciones',
+    lead: 'Registra equipos, tareas y estados de trabajo; relaciona cada ticket con el cliente y mantene el seguimiento operativo por sucursal.',
+    image: '/cierre-caja-comercio.svg',
+    imageAlt: 'Operacion comercial y seguimiento de tickets en PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF, quiero probar el sistema de tickets para mi servicio tecnico.',
+    sections: [
+      { title: 'Ingreso de equipos', body: 'Registra el detalle del equipo y del trabajo para conservar una recepcion clara.' },
+      { title: 'Estados de trabajo', body: 'Sigue cada ticket desde su ingreso hasta la entrega con un historial operativo.' },
+      { title: 'Relacion comercial', body: 'Conecta el ticket con el cliente, repuestos, ventas y caja cuando corresponda.' },
+    ],
+    featureList: ['Tickets', 'Clientes', 'Estados', 'Repuestos', 'Sucursales'],
+  },
+  {
+    slug: 'reportes',
+    seoTitle: 'Reportes de ventas, caja y stock | PCLAF Control',
+    description: 'Consulta reportes de ventas, caja, stock, compras y comprobantes por fecha, sucursal y operador.',
+    kicker: 'Reportes y control',
+    h1: 'Reportes para entender la operacion diaria de tu comercio',
+    lead: 'Consulta ventas, movimientos de caja, stock y comprobantes con filtros por fecha, sucursal o caja para tomar decisiones con datos.',
+    image: '/cierre-caja-comercio.svg',
+    imageAlt: 'Resumen de caja y reportes comerciales de PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF, quiero conocer los reportes del sistema.',
+    sections: [
+      { title: 'Ventas y cobros', body: 'Revisa ventas y medios de pago para entender la actividad comercial por periodo.' },
+      { title: 'Caja y movimientos', body: 'Consulta aperturas, cierres, diferencias e ingresos o egresos de cada caja.' },
+      { title: 'Stock y compras', body: 'Relaciona existencias y movimientos de mercaderia con la operacion de compras.' },
+    ],
+    featureList: ['Ventas', 'Caja', 'Stock', 'Compras', 'Sucursales'],
   },
   {
     slug: 'control-de-stock',
@@ -508,7 +578,7 @@ const buildSoftwareJsonLd = (page) => ({
   offers: {
     '@type': 'Offer',
     availability: 'https://schema.org/InStock',
-    description: 'Prueba gratis y planes comerciales para comercios.',
+    description: 'PCLAF Control esta gratis hasta nuevo aviso.',
     url: `${siteOrigin}/precios/`,
   },
 })
@@ -560,6 +630,7 @@ const renderTopbar = () => `
       <a class="is-primary" href="${appPath}?view=signup" data-analytics="header_signup">Probar gratis</a>
     </div>
   </header>
+  <p class="marketing-free-notice" role="status"><strong>Gratis hasta nuevo aviso.</strong> Crea tu cuenta y empieza a usar PCLAF Control sin costo.</p>
 `
 
 const renderFooter = () => `
@@ -573,6 +644,17 @@ const renderFooter = () => `
       <nav>
         <a href="${appPath}?view=login" data-analytics="footer_login">Iniciar sesion</a>
         <a href="${appPath}?view=signup" data-analytics="footer_signup_primary">Crear cuenta</a>
+      </nav>
+    </div>
+    <div class="marketing-footer-links">
+      <p class="marketing-footer-title">Soluciones</p>
+      <nav>
+        <a href="/sistema-de-ventas/" data-analytics="footer_sales">Ventas y caja</a>
+        <a href="/control-de-stock/" data-analytics="footer_stock">Stock</a>
+        <a href="/sistema-de-compras/" data-analytics="footer_purchases">Compras</a>
+        <a href="/facturacion/" data-analytics="footer_invoices">Facturacion</a>
+        <a href="/sistema-de-tickets/" data-analytics="footer_tickets">Tickets</a>
+        <a href="/reportes/" data-analytics="footer_reports">Reportes</a>
       </nav>
     </div>
     <div class="marketing-footer-links">
@@ -1232,6 +1314,15 @@ const marketingStyles = `
         color: #6f6a62;
         font-size: 0.82rem;
       }
+      .marketing-free-notice {
+        margin: 0;
+        padding: 10px 16px;
+        border-bottom: 1px solid #ded9d0;
+        background: #fff3cd;
+        color: #5c3f00;
+        text-align: center;
+        font-size: 0.92rem;
+      }
       .marketing-nav a,
       .marketing-auth-links a:not(.is-primary) {
         color: #4f4b45;
@@ -1523,6 +1614,11 @@ const marketingStyles = `
         .marketing-topbar {
           min-height: 70px;
           gap: 10px;
+        }
+        .marketing-free-notice {
+          padding: 9px 12px;
+          font-size: 0.83rem;
+          line-height: 1.4;
         }
         .marketing-brand img {
           width: 40px;

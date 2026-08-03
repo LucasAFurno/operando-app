@@ -21,6 +21,26 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.pclafcontrol.com.ar/sistema-de-compras/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.pclafcontrol.com.ar/facturacion/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.pclafcontrol.com.ar/sistema-de-tickets/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.pclafcontrol.com.ar/reportes/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.pclafcontrol.com.ar/control-de-stock/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
