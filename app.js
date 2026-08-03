@@ -134,7 +134,7 @@ let purchaseSuppliersExpanded = false
 let dashboardStockExpanded = false
 let dashboardAuditExpanded = false
 let auditModuleFilter = 'all'
-let auditPeriodFilter = 'today'
+let auditPeriodFilter = 'all'
 let auditSearchQuery = ''
 let auditDateFrom = ''
 let auditDateTo = ''
@@ -1035,12 +1035,25 @@ const getUiState = () => {
   }
   const auditModuleLabels = { sales: 'Ventas', cash: 'Caja', stock: 'Stock', products: 'Productos', purchases: 'Compras', customers: 'Clientes', invoices: 'Facturación', tickets: 'Tickets', settings: 'Configuración' }
   const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', document: 'comprobante', branch: 'sucursal', register: 'caja', user: 'usuario', user_assignment: 'acceso de usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
-  const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
+  let enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
     const documentKind = log.afterData?.kind || log.beforeData?.kind
     const modules = log.entityType === 'document' && documentKind === 'ticket' ? ['tickets'] : (auditModuleByEntity[log.entityType] || ['settings'])
     const entityLabel = log.entityType === 'user_assignment' && (log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name) ? `acceso de ${log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name}` : (log.entityType === 'document' ? (documentKind === 'ticket' ? 'ticket' : (documentKind === 'factura' ? 'factura' : 'comprobante')) : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
     return { ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel }
   })
+  const auditedEntities = new Set(enrichedAudit.map((entry) => `${entry.entityType}:${entry.entityId}`))
+  const inferredAudit = [
+    ...filteredSales.map((sale) => ({ entityType: 'sale', entityId: sale.id, createdAt: sale.soldAt, actorUserId: sale.createdBy, afterData: sale })),
+    ...scopedCashMovements.map((movement) => ({ entityType: 'cash_movement', entityId: movement.id, createdAt: movement.createdAt, actorUserId: movement.createdBy, afterData: movement })),
+    ...scopedStockMovements.map((movement) => ({ entityType: 'stock_movement', entityId: movement.id, createdAt: movement.createdAt, actorUserId: movement.createdBy, afterData: movement })),
+    ...enrichedScopedReceipts.map((receipt) => ({ entityType: 'purchase_receipt', entityId: receipt.id, createdAt: receipt.receivedAt, actorUserId: receipt.createdBy, afterData: receipt })),
+    ...enrichedInvoices.map((invoice) => ({ entityType: 'invoice', entityId: invoice.id, createdAt: invoice.issuedAt || invoice.dueDate, actorUserId: invoice.createdBy, afterData: invoice })),
+    ...enrichedTickets.map((ticket) => ({ entityType: 'ticket', entityId: ticket.id, createdAt: ticket.updatedAt, actorUserId: ticket.createdBy, afterData: ticket })),
+  ].filter((entry) => entry.entityId && entry.createdAt && !auditedEntities.has(`${entry.entityType}:${entry.entityId}`)).map((entry) => {
+    const modules = auditModuleByEntity[entry.entityType] || ['settings']
+    return { ...entry, id: `inferred-${entry.entityType}-${entry.entityId}`, action: 'registered', actorName: userMap.get(entry.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel: auditEntityLabels[entry.entityType] || 'registro' }
+  })
+  enrichedAudit = byRecentDate([...enrichedAudit, ...inferredAudit], 'createdAt')
   const auditActionLabels = {
     created: 'Creó un registro',
     updated: 'Actualizó un registro',
@@ -4298,7 +4311,16 @@ const bindEvents = () => {
     dashboardAuditExpanded = !dashboardAuditExpanded
     render()
   })
-  for (const button of document.querySelectorAll('[data-audit-period]')) button.addEventListener('click', () => { auditPeriodFilter = button.dataset.auditPeriod || 'today'; render() })
+  const firstAuditPeriod = document.querySelector('[data-audit-period]')
+  if (firstAuditPeriod && !document.querySelector('[data-audit-period="all"]')) {
+    const allPeriodsButton = document.createElement('button')
+    allPeriodsButton.type = 'button'
+    allPeriodsButton.className = `audit-filter-button ${auditPeriodFilter === 'all' ? 'is-active' : ''}`
+    allPeriodsButton.dataset.auditPeriod = 'all'
+    allPeriodsButton.textContent = 'Todo'
+    firstAuditPeriod.before(allPeriodsButton)
+  }
+  for (const button of document.querySelectorAll('[data-audit-period]')) button.addEventListener('click', () => { auditPeriodFilter = button.dataset.auditPeriod || 'all'; render() })
   for (const button of document.querySelectorAll('[data-audit-module]')) button.addEventListener('click', () => { auditModuleFilter = button.dataset.auditModule || 'all'; render() })
   for (const input of document.querySelectorAll('[data-audit-search]')) {
     input.placeholder = 'Buscar venta, factura, cliente, producto o usuario'
