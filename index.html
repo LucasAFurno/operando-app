@@ -936,14 +936,23 @@
         }
         .marketing-story,
         .marketing-story.is-reverse {
-          padding: 52px 0;
+          gap: 26px;
+          padding: 44px 0;
+        }
+        /* The hero already presents sales and cash. On mobile, skip the
+           repeated image and move directly to the benefit. */
+        .marketing-home-rows .marketing-story:first-child {
+          gap: 0;
+        }
+        .marketing-home-rows .marketing-story:first-child .marketing-story-media {
+          display: none;
         }
         .marketing-story-media {
           padding: 10px;
           border-radius: 16px;
         }
         .marketing-story-copy h2 {
-          font-size: 2.45rem;
+          font-size: clamp(2rem, 9vw, 2.45rem);
         }
         .marketing-home-cta {
           margin-inline: -11px;
