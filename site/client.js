@@ -4404,6 +4404,8 @@ const bindEvents = () => {
       if (!entry) continue
       const context = getAuditLinkedContext(auditUi, entry)
       const content = event.querySelector('.audit-trace-content')
+      const actorLine = content?.querySelector(':scope > p')
+      if (actorLine) actorLine.textContent = `Por ${entry.actorName || 'Sistema'}`
       const detail = document.createElement('div')
       detail.className = 'audit-event-detail'
       const before = entry.beforeData || {}
