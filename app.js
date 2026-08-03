@@ -2647,19 +2647,25 @@ const getAuditLinkedContext = (ui, entry) => {
 
 const auditOperationSummary = (ui, entry) => {
   const data = entry.afterData || entry.beforeData || {}
+  const context = getAuditLinkedContext(ui, entry)
   const line = (label, text) => `<span><b>${label}</b> ${escapeHtml(text)}</span>`
   if (entry.entityType === 'cash_movement') {
     const movement = ui.scopedCashMovements.find((item) => item.id === entry.entityId) || data
+    if (!movement.kind && !movement.note && movement.signedAmount == null && movement.signed_amount == null) return ''
     return line('Caja', `${cashMovementKindLabel(movement.kind)} · ${movement.note || 'Sin detalle'} · ${money(Number(movement.signedAmount ?? movement.signed_amount ?? 0))}`)
   }
   if (entry.entityType === 'cash_session') {
     const session = ui.scopedCashSessions.find((item) => item.id === entry.entityId) || data
+    if (session.openingAmount == null && session.opening_amount == null && session.countedAmount == null && session.counted_amount == null) return ''
     return line('Cierre de caja', `Apertura ${money(Number(session.openingAmount ?? session.opening_amount ?? 0))} · Contado ${money(Number(session.countedAmount ?? session.counted_amount ?? 0))} · Diferencia ${money(Number(session.differenceAmount ?? session.difference_amount ?? 0))}`)
   }
   if (entry.entityType.includes('stock')) {
     const movement = ui.scopedStockMovements.find((item) => item.id === entry.entityId) || data
     const product = ui.snapshot.products.find((item) => item.id === (movement.productId || movement.product_id))
-    return line('Stock', `${product?.name || movement.productName || 'Producto'} · ${stockMovementTypeLabel(movement.type)} · ${Number(movement.quantity || 0) > 0 ? '+' : ''}${movement.quantity ?? '—'} unidades`)
+    const productName = product?.name || movement.productName || context.itemNames[0] || ''
+    const quantity = movement.quantity
+    if (!productName && quantity == null) return ''
+    return line('Stock', `${productName || 'Producto'}${movement.type ? ` · ${stockMovementTypeLabel(movement.type)}` : ''}${quantity != null ? ` · ${Number(quantity) > 0 ? '+' : ''}${quantity} unidades` : ''}`)
   }
   if (entry.entityType === 'product') {
     const product = ui.snapshot.products.find((item) => item.id === entry.entityId) || data
@@ -4410,9 +4416,9 @@ const bindEvents = () => {
       const stockSummary = entry.entityType.includes('stock') ? `<span><b>Stock</b> ${escapeHtml(stockProduct?.name || after.productName || 'Producto')} · ${Number(after.quantity || 0) > 0 ? '+' : ''}${escapeHtml(String(after.quantity ?? '-'))} unidades</span>` : ''
       const saleDetail = context.sale ? `<span><b>Venta</b> ${escapeHtml(context.itemNames.slice(0, 3).join(', ') || context.sale.itemSummary || 'Sin detalle')} · ${money(context.sale.totalAmount)}</span>` : ''
       const invoiceDetail = context.invoice ? `<span><b>Factura</b> ${escapeHtml(context.invoice.number || 'sin número')} · ${money(context.invoice.totalAmount)}</span>` : ''
-      const productDetail = !context.sale && !context.invoice && context.data?.name ? `<span><b>Detalle</b> ${escapeHtml(String(context.data.name))}</span>` : ''
+      const productDetail = !context.sale && !context.invoice && entry.entityType !== 'product' && context.data?.name ? `<span><b>Detalle</b> ${escapeHtml(String(context.data.name))}</span>` : ''
       const operationSummary = auditOperationSummary(auditUi, entry)
-      detail.innerHTML = `${saleDetail}${invoiceDetail}${productDetail}${operationSummary}${changedValues}${cashSummary}${stockSummary}`
+      detail.innerHTML = `${saleDetail}${invoiceDetail}${productDetail}${operationSummary}${changedValues}`
       if (detail.textContent?.trim()) content?.append(detail)
       event.tabIndex = 0
       event.setAttribute('role', 'button')
