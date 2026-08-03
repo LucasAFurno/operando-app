@@ -2671,6 +2671,36 @@ const openAuditEvent = (ui, entry) => {
   goTo({ sales: 'ventas', cash: 'caja', stock: 'productos', products: 'productos', purchases: 'compras', customers: 'clientes', invoices: 'facturacion', tickets: 'tickets' }[entry.modules[0]] || 'ajustes')
 }
 
+const showAuditEventDetail = (ui, entry, auditTrace) => {
+  const context = getAuditLinkedContext(ui, entry)
+  const before = entry.beforeData || {}
+  const after = entry.afterData || {}
+  const fieldLabel = (key) => ({ full_name: 'Nombre', product_id: 'Producto', productId: 'Producto', sale_id: 'Venta', saleId: 'Venta', signed_amount: 'Importe', signedAmount: 'Importe', cash_session_id: 'Sesión de caja', cashSessionId: 'Sesión de caja', created_at: 'Fecha', createdAt: 'Fecha', updated_at: 'Actualización', updatedAt: 'Actualización', quantity: 'Cantidad', note: 'Detalle', status: 'Estado' }[key] || String(key).replace(/([A-Z])/g, ' $1').replaceAll('_', ' ').replace(/^./, (letter) => letter.toUpperCase()))
+  const formatValue = (value) => {
+    if (value === null || value === undefined || value === '') return '—'
+    if (typeof value === 'boolean') return value ? 'Sí' : 'No'
+    if (typeof value === 'object') return Array.isArray(value) ? `${value.length} registro${value.length === 1 ? '' : 's'}` : 'Datos registrados'
+    return String(value)
+  }
+  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])].filter((key) => !['id', 'business_id', 'businessId', 'branch_id', 'branchId', 'created_by', 'createdBy'].includes(key))
+  const changes = keys.map((key) => {
+    const previous = formatValue(before[key])
+    const current = formatValue(after[key])
+    return `<div><span>${escapeHtml(fieldLabel(key))}</span><strong>${escapeHtml(previous)} → ${escapeHtml(current)}</strong></div>`
+  }).join('')
+  const linked = [
+    context.sale && `Venta · ${context.sale.customerName || 'Consumidor final'} · ${money(context.sale.totalAmount)}`,
+    context.invoice && `Factura · ${context.invoice.number || 'Sin número'} · ${money(context.invoice.totalAmount)}`,
+    entry.entityType.includes('stock') && `Producto · ${ui.snapshot.products.find((product) => product.id === (after.productId || after.product_id || before.productId || before.product_id))?.name || 'Sin identificar'}`,
+  ].filter(Boolean)
+  const panel = document.querySelector('.audit-detail-panel') || document.createElement('aside')
+  panel.className = 'audit-detail-panel panel'
+  panel.innerHTML = `<button type="button" aria-label="Cerrar detalle">×</button><p class="audit-detail-kicker">${escapeHtml(entry.actorName || 'Sistema')} · ${escapeHtml(String(entry.createdAt || '').slice(0, 16).replace('T', ' · '))}</p><strong>${escapeHtml(entry.entityLabel)} · ${escapeHtml(entry.action || 'registro')}</strong>${linked.length ? `<p class="audit-detail-links">${linked.map(escapeHtml).join('<br />')}</p>` : ''}<div class="audit-detail-fields">${changes || '<span>Acción registrada correctamente.</span>'}</div>`
+  auditTrace?.closest('.panel')?.after(panel)
+  panel.querySelector('button')?.addEventListener('click', () => panel.remove())
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+}
+
 const auditSearchText = (ui, entry) => {
   const context = getAuditLinkedContext(ui, entry)
   return [entry.actorName, entry.entityLabel, entry.action, entry.entityId, entry.moduleLabel, context.sale?.customerName, context.sale?.itemSummary, context.sale?.totalAmount, context.invoice?.number, context.invoice?.customerName, context.invoice?.totalAmount, ...context.itemNames, ...Object.values(context.data || {})].join(' ').toLocaleLowerCase()
@@ -4308,7 +4338,7 @@ const bindEvents = () => {
       event.tabIndex = 0
       event.setAttribute('role', 'button')
       event.setAttribute('aria-label', `Abrir ${entry.entityLabel} relacionado`)
-      const openEvent = () => openAuditEvent(auditUi, entry)
+      const openEvent = () => showAuditEventDetail(auditUi, entry, auditTrace)
       event.addEventListener('click', openEvent)
       event.addEventListener('keydown', (keyboardEvent) => {
         if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return

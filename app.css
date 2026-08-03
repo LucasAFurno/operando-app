@@ -5416,6 +5416,7 @@ input[type='search'] { color: var(--text); }
 .audit-trace-panel .panel-head { align-items: center; }
 .audit-trace-toggle { flex: 0 0 auto; }
 .audit-detail-panel { position: relative; margin-top: 14px; padding: 18px; }.audit-detail-panel > button { position: absolute; top: 10px; right: 10px; }.audit-detail-kicker { margin: 0 0 6px; color: var(--muted); font-size: .82rem; }.audit-detail-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }.audit-detail-fields div { padding: 9px 10px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--panel)); }.audit-detail-fields span, .audit-detail-fields strong { display: block; }.audit-detail-fields span { color: var(--muted); font-size: .75rem; }.audit-detail-fields strong { margin-top: 2px; font-size: .9rem; }@media (max-width: 600px) { .audit-detail-fields { grid-template-columns: 1fr; } }
+.audit-detail-links { margin: 10px 0 0; color: var(--muted); font-size: .86rem; line-height: 1.5; }
 
 /* Inicio operativo: prioridad, acciones rápidas y actividad cronológica. */
 .dashboard-view { gap: 16px; }
