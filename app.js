@@ -1036,10 +1036,12 @@ const getUiState = () => {
   const auditModuleLabels = { sales: 'Ventas', cash: 'Caja', stock: 'Stock', products: 'Productos', purchases: 'Compras', customers: 'Clientes', invoices: 'Facturación', tickets: 'Tickets', settings: 'Configuración' }
   const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', document: 'comprobante', branch: 'sucursal', register: 'caja', user: 'usuario', user_assignment: 'acceso de usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
   let enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
-    const documentKind = log.afterData?.kind || log.beforeData?.kind
+    const afterData = log.afterData || log.after_data || {}
+    const beforeData = log.beforeData || log.before_data || {}
+    const documentKind = afterData.kind || beforeData.kind
     const modules = log.entityType === 'document' && documentKind === 'ticket' ? ['tickets'] : (auditModuleByEntity[log.entityType] || ['settings'])
-    const entityLabel = log.entityType === 'user_assignment' && (log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name) ? `acceso de ${log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name}` : (log.entityType === 'document' ? (documentKind === 'ticket' ? 'ticket' : (documentKind === 'factura' ? 'factura' : 'comprobante')) : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
-    return { ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel }
+    const entityLabel = log.entityType === 'user_assignment' && (afterData.assigned_user_name || beforeData.assigned_user_name) ? `acceso de ${afterData.assigned_user_name || beforeData.assigned_user_name}` : (log.entityType === 'document' ? (documentKind === 'ticket' ? 'ticket' : (documentKind === 'factura' ? 'factura' : 'comprobante')) : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
+    return { ...log, afterData, beforeData, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel }
   })
   const auditedEntities = new Set(enrichedAudit.map((entry) => `${entry.entityType}:${entry.entityId}`))
   const inferredAudit = [
@@ -2654,7 +2656,7 @@ const openAuditEvent = (ui, entry) => {
     render()
   }
 
-  if (context.sale || entry.entityType === 'sale') {
+  if ((context.sale || entry.entityType === 'sale') && entry.entityType !== 'invoice' && !(entry.entityType === 'document' && (data.kind === 'factura' || data.kind === 'invoice'))) {
     const sale = context.sale || ui.snapshot.sales.find((item) => item.id === entityId)
     if (sale) {
       saleEditingId = sale.id
@@ -4363,15 +4365,23 @@ const bindEvents = () => {
       const content = event.querySelector('.audit-trace-content')
       const detail = document.createElement('div')
       detail.className = 'audit-event-detail'
+      const before = entry.beforeData || {}
+      const after = entry.afterData || {}
+      const labels = { name: 'Nombre', full_name: 'Cliente', fullName: 'Cliente', phone: 'Telefono', email: 'Email', address: 'Direccion', sale_price: 'Precio venta', salePrice: 'Precio venta', cost_price: 'Costo', costPrice: 'Costo', quantity: 'Cantidad', signed_amount: 'Importe', signedAmount: 'Importe', note: 'Detalle', status: 'Estado', opening_amount: 'Apertura', openingAmount: 'Apertura', counted_amount: 'Contado', countedAmount: 'Contado', difference_amount: 'Diferencia', differenceAmount: 'Diferencia' }
+      const valueText = (value) => value === null || value === undefined || value === '' ? '-' : (typeof value === 'boolean' ? (value ? 'Si' : 'No') : String(value))
+      const changedValues = Object.keys(labels).filter((key) => after[key] !== undefined || before[key] !== undefined).filter((key) => after[key] !== before[key]).slice(0, 4).map((key) => `<span><b>${labels[key]}</b> ${escapeHtml(valueText(before[key]))} -> ${escapeHtml(valueText(after[key]))}</span>`).join('')
+      const cashSummary = ['cash_movement', 'cash_session'].includes(entry.entityType) ? `<span><b>Caja</b> ${escapeHtml(String(after.note || after.description || 'Movimiento registrado'))}${after.signedAmount != null || after.signed_amount != null ? ` · ${money(Number(after.signedAmount ?? after.signed_amount))}` : ''}${after.countedAmount != null || after.counted_amount != null ? ` · Contado ${money(Number(after.countedAmount ?? after.counted_amount))}` : ''}${after.differenceAmount != null || after.difference_amount != null ? ` · Diferencia ${money(Number(after.differenceAmount ?? after.difference_amount))}` : ''}</span>` : ''
+      const stockProduct = auditUi.snapshot.products.find((product) => product.id === (after.productId || after.product_id || before.productId || before.product_id))
+      const stockSummary = entry.entityType.includes('stock') ? `<span><b>Stock</b> ${escapeHtml(stockProduct?.name || after.productName || 'Producto')} · ${Number(after.quantity || 0) > 0 ? '+' : ''}${escapeHtml(String(after.quantity ?? '-'))} unidades</span>` : ''
       const saleDetail = context.sale ? `<span><b>Venta</b> ${escapeHtml(context.itemNames.slice(0, 3).join(', ') || context.sale.itemSummary || 'Sin detalle')} · ${money(context.sale.totalAmount)}</span>` : ''
       const invoiceDetail = context.invoice ? `<span><b>Factura</b> ${escapeHtml(context.invoice.number || 'sin número')} · ${money(context.invoice.totalAmount)}</span>` : ''
       const productDetail = !context.sale && !context.invoice && context.data?.name ? `<span><b>Detalle</b> ${escapeHtml(String(context.data.name))}</span>` : ''
-      detail.innerHTML = `${saleDetail}${invoiceDetail}${productDetail}`
+      detail.innerHTML = `${saleDetail}${invoiceDetail}${productDetail}${changedValues}${cashSummary}${stockSummary}`
       if (detail.textContent?.trim()) content?.append(detail)
       event.tabIndex = 0
       event.setAttribute('role', 'button')
       event.setAttribute('aria-label', `Abrir ${entry.entityLabel} relacionado`)
-      const openEvent = () => showAuditEventDetail(auditUi, entry, event)
+      const openEvent = () => openAuditEvent(auditUi, entry)
       event.addEventListener('click', openEvent)
       event.addEventListener('keydown', (keyboardEvent) => {
         if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return
