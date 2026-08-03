@@ -1038,7 +1038,7 @@ const getUiState = () => {
   const enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
     const documentKind = log.afterData?.kind || log.beforeData?.kind
     const modules = log.entityType === 'document' && documentKind === 'ticket' ? ['tickets'] : (auditModuleByEntity[log.entityType] || ['settings'])
-    const entityLabel = log.entityType === 'user_assignment' && (log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name) ? `acceso de ${log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name}` : (log.entityType === 'document' && documentKind === 'ticket' ? 'ticket' : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
+    const entityLabel = log.entityType === 'user_assignment' && (log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name) ? `acceso de ${log.afterData?.assigned_user_name || log.beforeData?.assigned_user_name}` : (log.entityType === 'document' ? (documentKind === 'ticket' ? 'ticket' : (documentKind === 'factura' ? 'factura' : 'comprobante')) : (auditEntityLabels[log.entityType] || log.entityType || 'registro'))
     return { ...log, actorName: userMap.get(log.actorUserId)?.fullName || 'Sistema', modules, moduleLabel: auditModuleLabels[modules[0]], entityLabel }
   })
   const auditActionLabels = {
@@ -2628,6 +2628,47 @@ const getAuditLinkedContext = (ui, entry) => {
   const sale = ui.enrichedSales?.find((item) => item.id === saleId || (invoice?.saleId && item.id === invoice.saleId))
   const itemNames = (sale?.items || []).map((item) => ui.snapshot.products.find((product) => product.id === item.productId)?.name || item.productName || 'Artículo')
   return { sale, invoice, itemNames, data }
+}
+
+const openAuditEvent = (ui, entry) => {
+  const context = getAuditLinkedContext(ui, entry)
+  const data = context.data || {}
+  const entityId = entry.entityId || ''
+  const goTo = (section, selector = '') => {
+    activeSection = section
+    if (selector) queueScrollToSelector(selector)
+    saveSection()
+    render()
+  }
+
+  if (context.sale || entry.entityType === 'sale') {
+    const sale = context.sale || ui.snapshot.sales.find((item) => item.id === entityId)
+    if (sale) {
+      saleEditingId = sale.id
+      saleFormOpen = true
+      saleDraftQuantities = Object.fromEntries((sale.items || []).map((item) => [item.productId, item.quantity]))
+      goTo('ventas', 'form[data-form="sale"]')
+      return
+    }
+  }
+  if (context.invoice || entry.entityType === 'invoice' || (entry.entityType === 'document' && (data.kind === 'factura' || data.kind === 'invoice'))) {
+    const invoice = context.invoice || ui.enrichedInvoices.find((item) => item.id === entityId)
+    if (invoice && openInvoiceDocument(invoice.id)) return
+    goTo('facturacion')
+    return
+  }
+  const ticketId = entry.entityType === 'ticket' || (entry.entityType === 'document' && data.kind === 'ticket') ? entityId : (data.ticketId || data.ticket_id || '')
+  if (ticketId) { ticketEditingId = ticketId; ticketFormOpen = true; goTo('tickets', 'form[data-form="ticket"]'); return }
+  if (['cash_movement', 'cash_session'].includes(entry.entityType)) { goTo('caja'); return }
+  if (['stock_movement', 'stock_adjustment', 'stock_transfer'].includes(entry.entityType)) { goTo('productos'); return }
+  if (entry.entityType === 'product') { productEditingId = entityId; goTo('productos'); return }
+  if (entry.entityType === 'purchase_receipt') { purchaseEditingId = entityId; goTo('compras', 'form[data-form="purchase-receipt"]'); return }
+  if (entry.entityType === 'supplier') { supplierEditingId = entityId; supplierFormOpen = true; goTo('compras', 'form[data-form="supplier"]'); return }
+  if (entry.entityType === 'customer') { customerEditingId = entityId; customerFormOpen = true; goTo('clientes', 'form[data-form="customer"]'); return }
+  if (entry.entityType === 'branch') { branchEditingId = entityId; goTo('sucursales'); return }
+  if (entry.entityType === 'register') { registerEditingId = entityId; goTo('cajeros'); return }
+  if (['user', 'user_assignment'].includes(entry.entityType)) { userEditingId = entityId; goTo('ajustes'); return }
+  goTo({ sales: 'ventas', cash: 'caja', stock: 'productos', products: 'productos', purchases: 'compras', customers: 'clientes', invoices: 'facturacion', tickets: 'tickets' }[entry.modules[0]] || 'ajustes')
 }
 
 const auditSearchText = (ui, entry) => {
@@ -4264,6 +4305,17 @@ const bindEvents = () => {
       const productDetail = !context.sale && !context.invoice && context.data?.name ? `<span><b>Detalle</b> ${escapeHtml(String(context.data.name))}</span>` : ''
       detail.innerHTML = `${saleDetail}${invoiceDetail}${productDetail}`
       if (detail.textContent?.trim()) content?.append(detail)
+      event.tabIndex = 0
+      event.setAttribute('role', 'button')
+      event.setAttribute('aria-label', `Abrir ${entry.entityLabel} relacionado`)
+      const openEvent = () => openAuditEvent(auditUi, entry)
+      event.addEventListener('click', openEvent)
+      event.addEventListener('keydown', (keyboardEvent) => {
+        if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return
+        keyboardEvent.preventDefault()
+        openEvent()
+      })
+      if (false) {
       const actions = document.createElement('div')
       actions.className = 'audit-event-actions'
       if (context.sale) {
@@ -4279,6 +4331,7 @@ const bindEvents = () => {
         actions.append(button)
       }
       if (actions.childElementCount) content?.append(actions)
+      }
     }
     let previousDate = ''
     for (const event of auditTrace.querySelectorAll('.audit-trace-event')) {

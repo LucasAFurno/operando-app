@@ -5599,6 +5599,10 @@ input[type='search'] { color: var(--text); }
 .audit-event-detail b { color: var(--text); font-weight: 700; }
 .audit-event-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .audit-event-actions .inline-action { min-height: 30px; }
+.audit-trace-event[role="button"] { cursor: pointer; }
+.audit-trace-event[role="button"]:hover .audit-trace-content { border-color: var(--trace-color); background: color-mix(in srgb, var(--trace-color) 8%, var(--panel)); }
+.audit-trace-event[role="button"]:focus-visible { outline: none; }
+.audit-trace-event[role="button"]:focus-visible .audit-trace-content { outline: 3px solid color-mix(in srgb, var(--trace-color) 45%, transparent); outline-offset: 2px; }
 @media (min-width: 761px) { .audit-trace.audit-timeline-drawer .audit-event-detail { grid-column: 1 / -1; }.audit-trace.audit-timeline-drawer .audit-event-actions { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .audit-filter-fields { justify-content: stretch; }.audit-search { min-width: 0; }.audit-event-detail span { white-space: normal; } }
 
