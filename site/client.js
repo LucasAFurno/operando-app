@@ -2684,10 +2684,15 @@ const openAuditEvent = (ui, entry) => {
   goTo({ sales: 'ventas', cash: 'caja', stock: 'productos', products: 'productos', purchases: 'compras', customers: 'clientes', invoices: 'facturacion', tickets: 'tickets' }[entry.modules[0]] || 'ajustes')
 }
 
-const showAuditEventDetail = (ui, entry, auditTrace) => {
+const showAuditEventDetail = (ui, entry, event) => {
   const context = getAuditLinkedContext(ui, entry)
   const before = entry.beforeData || {}
   const after = entry.afterData || {}
+  const content = event.querySelector('.audit-trace-content')
+  const currentDetail = content?.querySelector('.audit-expanded-detail')
+  if (currentDetail) { currentDetail.remove(); event.classList.remove('is-expanded'); return }
+  document.querySelectorAll('.audit-expanded-detail').forEach((detail) => detail.remove())
+  document.querySelectorAll('.audit-trace-event.is-expanded').forEach((item) => item.classList.remove('is-expanded'))
   const fieldLabel = (key) => ({ full_name: 'Nombre', product_id: 'Producto', productId: 'Producto', sale_id: 'Venta', saleId: 'Venta', signed_amount: 'Importe', signedAmount: 'Importe', cash_session_id: 'Sesión de caja', cashSessionId: 'Sesión de caja', created_at: 'Fecha', createdAt: 'Fecha', updated_at: 'Actualización', updatedAt: 'Actualización', quantity: 'Cantidad', note: 'Detalle', status: 'Estado' }[key] || String(key).replace(/([A-Z])/g, ' $1').replaceAll('_', ' ').replace(/^./, (letter) => letter.toUpperCase()))
   const formatValue = (value) => {
     if (value === null || value === undefined || value === '') return '—'
@@ -2701,17 +2706,23 @@ const showAuditEventDetail = (ui, entry, auditTrace) => {
     const current = formatValue(after[key])
     return `<div><span>${escapeHtml(fieldLabel(key))}</span><strong>${escapeHtml(previous)} → ${escapeHtml(current)}</strong></div>`
   }).join('')
-  const linked = [
-    context.sale && `Venta · ${context.sale.customerName || 'Consumidor final'} · ${money(context.sale.totalAmount)}`,
-    context.invoice && `Factura · ${context.invoice.number || 'Sin número'} · ${money(context.invoice.totalAmount)}`,
-    entry.entityType.includes('stock') && `Producto · ${ui.snapshot.products.find((product) => product.id === (after.productId || after.product_id || before.productId || before.product_id))?.name || 'Sin identificar'}`,
-  ].filter(Boolean)
-  const panel = document.querySelector('.audit-detail-panel') || document.createElement('aside')
-  panel.className = 'audit-detail-panel panel'
-  panel.innerHTML = `<button type="button" aria-label="Cerrar detalle">×</button><p class="audit-detail-kicker">${escapeHtml(entry.actorName || 'Sistema')} · ${escapeHtml(String(entry.createdAt || '').slice(0, 16).replace('T', ' · '))}</p><strong>${escapeHtml(entry.entityLabel)} · ${escapeHtml(entry.action || 'registro')}</strong>${linked.length ? `<p class="audit-detail-links">${linked.map(escapeHtml).join('<br />')}</p>` : ''}<div class="audit-detail-fields">${changes || '<span>Acción registrada correctamente.</span>'}</div>`
-  auditTrace?.closest('.panel')?.after(panel)
-  panel.querySelector('button')?.addEventListener('click', () => panel.remove())
-  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  const product = ui.snapshot.products.find((item) => item.id === (after.productId || after.product_id || before.productId || before.product_id))
+  const saleItems = context.sale?.items?.map((item) => `<li>${escapeHtml(item.productName || ui.snapshot.products.find((productEntry) => productEntry.id === item.productId)?.name || 'Artículo')} × ${Number(item.quantity || 0)} · ${money(Number(item.unitPrice || item.salePrice || 0) * Number(item.quantity || 0))}</li>`).join('') || ''
+  const cashData = entry.entityType === 'cash_session' || entry.entityType === 'cash_movement'
+    ? `<div class="audit-real-summary"><strong>Caja</strong><span>${after.note || after.description || 'Movimiento registrado'}${after.signedAmount != null || after.signed_amount != null ? ` · ${money(Number(after.signedAmount ?? after.signed_amount))}` : ''}${after.openingAmount != null || after.opening_amount != null ? ` · Apertura ${money(Number(after.openingAmount ?? after.opening_amount))}` : ''}${after.countedAmount != null || after.counted_amount != null ? ` · Contado ${money(Number(after.countedAmount ?? after.counted_amount))}` : ''}${after.differenceAmount != null || after.difference_amount != null ? ` · Diferencia ${money(Number(after.differenceAmount ?? after.difference_amount))}` : ''}</span></div>`
+    : ''
+  const stockData = entry.entityType.includes('stock') ? `<div class="audit-real-summary"><strong>Stock</strong><span>${escapeHtml(product?.name || after.productName || 'Producto')} · ${Number(after.quantity || 0) > 0 ? '+' : ''}${escapeHtml(String(after.quantity ?? '—'))} unidades${after.type ? ` · ${escapeHtml(String(after.type))}` : ''}</span></div>` : ''
+  const invoiceAction = context.invoice ? `<button type="button" class="inline-action" data-audit-open-invoice="${escapeHtml(context.invoice.id)}">Ver factura ${escapeHtml(context.invoice.number || '')}</button>` : ''
+  const detail = document.createElement('section')
+  detail.className = 'audit-expanded-detail'
+  detail.innerHTML = `${context.sale ? `<div class="audit-real-summary"><strong>Venta</strong><span>${escapeHtml(context.sale.customerName || 'Consumidor final')} · ${money(context.sale.totalAmount)}</span>${saleItems ? `<ul>${saleItems}</ul>` : ''}</div>` : ''}${cashData}${stockData}<div class="audit-detail-fields">${changes || '<span>Acción registrada correctamente.</span>'}</div>${invoiceAction ? `<div class="audit-detail-actions">${invoiceAction}</div>` : ''}`
+  content?.append(detail)
+  event.classList.add('is-expanded')
+  detail.querySelector('[data-audit-open-invoice]')?.addEventListener('click', (clickEvent) => {
+    clickEvent.stopPropagation()
+    const opened = openInvoiceDocument(context.invoice.id)
+    if (!opened) feedbackMessage = 'No se pudo abrir la factura.'
+  })
 }
 
 const auditSearchText = (ui, entry) => {
@@ -4360,7 +4371,7 @@ const bindEvents = () => {
       event.tabIndex = 0
       event.setAttribute('role', 'button')
       event.setAttribute('aria-label', `Abrir ${entry.entityLabel} relacionado`)
-      const openEvent = () => showAuditEventDetail(auditUi, entry, auditTrace)
+      const openEvent = () => showAuditEventDetail(auditUi, entry, event)
       event.addEventListener('click', openEvent)
       event.addEventListener('keydown', (keyboardEvent) => {
         if (keyboardEvent.key !== 'Enter' && keyboardEvent.key !== ' ') return
