@@ -144,8 +144,8 @@ const homeFeatureRows = [
     eyebrow: 'Siempre disponible',
     title: 'Entra desde PC o celular',
     body: 'Trabaja desde cualquier navegador, sin instalar programas y con la informacion del negocio disponible cuando la necesitas.',
-    image: '/pclaf-control-mobile-iphone.png',
-    alt: 'Vista movil de PCLAF Control en un telefono',
+    image: '/pclaf-control-mobile-devices.png',
+    alt: 'PCLAF Control en tablet y telefono',
   },
 ]
 
@@ -573,7 +573,7 @@ const buildSoftwareJsonLd = (page) => ({
   screenshot: [
     `${siteOrigin}/pclaf-control-punto-venta-real.png`,
     `${siteOrigin}/pclaf-control-stock-real.png`,
-    `${siteOrigin}/pclaf-control-mobile-iphone.png`,
+    `${siteOrigin}/pclaf-control-mobile-devices.png`,
   ],
   softwareVersion: assetVersion,
   description: page.description,
