@@ -13,7 +13,7 @@ const selectedCloudConfigFile = isDevBuild ? 'cloud-config.dev.json' : 'cloud-co
 const siteOrigin = 'https://www.pclafcontrol.com.ar'
 const appPath = '/app/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20quiero%20informacion%20de%20PCLAF%20Control.'
-const gaMeasurementId = String(process.env.PCLAF_GA4_ID || '').trim()
+const gaMeasurementId = String(process.env.PCLAF_GA4_ID || 'G-R0TVQX7DJJ').trim()
 
 const clientJs = await readFile(path.join(root, 'site', 'client.js'), 'utf8')
 const dataStoreJs = await readFile(path.join(root, 'site', 'data-store.js'), 'utf8')
