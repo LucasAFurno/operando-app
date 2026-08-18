@@ -2880,6 +2880,7 @@ const ownerAdminViewV2 = (ui) => {
   })
   const pendingSupport = allCommerces.filter((entry) => ['pendiente', 'esperando'].includes(entry.supportStatus)).length
   const blockedCommerces = allCommerces.filter((entry) => entry.status === 'blocked').length
+  const expiredCommerces = allCommerces.filter((entry) => entry.billingStatus === 'past_due').length
   const publicOpenCommerces = allCommerces.filter((entry) => entry.allowPublicSignup).length
   if (!platformCommerceSelectedId || !commerces.some((entry) => entry.id === platformCommerceSelectedId)) {
     platformCommerceSelectedId = commerces[0]?.id || allCommerces[0]?.id || ''
@@ -2915,43 +2916,42 @@ const ownerAdminViewV2 = (ui) => {
     return String(entry.trialEndsAt).slice(0, 10)
   }
   return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Mi admin</p><h2>Panel PCLAF</h2></div></div>
+  <section class="view-section platform-console"><div class="section-header platform-console-header"><div><p class="kicker">Administracion de plataforma</p><h2>Panel PCLAF</h2><p class="platform-console-intro">Seguimiento de cuentas, cobros y soporte. No es la operacion diaria de un comercio.</p></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar datos</button><button type="button" class="ghost-action" data-action="open-support">Soporte</button></div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
-    <section class="module-summary-grid">
-      <article class="metric-card compact"><span>Comercios</span><strong>${summary.totalCommerces || 0}</strong><p>${summary.activeCommerces || 0} activos</p></article>
-      <article class="metric-card compact"><span>Pruebas</span><strong>${summary.trialCommerces || 0}</strong><p>${summary.expiredCommerces || 0} vencidos</p></article>
-      <article class="metric-card compact"><span>Estructura</span><strong>${summary.totalBranches || 0}</strong><p>${summary.totalRegisters || 0} cajas / ${summary.totalUsers || 0} usuarios</p></article>
-      <article class="metric-card compact"><span>Soporte</span><strong>${pendingSupport}</strong><p>${blockedCommerces} bloqueados / ${publicOpenCommerces} altas abiertas</p></article>
+    <section class="platform-kpi-grid">
+      <article class="metric-card compact"><span>Cartera total</span><strong>${summary.totalCommerces || 0}</strong><p>${summary.activeCommerces || 0} cuentas activas</p></article>
+      <article class="metric-card compact ${summary.trialCommerces ? 'is-highlighted' : ''}"><span>En prueba</span><strong>${summary.trialCommerces || 0}</strong><p>${summary.expiredCommerces || 0} pruebas vencidas</p></article>
+      <article class="metric-card compact ${pendingSupport || blockedCommerces ? 'is-alert' : ''}"><span>Requieren atencion</span><strong>${pendingSupport + blockedCommerces + expiredCommerces}</strong><p>${pendingSupport} soporte / ${blockedCommerces} bloqueados</p></article>
+      <article class="metric-card compact"><span>Estructura alojada</span><strong>${summary.totalUsers || 0}</strong><p>${summary.totalBranches || 0} sucursales · ${summary.totalRegisters || 0} cajas</p></article>
     </section>
-    <section class="module-board admin-board">
-      <article class="panel module-side"><div class="panel-head"><div><h3>Estado general</h3><p>Resumen corto de la cuenta actual</p></div></div>
-        <div class="priority-list">
-          <div class="priority-item"><strong>Cuenta PCLAF</strong><p>${ui.user.fullName}<br /><small>${maskEmail(ui.user.email) || 'Sin email'}</small></p></div>
-          <div class="priority-item"><strong>Activos</strong><p>${summary.activeCommerces || 0}<br /><small>${summary.pausedCommerces || 0} pausados</small></p></div>
-          <div class="priority-item"><strong>Pruebas</strong><p>${summary.trialCommerces || 0}<br /><small>${summary.expiredCommerces || 0} para revisar</small></p></div>
-          <div class="priority-item"><strong>Vista</strong><p>Global PCLAF<br /><small>Sin mezclar operacion diaria</small></p></div>
-        </div>
-        <div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button><button type="button" class="ghost-action" data-action="open-support">Soporte</button><button type="button" class="danger-action" data-action="sign-out">Cerrar sesion</button></div>
-      </article>
+    <section class="platform-attention-strip">
+      <div><p class="kicker">Cola de atencion</p><h3>Que necesita seguimiento hoy</h3></div>
+      <div class="platform-attention-actions">
+        <span class="platform-alert ${platformSupportFilter === 'attention' ? 'is-active' : ''}" data-platform-support-chip="attention"><strong>${pendingSupport}</strong> casos de soporte</span>
+        <span class="platform-alert ${platformCommerceFilter === 'blocked' ? 'is-active' : ''}" data-platform-chip="blocked"><strong>${blockedCommerces}</strong> cuentas bloqueadas</span>
+        <span class="platform-alert ${platformCommerceFilter === 'past_due' ? 'is-active' : ''}" data-platform-chip="past_due"><strong>${expiredCommerces}</strong> cobros vencidos</span>
+      </div>
+    </section>
+    <section class="platform-workspace">
       <div class="module-main">
-        <article class="panel"><div class="panel-head"><div><h3>Seguimiento rapido</h3><p>Busca y filtra cuentas para operar mas rapido</p></div></div>
+        <article class="panel platform-filter-panel"><div class="panel-head"><div><p class="kicker">Cartera PCLAF</p><h3>Comercios</h3><p>Encontrá una cuenta y abrí su ficha de control.</p></div><span class="panel-count">${commerces.length} visibles</span></div>
           <div class="form-grid compact-form">
             <label>Buscar comercio<input type="search" value="${platformSearchQuery}" data-platform-search placeholder="Nombre, codigo, email o etiqueta" /></label>
             <label>Estado<select data-platform-filter="status"><option value="all" ${platformCommerceFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformCommerceFilter === 'active' ? 'selected' : ''}>Activos</option><option value="trial" ${platformCommerceFilter === 'trial' ? 'selected' : ''}>Prueba</option><option value="paused" ${platformCommerceFilter === 'paused' ? 'selected' : ''}>Pausados</option><option value="blocked" ${platformCommerceFilter === 'blocked' ? 'selected' : ''}>Bloqueados</option><option value="past_due" ${platformCommerceFilter === 'past_due' ? 'selected' : ''}>Vencidos</option></select></label>
             <label>Soporte<select data-platform-filter="support"><option value="all" ${platformSupportFilter === 'all' ? 'selected' : ''}>Todos</option><option value="attention" ${platformSupportFilter === 'attention' ? 'selected' : ''}>Requiere atencion</option><option value="activo" ${platformSupportFilter === 'activo' ? 'selected' : ''}>Activo</option><option value="seguimiento" ${platformSupportFilter === 'seguimiento' ? 'selected' : ''}>Seguimiento</option><option value="esperando" ${platformSupportFilter === 'esperando' ? 'selected' : ''}>Esperando cliente</option><option value="resuelto" ${platformSupportFilter === 'resuelto' ? 'selected' : ''}>Resuelto</option></select></label>
           </div>
-          <div class="chip-grid">
+          <div class="chip-grid platform-filter-chips">
             <span class="module-chip ${platformCommerceFilter === 'all' ? 'is-active' : ''}" data-platform-chip="all">Todas ${allCommerces.length}</span>
             <span class="module-chip ${platformCommerceFilter === 'trial' ? 'is-active' : ''}" data-platform-chip="trial">Prueba ${summary.trialCommerces || 0}</span>
             <span class="module-chip ${platformCommerceFilter === 'blocked' ? 'is-active' : ''}" data-platform-chip="blocked">Bloqueadas ${blockedCommerces}</span>
             <span class="module-chip ${platformSupportFilter === 'attention' ? 'is-active' : ''}" data-platform-support-chip="attention">Pendientes ${pendingSupport}</span>
           </div>
         </article>
-        <article class="panel"><div class="panel-head"><div><h3>Comercios creados</h3><p>Estado comercial y operativo sin entrar al negocio</p></div></div>
-          ${dataTable(['Comercio', 'Pack', 'Soporte', 'Cobro', 'Prueba', 'Ultimo acceso', 'Gestion'], commerces.length ? commerces.map((entry) => `<div class="data-row ${entry.id === platformCommerceSelectedId ? 'is-selected' : ''}"><span><strong>${entry.name}</strong><br /><small>${entry.instanceKey}</small></span><span>${planLabels[entry.activePlan] || entry.activePlan}</span><span>${supportStatusLabel(entry.supportStatus)}<br /><small>${entry.supportOwner || 'Sin asignar'}</small></span><span>${billingLabel(entry.billingStatus)}</span><span>${trialLabel(entry)}</span><span>${entry.lastAccessAt ? formatDate(entry.lastAccessAt) : 'Nunca'}</span><span><button type="button" class="inline-action" data-platform-select="${entry.id}">Ver detalle</button></span></div>`) : [`<div class="data-row"><span>No hay comercios para este filtro.</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span></div>`])}
+        <article class="panel platform-list-panel">
+          ${dataTable(['Comercio', 'Plan', 'Seguimiento', 'Cobro', 'Prueba', 'Ultimo acceso', 'Ficha'], commerces.length ? commerces.map((entry) => `<div class="data-row ${entry.id === platformCommerceSelectedId ? 'is-selected' : ''}"><span><strong>${entry.name}</strong><br /><small>${entry.instanceKey}</small></span><span>${planLabels[entry.activePlan] || entry.activePlan}</span><span>${supportStatusLabel(entry.supportStatus)}<br /><small>${entry.supportOwner || 'Sin asignar'}</small></span><span>${billingLabel(entry.billingStatus)}</span><span>${trialLabel(entry)}</span><span>${entry.lastAccessAt ? formatDate(entry.lastAccessAt) : 'Nunca'}</span><span><button type="button" class="inline-action" data-platform-select="${entry.id}">Abrir ficha</button></span></div>`) : [`<div class="data-row"><span>No hay comercios para este filtro.</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span></div>`], 'platform-commerce-table')}
         </article>
-        ${selectedCommerce ? `<div class="compact-form-grid">
-          <article class="panel"><div class="panel-head"><div><h3>Detalle del comercio</h3><p>Pack, estado, soporte y acceso publico</p></div></div>
+        ${selectedCommerce ? `<section class="platform-detail-section"><div class="section-divider"><p class="kicker">Ficha seleccionada</p><h3>${selectedCommerce.name}</h3><p>${selectedCommerce.ownerEmail} · ${selectedCommerce.instanceKey}</p></div><div class="compact-form-grid">
+          <article class="panel"><div class="panel-head"><div><h3>Configuracion de cuenta</h3><p>Cambios de plan, acceso y seguimiento.</p></div></div>
             <form class="form-grid compact-form" data-form="platform-commerce">
               <input type="hidden" name="commerceId" value="${selectedCommerce.id}" />
               <label>Comercio<input type="text" value="${selectedCommerce.name}" disabled /></label>
@@ -2969,7 +2969,7 @@ const ownerAdminViewV2 = (ui) => {
             </form>
             <div class="panel-note"><span>Alta: ${formatDate(selectedCommerce.createdAt)}</span><span>Prueba hasta: ${selectedCommerce.trialEndsAt ? selectedCommerce.trialEndsAt.slice(0, 10) : 'Sin fecha'}</span></div>
           </article>
-          <article class="panel"><div class="panel-head"><div><h3>Lectura ejecutiva</h3><p>Seguimiento comercial y tecnico</p></div></div>
+          <article class="panel"><div class="panel-head"><div><h3>Resumen de la cuenta</h3><p>Lectura comercial y operativa.</p></div></div>
             <div class="priority-list">
               <div class="priority-item"><strong>Instancia</strong><p>${selectedCommerce.instanceKey}</p></div>
               <div class="priority-item"><strong>Estado</strong><p>${commerceLabel(selectedCommerce.status)}<br /><small>${billingLabel(selectedCommerce.billingStatus)}</small></p></div>
@@ -2984,7 +2984,7 @@ const ownerAdminViewV2 = (ui) => {
               <div class="timeline-item"><strong>Facturacion</strong><p>${selectedCommerce.billingNote || 'Sin nota de cobro cargada.'}</p></div>
             </div>
           </article>
-        </div>` : ''}
+        </div></section>` : ''}
         ${selectedCommerce ? `<div class="compact-form-grid">
           <article class="panel"><div class="panel-head"><div><h3>Usuarios del cliente</h3><p>Accesos y ultimo uso</p></div></div>
             ${dataTable(['Usuario', 'Perfil', 'Estado', 'Ultimo acceso'], selectedUsers.map((entry) => `<div class="data-row"><span>${entry.full_name || entry.fullName || 'Usuario'}<br /><small>${maskEmail(entry.email) || 'Sin email'}</small></span><span>${entry.is_owner ? 'Propietario' : (entry.role_key || entry.roleKey || 'Usuario')}</span><span>${entry.status === 'active' ? 'Activo' : 'Inactivo'}</span><span>${entry.last_login_at ? formatDate(entry.last_login_at) : 'Nunca'}</span></div>`))}
@@ -2993,13 +2993,6 @@ const ownerAdminViewV2 = (ui) => {
             ${dataTable(['Sucursal', 'Codigo', 'Cajas'], selectedBranches.map((entry) => `<div class="data-row"><span>${entry.name || 'Sucursal'}</span><span>${entry.code || '-'}</span><span>${selectedRegisters.filter((register) => register.branch_id === entry.id || register.branchId === entry.id).length}</span></div>`))}
           </article>
         </div>` : ''}
-        <article class="panel"><div class="panel-head"><div><h3>Que controlas desde aca</h3><p>Tu consola de plataforma, no la operacion diaria del cliente</p></div></div>
-          <div class="timeline-list">
-            <div class="timeline-item"><strong>Prueba, activo o bloqueado</strong><p>Ves el estado comercial real de cada cuenta.</p><span>Puedes pausar altas publicas o cambiar pack sin entrar al negocio.</span></div>
-            <div class="timeline-item"><strong>Detalle por cliente</strong><p>Dueño, fecha de alta, ultimo acceso, sucursales, cajas y usuarios.</p><span>Esto te sirve para soporte y seguimiento comercial.</span></div>
-            <div class="timeline-item"><strong>Separado del admin del cliente</strong><p>La operacion diaria sigue dentro del comercio.</p><span>Mi admin queda reservado para el control general de PCLAF Control.</span></div>
-          </div>
-        </article>
       </div>
     </section>
   </section>
