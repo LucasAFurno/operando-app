@@ -23,6 +23,9 @@ const cloudCoreJs = await readFile(path.join(root, 'site', 'cloud-core.js'), 'ut
 const stylesCss = await readFile(path.join(root, 'site', 'styles.css'), 'utf8')
 const cloudConfigJson = await readFile(path.join(root, 'site', selectedCloudConfigFile), 'utf8')
 const assetVersion = createHash('sha256').update(`${clientJs}${cloudAuthJs}${stylesCss}${cloudConfigJson}`).digest('hex').slice(0, 12)
+const releaseRevision = String(process.env.GITHUB_SHA || process.env.PCLAF_RELEASE_VERSION || assetVersion).trim().slice(0, 12)
+const releaseVersion = `v${releaseRevision}`
+const builtClientJs = clientJs.replaceAll('__PCLAF_RELEASE_VERSION__', releaseVersion)
 const faviconSvg = await readFile(path.join(root, 'public', 'favicon.svg'), 'utf8')
 const cnameFile = await readFile(path.join(root, 'public', 'CNAME'), 'utf8')
 
@@ -1990,7 +1993,7 @@ Sitemap: ${siteOrigin}/sitemap.xml
 const htmlIndex = Object.fromEntries(pageEntries.map((entry) => [entry.pathname, entry]))
 
 const serverCode = `const appCss = ${JSON.stringify(stylesCss)};
-const appJs = ${JSON.stringify(clientJs)};
+const appJs = ${JSON.stringify(builtClientJs)};
 const dataStore = ${JSON.stringify(dataStoreJs)};
 const cloudSync = ${JSON.stringify(cloudSyncJs)};
 const cloudAuth = ${JSON.stringify(cloudAuthJs)};
@@ -2068,7 +2071,7 @@ await mkdir(serverDir, { recursive: true })
 
 await writePageTree(dist)
 await writeFile(path.join(dist, 'app.css'), stylesCss)
-await writeFile(path.join(dist, 'app.js'), clientJs)
+await writeFile(path.join(dist, 'app.js'), builtClientJs)
 await writeFile(path.join(dist, 'data-store.js'), dataStoreJs)
 await writeFile(path.join(dist, 'cloud-sync.js'), cloudSyncJs)
 await writeFile(path.join(dist, 'cloud-auth.js'), cloudAuthJs)
@@ -2083,7 +2086,7 @@ await copyDirectory(path.join(root, 'public'), dist)
 if (!isDevBuild) {
   await writePageTree(root)
   await writeFile(path.join(root, 'app.css'), stylesCss)
-  await writeFile(path.join(root, 'app.js'), clientJs)
+  await writeFile(path.join(root, 'app.js'), builtClientJs)
   await writeFile(path.join(root, 'data-store.js'), dataStoreJs)
   await writeFile(path.join(root, 'cloud-sync.js'), cloudSyncJs)
   await writeFile(path.join(root, 'cloud-auth.js'), cloudAuthJs)
