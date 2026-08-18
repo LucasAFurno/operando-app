@@ -1,5 +1,5 @@
-import { createBrowserDataStore } from './data-store.js?v=20260727-realtime'
-import { createCloudAuthManager } from './cloud-auth.js?v=20260720l'
+import { createBrowserDataStore } from './data-store.js?v=__PCLAF_ASSET_VERSION__'
+import { createCloudAuthManager } from './cloud-auth.js?v=__PCLAF_ASSET_VERSION__'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
@@ -252,13 +252,14 @@ const loadCloudAccess = async (sessionPayload = null) => {
   if (!currentSession?.sessionToken) throw new Error('No hay sesion valida para sincronizar.')
   commerceContext = currentSession.commerceContext || null
   store.setCloudAccessToken(currentSession.sessionToken)
-  await store.syncFromCloud(['dashboard'])
   const activeProfile = store.setCloudAuthSession(currentSession.profile, [])
   if (!activeProfile) {
     commerceContext = null
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
+  await store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
+  store.setCloudAuthSession(currentSession.profile, [])
   startOperationalRealtime()
   return activeProfile
 }
