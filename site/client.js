@@ -946,7 +946,9 @@ const clearFeedbackSoon = () => {
   }, 2800)
 }
 const getAllowedNav = (ui) => navItems.filter((item) => (
-  store.canAccessModule(item.moduleKey, item.permission)
+  (ui.user?.isPlatformAdmin
+    ? item.platformOnly
+    : store.canAccessModule(item.moduleKey, item.permission))
   && (!item.ownerOnly || ui.user?.isOwner)
   && (!item.platformOnly || ui.user?.isPlatformAdmin)
 ))
@@ -3145,6 +3147,7 @@ const basicSettingsView = (ui) => `
 `
 
 const renderCurrentView = (ui) => {
+  if (ui.user?.isPlatformAdmin) return ownerAdminViewV2(ui)
   const canManageCommerceSettings = Boolean(ui.user?.isPlatformAdmin || ui.user?.isOwner || ui.role?.key === 'admin')
   switch (activeSection) {
     case 'clientes': return customersViewV2(ui)
@@ -3168,6 +3171,7 @@ const renderApp = (ui) => {
   const allowedNav = getAllowedNav(ui)
   if (!allowedNav.some((item) => item.id === activeSection)) activeSection = allowedNav[0]?.id || 'dashboard'
   saveSection()
+  const isPlatformConsole = Boolean(ui.user?.isPlatformAdmin)
   const branchName = ui.currentBranch?.name || ui.snapshot.business.branch || 'Sucursal'
   const registerName = ui.currentRegister?.name || 'Sin caja asignada'
   const isDevEnvironment = ui.cloudConnection.environment === 'development'
@@ -3177,7 +3181,7 @@ const renderApp = (ui) => {
   const searchOptions = buildQuickSearchTargets(ui).slice(0, 40).map((item) => `<option value="${item.label}"></option>`).join('')
   const userName = ui.user?.fullName || 'Usuario'
   const userInitials = userName.split(/\s+/).filter(Boolean).slice(0, 2).map((chunk) => chunk[0]?.toUpperCase()).join('') || 'PC'
-  const allAlertItems = [
+  const allAlertItems = isPlatformConsole ? [] : [
     ...(!ui.openCashSession ? [{ id: 'cash-closed', title: 'Caja cerrada', detail: 'No hay una caja abierta para operar en efectivo.', section: 'caja', target: '[data-cash-operation]' }] : []),
     ...ui.lowStock.slice(0, 4).map((product) => ({
       id: `low-stock-${product.id}`,
@@ -3209,35 +3213,35 @@ const renderApp = (ui) => {
       </aside>
       <div class="workspace">
         <header class="topbar">
-          <div class="topbar-left"><p class="kicker">Panel de control</p><h1>${ui.commerceContext?.commerce_name || productName}</h1><span>${branchName} · ${appVersion}</span></div>
+          <div class="topbar-left"><p class="kicker">${isPlatformConsole ? 'Administracion de plataforma' : 'Panel de control'}</p><h1>${isPlatformConsole ? productName : (ui.commerceContext?.commerce_name || productName)}</h1><span>${isPlatformConsole ? `Consola interna · ${appVersion}` : `${branchName} · ${appVersion}`}</span></div>
           <div class="topbar-center">
-            <form class="quick-search" data-form="topbar-jump">
+            ${isPlatformConsole ? '' : `<form class="quick-search" data-form="topbar-jump">
               <span class="quick-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span>
               <input type="search" name="query" value="${topbarSearch}" list="nav-search-options" placeholder="Buscar ventas, clientes, productos, stock, facturas o cajas" />
               <datalist id="nav-search-options">${searchOptions}</datalist>
-            </form>
+            </form>`}
           </div>
           <div class="${topbarRightClass}">
             ${isDevEnvironment ? `<span class="topbar-runtime is-dev">${environmentLabel}</span>` : ''}
             <div class="account-alerts-wrap">
               <button class="account-card compact-meta ${accountAlertsOpen ? 'is-open' : ''}" type="button" data-action="toggle-account-alerts" aria-label="Abrir menu de cuenta" aria-expanded="${accountAlertsOpen ? 'true' : 'false'}">
                 <span class="account-avatar">${userInitials}</span>
-                <span class="account-copy"><strong>${userName}</strong><span>${ui.role?.name || 'Usuario'}</span></span>
-                <span class="account-cash-state ${ui.openCashSession ? 'is-open' : 'is-closed'}"><span class="status-led" aria-hidden="true"></span><span>${statusTitle}</span></span>
+                <span class="account-copy"><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador PCLAF' : (ui.role?.name || 'Usuario')}</span></span>
+                ${isPlatformConsole ? '' : `<span class="account-cash-state ${ui.openCashSession ? 'is-open' : 'is-closed'}"><span class="status-led" aria-hidden="true"></span><span>${statusTitle}</span></span>`}
                 ${notificationCount ? `<span class="account-alert-count" aria-label="${notificationCount} alertas">${notificationCount}</span>` : ''}
                 <span class="account-menu-chevron" aria-hidden="true">⌄</span>
               </button>
               ${accountAlertsOpen ? `<div class="account-alerts-popover">
                 <div class="account-alerts-head">
-                  <div><strong>${userName}</strong><span>${ui.role?.name || 'Usuario'}</span></div>
+                  <div><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador PCLAF' : (ui.role?.name || 'Usuario')}</span></div>
                   <button type="button" class="ghost-action account-alerts-link" data-action="open-account-panel">Mi cuenta</button>
                 </div>
-                <button type="button" class="account-cash-action ${ui.openCashSession ? 'is-open' : 'is-closed'}" data-section="caja" data-cash-operation>
+                ${isPlatformConsole ? '' : `<button type="button" class="account-cash-action ${ui.openCashSession ? 'is-open' : 'is-closed'}" data-section="caja" data-cash-operation>
                   <span class="status-led" aria-hidden="true"></span>
                   <span><strong>Caja ${statusTitle.toLowerCase()}</strong><small>${statusHint || (ui.openCashSession ? 'Lista para operar' : 'Abrir para cobrar en efectivo')}</small></span>
                   <span aria-hidden="true">›</span>
-                </button>
-                <div class="account-popover-label">Alertas</div>
+                </button>`}
+                <div class="account-popover-label">${isPlatformConsole ? 'Consola PCLAF' : 'Alertas'}</div>
                 <div class="account-alerts-list">
                   ${alertItems.length ? alertItems.map((item) => `<div class="account-alert-item">
                     <button type="button" class="account-alert-open" data-alert-section="${item.section}" data-alert-target="${item.target}">
