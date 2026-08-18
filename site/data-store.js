@@ -1,4 +1,4 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=20260727-realtime'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=__PCLAF_ASSET_VERSION__'
 
 const dataStorageKey = 'pclaf-control-data'
 const cloudConfigStorageKey = 'pclaf-control-cloud-config'
@@ -1251,9 +1251,10 @@ export const createBrowserDataStore = (options = {}) => {
       return null
     }
     const normalizedUsers = users.length ? replaceCloudUsers(users) : state.users
-    if (!normalizedUsers.some((entry) => entry.id === normalizedProfile.id)) {
-      state.users = [normalizedProfile, ...state.users.filter((entry) => entry.id !== normalizedProfile.id)]
-    }
+    const existingUser = normalizedUsers.find((entry) => entry.id === normalizedProfile.id)
+    state.users = existingUser
+      ? state.users.map((entry) => entry.id === normalizedProfile.id ? { ...entry, ...normalizedProfile } : entry)
+      : [normalizedProfile, ...state.users.filter((entry) => entry.id !== normalizedProfile.id)]
     state.session.userId = normalizedProfile.id
     state.session.authenticated = normalizedProfile.status === 'active'
     return normalizedProfile
