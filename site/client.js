@@ -164,10 +164,9 @@ let arcaCertificateName = ''
 let arcaVerificationState = 'idle'
 let arcaConnectionStatus = 'attention'
 let arcaFiscal = { cuit: '', legalName: '', pointOfSale: '', csrPem: '', certificatePem: '' }
-let platformCommerceSelectedId = ''
-let platformCommerceFilter = 'all'
-let platformSupportFilter = 'all'
-let platformSearchQuery = ''
+let platformUserSelectedId = ''
+let platformUserFilter = 'all'
+let platformUserSearchQuery = ''
 let pendingScrollSelector = ''
 let userDraftRoleId = 'role-cashier'
 const pageSizeOptions = [10, 20, 50, 100, 1000]
@@ -2850,153 +2849,34 @@ const ownerAdminView = (ui) => ownerAdminViewV2(ui)
 
 const ownerAdminViewV2 = (ui) => {
   const platform = ui.platformAdmin
-  if (!platform) {
-    return `
-    <section class="view-section"><div class="section-header"><div><p class="kicker">Mi admin</p><h2>Panel PCLAF</h2></div></div>
-      <article class="panel empty-panel">
-        <h3>Consola global no disponible</h3>
-        <p>No pude cargar el resumen de comercios todavia. Reintenta y vuelvo a consultar la base real.</p>
-        <div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div>
-      </article>
-    </section>
-    `
-  }
-  const summary = platform.summary || {}
-  const allCommerces = Array.isArray(platform.commerces) ? platform.commerces : []
-  const normalizedSearch = String(platformSearchQuery || '').trim().toLowerCase()
-  const commerces = allCommerces.filter((entry) => {
-    const matchesStatus = platformCommerceFilter === 'all'
-      || (platformCommerceFilter === 'trial' ? entry.billingStatus === 'trial' : entry.status === platformCommerceFilter || entry.billingStatus === platformCommerceFilter)
-    const matchesSupport = platformSupportFilter === 'all'
-      || (platformSupportFilter === 'attention'
-        ? ['pendiente', 'esperando'].includes(entry.supportStatus)
-        : entry.supportStatus === platformSupportFilter)
-    const matchesSearch = !normalizedSearch
-      || entry.name.toLowerCase().includes(normalizedSearch)
-      || entry.instanceKey.toLowerCase().includes(normalizedSearch)
-      || entry.ownerEmail.toLowerCase().includes(normalizedSearch)
-      || (entry.internalTag || '').toLowerCase().includes(normalizedSearch)
-    return matchesStatus && matchesSupport && matchesSearch
+  if (!platform) return `<section class="view-section"><div class="section-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2></div></div><article class="panel empty-panel"><h3>Consola global no disponible</h3><p>Actualizá para volver a consultar los datos de plataforma.</p><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></article></section>`
+
+  const formatDate = (value) => value ? String(value).replace('T', ' · ').slice(0, 16) : 'Sin dato'
+  const actionLabels = { created: 'Cuenta creada', updated: 'Actualización', deleted: 'Eliminación', signed_in: 'Inicio de sesión', signed_out: 'Cierre de sesión', assigned: 'Acceso asignado', unassigned: 'Acceso retirado', opened: 'Apertura de caja', closed: 'Cierre de caja' }
+  const entityLabels = { user: 'Usuario', user_assignment: 'Acceso', session: 'Sesión', sale: 'Venta', cash_session: 'Caja', cash_movement: 'Movimiento de caja', product: 'Producto', stock_movement: 'Movimiento de stock', purchase_receipt: 'Compra', customer: 'Cliente', supplier: 'Proveedor', document: 'Comprobante', ticket: 'Ticket', branch: 'Sucursal', register: 'Caja', business: 'Comercio' }
+  const entityModule = { sale: 'sales', cash_session: 'cash', cash_movement: 'cash', product: 'products', stock_movement: 'stock', purchase_receipt: 'purchases', customer: 'customers', supplier: 'purchases', document: 'invoices', ticket: 'tickets', user: 'settings', user_assignment: 'settings', session: 'settings', branch: 'settings', register: 'settings', business: 'settings' }
+  const allUsers = Array.isArray(platform.users) ? platform.users : []
+  const search = String(platformUserSearchQuery || '').trim().toLowerCase()
+  const users = allUsers.filter((entry) => {
+    const matchesState = platformUserFilter === 'all' || entry.status === platformUserFilter
+    const haystack = [entry.fullName, entry.email, ...(entry.memberships || []).flatMap((membership) => [membership.commerceName, membership.instanceKey, membership.roleKey])].join(' ').toLowerCase()
+    return matchesState && (!search || haystack.includes(search))
   })
-  const pendingSupport = allCommerces.filter((entry) => ['pendiente', 'esperando'].includes(entry.supportStatus)).length
-  const blockedCommerces = allCommerces.filter((entry) => entry.status === 'blocked').length
-  const expiredCommerces = allCommerces.filter((entry) => entry.billingStatus === 'past_due').length
-  const publicOpenCommerces = allCommerces.filter((entry) => entry.allowPublicSignup).length
-  if (!platformCommerceSelectedId || !commerces.some((entry) => entry.id === platformCommerceSelectedId)) {
-    platformCommerceSelectedId = commerces[0]?.id || allCommerces[0]?.id || ''
-  }
-  const selectedCommerce = commerces.find((entry) => entry.id === platformCommerceSelectedId) || allCommerces.find((entry) => entry.id === platformCommerceSelectedId) || commerces[0] || allCommerces[0] || null
-  const selectedUsers = Array.isArray(selectedCommerce?.users) ? selectedCommerce.users : []
-  const selectedBranches = Array.isArray(selectedCommerce?.branches) ? selectedCommerce.branches : []
-  const selectedRegisters = Array.isArray(selectedCommerce?.registers) ? selectedCommerce.registers : []
-  const formatDate = (value) => value ? String(value).replace('T', ' ').slice(0, 16) : 'Sin dato'
-  const supportStatusLabel = (value) => {
-    if (value === 'activo') return 'Activo'
-    if (value === 'seguimiento') return 'Seguimiento'
-    if (value === 'esperando') return 'Esperando cliente'
-    if (value === 'resuelto') return 'Resuelto'
-    return 'Pendiente'
-  }
-  const billingLabel = (value) => {
-    if (value === 'trial') return 'Prueba'
-    if (value === 'active') return 'Activo'
-    if (value === 'past_due') return 'Vencido'
-    if (value === 'paused') return 'Pausado'
-    if (value === 'cancelled') return 'Cancelado'
-    return value || 'Sin dato'
-  }
-  const commerceLabel = (value) => {
-    if (value === 'active') return 'Activo'
-    if (value === 'paused') return 'Pausado'
-    if (value === 'blocked') return 'Bloqueado'
-    return value || 'Sin dato'
-  }
-  const trialLabel = (entry) => {
-    if (!entry?.trialEndsAt) return 'Sin fecha'
-    return String(entry.trialEndsAt).slice(0, 10)
-  }
-  return `
-  <section class="view-section platform-console"><div class="section-header platform-console-header"><div><p class="kicker">Control de plataforma</p><h2>Panel PCLAF</h2></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button><button type="button" class="ghost-action" data-action="open-support">Soporte</button></div></div>
+  if (!platformUserSelectedId || !users.some((entry) => entry.id === platformUserSelectedId)) platformUserSelectedId = users[0]?.id || allUsers[0]?.id || ''
+  const selectedUser = allUsers.find((entry) => entry.id === platformUserSelectedId) || users[0] || allUsers[0] || null
+  const activeUsers = allUsers.filter((entry) => entry.status === 'active').length
+  const usersWithActivity = allUsers.filter((entry) => entry.activity?.length).length
+  const trace = selectedUser?.activity || []
+  return `<section class="view-section platform-trace-view"><div class="section-header platform-console-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2><p class="section-description">Elegí una persona para seguir su actividad real en todos sus comercios.</p></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
-    <section class="platform-kpi-grid">
-      <article class="metric-card compact"><span>Comercios</span><strong>${summary.totalCommerces || 0}</strong><p>${summary.activeCommerces || 0} activos</p></article>
-      <article class="metric-card compact ${summary.trialCommerces ? 'is-highlighted' : ''}"><span>Pruebas</span><strong>${summary.trialCommerces || 0}</strong><p>${summary.expiredCommerces || 0} vencidas</p></article>
-      <article class="metric-card compact ${pendingSupport || blockedCommerces ? 'is-alert' : ''}"><span>Atención</span><strong>${pendingSupport + blockedCommerces + expiredCommerces}</strong><p>${pendingSupport} soporte · ${blockedCommerces} bloqueados</p></article>
-      <article class="metric-card compact"><span>Usuarios</span><strong>${summary.totalUsers || 0}</strong><p>${summary.totalBranches || 0} sucursales · ${summary.totalRegisters || 0} cajas</p></article>
+    <section class="platform-trace-stats"><span><strong>${allUsers.length}</strong> usuarios</span><span><strong>${activeUsers}</strong> activos</span><span><strong>${usersWithActivity}</strong> con actividad registrada</span></section>
+    <section class="platform-trace-workspace"><aside class="panel platform-user-directory"><div class="panel-head"><div><p class="kicker">Directorio</p><h3>Usuarios</h3></div><span class="panel-count">${users.length}</span></div><div class="platform-user-filters"><input type="search" value="${escapeHtml(platformUserSearchQuery)}" data-platform-user-search placeholder="Buscar persona o comercio" /><select data-platform-user-filter><option value="all" ${platformUserFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformUserFilter === 'active' ? 'selected' : ''}>Activos</option><option value="inactive" ${platformUserFilter === 'inactive' ? 'selected' : ''}>Inactivos</option></select></div><div class="platform-user-list">${users.length ? users.map((entry) => `<button type="button" class="platform-user-row ${entry.id === selectedUser?.id ? 'is-selected' : ''}" data-platform-user-select="${entry.id}"><span class="platform-user-avatar">${escapeHtml((entry.fullName || '?').slice(0, 1).toUpperCase())}</span><span><strong>${escapeHtml(entry.fullName)}</strong><small>${escapeHtml(entry.email || 'Sin email')}</small><em>${entry.memberships?.[0]?.commerceName || 'Sin comercio'}</em></span><time>${entry.lastLoginAt ? formatDate(entry.lastLoginAt) : 'Sin acceso'}</time></button>`).join('') : '<p class="empty-state">No hay usuarios para este filtro.</p>'}</div></aside>
+      ${selectedUser ? `<section class="platform-user-detail"><header class="platform-user-header"><span class="platform-user-avatar large">${escapeHtml((selectedUser.fullName || '?').slice(0, 1).toUpperCase())}</span><div><p class="kicker">Perfil seleccionado</p><h3>${escapeHtml(selectedUser.fullName)}</h3><p>${escapeHtml(selectedUser.email || 'Sin email')} · ${selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}</p></div><div class="platform-user-meta"><span>Alta<strong>${formatDate(selectedUser.createdAt)}</strong></span><span>Último acceso<strong>${formatDate(selectedUser.lastLoginAt)}</strong></span></div></header>
+        <section class="platform-membership-panel"><p class="kicker">Comercios y permisos</p><div>${(selectedUser.memberships || []).map((membership) => `<article><strong>${escapeHtml(membership.commerceName)}</strong><span>${escapeHtml(membership.instanceKey)} · ${membership.isOwner ? 'Propietario' : escapeHtml(membership.roleKey)}</span><em class="${membership.status === 'active' ? 'is-active' : ''}">${membership.status === 'active' ? 'Activo' : 'Inactivo'}</em></article>`).join('') || '<p class="empty-state">No tiene comercios asignados.</p>'}</div></section>
+        <section class="panel platform-user-trace-panel"><div class="panel-head"><div><p class="kicker">Auditoría de usuario</p><h3>Línea de trazabilidad</h3><p>Solo metadatos: acción, hora y comercio.</p></div><span class="panel-count">${trace.length} eventos</span></div><div class="platform-user-trace">${trace.length ? trace.map((event) => { const module = entityModule[event.entityType] || 'settings'; return `<article class="platform-trace-event module-${module}"><span class="platform-trace-node"></span><div><div><span class="audit-module-tag module-${module}">${entityLabels[event.entityType] || 'Sistema'}</span><time>${formatDate(event.createdAt)}</time></div><strong>${actionLabels[event.action] || 'Actividad registrada'}</strong><p>${event.commerceName ? `En ${escapeHtml(event.commerceName)}` : 'Registro de cuenta PCLAF'}</p></div></article>` }).join('') : '<p class="empty-state">Todavía no hay eventos auditados para esta persona.</p>'}</div></section>
+      </section>` : ''}
     </section>
-    <section class="platform-attention-strip">
-      <div><p class="kicker">Para revisar</p><h3>Seguimiento pendiente</h3></div>
-      <div class="platform-attention-actions">
-        <span class="platform-alert ${platformSupportFilter === 'attention' ? 'is-active' : ''}" data-platform-support-chip="attention"><strong>${pendingSupport}</strong> casos de soporte</span>
-        <span class="platform-alert ${platformCommerceFilter === 'blocked' ? 'is-active' : ''}" data-platform-chip="blocked"><strong>${blockedCommerces}</strong> cuentas bloqueadas</span>
-        <span class="platform-alert ${platformCommerceFilter === 'past_due' ? 'is-active' : ''}" data-platform-chip="past_due"><strong>${expiredCommerces}</strong> cobros vencidos</span>
-      </div>
-    </section>
-    <section class="platform-workspace">
-      <div class="module-main">
-        <article class="panel platform-filter-panel"><div class="panel-head"><div><p class="kicker">Cartera PCLAF</p><h3>Comercios</h3></div><span class="panel-count">${commerces.length} visibles</span></div>
-          <div class="form-grid compact-form">
-            <label>Buscar comercio<input type="search" value="${platformSearchQuery}" data-platform-search placeholder="Nombre, codigo, email o etiqueta" /></label>
-            <label>Estado<select data-platform-filter="status"><option value="all" ${platformCommerceFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformCommerceFilter === 'active' ? 'selected' : ''}>Activos</option><option value="trial" ${platformCommerceFilter === 'trial' ? 'selected' : ''}>Prueba</option><option value="paused" ${platformCommerceFilter === 'paused' ? 'selected' : ''}>Pausados</option><option value="blocked" ${platformCommerceFilter === 'blocked' ? 'selected' : ''}>Bloqueados</option><option value="past_due" ${platformCommerceFilter === 'past_due' ? 'selected' : ''}>Vencidos</option></select></label>
-            <label>Soporte<select data-platform-filter="support"><option value="all" ${platformSupportFilter === 'all' ? 'selected' : ''}>Todos</option><option value="attention" ${platformSupportFilter === 'attention' ? 'selected' : ''}>Requiere atencion</option><option value="activo" ${platformSupportFilter === 'activo' ? 'selected' : ''}>Activo</option><option value="seguimiento" ${platformSupportFilter === 'seguimiento' ? 'selected' : ''}>Seguimiento</option><option value="esperando" ${platformSupportFilter === 'esperando' ? 'selected' : ''}>Esperando cliente</option><option value="resuelto" ${platformSupportFilter === 'resuelto' ? 'selected' : ''}>Resuelto</option></select></label>
-          </div>
-          <div class="chip-grid platform-filter-chips">
-            <span class="module-chip ${platformCommerceFilter === 'all' ? 'is-active' : ''}" data-platform-chip="all">Todas ${allCommerces.length}</span>
-            <span class="module-chip ${platformCommerceFilter === 'trial' ? 'is-active' : ''}" data-platform-chip="trial">Prueba ${summary.trialCommerces || 0}</span>
-            <span class="module-chip ${platformCommerceFilter === 'blocked' ? 'is-active' : ''}" data-platform-chip="blocked">Bloqueadas ${blockedCommerces}</span>
-            <span class="module-chip ${platformSupportFilter === 'attention' ? 'is-active' : ''}" data-platform-support-chip="attention">Pendientes ${pendingSupport}</span>
-          </div>
-        </article>
-        <article class="panel platform-list-panel">
-          ${dataTable(['Comercio', 'Plan', 'Seguimiento', 'Cobro', 'Prueba', 'Ultimo acceso', 'Ficha'], commerces.length ? commerces.map((entry) => `<div class="data-row ${entry.id === platformCommerceSelectedId ? 'is-selected' : ''}"><span><strong>${entry.name}</strong><br /><small>${entry.instanceKey}</small></span><span>${planLabels[entry.activePlan] || entry.activePlan}</span><span>${supportStatusLabel(entry.supportStatus)}<br /><small>${entry.supportOwner || 'Sin asignar'}</small></span><span>${billingLabel(entry.billingStatus)}</span><span>${trialLabel(entry)}</span><span>${entry.lastAccessAt ? formatDate(entry.lastAccessAt) : 'Nunca'}</span><span><button type="button" class="inline-action" data-platform-select="${entry.id}">Abrir ficha</button></span></div>`) : [`<div class="data-row"><span>No hay comercios para este filtro.</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span></div>`], 'platform-commerce-table')}
-        </article>
-        ${selectedCommerce ? `<section class="platform-detail-section"><div class="section-divider"><div><p class="kicker">Ficha del comercio</p><h3>${selectedCommerce.name}</h3><p>${selectedCommerce.ownerEmail} · ${selectedCommerce.instanceKey}</p></div><span>${commerceLabel(selectedCommerce.status)} · ${billingLabel(selectedCommerce.billingStatus)}</span></div><div class="compact-form-grid">
-          <article class="panel"><div class="panel-head"><div><h3>Configuracion de cuenta</h3><p>Cambios de plan, acceso y seguimiento.</p></div></div>
-            <form class="form-grid compact-form" data-form="platform-commerce">
-              <input type="hidden" name="commerceId" value="${selectedCommerce.id}" />
-              <label>Comercio<input type="text" value="${selectedCommerce.name}" disabled /></label>
-              <label>Dueño<input type="email" value="${selectedCommerce.ownerEmail}" disabled /></label>
-              <label>Pack<select name="activePlan"><option value="basic" ${selectedCommerce.activePlan === 'basic' ? 'selected' : ''}>Gestion base</option><option value="retail" ${selectedCommerce.activePlan === 'retail' ? 'selected' : ''}>Mostrador</option><option value="full" ${selectedCommerce.activePlan === 'full' ? 'selected' : ''}>Operacion</option><option value="multi" ${selectedCommerce.activePlan === 'multi' ? 'selected' : ''}>Multi sucursal</option><option value="custom" ${selectedCommerce.activePlan === 'custom' ? 'selected' : ''}>Personalizado</option></select></label>
-              <label>Estado<select name="status"><option value="active" ${selectedCommerce.status === 'active' ? 'selected' : ''}>Activo</option><option value="paused" ${selectedCommerce.status === 'paused' ? 'selected' : ''}>Pausado</option><option value="blocked" ${selectedCommerce.status === 'blocked' ? 'selected' : ''}>Bloqueado</option></select></label>
-              <label>Cobro<select name="billingStatus"><option value="trial" ${selectedCommerce.billingStatus === 'trial' ? 'selected' : ''}>Prueba</option><option value="active" ${selectedCommerce.billingStatus === 'active' ? 'selected' : ''}>Activo</option><option value="past_due" ${selectedCommerce.billingStatus === 'past_due' ? 'selected' : ''}>Vencido</option><option value="paused" ${selectedCommerce.billingStatus === 'paused' ? 'selected' : ''}>Pausado</option><option value="cancelled" ${selectedCommerce.billingStatus === 'cancelled' ? 'selected' : ''}>Cancelado</option></select></label>
-              <label>Alta publica<select name="allowPublicSignup"><option value="true" ${selectedCommerce.allowPublicSignup ? 'selected' : ''}>Permitida</option><option value="false" ${!selectedCommerce.allowPublicSignup ? 'selected' : ''}>Cerrada</option></select></label>
-              <label>Responsable PCLAF<input type="text" name="supportOwner" value="${selectedCommerce.supportOwner || ''}" placeholder="Quien sigue esta cuenta" /></label>
-              <label>Seguimiento<select name="supportStatus"><option value="pendiente" ${selectedCommerce.supportStatus === 'pendiente' ? 'selected' : ''}>Pendiente</option><option value="activo" ${selectedCommerce.supportStatus === 'activo' ? 'selected' : ''}>Activo</option><option value="seguimiento" ${selectedCommerce.supportStatus === 'seguimiento' ? 'selected' : ''}>Seguimiento</option><option value="esperando" ${selectedCommerce.supportStatus === 'esperando' ? 'selected' : ''}>Esperando cliente</option><option value="resuelto" ${selectedCommerce.supportStatus === 'resuelto' ? 'selected' : ''}>Resuelto</option></select></label>
-              <label>Etiqueta interna<input type="text" name="internalTag" value="${selectedCommerce.internalTag || ''}" placeholder="Kiosco, taller, demo, referido" /></label>
-              <label class="full-span">Nota comercial<textarea name="commercialNote" rows="3" placeholder="Seguimiento, interes, propuesta o proximo paso">${selectedCommerce.commercialNote || ''}</textarea></label>
-              <label class="full-span">Nota de cobro<textarea name="billingNote" rows="3" placeholder="Situacion de facturacion o cobro">${selectedCommerce.billingNote || ''}</textarea></label>
-              <button type="submit">Guardar cambios</button>
-            </form>
-            <div class="panel-note"><span>Alta: ${formatDate(selectedCommerce.createdAt)}</span><span>Prueba hasta: ${selectedCommerce.trialEndsAt ? selectedCommerce.trialEndsAt.slice(0, 10) : 'Sin fecha'}</span></div>
-          </article>
-          <article class="panel"><div class="panel-head"><div><h3>Resumen de la cuenta</h3><p>Lectura comercial y operativa.</p></div></div>
-            <div class="priority-list">
-              <div class="priority-item"><strong>Instancia</strong><p>${selectedCommerce.instanceKey}</p></div>
-              <div class="priority-item"><strong>Estado</strong><p>${commerceLabel(selectedCommerce.status)}<br /><small>${billingLabel(selectedCommerce.billingStatus)}</small></p></div>
-              <div class="priority-item"><strong>Ultimo acceso</strong><p>${selectedCommerce.lastAccessAt ? formatDate(selectedCommerce.lastAccessAt) : 'Nunca'}</p></div>
-              <div class="priority-item"><strong>Estructura</strong><p>${selectedCommerce.branchesCount} sucursales<br /><small>${selectedCommerce.registersCount} cajas / ${selectedCommerce.usersCount} usuarios</small></p></div>
-              <div class="priority-item"><strong>Soporte</strong><p>${supportStatusLabel(selectedCommerce.supportStatus)}<br /><small>${selectedCommerce.supportOwner || 'Sin asignar'}</small></p></div>
-              <div class="priority-item"><strong>Etiqueta</strong><p>${selectedCommerce.internalTag || 'Sin etiqueta'}</p></div>
-            </div>
-            <div class="chip-grid">${(selectedCommerce.enabledModules || []).map((moduleKey) => `<span class="module-chip is-active">${ui.moduleCatalog[moduleKey]?.name || moduleKey}</span>`).join('') || '<span class="module-chip">Sin modulos</span>'}</div>
-            <div class="timeline-list compact-timeline">
-              <div class="timeline-item"><strong>Nota comercial</strong><p>${selectedCommerce.commercialNote || 'Sin seguimiento comercial cargado.'}</p></div>
-              <div class="timeline-item"><strong>Facturacion</strong><p>${selectedCommerce.billingNote || 'Sin nota de cobro cargada.'}</p></div>
-            </div>
-          </article>
-        </div></section>` : ''}
-        ${selectedCommerce ? `<div class="compact-form-grid">
-          <article class="panel"><div class="panel-head"><div><h3>Usuarios del cliente</h3><p>Accesos y ultimo uso</p></div></div>
-            ${dataTable(['Usuario', 'Perfil', 'Estado', 'Ultimo acceso'], selectedUsers.map((entry) => `<div class="data-row"><span>${entry.full_name || entry.fullName || 'Usuario'}<br /><small>${maskEmail(entry.email) || 'Sin email'}</small></span><span>${entry.is_owner ? 'Propietario' : (entry.role_key || entry.roleKey || 'Usuario')}</span><span>${entry.status === 'active' ? 'Activo' : 'Inactivo'}</span><span>${entry.last_login_at ? formatDate(entry.last_login_at) : 'Nunca'}</span></div>`))}
-          </article>
-          <article class="panel"><div class="panel-head"><div><h3>Sucursales y cajas</h3><p>Estructura ligada al comercio</p></div></div>
-            ${dataTable(['Sucursal', 'Codigo', 'Cajas'], selectedBranches.map((entry) => `<div class="data-row"><span>${entry.name || 'Sucursal'}</span><span>${entry.code || '-'}</span><span>${selectedRegisters.filter((register) => register.branch_id === entry.id || register.branchId === entry.id).length}</span></div>`))}
-          </article>
-        </div>` : ''}
-      </div>
-    </section>
-  </section>
-`
+  </section>`
 }
 
 const settingsView = (ui) => settingsViewV2(ui)
@@ -4619,8 +4499,8 @@ const bindEvents = () => {
     requestScrollTop()
     render()
   })
-  for (const button of document.querySelectorAll('[data-platform-select]')) button.addEventListener('click', () => {
-    platformCommerceSelectedId = button.dataset.platformSelect || ''
+  for (const button of document.querySelectorAll('[data-platform-user-select]')) button.addEventListener('click', () => {
+    platformUserSelectedId = button.dataset.platformUserSelect || ''
     requestScrollTop()
     render()
   })
@@ -4633,21 +4513,12 @@ const bindEvents = () => {
     }
     render()
   })
-  for (const input of document.querySelectorAll('[data-platform-search]')) input.addEventListener('input', () => {
-    platformSearchQuery = input.value || ''
-    rerenderSearchKeepingFocus(input, '[data-platform-search]')
+  for (const input of document.querySelectorAll('[data-platform-user-search]')) input.addEventListener('input', () => {
+    platformUserSearchQuery = input.value || ''
+    rerenderSearchKeepingFocus(input, '[data-platform-user-search]')
   })
-  for (const select of document.querySelectorAll('[data-platform-filter]')) select.addEventListener('change', () => {
-    if (select.dataset.platformFilter === 'status') platformCommerceFilter = select.value || 'all'
-    if (select.dataset.platformFilter === 'support') platformSupportFilter = select.value || 'all'
-    render()
-  })
-  for (const chip of document.querySelectorAll('[data-platform-chip]')) chip.addEventListener('click', () => {
-    platformCommerceFilter = chip.dataset.platformChip || 'all'
-    render()
-  })
-  for (const chip of document.querySelectorAll('[data-platform-support-chip]')) chip.addEventListener('click', () => {
-    platformSupportFilter = chip.dataset.platformSupportChip || 'all'
+  for (const select of document.querySelectorAll('[data-platform-user-filter]')) select.addEventListener('change', () => {
+    platformUserFilter = select.value || 'all'
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-customer-form"]')) button.addEventListener('click', () => {
