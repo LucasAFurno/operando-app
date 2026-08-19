@@ -2916,16 +2916,16 @@ const ownerAdminViewV2 = (ui) => {
     return String(entry.trialEndsAt).slice(0, 10)
   }
   return `
-  <section class="view-section platform-console"><div class="section-header platform-console-header"><div><p class="kicker">Administracion de plataforma</p><h2>Panel PCLAF</h2><p class="platform-console-intro">Seguimiento de cuentas, cobros y soporte. No es la operacion diaria de un comercio.</p></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar datos</button><button type="button" class="ghost-action" data-action="open-support">Soporte</button></div></div>
+  <section class="view-section platform-console"><div class="section-header platform-console-header"><div><p class="kicker">Control de plataforma</p><h2>Panel PCLAF</h2></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button><button type="button" class="ghost-action" data-action="open-support">Soporte</button></div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="platform-kpi-grid">
-      <article class="metric-card compact"><span>Cartera total</span><strong>${summary.totalCommerces || 0}</strong><p>${summary.activeCommerces || 0} cuentas activas</p></article>
-      <article class="metric-card compact ${summary.trialCommerces ? 'is-highlighted' : ''}"><span>En prueba</span><strong>${summary.trialCommerces || 0}</strong><p>${summary.expiredCommerces || 0} pruebas vencidas</p></article>
-      <article class="metric-card compact ${pendingSupport || blockedCommerces ? 'is-alert' : ''}"><span>Requieren atencion</span><strong>${pendingSupport + blockedCommerces + expiredCommerces}</strong><p>${pendingSupport} soporte / ${blockedCommerces} bloqueados</p></article>
-      <article class="metric-card compact"><span>Estructura alojada</span><strong>${summary.totalUsers || 0}</strong><p>${summary.totalBranches || 0} sucursales · ${summary.totalRegisters || 0} cajas</p></article>
+      <article class="metric-card compact"><span>Comercios</span><strong>${summary.totalCommerces || 0}</strong><p>${summary.activeCommerces || 0} activos</p></article>
+      <article class="metric-card compact ${summary.trialCommerces ? 'is-highlighted' : ''}"><span>Pruebas</span><strong>${summary.trialCommerces || 0}</strong><p>${summary.expiredCommerces || 0} vencidas</p></article>
+      <article class="metric-card compact ${pendingSupport || blockedCommerces ? 'is-alert' : ''}"><span>Atención</span><strong>${pendingSupport + blockedCommerces + expiredCommerces}</strong><p>${pendingSupport} soporte · ${blockedCommerces} bloqueados</p></article>
+      <article class="metric-card compact"><span>Usuarios</span><strong>${summary.totalUsers || 0}</strong><p>${summary.totalBranches || 0} sucursales · ${summary.totalRegisters || 0} cajas</p></article>
     </section>
     <section class="platform-attention-strip">
-      <div><p class="kicker">Cola de atencion</p><h3>Que necesita seguimiento hoy</h3></div>
+      <div><p class="kicker">Para revisar</p><h3>Seguimiento pendiente</h3></div>
       <div class="platform-attention-actions">
         <span class="platform-alert ${platformSupportFilter === 'attention' ? 'is-active' : ''}" data-platform-support-chip="attention"><strong>${pendingSupport}</strong> casos de soporte</span>
         <span class="platform-alert ${platformCommerceFilter === 'blocked' ? 'is-active' : ''}" data-platform-chip="blocked"><strong>${blockedCommerces}</strong> cuentas bloqueadas</span>
@@ -2934,7 +2934,7 @@ const ownerAdminViewV2 = (ui) => {
     </section>
     <section class="platform-workspace">
       <div class="module-main">
-        <article class="panel platform-filter-panel"><div class="panel-head"><div><p class="kicker">Cartera PCLAF</p><h3>Comercios</h3><p>Encontrá una cuenta y abrí su ficha de control.</p></div><span class="panel-count">${commerces.length} visibles</span></div>
+        <article class="panel platform-filter-panel"><div class="panel-head"><div><p class="kicker">Cartera PCLAF</p><h3>Comercios</h3></div><span class="panel-count">${commerces.length} visibles</span></div>
           <div class="form-grid compact-form">
             <label>Buscar comercio<input type="search" value="${platformSearchQuery}" data-platform-search placeholder="Nombre, codigo, email o etiqueta" /></label>
             <label>Estado<select data-platform-filter="status"><option value="all" ${platformCommerceFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformCommerceFilter === 'active' ? 'selected' : ''}>Activos</option><option value="trial" ${platformCommerceFilter === 'trial' ? 'selected' : ''}>Prueba</option><option value="paused" ${platformCommerceFilter === 'paused' ? 'selected' : ''}>Pausados</option><option value="blocked" ${platformCommerceFilter === 'blocked' ? 'selected' : ''}>Bloqueados</option><option value="past_due" ${platformCommerceFilter === 'past_due' ? 'selected' : ''}>Vencidos</option></select></label>
@@ -2950,7 +2950,7 @@ const ownerAdminViewV2 = (ui) => {
         <article class="panel platform-list-panel">
           ${dataTable(['Comercio', 'Plan', 'Seguimiento', 'Cobro', 'Prueba', 'Ultimo acceso', 'Ficha'], commerces.length ? commerces.map((entry) => `<div class="data-row ${entry.id === platformCommerceSelectedId ? 'is-selected' : ''}"><span><strong>${entry.name}</strong><br /><small>${entry.instanceKey}</small></span><span>${planLabels[entry.activePlan] || entry.activePlan}</span><span>${supportStatusLabel(entry.supportStatus)}<br /><small>${entry.supportOwner || 'Sin asignar'}</small></span><span>${billingLabel(entry.billingStatus)}</span><span>${trialLabel(entry)}</span><span>${entry.lastAccessAt ? formatDate(entry.lastAccessAt) : 'Nunca'}</span><span><button type="button" class="inline-action" data-platform-select="${entry.id}">Abrir ficha</button></span></div>`) : [`<div class="data-row"><span>No hay comercios para este filtro.</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span></div>`], 'platform-commerce-table')}
         </article>
-        ${selectedCommerce ? `<section class="platform-detail-section"><div class="section-divider"><p class="kicker">Ficha seleccionada</p><h3>${selectedCommerce.name}</h3><p>${selectedCommerce.ownerEmail} · ${selectedCommerce.instanceKey}</p></div><div class="compact-form-grid">
+        ${selectedCommerce ? `<section class="platform-detail-section"><div class="section-divider"><div><p class="kicker">Ficha del comercio</p><h3>${selectedCommerce.name}</h3><p>${selectedCommerce.ownerEmail} · ${selectedCommerce.instanceKey}</p></div><span>${commerceLabel(selectedCommerce.status)} · ${billingLabel(selectedCommerce.billingStatus)}</span></div><div class="compact-form-grid">
           <article class="panel"><div class="panel-head"><div><h3>Configuracion de cuenta</h3><p>Cambios de plan, acceso y seguimiento.</p></div></div>
             <form class="form-grid compact-form" data-form="platform-commerce">
               <input type="hidden" name="commerceId" value="${selectedCommerce.id}" />
