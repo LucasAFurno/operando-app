@@ -33,6 +33,10 @@ jobs:
 
       - name: Build site
         run: npm run build
+        env:
+          # El ID de medición GA4 es público; se configura en GitHub Actions y
+          # solo se incorpora al sitio tras el consentimiento analítico.
+          PCLAF_GA4_ID: ${{ vars.PCLAF_GA4_ID }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

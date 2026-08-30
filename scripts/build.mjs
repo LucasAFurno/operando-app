@@ -13,7 +13,8 @@ const selectedCloudConfigFile = isDevBuild ? 'cloud-config.dev.json' : 'cloud-co
 const siteOrigin = 'https://www.pclafcontrol.com.ar'
 const appPath = '/app/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20quiero%20informacion%20de%20PCLAF%20Control.'
-const gaMeasurementId = String(process.env.PCLAF_GA4_ID || 'G-R0TVQX7DJJ').trim()
+const configuredGaMeasurementId = String(process.env.PCLAF_GA4_ID || 'G-R0TVQX7DJJ').trim()
+const gaMeasurementId = /^G-[A-Z0-9]+$/i.test(configuredGaMeasurementId) ? configuredGaMeasurementId : ''
 
 const clientJs = await readFile(path.join(root, 'site', 'client.js'), 'utf8')
 const dataStoreJs = await readFile(path.join(root, 'site', 'data-store.js'), 'utf8')
@@ -531,10 +532,10 @@ const marketingPages = [
   {
     slug: 'privacidad',
     seoTitle: 'Politica de privacidad | PCLAF Control',
-    description: 'Conoce como PCLAF Control trata datos comerciales, accesos, comunicaciones y soporte.',
+    description: 'Conoce como PCLAF Control trata datos comerciales, accesos, comunicaciones, soporte y preferencias de cookies.',
     kicker: 'Legal',
     h1: 'Politica de privacidad de PCLAF Control',
-    lead: 'Esta pagina resume como tratamos datos de acceso, datos comerciales y consultas enviadas por formularios o WhatsApp.',
+    lead: 'Esta página resume cómo tratamos datos de acceso, datos comerciales, consultas y preferencias de cookies en el sitio público.',
     image: '/og-pclaf-control.svg',
     imageAlt: 'Politica de privacidad de PCLAF Control',
     whatsAppPrompt: 'Hola PCLAF, quiero consultar sobre privacidad y datos.',
@@ -542,6 +543,8 @@ const marketingPages = [
       { title: 'Datos de acceso', body: 'Los accesos se usan para identificar usuarios y proteger la operacion de cada comercio.' },
       { title: 'Datos operativos', body: 'La informacion de ventas, caja, stock y clientes pertenece al comercio que usa la plataforma.' },
       { title: 'Soporte y contacto', body: 'Los mensajes enviados por WhatsApp o formularios se usan para responder consultas comerciales o tecnicas.' },
+      { title: 'Cookies necesarias', body: 'Guardamos localmente tu elección de privacidad para recordar la configuración. Este almacenamiento es necesario para respetar tu decisión y no se usa para medir navegación.' },
+      { title: 'Analíticas opcionales', body: 'Solo cargamos Google Analytics 4 si aceptás la categoría analítica de forma expresa. Sirve para conocer páginas y acciones comerciales de manera agregada. Podés retirar o cambiar el consentimiento desde “Preferencias de cookies” en el pie de página; al rechazarlo, no cargamos GA4 ni Meta o TikTok.' },
     ],
     featureList: ['Privacidad', 'Accesos', 'Datos comerciales', 'Soporte'],
   },
@@ -673,6 +676,7 @@ const renderFooter = () => `
         <a href="/preguntas-frecuentes/" data-analytics="footer_faq">Preguntas frecuentes</a>
         <a href="/privacidad/" data-analytics="footer_privacidad">Privacidad</a>
         <a href="/terminos/" data-analytics="footer_terminos">Terminos</a>
+        <button type="button" class="marketing-cookie-link" data-consent-open>Preferencias de cookies</button>
       </nav>
     </div>
     <div class="marketing-footer-actions">
@@ -1199,6 +1203,25 @@ const marketingStyles = `
       body[data-page="home"] .marketing-grid-compact {
         display: none;
       }
+      .marketing-cookie-link { appearance: none; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
+      .marketing-cookie-link:hover { color: #d51d22; }
+      .marketing-consent { position: fixed; z-index: 20; right: 20px; bottom: 20px; width: min(460px, calc(100vw - 40px)); padding: 22px; border: 1px solid #ded9d0; border-radius: 18px; background: #fffdf8; color: #181818; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28); }
+      .marketing-consent[hidden], .marketing-consent-modal[hidden] { display: none; }
+      .marketing-consent h2, .marketing-consent-panel h2 { margin: 0 0 8px; font-size: 1.2rem; }
+      .marketing-consent p, .marketing-consent-option span { margin: 0; color: #625e57; line-height: 1.5; }
+      .marketing-consent p + p { margin-top: 10px; }
+      .marketing-consent a { color: #aa161a; }
+      .marketing-consent-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      .marketing-consent button { min-height: 42px; padding: 0 14px; border: 1px solid #bdb7ae; border-radius: 10px; background: #fff; color: #181818; cursor: pointer; font: inherit; font-weight: 700; }
+      .marketing-consent button.is-primary { border-color: #db1616; background: #db1616; color: #fff; }
+      .marketing-consent button:focus-visible, .marketing-cookie-link:focus-visible { outline: 3px solid #1e70c9; outline-offset: 3px; }
+      .marketing-consent-modal { position: fixed; z-index: 21; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, 0.55); }
+      .marketing-consent-panel { width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 24px; border-radius: 18px; background: #fffdf8; color: #181818; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); }
+      .marketing-consent-option { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; padding: 14px; border: 1px solid #ded9d0; border-radius: 12px; }
+      .marketing-consent-option input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: #db1616; }
+      .marketing-consent-option strong, .marketing-consent-option span { display: block; }
+      .marketing-consent-option span { margin-top: 4px; }
+      @media (max-width: 640px) { .marketing-consent { right: 12px; bottom: 12px; width: calc(100vw - 24px); } .marketing-consent-actions { display: grid; grid-template-columns: 1fr; } .marketing-consent-actions button { width: 100%; } }
       @media (max-width: 1024px) {
         .marketing-topbar {
           grid-template-columns: 1fr;
@@ -1759,14 +1782,6 @@ const renderMarketingPage = (page) => {
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
     <title>${escapeHtml(page.seoTitle)}</title>
     <style>${marketingStyles}</style>
-    ${gaMeasurementId ? `
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '${gaMeasurementId}');
-    </script>` : ''}
     <script type="application/ld+json">${structuredData}</script>
     <script type="application/ld+json">${organizationData}</script>
     ${faqData ? `<script type="application/ld+json">${JSON.stringify(faqData)}</script>` : ''}
@@ -1810,7 +1825,21 @@ const renderMarketingPage = (page) => {
       ${renderFooter()}
     </div>
     <a href="${pageSupportUrl}" class="marketing-floating-whatsapp" target="_blank" rel="noreferrer" data-analytics="whatsapp_support">Hablar por WhatsApp</a>
+    <section class="marketing-consent" id="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" hidden><h2 id="cookie-consent-title">Tu privacidad</h2><p>Usamos almacenamiento necesario para recordar esta elección. Las cookies analíticas son opcionales.</p><p><a href="/privacidad/">Consulta nuestra política de privacidad</a>.</p><div class="marketing-consent-actions"><button type="button" data-consent-reject>Rechazar analíticas</button><button type="button" data-consent-settings>Configurar</button><button type="button" class="is-primary" data-consent-accept>Aceptar analíticas</button></div></section>
+    <div class="marketing-consent-modal" id="cookie-preferences" role="dialog" aria-modal="true" aria-labelledby="cookie-preferences-title" hidden><div class="marketing-consent-panel"><h2 id="cookie-preferences-title" tabindex="-1">Preferencias de cookies</h2><p>Podés cambiar tu elección en cualquier momento. No usamos píxeles de Meta ni TikTok.</p><label class="marketing-consent-option"><input type="checkbox" checked disabled /><span><strong>Necesarias</strong><span>Guardan tu preferencia de privacidad y permiten el funcionamiento básico del sitio.</span></span></label><label class="marketing-consent-option"><input type="checkbox" id="analytics-consent" /><span><strong>Analíticas</strong><span>Si las aceptás, cargamos Google Analytics 4 para medir páginas y acciones comerciales de forma agregada.</span></span></label><div class="marketing-consent-actions"><button type="button" data-consent-close>Cancelar</button><button type="button" class="is-primary" data-consent-save>Guardar preferencias</button></div></div></div>
     <script>
+      (function () {
+        var key = 'pclaf_cookie_preferences_v1', id = ${JSON.stringify(gaMeasurementId)}, banner = document.getElementById('cookie-consent'), modal = document.getElementById('cookie-preferences'), input = document.getElementById('analytics-consent'), trigger;
+        function read() { try { var value = localStorage.getItem(key); return value ? JSON.parse(value) : null; } catch (error) { return null; } }
+        function clearGaCookies() { var names = ['_ga', '_gid', '_gat']; if (id) names.push('_ga_' + id.replace(/^G-/, '')); names.forEach(function (name) { document.cookie = name + '=; Max-Age=0; path=/'; document.cookie = name + '=; Max-Age=0; path=/; domain=.' + location.hostname.split('.').slice(-2).join('.'); }); }
+        function load() { if (!id || window.__pclafGa4Loaded) return; window.__pclafGa4Loaded = true; window.dataLayer = window.dataLayer || []; window.gtag = function () { window.dataLayer.push(arguments); }; window.gtag('js', new Date()); window.gtag('config', id); var script = document.createElement('script'); script.async = true; script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id); document.head.appendChild(script); }
+        function save(analytics) { try { localStorage.setItem(key, JSON.stringify({ necessary: true, analytics: !!analytics, updatedAt: new Date().toISOString() })); } catch (error) {} window.__pclafAnalyticsAllowed = !!analytics; if (analytics) load(); else { clearGaCookies(); } banner.hidden = true; modal.hidden = true; }
+        function open(button) { trigger = button || document.activeElement; var saved = read(); input.checked = !!(saved && saved.analytics); banner.hidden = true; modal.hidden = false; document.getElementById('cookie-preferences-title').focus(); }
+        function close() { modal.hidden = true; if (!read()) banner.hidden = false; if (trigger && trigger.focus) trigger.focus(); }
+        var saved = read(); window.__pclafAnalyticsAllowed = !!(saved && saved.analytics); if (window.__pclafAnalyticsAllowed) load(); else if (!saved) banner.hidden = false;
+        document.querySelectorAll('[data-consent-open]').forEach(function (button) { button.addEventListener('click', function () { open(button); }); });
+        document.querySelector('[data-consent-reject]').addEventListener('click', function () { save(false); }); document.querySelector('[data-consent-accept]').addEventListener('click', function () { save(true); }); document.querySelector('[data-consent-settings]').addEventListener('click', function () { open(); }); document.querySelector('[data-consent-save]').addEventListener('click', function () { save(input.checked); }); document.querySelector('[data-consent-close]').addEventListener('click', close); document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !modal.hidden) close(); });
+      }());
       const demoForm = document.querySelector('[data-demo-form]');
       if (demoForm) {
         demoForm.addEventListener('submit', function (event) {
@@ -1825,7 +1854,7 @@ const renderMarketingPage = (page) => {
             data.get('cajas') ? 'Cajas: ' + data.get('cajas') : ''
           ].filter(Boolean);
           const href = 'https://wa.me/5491135708345?text=' + encodeURIComponent(parts.join('\\n'));
-          if (typeof window.gtag === 'function') {
+          if (window.__pclafAnalyticsAllowed && typeof window.gtag === 'function') {
             window.gtag('event', 'generate_lead', {
               page_title: document.title,
               page_location: window.location.href
@@ -1836,7 +1865,7 @@ const renderMarketingPage = (page) => {
       }
       document.querySelectorAll('[data-analytics]').forEach(function (element) {
         element.addEventListener('click', function () {
-          if (typeof window.gtag === 'function') {
+          if (window.__pclafAnalyticsAllowed && typeof window.gtag === 'function') {
             window.gtag('event', element.getAttribute('data-analytics'), {
               page_title: document.title,
               page_location: window.location.href

@@ -44,6 +44,11 @@ Copiar `.env.example` a `.env` y completar:
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_INSTANCE_ENV`
 - `VITE_INSTANCE_KEY`
+- `PCLAF_GA4_ID` (opcional; ID público de medición GA4 para la web pública)
+
+Para GitHub Pages, configurá `PCLAF_GA4_ID` como una variable del repositorio en
+**Settings → Secrets and variables → Actions → Variables**. El workflow la pasa al
+build; GA4 se carga únicamente cuando el visitante acepta las cookies analíticas.
 
 ## Primeros pasos
 

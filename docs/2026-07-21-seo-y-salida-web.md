@@ -51,7 +51,8 @@ Fecha: 2026-07-21
 - Landing publica sin cargar el codigo completo de la app.
 - Modulo descargable de plantilla para importacion:
   - `/plantilla-productos-pclaf-control.csv`
-- Eventos listos para GA4 si se define `PCLAF_GA4_ID`:
+- Medición privacy-first: el banner ofrece categorías necesarias y analíticas; GA4 solo se carga después de aceptar analíticas. La elección se puede modificar desde el pie de página y, sin consentimiento, los eventos no se envían.
+- Eventos listos para GA4 si se define `PCLAF_GA4_ID` (ID público de medición, no una clave secreta) y el visitante acepta analíticas:
   - header login
   - header signup
   - hero trial
@@ -64,7 +65,7 @@ Fecha: 2026-07-21
 ## Pendiente fuera del codigo
 
 - Configurar Google Search Console y enviar sitemap.
-- Configurar GA4 real con `PCLAF_GA4_ID`.
+- Configurar GA4 real con `PCLAF_GA4_ID`. No agregar Meta Pixel ni TikTok Pixel sin una revisión específica de privacidad y consentimiento.
 - Medir Core Web Vitals reales en produccion.
 - Definir redireccion canonica final si se usa `www` como unica version.
 - Preparar `app.pclafcontrol.com.ar` si mas adelante se quiere separar por subdominio en vez de `/app/`.
@@ -87,7 +88,7 @@ Fecha: 2026-07-21
    - precios
    - sistema-de-ventas
    - control-de-stock
-3. Activar GA4.
+3. Configurar `PCLAF_GA4_ID` y comprobar que GA4 solo se solicita después de aceptar analíticas.
 4. Medir clics reales en:
    - Probar gratis
    - Iniciar sesion
