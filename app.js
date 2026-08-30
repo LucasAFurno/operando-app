@@ -159,6 +159,8 @@ let dismissedAccountAlertIds = new Set()
 let supportMenuOpen = false
 let settingsPanelOpen = ''
 let progressiveProfilePromptOpen = true
+let progressiveProfileStep = 1
+let progressiveProfileGoalsDraft = null
 let arcaSetupStep = 1
 let arcaCsrGenerated = false
 let arcaCertificateName = ''
@@ -3190,7 +3192,12 @@ const progressiveProfileModal = (ui) => {
   if (!progressiveProfilePromptOpen || !ui.user?.isOwner || ui.progressiveProfile.status === 'complete') return ''
   const profile = ui.progressiveProfile
   const goals = [['vender','Vender más rápido'],['stock','Controlar stock'],['caja','Ordenar caja'],['clientes','Gestionar clientes'],['facturacion','Emitir comprobantes'],['sucursales','Trabajar con sucursales']]
-  return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title"><button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button><div class="progressive-profile-layout"><aside class="progressive-profile-route"><span class="progressive-profile-step">01</span><p class="kicker">Puesta a punto</p><h2>Tu operación,<br />a tu medida.</h2><p>Elegí qué querés resolver primero. El resto es opcional.</p><span class="progressive-profile-time">Menos de 1 minuto</span></aside><div class="progressive-profile-content"><p class="kicker">Configuración rápida</p><h2 id="progressive-profile-title">¿Por dónde empezamos?</h2><p class="progressive-profile-copy">Usamos estas respuestas solo para ajustar sugerencias y soporte. No cambia tu acceso ni frena el POS.</p><form class="progressive-profile-modal-form" data-form="progressive-profile"><fieldset class="progressive-goals"><legend>Elegí hasta 5 prioridades</legend><div class="goal-option-grid">${goals.map(([value,label]) => `<label class="goal-option"><input type="checkbox" name="operationalGoals" value="${value}" ${profile.operationalGoals.includes(value) ? 'checked' : ''} /><span class="goal-option-mark">✓</span><span>${label}</span></label>`).join('')}</div><p class="progressive-goal-feedback" aria-live="polite">Elegí las que más impacten hoy. Podés continuar con menos de cinco.</p></fieldset><details class="progressive-profile-details"><summary>Agregar datos opcionales para soporte</summary><div class="form-grid compact-form progressive-profile-fields"><label>País<input type="text" name="country" value="${escapeHtml(profile.country || '')}" placeholder="Ej. Argentina" /></label><label>Rubro<input type="text" name="industry" value="${escapeHtml(profile.industry || '')}" placeholder="Ej. Kiosco, indumentaria" /></label><label>Teléfono<input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="Opcional" /></label><label>¿Necesitás ARCA?<select name="needsArca"><option value="">Todavía no lo sé</option><option value="yes" ${profile.needsArca === true ? 'selected' : ''}>Sí</option><option value="no" ${profile.needsArca === false ? 'selected' : ''}>No por ahora</option></select></label></div></details><div class="progressive-profile-actions"><button type="submit" class="primary-action">Guardar preferencias</button><button type="button" class="ghost-action" data-action="close-progressive-profile">Ahora no</button></div></form></div></div></section></div>`
+  const selectedGoals = progressiveProfileGoalsDraft || profile.operationalGoals
+  const isGoalsStep = progressiveProfileStep === 1
+  const stepContent = isGoalsStep
+    ? `<fieldset class="progressive-goals"><legend>Elegí hasta 5 prioridades</legend><div class="goal-option-grid">${goals.map(([value,label]) => `<label class="goal-option"><input type="checkbox" name="operationalGoals" value="${value}" ${selectedGoals.includes(value) ? 'checked' : ''} /><span class="goal-option-mark">✓</span><span>${label}</span></label>`).join('')}</div><p class="progressive-goal-feedback" aria-live="polite">Elegí las que más impacten hoy. Podés continuar con menos de cinco.</p></fieldset><div class="progressive-profile-actions"><button type="button" class="primary-action" data-action="progressive-profile-next">Continuar</button><button type="button" class="ghost-action" data-action="close-progressive-profile">Ahora no</button></div>`
+    : `<div class="progressive-profile-step-intro"><span class="progressive-profile-step-label">Paso 2 de 2</span><h3>Un poco más sobre tu negocio</h3><p>Todo es opcional. Nos ayuda a acompañarte mejor cuando lo necesites.</p></div>${selectedGoals.map((goal) => `<input type="hidden" name="operationalGoals" value="${goal}" />`).join('')}<div class="form-grid compact-form progressive-profile-fields"><label>País<input type="text" name="country" value="${escapeHtml(profile.country || '')}" placeholder="Ej. Argentina" /></label><label>Rubro<input type="text" name="industry" value="${escapeHtml(profile.industry || '')}" placeholder="Ej. Kiosco, indumentaria" /></label><label>Teléfono<input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="Opcional" /></label><label>¿Necesitás ARCA?<select name="needsArca"><option value="">Todavía no lo sé</option><option value="yes" ${profile.needsArca === true ? 'selected' : ''}>Sí</option><option value="no" ${profile.needsArca === false ? 'selected' : ''}>No por ahora</option></select></label></div><div class="progressive-profile-actions"><button type="button" class="ghost-action" data-action="progressive-profile-previous">Volver</button><button type="submit" class="primary-action">Guardar preferencias</button><button type="button" class="ghost-action" data-action="close-progressive-profile">Ahora no</button></div>`
+  return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title"><button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button><div class="progressive-profile-layout"><aside class="progressive-profile-route"><span class="progressive-profile-step">0${progressiveProfileStep}</span><p class="kicker">Puesta a punto</p><h2>${isGoalsStep ? 'Tu operación,<br />a tu medida.' : 'Sumemos<br />contexto.'}</h2><p>${isGoalsStep ? 'Elegí qué querés resolver primero. El resto es opcional.' : 'Estos datos son opcionales y solo mejoran el acompañamiento.'}</p><span class="progressive-profile-time">Paso ${progressiveProfileStep} de 2 · Menos de 1 minuto</span></aside><div class="progressive-profile-content"><p class="kicker">Configuración rápida</p><h2 id="progressive-profile-title">${isGoalsStep ? '¿Por dónde empezamos?' : 'Personalicemos la ayuda'}</h2><p class="progressive-profile-copy">Usamos estas respuestas solo para ajustar sugerencias y soporte. No cambia tu acceso ni frena el POS.</p><form class="progressive-profile-modal-form" data-form="progressive-profile">${stepContent}</form></div></div></section></div>`
 }
 
 const renderApp = (ui) => {
@@ -3906,7 +3913,7 @@ const handleSubmit = async (event) => {
   if (kind === 'progressive-profile') {
     const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), needsArca: formData.get('needsArca') === 'yes' ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
     feedbackMessage = result.message || ''
-    if (result.ok) progressiveProfilePromptOpen = false
+    if (result.ok) { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null }
   }
   if (kind === 'cloud-connection') {
     cloudSyncBusy = true
@@ -5227,21 +5234,22 @@ const bindEvents = () => {
       render()
     })
   }
-  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = true; activeSection = 'dashboard'; requestScrollTop(); render() })
-  for (const button of document.querySelectorAll('[data-action="close-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; render() })
+  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = true; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; activeSection = 'dashboard'; requestScrollTop(); render() })
+  for (const button of document.querySelectorAll('[data-action="close-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; render() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { progressiveProfileGoalsDraft = [...document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]:checked')].map((input) => input.value); progressiveProfileStep = 2; render() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { progressiveProfileStep = 1; render() })
   for (const input of document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]')) input.addEventListener('change', () => {
-    const selected = [...document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]:checked')]
-    if (selected.length > 5) input.checked = false
-    const count = Math.min(selected.length, 5)
+    let selected = [...document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]:checked')]
+    if (selected.length > 5) { input.checked = false; selected = selected.filter((entry) => entry !== input) }
+    const count = selected.length
+    progressiveProfileGoalsDraft = selected.map((entry) => entry.value)
     const feedback = document.querySelector('.progressive-goal-feedback')
-    const details = document.querySelector('.progressive-profile-details')
     if (count === 5) {
-      if (details) details.open = true
-      if (feedback) feedback.textContent = 'Listo: elegiste tus 5 prioridades. Completá los datos de soporte o guardá para continuar.'
-      details?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      progressiveProfileStep = 2
+      render()
       return
     }
-    if (selected.length > 5) {
+    if (input.checked === false && count === 5) {
       if (feedback) feedback.textContent = 'Podés elegir hasta 5 prioridades.'
       return
     }
