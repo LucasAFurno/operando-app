@@ -46,7 +46,7 @@ export const createSupabaseCoreAdapter = (config) => {
     app_public_upsert_customer: ['customers'], app_public_upsert_supplier: ['purchases'], app_public_upsert_product: ['products', 'stock'],
     app_public_open_cash_session: ['cash'], app_public_close_cash_session: ['cash'], app_public_create_cash_movement: ['cash'],
     app_public_create_sale: ['sales', 'cash', 'products', 'customers', 'invoices'], app_public_register_invoice_payment: ['invoices', 'sales', 'cash', 'customers'],
-    app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock'], app_public_upsert_document: ['invoices', 'tickets', 'sales'],
+    app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock'], app_public_upsert_document: ['invoices', 'tickets', 'sales', 'audit'],
     app_public_upsert_branch: ['settings', 'cash'], app_public_upsert_register: ['settings', 'cash'], app_public_upsert_user: ['settings'], app_public_toggle_user_active: ['settings'],
   }
   const rpc = async (fnName, body) => {
@@ -116,6 +116,11 @@ export const createSupabaseCoreAdapter = (config) => {
         p_active_plan: payload?.activePlan || 'custom',
         p_enabled_modules: Array.isArray(payload?.enabledModules) ? payload.enabledModules : null,
         p_allow_public_signup: typeof payload?.allowPublicSignup === 'boolean' ? payload.allowPublicSignup : null,
+      })
+    },
+    async markProductGuideSeen() {
+      return rpc('app_public_mark_product_guide_seen', {
+        p_session_token: getSessionToken(),
       })
     },
     async upsertCustomer(payload) {

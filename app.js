@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=20260727-realtime'
-import { createCloudAuthManager } from './cloud-auth.js?v=20260720l'
+import { createBrowserDataStore } from './data-store.js?v=0866868a2ee1'
+import { createCloudAuthManager } from './cloud-auth.js?v=0866868a2ee1'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'PCLAF Control'
-const appVersion = 'v2026.07.22-o'
+const appVersion = 'v0866868a2ee1'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20soporte%20de%20PCLAF%20Control.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20PCLAF%20Control.'
 const publicSiteUrl = 'https://www.pclafcontrol.com.ar'
@@ -14,6 +14,7 @@ const sectionStorageKey = 'pclaf-control-section'
 const instanceStorageKey = 'pclaf-control-instance'
 const dataStorageKey = 'pclaf-control-data'
 const cloudConfigStorageKey = 'pclaf-control-cloud-config'
+const onboardingStorageKey = 'pclaf-control-onboarding-v1'
 const defaultSupabaseUrl = 'https://rfwsnqmjkclxhbmidbkm.supabase.co'
 const canPersistInBrowser = Boolean(globalThis.window?.pclafDesktop?.isDesktop)
 
@@ -152,6 +153,7 @@ let recoveryState = null
 let hardwareScanBuffer = ''
 let hardwareScanTimer = null
 let hardwareScanListenerBound = false
+let onboardingKeyListenerBound = false
 let feedbackTimer = null
 let pendingScrollTop = false
 let accountAlertsOpen = false
@@ -167,13 +169,47 @@ let arcaCertificateName = ''
 let arcaVerificationState = 'idle'
 let arcaConnectionStatus = 'attention'
 let arcaFiscal = { cuit: '', legalName: '', pointOfSale: '', csrPem: '', certificatePem: '' }
-let platformCommerceSelectedId = ''
-let platformCommerceFilter = 'all'
-let platformSupportFilter = 'all'
-let platformSearchQuery = ''
+let platformUserSelectedId = ''
+let platformUserFilter = 'all'
+let platformUserSearchQuery = ''
 let pendingScrollSelector = ''
 let userDraftRoleId = 'role-cashier'
+let onboarding = { visible: false, step: 0, completed: [] }
+let onboardingLoadedFor = ''
+let onboardingSeenReportedFor = ''
 const pageSizeOptions = [10, 20, 50, 100, 1000]
+
+const onboardingSteps = [
+  { id: 'product', section: 'productos', selector: '[data-action="open-product-form"]', title: 'Cargá un producto', text: 'Usá “Agregar producto” para dar de alta el primer artículo.' },
+  { id: 'category', section: 'productos', selector: '[data-guide-category]', title: 'Definí la categoría', text: 'Esta categoría ordena tu catálogo y acelera las búsquedas.' },
+  { id: 'cash', section: 'caja', selector: '[data-cash-operation]', title: 'Abrí la caja', text: 'Abrí una caja antes de cobrar en efectivo. Transferencias y cuenta no la requieren.' },
+  { id: 'cart', section: 'ventas', selector: 'input[name="quickAddCode"]', title: 'Buscá o escaneá', text: 'Escribí, elegí de la lista o escaneá el artículo para sumarlo al carrito.' },
+  { id: 'charge', section: 'ventas', selector: '.pos-charge-button', title: 'Confirmá el cobro', text: 'Revisá el medio de pago y cobrá una sola vez. El botón se desactiva mientras se procesa.' },
+  { id: 'receipt', section: 'ventas', selector: '[data-sale-action="invoice"]', title: 'Emití el comprobante', text: 'Desde el historial podés generar el comprobante de una venta ya registrada.' },
+]
+
+const getOnboardingStorageKey = () => `${onboardingStorageKey}:${commerceContext?.commerce_id || authInstanceKey || 'local'}:${store?.getSnapshot?.().meta?.currentUserId || 'user'}`
+const saveOnboarding = () => safeStorage.setItem(getOnboardingStorageKey(), JSON.stringify(onboarding))
+const loadOnboarding = (guideSeenAt = '') => {
+  onboarding = { visible: !guideSeenAt, step: 0, completed: [] }
+  if (guideSeenAt) return
+  try {
+    const saved = JSON.parse(safeStorage.getItem(getOnboardingStorageKey(), ''))
+    if (saved && Array.isArray(saved.completed)) onboarding = { visible: false, step: Number(saved.step) || 0, completed: saved.completed }
+  } catch { /* La guía es opcional: un estado inválido no afecta la operación. */ }
+}
+const currentOnboardingStep = () => onboardingSteps[onboarding.step] || onboardingSteps.find((step) => !onboarding.completed.includes(step.id)) || null
+const completeOnboardingStep = (id) => {
+  if (!onboarding.completed.includes(id)) onboarding.completed.push(id)
+  onboarding.step = onboardingSteps.findIndex((step) => !onboarding.completed.includes(step.id))
+  saveOnboarding()
+}
+const guideCard = () => {
+  const step = onboarding.visible ? currentOnboardingStep() : null
+  if (!step) return ''
+  const position = Math.max(1, onboardingSteps.findIndex((entry) => entry.id === step.id) + 1)
+  return `<div class="onboarding-layer"><div class="onboarding-scrim" aria-hidden="true"></div><aside class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-live="polite"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p>${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="focus-onboarding-control">Mostrar dónde hacerlo</button><button type="button" class="text-action" data-action="next-onboarding-step">Siguiente</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside></div>`
+}
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
 const callArca = async (action, payload = {}) => {
@@ -255,13 +291,14 @@ const loadCloudAccess = async (sessionPayload = null) => {
   if (!currentSession?.sessionToken) throw new Error('No hay sesion valida para sincronizar.')
   commerceContext = currentSession.commerceContext || null
   store.setCloudAccessToken(currentSession.sessionToken)
-  await store.syncFromCloud(['dashboard'])
   const activeProfile = store.setCloudAuthSession(currentSession.profile, [])
   if (!activeProfile) {
     commerceContext = null
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
+  await store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
+  store.setCloudAuthSession(currentSession.profile, [])
   startOperationalRealtime()
   return activeProfile
 }
@@ -2087,7 +2124,7 @@ const productsView = (ui) => {
             <label>Precio venta<input type="number" name="salePrice" min="0" required /></label>
             <label>Costo<input type="number" name="costPrice" min="0" required /></label>
             <label>Minimo<input type="number" name="minStock" min="0" required /></label>
-            <label>Categoria<input type="text" name="category" required /></label>
+            <label>Categoria<input type="text" name="category" data-guide-category required /></label>
             <label class="field-check full-span"><input type="checkbox" name="trackStock" checked /><span class="field-check-box" aria-hidden="true"></span><span>Controlar stock de este articulo</span></label>
             <div class="full-span inline-action-group scanner-row">
               <button type="button" class="inline-action" data-action="focus-product-barcode">Usar lector</button>
@@ -2868,160 +2905,34 @@ const ownerAdminView = (ui) => ownerAdminViewV2(ui)
 
 const ownerAdminViewV2 = (ui) => {
   const platform = ui.platformAdmin
-  if (!platform) {
-    return `
-    <section class="view-section"><div class="section-header"><div><p class="kicker">Mi admin</p><h2>Panel PCLAF</h2></div></div>
-      <article class="panel empty-panel">
-        <h3>Consola global no disponible</h3>
-        <p>No pude cargar el resumen de comercios todavia. Reintenta y vuelvo a consultar la base real.</p>
-        <div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div>
-      </article>
-    </section>
-    `
-  }
-  const summary = platform.summary || {}
-  const allCommerces = Array.isArray(platform.commerces) ? platform.commerces : []
-  const normalizedSearch = String(platformSearchQuery || '').trim().toLowerCase()
-  const commerces = allCommerces.filter((entry) => {
-    const matchesStatus = platformCommerceFilter === 'all'
-      || (platformCommerceFilter === 'trial' ? entry.billingStatus === 'trial' : entry.status === platformCommerceFilter || entry.billingStatus === platformCommerceFilter)
-    const matchesSupport = platformSupportFilter === 'all'
-      || (platformSupportFilter === 'attention'
-        ? ['pendiente', 'esperando'].includes(entry.supportStatus)
-        : entry.supportStatus === platformSupportFilter)
-    const matchesSearch = !normalizedSearch
-      || entry.name.toLowerCase().includes(normalizedSearch)
-      || entry.instanceKey.toLowerCase().includes(normalizedSearch)
-      || entry.ownerEmail.toLowerCase().includes(normalizedSearch)
-      || (entry.internalTag || '').toLowerCase().includes(normalizedSearch)
-    return matchesStatus && matchesSupport && matchesSearch
+  if (!platform) return `<section class="view-section"><div class="section-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2></div></div><article class="panel empty-panel"><h3>Consola global no disponible</h3><p>Actualizá para volver a consultar los datos de plataforma.</p><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></article></section>`
+
+  const formatDate = (value) => value ? String(value).replace('T', ' · ').slice(0, 16) : 'Sin dato'
+  const actionLabels = { created: 'Cuenta creada', updated: 'Actualización', deleted: 'Eliminación', signed_in: 'Inicio de sesión', signed_out: 'Cierre de sesión', assigned: 'Acceso asignado', unassigned: 'Acceso retirado', opened: 'Apertura de caja', closed: 'Cierre de caja' }
+  const entityLabels = { user: 'Usuario', user_assignment: 'Acceso', session: 'Sesión', sale: 'Venta', cash_session: 'Caja', cash_movement: 'Movimiento de caja', product: 'Producto', stock_movement: 'Movimiento de stock', purchase_receipt: 'Compra', customer: 'Cliente', supplier: 'Proveedor', document: 'Comprobante', ticket: 'Ticket', branch: 'Sucursal', register: 'Caja', business: 'Comercio' }
+  const entityModule = { sale: 'sales', cash_session: 'cash', cash_movement: 'cash', product: 'products', stock_movement: 'stock', purchase_receipt: 'purchases', customer: 'customers', supplier: 'purchases', document: 'invoices', ticket: 'tickets', user: 'settings', user_assignment: 'settings', session: 'settings', branch: 'settings', register: 'settings', business: 'settings' }
+  const allUsers = Array.isArray(platform.users) ? platform.users : []
+  const search = String(platformUserSearchQuery || '').trim().toLowerCase()
+  const users = allUsers.filter((entry) => {
+    const matchesState = platformUserFilter === 'all' || entry.status === platformUserFilter
+    const haystack = [entry.fullName, entry.email, ...(entry.memberships || []).flatMap((membership) => [membership.commerceName, membership.instanceKey, membership.roleKey])].join(' ').toLowerCase()
+    return matchesState && (!search || haystack.includes(search))
   })
-  const pendingSupport = allCommerces.filter((entry) => ['pendiente', 'esperando'].includes(entry.supportStatus)).length
-  const blockedCommerces = allCommerces.filter((entry) => entry.status === 'blocked').length
-  const publicOpenCommerces = allCommerces.filter((entry) => entry.allowPublicSignup).length
-  if (!platformCommerceSelectedId || !commerces.some((entry) => entry.id === platformCommerceSelectedId)) {
-    platformCommerceSelectedId = commerces[0]?.id || allCommerces[0]?.id || ''
-  }
-  const selectedCommerce = commerces.find((entry) => entry.id === platformCommerceSelectedId) || allCommerces.find((entry) => entry.id === platformCommerceSelectedId) || commerces[0] || allCommerces[0] || null
-  const selectedUsers = Array.isArray(selectedCommerce?.users) ? selectedCommerce.users : []
-  const selectedBranches = Array.isArray(selectedCommerce?.branches) ? selectedCommerce.branches : []
-  const selectedRegisters = Array.isArray(selectedCommerce?.registers) ? selectedCommerce.registers : []
-  const formatDate = (value) => value ? String(value).replace('T', ' ').slice(0, 16) : 'Sin dato'
-  const supportStatusLabel = (value) => {
-    if (value === 'activo') return 'Activo'
-    if (value === 'seguimiento') return 'Seguimiento'
-    if (value === 'esperando') return 'Esperando cliente'
-    if (value === 'resuelto') return 'Resuelto'
-    return 'Pendiente'
-  }
-  const billingLabel = (value) => {
-    if (value === 'trial') return 'Prueba'
-    if (value === 'active') return 'Activo'
-    if (value === 'past_due') return 'Vencido'
-    if (value === 'paused') return 'Pausado'
-    if (value === 'cancelled') return 'Cancelado'
-    return value || 'Sin dato'
-  }
-  const commerceLabel = (value) => {
-    if (value === 'active') return 'Activo'
-    if (value === 'paused') return 'Pausado'
-    if (value === 'blocked') return 'Bloqueado'
-    return value || 'Sin dato'
-  }
-  const trialLabel = (entry) => {
-    if (!entry?.trialEndsAt) return 'Sin fecha'
-    return String(entry.trialEndsAt).slice(0, 10)
-  }
-  return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Mi admin</p><h2>Panel PCLAF</h2></div></div>
+  if (!platformUserSelectedId || !users.some((entry) => entry.id === platformUserSelectedId)) platformUserSelectedId = users[0]?.id || allUsers[0]?.id || ''
+  const selectedUser = allUsers.find((entry) => entry.id === platformUserSelectedId) || users[0] || allUsers[0] || null
+  const activeUsers = allUsers.filter((entry) => entry.status === 'active').length
+  const usersWithActivity = allUsers.filter((entry) => entry.activity?.length).length
+  const trace = selectedUser?.activity || []
+  return `<section class="view-section platform-trace-view"><div class="section-header platform-console-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2><p class="section-description">Elegí una persona para seguir su actividad real en todos sus comercios.</p></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
-    <section class="module-summary-grid">
-      <article class="metric-card compact"><span>Comercios</span><strong>${summary.totalCommerces || 0}</strong><p>${summary.activeCommerces || 0} activos</p></article>
-      <article class="metric-card compact"><span>Pruebas</span><strong>${summary.trialCommerces || 0}</strong><p>${summary.expiredCommerces || 0} vencidos</p></article>
-      <article class="metric-card compact"><span>Estructura</span><strong>${summary.totalBranches || 0}</strong><p>${summary.totalRegisters || 0} cajas / ${summary.totalUsers || 0} usuarios</p></article>
-      <article class="metric-card compact"><span>Soporte</span><strong>${pendingSupport}</strong><p>${blockedCommerces} bloqueados / ${publicOpenCommerces} altas abiertas</p></article>
+    <section class="platform-trace-stats"><span><strong>${allUsers.length}</strong> usuarios</span><span><strong>${activeUsers}</strong> activos</span><span><strong>${usersWithActivity}</strong> con actividad registrada</span></section>
+    <section class="platform-trace-workspace"><aside class="panel platform-user-directory"><div class="panel-head"><div><p class="kicker">Directorio</p><h3>Usuarios</h3></div><span class="panel-count">${users.length}</span></div><div class="platform-user-filters"><input type="search" value="${escapeHtml(platformUserSearchQuery)}" data-platform-user-search placeholder="Buscar persona o comercio" /><select data-platform-user-filter><option value="all" ${platformUserFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformUserFilter === 'active' ? 'selected' : ''}>Activos</option><option value="inactive" ${platformUserFilter === 'inactive' ? 'selected' : ''}>Inactivos</option></select></div><div class="platform-user-list">${users.length ? users.map((entry) => `<button type="button" class="platform-user-row ${entry.id === selectedUser?.id ? 'is-selected' : ''}" data-platform-user-select="${entry.id}"><span class="platform-user-avatar">${escapeHtml((entry.fullName || '?').slice(0, 1).toUpperCase())}</span><span><strong>${escapeHtml(entry.fullName)}</strong><small>${escapeHtml(entry.email || 'Sin email')}</small><em>${entry.memberships?.[0]?.commerceName || 'Sin comercio'}</em></span><time>${entry.lastLoginAt ? formatDate(entry.lastLoginAt) : 'Sin acceso'}</time></button>`).join('') : '<p class="empty-state">No hay usuarios para este filtro.</p>'}</div></aside>
+      ${selectedUser ? `<section class="platform-user-detail"><header class="platform-user-header"><span class="platform-user-avatar large">${escapeHtml((selectedUser.fullName || '?').slice(0, 1).toUpperCase())}</span><div><p class="kicker">Perfil seleccionado</p><h3>${escapeHtml(selectedUser.fullName)}</h3><p>${escapeHtml(selectedUser.email || 'Sin email')} · ${selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}</p></div><div class="platform-user-meta"><span>Alta<strong>${formatDate(selectedUser.createdAt)}</strong></span><span>Último acceso<strong>${formatDate(selectedUser.lastLoginAt)}</strong></span></div></header>
+        <section class="platform-membership-panel"><p class="kicker">Comercios y permisos</p><div>${(selectedUser.memberships || []).map((membership) => `<article><strong>${escapeHtml(membership.commerceName)}</strong><span>${escapeHtml(membership.instanceKey)} · ${membership.isOwner ? 'Propietario' : escapeHtml(membership.roleKey)}</span><em class="${membership.status === 'active' ? 'is-active' : ''}">${membership.status === 'active' ? 'Activo' : 'Inactivo'}</em></article>`).join('') || '<p class="empty-state">No tiene comercios asignados.</p>'}</div></section>
+        <section class="panel platform-user-trace-panel"><div class="panel-head"><div><p class="kicker">Auditoría de usuario</p><h3>Línea de trazabilidad</h3><p>Solo metadatos: acción, hora y comercio.</p></div><span class="panel-count">${trace.length} eventos</span></div><div class="platform-user-trace">${trace.length ? trace.map((event) => { const module = entityModule[event.entityType] || 'settings'; return `<article class="platform-trace-event module-${module}"><span class="platform-trace-node"></span><div><div><span class="audit-module-tag module-${module}">${entityLabels[event.entityType] || 'Sistema'}</span><time>${formatDate(event.createdAt)}</time></div><strong>${actionLabels[event.action] || 'Actividad registrada'}</strong><p>${event.commerceName ? `En ${escapeHtml(event.commerceName)}` : 'Registro de cuenta PCLAF'}</p></div></article>` }).join('') : '<p class="empty-state">Todavía no hay eventos auditados para esta persona.</p>'}</div></section>
+      </section>` : ''}
     </section>
-    <section class="module-board admin-board">
-      <article class="panel module-side"><div class="panel-head"><div><h3>Estado general</h3><p>Resumen corto de la cuenta actual</p></div></div>
-        <div class="priority-list">
-          <div class="priority-item"><strong>Cuenta PCLAF</strong><p>${ui.user.fullName}<br /><small>${maskEmail(ui.user.email) || 'Sin email'}</small></p></div>
-          <div class="priority-item"><strong>Activos</strong><p>${summary.activeCommerces || 0}<br /><small>${summary.pausedCommerces || 0} pausados</small></p></div>
-          <div class="priority-item"><strong>Pruebas</strong><p>${summary.trialCommerces || 0}<br /><small>${summary.expiredCommerces || 0} para revisar</small></p></div>
-          <div class="priority-item"><strong>Vista</strong><p>Global PCLAF<br /><small>Sin mezclar operacion diaria</small></p></div>
-        </div>
-        <div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button><button type="button" class="ghost-action" data-action="open-support">Soporte</button><button type="button" class="danger-action" data-action="sign-out">Cerrar sesion</button></div>
-      </article>
-      <div class="module-main">
-        <article class="panel"><div class="panel-head"><div><h3>Seguimiento rapido</h3><p>Busca y filtra cuentas para operar mas rapido</p></div></div>
-          <div class="form-grid compact-form">
-            <label>Buscar comercio<input type="search" value="${platformSearchQuery}" data-platform-search placeholder="Nombre, codigo, email o etiqueta" /></label>
-            <label>Estado<select data-platform-filter="status"><option value="all" ${platformCommerceFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformCommerceFilter === 'active' ? 'selected' : ''}>Activos</option><option value="trial" ${platformCommerceFilter === 'trial' ? 'selected' : ''}>Prueba</option><option value="paused" ${platformCommerceFilter === 'paused' ? 'selected' : ''}>Pausados</option><option value="blocked" ${platformCommerceFilter === 'blocked' ? 'selected' : ''}>Bloqueados</option><option value="past_due" ${platformCommerceFilter === 'past_due' ? 'selected' : ''}>Vencidos</option></select></label>
-            <label>Soporte<select data-platform-filter="support"><option value="all" ${platformSupportFilter === 'all' ? 'selected' : ''}>Todos</option><option value="attention" ${platformSupportFilter === 'attention' ? 'selected' : ''}>Requiere atencion</option><option value="activo" ${platformSupportFilter === 'activo' ? 'selected' : ''}>Activo</option><option value="seguimiento" ${platformSupportFilter === 'seguimiento' ? 'selected' : ''}>Seguimiento</option><option value="esperando" ${platformSupportFilter === 'esperando' ? 'selected' : ''}>Esperando cliente</option><option value="resuelto" ${platformSupportFilter === 'resuelto' ? 'selected' : ''}>Resuelto</option></select></label>
-          </div>
-          <div class="chip-grid">
-            <span class="module-chip ${platformCommerceFilter === 'all' ? 'is-active' : ''}" data-platform-chip="all">Todas ${allCommerces.length}</span>
-            <span class="module-chip ${platformCommerceFilter === 'trial' ? 'is-active' : ''}" data-platform-chip="trial">Prueba ${summary.trialCommerces || 0}</span>
-            <span class="module-chip ${platformCommerceFilter === 'blocked' ? 'is-active' : ''}" data-platform-chip="blocked">Bloqueadas ${blockedCommerces}</span>
-            <span class="module-chip ${platformSupportFilter === 'attention' ? 'is-active' : ''}" data-platform-support-chip="attention">Pendientes ${pendingSupport}</span>
-          </div>
-        </article>
-        <article class="panel"><div class="panel-head"><div><h3>Comercios creados</h3><p>Estado comercial y operativo sin entrar al negocio</p></div></div>
-          ${dataTable(['Comercio', 'Pack', 'Soporte', 'Cobro', 'Prueba', 'Ultimo acceso', 'Gestion'], commerces.length ? commerces.map((entry) => `<div class="data-row ${entry.id === platformCommerceSelectedId ? 'is-selected' : ''}"><span><strong>${entry.name}</strong><br /><small>${entry.instanceKey}</small></span><span>${planLabels[entry.activePlan] || entry.activePlan}</span><span>${supportStatusLabel(entry.supportStatus)}<br /><small>${entry.supportOwner || 'Sin asignar'}</small></span><span>${billingLabel(entry.billingStatus)}</span><span>${trialLabel(entry)}</span><span>${entry.lastAccessAt ? formatDate(entry.lastAccessAt) : 'Nunca'}</span><span><button type="button" class="inline-action" data-platform-select="${entry.id}">Ver detalle</button></span></div>`) : [`<div class="data-row"><span>No hay comercios para este filtro.</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span><span>-</span></div>`])}
-        </article>
-        ${selectedCommerce ? `<div class="compact-form-grid">
-          <article class="panel"><div class="panel-head"><div><h3>Detalle del comercio</h3><p>Pack, estado, soporte y acceso publico</p></div></div>
-            <form class="form-grid compact-form" data-form="platform-commerce">
-              <input type="hidden" name="commerceId" value="${selectedCommerce.id}" />
-              <label>Comercio<input type="text" value="${selectedCommerce.name}" disabled /></label>
-              <label>Dueño<input type="email" value="${selectedCommerce.ownerEmail}" disabled /></label>
-              <label>Pack<select name="activePlan"><option value="basic" ${selectedCommerce.activePlan === 'basic' ? 'selected' : ''}>Gestion base</option><option value="retail" ${selectedCommerce.activePlan === 'retail' ? 'selected' : ''}>Mostrador</option><option value="full" ${selectedCommerce.activePlan === 'full' ? 'selected' : ''}>Operacion</option><option value="multi" ${selectedCommerce.activePlan === 'multi' ? 'selected' : ''}>Multi sucursal</option><option value="custom" ${selectedCommerce.activePlan === 'custom' ? 'selected' : ''}>Personalizado</option></select></label>
-              <label>Estado<select name="status"><option value="active" ${selectedCommerce.status === 'active' ? 'selected' : ''}>Activo</option><option value="paused" ${selectedCommerce.status === 'paused' ? 'selected' : ''}>Pausado</option><option value="blocked" ${selectedCommerce.status === 'blocked' ? 'selected' : ''}>Bloqueado</option></select></label>
-              <label>Cobro<select name="billingStatus"><option value="trial" ${selectedCommerce.billingStatus === 'trial' ? 'selected' : ''}>Prueba</option><option value="active" ${selectedCommerce.billingStatus === 'active' ? 'selected' : ''}>Activo</option><option value="past_due" ${selectedCommerce.billingStatus === 'past_due' ? 'selected' : ''}>Vencido</option><option value="paused" ${selectedCommerce.billingStatus === 'paused' ? 'selected' : ''}>Pausado</option><option value="cancelled" ${selectedCommerce.billingStatus === 'cancelled' ? 'selected' : ''}>Cancelado</option></select></label>
-              <label>Alta publica<select name="allowPublicSignup"><option value="true" ${selectedCommerce.allowPublicSignup ? 'selected' : ''}>Permitida</option><option value="false" ${!selectedCommerce.allowPublicSignup ? 'selected' : ''}>Cerrada</option></select></label>
-              <label>Responsable PCLAF<input type="text" name="supportOwner" value="${selectedCommerce.supportOwner || ''}" placeholder="Quien sigue esta cuenta" /></label>
-              <label>Seguimiento<select name="supportStatus"><option value="pendiente" ${selectedCommerce.supportStatus === 'pendiente' ? 'selected' : ''}>Pendiente</option><option value="activo" ${selectedCommerce.supportStatus === 'activo' ? 'selected' : ''}>Activo</option><option value="seguimiento" ${selectedCommerce.supportStatus === 'seguimiento' ? 'selected' : ''}>Seguimiento</option><option value="esperando" ${selectedCommerce.supportStatus === 'esperando' ? 'selected' : ''}>Esperando cliente</option><option value="resuelto" ${selectedCommerce.supportStatus === 'resuelto' ? 'selected' : ''}>Resuelto</option></select></label>
-              <label>Etiqueta interna<input type="text" name="internalTag" value="${selectedCommerce.internalTag || ''}" placeholder="Kiosco, taller, demo, referido" /></label>
-              <label class="full-span">Nota comercial<textarea name="commercialNote" rows="3" placeholder="Seguimiento, interes, propuesta o proximo paso">${selectedCommerce.commercialNote || ''}</textarea></label>
-              <label class="full-span">Nota de cobro<textarea name="billingNote" rows="3" placeholder="Situacion de facturacion o cobro">${selectedCommerce.billingNote || ''}</textarea></label>
-              <button type="submit">Guardar cambios</button>
-            </form>
-            <div class="panel-note"><span>Alta: ${formatDate(selectedCommerce.createdAt)}</span><span>Prueba hasta: ${selectedCommerce.trialEndsAt ? selectedCommerce.trialEndsAt.slice(0, 10) : 'Sin fecha'}</span></div>
-          </article>
-          <article class="panel"><div class="panel-head"><div><h3>Lectura ejecutiva</h3><p>Seguimiento comercial y tecnico</p></div></div>
-            <div class="priority-list">
-              <div class="priority-item"><strong>Instancia</strong><p>${selectedCommerce.instanceKey}</p></div>
-              <div class="priority-item"><strong>Estado</strong><p>${commerceLabel(selectedCommerce.status)}<br /><small>${billingLabel(selectedCommerce.billingStatus)}</small></p></div>
-              <div class="priority-item"><strong>Ultimo acceso</strong><p>${selectedCommerce.lastAccessAt ? formatDate(selectedCommerce.lastAccessAt) : 'Nunca'}</p></div>
-              <div class="priority-item"><strong>Estructura</strong><p>${selectedCommerce.branchesCount} sucursales<br /><small>${selectedCommerce.registersCount} cajas / ${selectedCommerce.usersCount} usuarios</small></p></div>
-              <div class="priority-item"><strong>Soporte</strong><p>${supportStatusLabel(selectedCommerce.supportStatus)}<br /><small>${selectedCommerce.supportOwner || 'Sin asignar'}</small></p></div>
-              <div class="priority-item"><strong>Etiqueta</strong><p>${selectedCommerce.internalTag || 'Sin etiqueta'}</p></div>
-            </div>
-            <div class="chip-grid">${(selectedCommerce.enabledModules || []).map((moduleKey) => `<span class="module-chip is-active">${ui.moduleCatalog[moduleKey]?.name || moduleKey}</span>`).join('') || '<span class="module-chip">Sin modulos</span>'}</div>
-            <div class="timeline-list compact-timeline">
-              <div class="timeline-item"><strong>Nota comercial</strong><p>${selectedCommerce.commercialNote || 'Sin seguimiento comercial cargado.'}</p></div>
-              <div class="timeline-item"><strong>Facturacion</strong><p>${selectedCommerce.billingNote || 'Sin nota de cobro cargada.'}</p></div>
-            </div>
-          </article>
-        </div>` : ''}
-        ${selectedCommerce ? `<div class="compact-form-grid">
-          <article class="panel"><div class="panel-head"><div><h3>Usuarios del cliente</h3><p>Accesos y ultimo uso</p></div></div>
-            ${dataTable(['Usuario', 'Perfil', 'Estado', 'Ultimo acceso'], selectedUsers.map((entry) => `<div class="data-row"><span>${entry.full_name || entry.fullName || 'Usuario'}<br /><small>${maskEmail(entry.email) || 'Sin email'}</small></span><span>${entry.is_owner ? 'Propietario' : (entry.role_key || entry.roleKey || 'Usuario')}</span><span>${entry.status === 'active' ? 'Activo' : 'Inactivo'}</span><span>${entry.last_login_at ? formatDate(entry.last_login_at) : 'Nunca'}</span></div>`))}
-          </article>
-          <article class="panel"><div class="panel-head"><div><h3>Sucursales y cajas</h3><p>Estructura ligada al comercio</p></div></div>
-            ${dataTable(['Sucursal', 'Codigo', 'Cajas'], selectedBranches.map((entry) => `<div class="data-row"><span>${entry.name || 'Sucursal'}</span><span>${entry.code || '-'}</span><span>${selectedRegisters.filter((register) => register.branch_id === entry.id || register.branchId === entry.id).length}</span></div>`))}
-          </article>
-        </div>` : ''}
-        <article class="panel"><div class="panel-head"><div><h3>Que controlas desde aca</h3><p>Tu consola de plataforma, no la operacion diaria del cliente</p></div></div>
-          <div class="timeline-list">
-            <div class="timeline-item"><strong>Prueba, activo o bloqueado</strong><p>Ves el estado comercial real de cada cuenta.</p><span>Puedes pausar altas publicas o cambiar pack sin entrar al negocio.</span></div>
-            <div class="timeline-item"><strong>Detalle por cliente</strong><p>Dueño, fecha de alta, ultimo acceso, sucursales, cajas y usuarios.</p><span>Esto te sirve para soporte y seguimiento comercial.</span></div>
-            <div class="timeline-item"><strong>Separado del admin del cliente</strong><p>La operacion diaria sigue dentro del comercio.</p><span>Mi admin queda reservado para el control general de PCLAF Control.</span></div>
-          </div>
-        </article>
-      </div>
-    </section>
-  </section>
-`
+  </section>`
 }
 
 const settingsView = (ui) => settingsViewV2(ui)
@@ -3201,6 +3112,19 @@ const progressiveProfileModal = (ui) => {
 }
 
 const renderApp = (ui) => {
+  const onboardingKey = getOnboardingStorageKey()
+  if (onboardingLoadedFor !== onboardingKey) {
+    onboardingLoadedFor = onboardingKey
+    loadOnboarding(ui.user?.productGuideSeenAt)
+  }
+  if (!ui.user?.productGuideSeenAt && onboarding.visible && onboardingSeenReportedFor !== onboardingKey) {
+    onboardingSeenReportedFor = onboardingKey
+    store.markProductGuideSeen().then((result) => {
+      if (result?.ok) authManager?.updateSessionProfile?.({ product_guide_seen_at: result.productGuideSeenAt })
+    }).catch(() => {
+      // La guía sigue siendo opcional si la red se corta durante este aviso.
+    })
+  }
   const allowedNav = getAllowedNav(ui)
   if (!allowedNav.some((item) => item.id === activeSection)) activeSection = allowedNav[0]?.id || 'dashboard'
   saveSection()
@@ -3255,6 +3179,7 @@ const renderApp = (ui) => {
             </form>`}
           </div>
           <div class="${topbarRightClass}">
+            <button type="button" class="topbar-guide-action" data-action="resume-onboarding" aria-label="Abrir guía inicial">Guía inicial</button>
             ${isDevEnvironment ? `<span class="topbar-runtime is-dev">${environmentLabel}</span>` : ''}
             <div class="account-alerts-wrap">
               <button class="account-card compact-meta ${accountAlertsOpen ? 'is-open' : ''}" type="button" data-action="toggle-account-alerts" aria-label="Abrir menu de cuenta" aria-expanded="${accountAlertsOpen ? 'true' : 'false'}">
@@ -3292,7 +3217,7 @@ const renderApp = (ui) => {
             </div>
           </div>
         </header>
-        <main class="page">${renderCurrentView(ui)}</main>
+        <main class="page">${guideCard()}${renderCurrentView(ui)}</main>
         ${progressiveProfileModal(ui)}
       </div>
     </div>
@@ -3736,6 +3661,9 @@ const importData = async (event) => {
 const handleSubmit = async (event) => {
   event.preventDefault()
   const form = event.currentTarget
+  if (form.dataset.submitting === 'true') return
+  form.dataset.submitting = 'true'
+  for (const button of form.querySelectorAll('button[type="submit"]')) button.disabled = true
   const formData = new FormData(form, event.submitter)
   const kind = form.dataset.form
 
@@ -3930,6 +3858,7 @@ const handleSubmit = async (event) => {
   if (kind === 'product') {
     const result = await store.createProduct({ name: formData.get('name'), sku: formData.get('sku'), barcode: formData.get('barcode'), stock: formData.get('stock'), salePrice: formData.get('salePrice'), costPrice: formData.get('costPrice'), minStock: formData.get('minStock'), category: formData.get('category'), trackStock: formData.get('trackStock') === 'on' })
     feedbackMessage = result.message || ''
+    if (result.ok) { completeOnboardingStep('product'); completeOnboardingStep('category') }
     productFormOpen = false
   }
   if (kind === 'product-inline') {
@@ -4067,6 +3996,7 @@ const handleSubmit = async (event) => {
   if (kind === 'open-cash') {
     const result = await store.openCashSession({ registerId: formData.get('registerId'), openingAmount: formData.get('openingAmount') })
     feedbackMessage = result.message || ''
+    if (result.ok) completeOnboardingStep('cash')
     cashFormOpen = false
   }
   if (kind === 'close-cash') {
@@ -4176,6 +4106,7 @@ const handleSubmit = async (event) => {
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
     feedbackMessage = result.message || ''
+    if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge') }
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
@@ -4218,6 +4149,54 @@ const bindEvents = () => {
     })
   }
   for (const form of document.querySelectorAll('form[data-form]')) form.addEventListener('submit', handleSubmit)
+  const focusOnboardingControl = () => {
+    const step = currentOnboardingStep()
+    if (!step) return
+    activeSection = step.section
+    if (step.id === 'product' || step.id === 'category') productFormOpen = true
+    if (step.id === 'cash') cashFormOpen = true
+    onboarding.visible = true
+    requestScrollTop()
+    render()
+    window.requestAnimationFrame(() => {
+      document.querySelectorAll('.is-onboarding-target').forEach((element) => element.classList.remove('is-onboarding-target'))
+      const target = document.querySelector(step.selector)
+      target?.classList.add('is-onboarding-target')
+      target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+      target?.focus?.({ preventScroll: true })
+    })
+  }
+  for (const button of document.querySelectorAll('[data-action="resume-onboarding"]')) button.addEventListener('click', () => {
+    onboarding.step = onboardingSteps.findIndex((step) => !onboarding.completed.includes(step.id))
+    if (onboarding.step < 0) {
+      feedbackMessage = 'Ya completaste la guía inicial. Podés seguir operando normalmente.'
+      render()
+      return
+    }
+    onboarding.visible = true
+    saveOnboarding()
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="dismiss-onboarding"]')) button.addEventListener('click', () => {
+    onboarding.visible = false
+    saveOnboarding()
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="next-onboarding-step"]')) button.addEventListener('click', () => {
+    onboarding.step = Math.min(onboarding.step + 1, onboardingSteps.length - 1)
+    saveOnboarding()
+    focusOnboardingControl()
+  })
+  for (const button of document.querySelectorAll('[data-action="focus-onboarding-control"]')) button.addEventListener('click', focusOnboardingControl)
+  if (!onboardingKeyListenerBound) {
+    onboardingKeyListenerBound = true
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !onboarding.visible) return
+      onboarding.visible = false
+      saveOnboarding()
+      render()
+    })
+  }
   const updateSaleTotals = () => {
     let subtotal = 0
     for (const input of document.querySelectorAll('input[name^="qty_"]')) {
@@ -4270,6 +4249,7 @@ const bindEvents = () => {
     }
     saleDraftQuantities = { ...readCurrentSaleQuantities(), [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1 }
     saleQuickAddCode = ''
+    completeOnboardingStep('cart')
     feedbackMessage = ''
     render()
   }
@@ -4664,8 +4644,8 @@ const bindEvents = () => {
     requestScrollTop()
     render()
   })
-  for (const button of document.querySelectorAll('[data-platform-select]')) button.addEventListener('click', () => {
-    platformCommerceSelectedId = button.dataset.platformSelect || ''
+  for (const button of document.querySelectorAll('[data-platform-user-select]')) button.addEventListener('click', () => {
+    platformUserSelectedId = button.dataset.platformUserSelect || ''
     requestScrollTop()
     render()
   })
@@ -4678,21 +4658,12 @@ const bindEvents = () => {
     }
     render()
   })
-  for (const input of document.querySelectorAll('[data-platform-search]')) input.addEventListener('input', () => {
-    platformSearchQuery = input.value || ''
-    rerenderSearchKeepingFocus(input, '[data-platform-search]')
+  for (const input of document.querySelectorAll('[data-platform-user-search]')) input.addEventListener('input', () => {
+    platformUserSearchQuery = input.value || ''
+    rerenderSearchKeepingFocus(input, '[data-platform-user-search]')
   })
-  for (const select of document.querySelectorAll('[data-platform-filter]')) select.addEventListener('change', () => {
-    if (select.dataset.platformFilter === 'status') platformCommerceFilter = select.value || 'all'
-    if (select.dataset.platformFilter === 'support') platformSupportFilter = select.value || 'all'
-    render()
-  })
-  for (const chip of document.querySelectorAll('[data-platform-chip]')) chip.addEventListener('click', () => {
-    platformCommerceFilter = chip.dataset.platformChip || 'all'
-    render()
-  })
-  for (const chip of document.querySelectorAll('[data-platform-support-chip]')) chip.addEventListener('click', () => {
-    platformSupportFilter = chip.dataset.platformSupportChip || 'all'
+  for (const select of document.querySelectorAll('[data-platform-user-filter]')) select.addEventListener('change', () => {
+    platformUserFilter = select.value || 'all'
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-customer-form"]')) button.addEventListener('click', () => {
@@ -5001,18 +4972,21 @@ const bindEvents = () => {
       }
       if (button.dataset.saleAction === 'receipt') {
         printReceipt(button.dataset.id)
+        completeOnboardingStep('receipt')
         feedbackMessage = 'Comprobante listo para imprimir.'
         render()
         return
       }
       if (button.dataset.saleAction === 'receipt-80') {
         printThermalReceipt(button.dataset.id, '80')
+        completeOnboardingStep('receipt')
         feedbackMessage = 'Ticket 80 mm listo para imprimir.'
         render()
         return
       }
       if (button.dataset.saleAction === 'receipt-58') {
         printThermalReceipt(button.dataset.id, '58')
+        completeOnboardingStep('receipt')
         feedbackMessage = 'Ticket 58 mm listo para imprimir.'
         render()
         return
@@ -5029,6 +5003,7 @@ const bindEvents = () => {
             ? store.cancelSale(button.dataset.id)
             : store.createReturnFromSale(button.dataset.id)
       feedbackMessage = result.message || ''
+      if (result.ok && button.dataset.saleAction === 'invoice') completeOnboardingStep('receipt')
       render()
     })
   }

@@ -1,4 +1,4 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=20260727-realtime'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=0866868a2ee1'
 
 const dataStorageKey = 'pclaf-control-data'
 const cloudConfigStorageKey = 'pclaf-control-cloud-config'
@@ -1062,6 +1062,7 @@ export const createBrowserDataStore = (options = {}) => {
       isPlatformAdmin: Boolean(entry.is_platform_admin || entry.isPlatformAdmin),
       allowedModules: normalizeStringList(entry.allowed_modules || entry.allowedModules, validModuleKeys),
       blockedPermissions: normalizeStringList(entry.blocked_permissions || entry.blockedPermissions, validPermissionKeys),
+      productGuideSeenAt: entry.product_guide_seen_at || entry.productGuideSeenAt || '',
       createdAt: entry.created_at || entry.createdAt || todayIso(),
       updatedAt: entry.updated_at || entry.updatedAt || todayIso(),
     }
@@ -1081,6 +1082,32 @@ export const createBrowserDataStore = (options = {}) => {
         totalBranches: Number(summary.total_branches || summary.totalBranches || 0),
         totalRegisters: Number(summary.total_registers || summary.totalRegisters || 0),
       },
+      users: Array.isArray(payload.users) ? payload.users.map((entry) => ({
+        id: entry.id,
+        fullName: entry.full_name || entry.fullName || 'Usuario',
+        email: String(entry.email || '').trim().toLowerCase(),
+        status: entry.status || 'active',
+        isPlatformAdmin: Boolean(entry.is_platform_admin ?? entry.isPlatformAdmin),
+        createdAt: entry.created_at || entry.createdAt || '',
+        lastLoginAt: entry.last_login_at || entry.lastLoginAt || '',
+        memberships: Array.isArray(entry.memberships) ? entry.memberships.map((membership) => ({
+          id: membership.id,
+          commerceId: membership.commerce_id || membership.commerceId || '',
+          commerceName: membership.commerce_name || membership.commerceName || 'Comercio',
+          instanceKey: membership.instance_key || membership.instanceKey || '',
+          roleKey: membership.role_key || membership.roleKey || 'user',
+          status: membership.status || 'active',
+          isOwner: Boolean(membership.is_owner ?? membership.isOwner),
+        })) : [],
+        activity: Array.isArray(entry.activity) ? entry.activity.map((activity) => ({
+          id: activity.id,
+          entityType: activity.entity_type || activity.entityType || 'system',
+          action: activity.action || 'updated',
+          commerceId: activity.commerce_id || activity.commerceId || '',
+          commerceName: activity.commerce_name || activity.commerceName || '',
+          createdAt: activity.created_at || activity.createdAt || '',
+        })) : [],
+      })) : [],
       commerces: Array.isArray(payload.commerces) ? payload.commerces.map((entry) => ({
         id: entry.id,
         name: entry.name || 'Comercio',
@@ -1256,9 +1283,11 @@ export const createBrowserDataStore = (options = {}) => {
       state.session.authenticated = false
       return null
     }
-    if (users.length) replaceCloudUsers(users)
-    const existingUser = state.users.find((entry) => entry.id === normalizedProfile.id)
-    state.users = [{ ...existingUser, ...normalizedProfile }, ...state.users.filter((entry) => entry.id !== normalizedProfile.id)]
+    const normalizedUsers = users.length ? replaceCloudUsers(users) : state.users
+    const existingUser = normalizedUsers.find((entry) => entry.id === normalizedProfile.id)
+    state.users = existingUser
+      ? state.users.map((entry) => entry.id === normalizedProfile.id ? { ...entry, ...normalizedProfile } : entry)
+      : [normalizedProfile, ...state.users.filter((entry) => entry.id !== normalizedProfile.id)]
     state.session.userId = normalizedProfile.id
     state.session.authenticated = normalizedProfile.status === 'active'
     return normalizedProfile
@@ -2783,36 +2812,6 @@ export const createBrowserDataStore = (options = {}) => {
     const before = state[key].find((item) => item.id === id) || null
     if (!before) return { ok: false, message: 'Registro no encontrado.' }
 
-    if (entity === 'customer' || entity === 'supplier') {
-      if (cloudCoreAdapter) {
-        if (entity === 'customer') await cloudCoreAdapter.upsertCustomer({ ...before, isActive: false })
-        if (entity === 'supplier') await cloudCoreAdapter.upsertSupplier({ ...before, isActive: false })
-        await syncFromCloud()
-        return { ok: true, message: entity === 'customer' ? 'Cliente eliminado.' : 'Proveedor eliminado.' }
-      }
-    }
-
-    if (entity === 'branch') {
-      const replacement = state.branches.find((branch) => branch.id !== id)
-      if (!replacement) return { ok: false, message: 'No podes eliminar la unica sucursal del comercio.' }
-      const branchRegisters = state.registers.filter((register) => register.branchId === id)
-      if (cloudCoreAdapter) {
-        await cloudCoreAdapter.upsertBranch({ ...before, isActive: false })
-        for (const register of branchRegisters) await cloudCoreAdapter.upsertRegister({ ...register, isActive: false })
-        await syncFromCloud()
-      } else {
-        state.branches = state.branches.filter((branch) => branch.id !== id)
-        state.registers = state.registers.filter((register) => register.branchId !== id)
-        if (state.business.currentBranchId === id) {
-          state.business.currentBranchId = replacement.id
-          state.business.currentRegisterId = state.registers.find((register) => register.branchId === replacement.id)?.id || ''
-        }
-        pushAudit(state, currentUser().id, entity, id, 'deleted', null, before)
-        save()
-      }
-      return { ok: true, message: 'Sucursal eliminada de la operación.' }
-    }
-
     if (entity === 'register') {
       const hasOpenCashSession = state.cashSessions.some((session) => session.registerId === id && session.status === 'open')
       if (hasOpenCashSession) return { ok: false, message: 'No podes eliminar una caja con una sesion abierta. Cerra la caja primero.' }
@@ -2913,6 +2912,16 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Conexion cloud desactivada.' }
   }
 
+  const markProductGuideSeen = async () => {
+    if (!cloudCoreAdapter?.markProductGuideSeen) return { ok: true, productGuideSeenAt: new Date().toISOString() }
+    const result = await cloudCoreAdapter.markProductGuideSeen()
+    const productGuideSeenAt = result?.product_guide_seen_at || result?.productGuideSeenAt || new Date().toISOString()
+    if (cloudAuthProfile) cloudAuthProfile.productGuideSeenAt = productGuideSeenAt
+    const user = state.users.find((entry) => entry.id === state.session.userId)
+    if (user) user.productGuideSeenAt = productGuideSeenAt
+    return { ok: true, productGuideSeenAt }
+  }
+
   const updatePlatformCommerce = async (payload = {}) => {
     if (!cloudCoreAdapter?.updatePlatformCommerce) return { ok: false, message: 'La consola PCLAF no esta disponible.' }
     const result = await cloudCoreAdapter.updatePlatformCommerce(payload)
@@ -2969,6 +2978,7 @@ export const createBrowserDataStore = (options = {}) => {
     getCloudConnection,
     setCloudConnection,
     clearCloudConnection,
+    markProductGuideSeen,
     setCloudAccessToken,
     setCloudAuthSession,
     clearCloudAuthSession,
