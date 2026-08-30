@@ -30,6 +30,14 @@ create table if not exists public.commerce_accounts (
   updated_at timestamptz not null default now()
 );
 
+alter table public.commerce_accounts
+  add column if not exists onboarding_country text not null default '',
+  add column if not exists onboarding_industry text not null default '',
+  add column if not exists onboarding_phone text not null default '',
+  add column if not exists onboarding_needs_arca boolean,
+  add column if not exists onboarding_goals jsonb not null default '[]'::jsonb,
+  add column if not exists onboarding_status text not null default 'pending';
+
 alter table public.control_users
   add column if not exists active_commerce_id uuid references public.commerce_accounts(id) on delete set null,
   add column if not exists active_branch_id uuid,

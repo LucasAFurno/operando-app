@@ -266,6 +266,7 @@ const seedData = {
     currentRegisterId: '',
     enabledModules: modulePresets.full,
     activePlan: 'full',
+    progressiveProfile: { country: '', industry: '', phone: '', needsArca: null, operationalGoals: [], status: 'pending' },
     documentCounters: {
       invoiceA: 1,
       invoiceB: 184,
@@ -286,7 +287,7 @@ const seedData = {
   registers: [],
   roles,
   users: [
-    { id: makeId(), fullName: 'Administrador demo', roleId: roleIds.admin, email: 'admin@demo.local', pin: 'demo1234', isActive: true, allowedModules: [], blockedPermissions: [] },
+    { id: makeId(), fullName: 'Administrador demo', roleId: roleIds.admin, email: 'admin@demo.local', pin: 'demo1234', isActive: true, isOwner: true, allowedModules: [], blockedPermissions: [] },
     { id: makeId(), fullName: 'Caja demo', roleId: roleIds.cashier, email: 'caja@demo.local', pin: 'demo1111', isActive: true, allowedModules: [], blockedPermissions: [] },
     { id: makeId(), fullName: 'Deposito demo', roleId: roleIds.warehouse, email: 'deposito@demo.local', pin: 'demo2222', isActive: true, allowedModules: [], blockedPermissions: [] },
   ],
@@ -834,12 +835,17 @@ const migrateState = (source) => {
     ? source.business.enabledModules.filter((key) => moduleCatalog[key])
     : [...modulePresets.full]
   migrated.business.activePlan = source.business?.activePlan || 'full'
+  migrated.business.progressiveProfile = { ...migrated.business.progressiveProfile, ...(source.business?.progressiveProfile || {}), operationalGoals: Array.isArray(source.business?.progressiveProfile?.operationalGoals) ? source.business.progressiveProfile.operationalGoals.filter((goal) => typeof goal === 'string') : [] }
   migrated.branches = Array.isArray(source.branches) && source.branches.length ? source.branches : migrated.branches
   migrated.registers = Array.isArray(source.registers) && source.registers.length ? source.registers : migrated.registers
   if (!migrated.business.currentBranchId) migrated.business.currentBranchId = migrated.branches[0]?.id || ''
   if (!migrated.business.currentRegisterId) migrated.business.currentRegisterId = migrated.registers.find((entry) => entry.branchId === migrated.business.currentBranchId)?.id || migrated.registers[0]?.id || ''
   migrated.roles = Array.isArray(source.roles) && source.roles.length ? source.roles : migrated.roles
   migrated.users = Array.isArray(source.users) && source.users.length ? source.users : migrated.users
+  if (!migrated.users.some((user) => user.isOwner)) {
+    const legacyOwner = migrated.users.find((user) => user.roleId === roleIds.admin)
+    if (legacyOwner) legacyOwner.isOwner = true
+  }
   migrated.session = {
     userId: source.session?.userId || '',
     authenticated: Boolean(source.session?.authenticated),
@@ -1591,6 +1597,23 @@ export const createBrowserDataStore = (options = {}) => {
     pushAudit(state, currentUser().id, 'business', null, 'updated', clone(state.business), before)
     save({ skipCloud: Boolean(cloudCoreAdapter) })
     return { ok: true, message: 'Perfil del comercio actualizado.' }
+  }
+
+  const updateProgressiveProfile = async (payload) => {
+    const denied = ensurePermission(actionPermissions.settingsManage)
+    if (denied) return denied
+    if (!currentUser().isOwner && !currentUser().isPlatformAdmin) return { ok: false, message: 'Solo el propietario puede actualizar este perfil.' }
+    const goals = Array.isArray(payload.operationalGoals) ? [...new Set(payload.operationalGoals.map((goal) => String(goal).trim()).filter(Boolean))] : []
+    const allowedGoals = new Set(['vender', 'stock', 'caja', 'clientes', 'facturacion', 'sucursales'])
+    if (goals.length > 5 || goals.some((goal) => !allowedGoals.has(goal))) return { ok: false, message: 'Revisa los objetivos seleccionados.' }
+    const normalizedPayload = { country: String(payload.country || '').trim().slice(0, 80), industry: String(payload.industry || '').trim().slice(0, 100), phone: String(payload.phone || '').trim().slice(0, 30), needsArca: typeof payload.needsArca === 'boolean' ? payload.needsArca : null, operationalGoals: goals, status: payload.status === 'complete' ? 'complete' : 'pending' }
+    if (normalizedPayload.phone && !/^[+()0-9\s-]{6,30}$/.test(normalizedPayload.phone)) return { ok: false, message: 'Ingresa un teléfono válido o déjalo vacío.' }
+    const before = clone(state.business.progressiveProfile)
+    const remoteProfile = cloudCoreAdapter ? await cloudCoreAdapter.updateProgressiveProfile(normalizedPayload) : normalizedPayload
+    state.business.progressiveProfile = { country: remoteProfile?.onboarding_country ?? normalizedPayload.country, industry: remoteProfile?.onboarding_industry ?? normalizedPayload.industry, phone: remoteProfile?.onboarding_phone ?? normalizedPayload.phone, needsArca: remoteProfile?.onboarding_needs_arca ?? normalizedPayload.needsArca, operationalGoals: remoteProfile?.onboarding_goals ?? normalizedPayload.operationalGoals, status: remoteProfile?.onboarding_status ?? normalizedPayload.status }
+    pushAudit(state, currentUser().id, 'progressive_profile', null, 'updated', clone(state.business.progressiveProfile), before)
+    save({ skipCloud: Boolean(cloudCoreAdapter) })
+    return { ok: true, message: 'Perfil opcional guardado. Podés cambiarlo cuando quieras.' }
   }
 
   const createProduct = async (payload) => {
@@ -2940,6 +2963,7 @@ export const createBrowserDataStore = (options = {}) => {
     setModuleEnabled,
     applyModulePreset,
     updateBusinessProfile,
+    updateProgressiveProfile,
     createProduct,
     updateProduct,
     updateProductFromPurchase,

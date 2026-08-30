@@ -955,6 +955,13 @@ const getAllowedNav = (ui) => navItems.filter((item) => (
 
 const getUiState = () => {
   const snapshot = store.getSnapshot()
+  const storedProgressiveProfile = snapshot.business.progressiveProfile || {}
+  const progressiveProfile = {
+    country: storedProgressiveProfile.country || commerceContext?.onboarding_country || '', industry: storedProgressiveProfile.industry || commerceContext?.onboarding_industry || '', phone: storedProgressiveProfile.phone || commerceContext?.onboarding_phone || '',
+    needsArca: storedProgressiveProfile.needsArca ?? commerceContext?.onboarding_needs_arca ?? null,
+    operationalGoals: Array.isArray(storedProgressiveProfile.operationalGoals) && storedProgressiveProfile.operationalGoals.length ? storedProgressiveProfile.operationalGoals : (Array.isArray(commerceContext?.onboarding_goals) ? commerceContext.onboarding_goals : []),
+    status: commerceContext?.onboarding_status || storedProgressiveProfile.status || 'pending',
+  }
   const user = snapshot.users.find((entry) => entry.id === snapshot.session.userId) || snapshot.users[0]
   const role = snapshot.roles.find((entry) => entry.id === user?.roleId) || snapshot.roles[0]
   const customerMap = new Map(snapshot.customers.map((item) => [item.id, item]))
@@ -1090,6 +1097,7 @@ const getUiState = () => {
     user,
     role,
     commerceContext,
+    progressiveProfile,
     platformAdmin: store.getPlatformAdminData?.() || null,
     cloudConnection: store.getCloudConnection(),
     isAuthenticated: store.isAuthenticated(),
@@ -1587,6 +1595,13 @@ const cloudActivationView = (ui) => `
   </div>
 `
 
+const progressiveSuggestion = (profile) => {
+  if (profile.needsArca === true) return 'Podemos guiarte para preparar la facturación ARCA cuando estés listo.'
+  const labels = { vender: 'agilizar ventas', stock: 'ordenar el stock', caja: 'organizar la caja', clientes: 'gestionar clientes', facturacion: 'emitir comprobantes', sucursales: 'preparar sucursales' }
+  const firstGoal = (profile.operationalGoals || []).find((goal) => labels[goal])
+  return firstGoal ? `Sugerencia inicial: ${labels[firstGoal]}.` : 'Podés seguir operando y completar este perfil cuando te resulte útil.'
+}
+
 const dashboardView = (ui) => `
   <section class="view-section">
     <div class="section-header"><div><p class="kicker">Resumen diario</p><h2>Operacion del local</h2></div><div class="panel-inline-stats section-inline-stats dashboard-inline-stats">
@@ -1596,6 +1611,8 @@ const dashboardView = (ui) => `
       <span class="panel-inline-stat"><strong>${money(ui.pendingInvoices)}</strong><span>Facturas</span></span>
     </div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${ui.user?.isOwner && ui.progressiveProfile.status !== 'complete' ? `<article class="panel progressive-profile-banner"><div><p class="kicker">Personalización opcional</p><h3>Contanos un poco sobre tu negocio</h3><p>País, rubro, teléfono, necesidad de ARCA y objetivos nos ayudan a personalizar el onboarding, soporte y sugerencias. No afecta el uso del POS.</p></div><button type="button" class="primary-action" data-action="open-progressive-profile">Completar cuando quiera</button></article>` : ''}
+    ${ui.user?.isOwner && ui.progressiveProfile.status === 'complete' ? `<div class="info-strip progressive-suggestion"><strong>${ui.progressiveProfile.industry ? `Sugerencia para ${escapeHtml(ui.progressiveProfile.industry)}` : 'Sugerencia para tu operación'}</strong><span>${progressiveSuggestion(ui.progressiveProfile)}</span></div>` : ''}
     <section class="dashboard-grid dashboard-operation-grid">
       <article class="panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Con multiples articulos</p></div></div><div class="list">
         ${ui.enrichedSales.slice(0, 5).map((sale) => `<div class="list-row"><div><strong>${sale.customerName}</strong><p>${sale.itemSummary}</p></div><div class="right"><strong>${money(sale.totalAmount)}</strong><p>${sale.channel} - ${sale.paymentMethod}</p></div></div>`).join('')}
@@ -3044,6 +3061,7 @@ const settingsViewV2 = (ui) => `
       </article>
       <nav class="settings-section-switcher" aria-label="Secciones de configuracion">
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'commerce' ? 'is-active' : ''}" data-settings-panel="commerce" aria-expanded="${settingsPanelOpen === 'commerce' ? 'true' : 'false'}"><strong>Datos del comercio</strong><span>Nombre, razon social y propietario</span></button>
+        <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'progressive-profile' ? 'is-active' : ''}" data-settings-panel="progressive-profile" aria-expanded="${settingsPanelOpen === 'progressive-profile' ? 'true' : 'false'}"><strong>Perfil opcional</strong><span>${ui.progressiveProfile.status === 'complete' ? 'Personalización lista' : 'Continuar cuando quieras'}</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'users' ? 'is-active' : ''}" data-settings-panel="users" aria-expanded="${settingsPanelOpen === 'users' ? 'true' : 'false'}"><strong>Usuarios y permisos</strong><span>${ui.enrichedUsers.length} cuentas del negocio</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'modules' ? 'is-active' : ''}" data-settings-panel="modules" aria-expanded="${settingsPanelOpen === 'modules' ? 'true' : 'false'}"><strong>Plan y modulos</strong><span>${ui.snapshot.business.enabledModules.length} modulos activos</span></button>
         ${canViewBranches ? `<button type="button" class="settings-section-trigger ${settingsPanelOpen === 'branches' ? 'is-active' : ''}" data-settings-panel="branches" aria-expanded="${settingsPanelOpen === 'branches' ? 'true' : 'false'}"><strong>Sucursales</strong><span>${ui.snapshot.branches.length} locales configurados</span></button>` : ''}
@@ -3064,6 +3082,7 @@ const settingsViewV2 = (ui) => `
           <button type="submit" ${canManageUsers ? '' : 'disabled'}>Guardar comercio</button>
         </form>
       </article>` : ''}
+      ${settingsPanelOpen === 'progressive-profile' ? `<article class="panel settings-expand-panel" data-settings-content="progressive-profile"><div class="panel-head"><div><h3>Perfil progresivo</h3><p>Es opcional y podés retomarlo o modificarlo cuando quieras.</p></div></div>${!ui.user?.isOwner ? '<div class="info-strip"><strong>Solo el propietario puede editarlo</strong><span>Estos datos se usan únicamente para personalizar onboarding, soporte y sugerencias.</span></div>' : ''}<form class="form-grid compact-form settings-wide-form" data-form="progressive-profile"><label>País<input type="text" name="country" value="${escapeHtml(ui.progressiveProfile.country || '')}" placeholder="Ej. Argentina" ${ui.user?.isOwner ? '' : 'disabled'} /></label><label>Rubro<input type="text" name="industry" value="${escapeHtml(ui.progressiveProfile.industry || '')}" placeholder="Ej. Kiosco, indumentaria, servicios" ${ui.user?.isOwner ? '' : 'disabled'} /></label><label>Teléfono de contacto<input type="tel" name="phone" value="${escapeHtml(ui.progressiveProfile.phone || '')}" placeholder="Opcional" ${ui.user?.isOwner ? '' : 'disabled'} /></label><label>¿Necesitás facturación ARCA?<select name="needsArca" ${ui.user?.isOwner ? '' : 'disabled'}><option value="">Todavía no lo sé</option><option value="yes" ${ui.progressiveProfile.needsArca === true ? 'selected' : ''}>Sí</option><option value="no" ${ui.progressiveProfile.needsArca === false ? 'selected' : ''}>No por ahora</option></select></label><fieldset class="full-span progressive-goals"><legend>¿Qué querés resolver primero?</legend><span>Elegí hasta 5 opciones.</span><div>${[['vender','Vender más rápido'],['stock','Controlar stock'],['caja','Ordenar caja'],['clientes','Gestionar clientes'],['facturacion','Emitir comprobantes'],['sucursales','Trabajar con sucursales']].map(([value,label]) => `<label class="checkbox-row"><input type="checkbox" name="operationalGoals" value="${value}" ${ui.progressiveProfile.operationalGoals.includes(value) ? 'checked' : ''} ${ui.user?.isOwner ? '' : 'disabled'} /><span>${label}</span></label>`).join('')}</div></fieldset><p class="form-note full-span">Estos datos no activan ARCA ni cambian permisos, módulos o el acceso al POS.</p><button type="submit" ${ui.user?.isOwner ? '' : 'disabled'}>Guardar perfil opcional</button></form></article>` : ''}
       ${settingsPanelOpen === 'users' ? `<article class="panel settings-expand-panel" data-settings-content="users"><div class="panel-head"><div><h3>${editingUser ? 'Editar cuenta' : 'Usuarios del negocio'}</h3><p>Gestiona quienes pueden entrar y que rol tiene cada uno</p></div></div>
           ${!canManageUsers ? '<div class="info-strip"><strong>Solo lectura</strong><span>Necesitas entrar con la cuenta propietaria para editar permisos.</span></div>' : ''}
           <form class="form-grid" data-form="user">
@@ -3874,6 +3893,10 @@ const handleSubmit = async (event) => {
       commerce_name: String(formData.get('name') || commerceContext?.commerce_name || '').trim(),
       owner_email: String(formData.get('ownerEmail') || commerceContext?.owner_email || '').trim().toLowerCase(),
     }
+    feedbackMessage = result.message || ''
+  }
+  if (kind === 'progressive-profile') {
+    const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), needsArca: formData.get('needsArca') === 'yes' ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
     feedbackMessage = result.message || ''
   }
   if (kind === 'cloud-connection') {
@@ -5195,6 +5218,7 @@ const bindEvents = () => {
       render()
     })
   }
+  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { activeSection = 'ajustes'; settingsPanelOpen = 'progressive-profile'; requestScrollTop(); render() })
   for (const arcaGuideButton of document.querySelectorAll('[data-action="open-arca-guide"]')) {
     arcaGuideButton.addEventListener('click', () => {
       window.open('https://www.arca.gob.ar/fe/ayuda/documentos/AccionesarealizarparaconsumirunWebservicedeFacturaElectr.pdf', '_blank', 'noopener,noreferrer')

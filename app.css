@@ -2788,6 +2788,14 @@ input[type='search'] { color: var(--text); }
   margin-top: 16px;
 }
 
+.progressive-profile-banner { display: flex; align-items: center; justify-content: space-between; gap: 18px; border-color: color-mix(in srgb, var(--accent) 42%, var(--line)); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }
+.progressive-profile-banner h3 { margin: 2px 0 6px; }
+.progressive-profile-banner p { margin: 0; color: var(--muted); max-width: 780px; }
+.progressive-goals { display: grid; gap: 10px; border: 0; padding: 0; margin: 0; }
+.progressive-goals > span { color: var(--muted); font-size: .82rem; }
+.progressive-goals > div { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+@media (max-width: 680px) { .progressive-profile-banner { align-items: flex-start; flex-direction: column; } }
+
 .stacked-section {
   display: grid;
   gap: 18px;

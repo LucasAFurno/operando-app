@@ -107,6 +107,9 @@ export const createSupabaseCoreAdapter = (config) => {
         p_active_plan: '',
       })
     },
+    async updateProgressiveProfile(payload) {
+      return rpc('app_public_update_progressive_profile', { p_session_token: getSessionToken(), p_country: payload?.country || '', p_industry: payload?.industry || '', p_phone: payload?.phone || '', p_needs_arca: typeof payload?.needsArca === 'boolean' ? payload.needsArca : null, p_operational_goals: Array.isArray(payload?.operationalGoals) ? payload.operationalGoals : [], p_status: payload?.status || 'pending' })
+    },
     async updateCommerceRuntime(payload) {
       return rpc('app_public_update_commerce_runtime', {
         p_session_token: getSessionToken(),

@@ -170,7 +170,13 @@ begin
       'legal_name', v_commerce.legal_name,
       'owner_email', v_commerce.owner_email,
       'active_plan', v_commerce.active_plan,
-      'status', v_commerce.status
+      'status', v_commerce.status,
+      'onboarding_country', v_commerce.onboarding_country,
+      'onboarding_industry', v_commerce.onboarding_industry,
+      'onboarding_phone', v_commerce.onboarding_phone,
+      'onboarding_needs_arca', v_commerce.onboarding_needs_arca,
+      'onboarding_goals', v_commerce.onboarding_goals,
+      'onboarding_status', v_commerce.onboarding_status
     )
   );
 end;
@@ -745,6 +751,14 @@ begin
       'currentRegisterId', coalesce(v_user.assigned_register_id, (select id from public.registers where commerce_id = v_commerce.id order by created_at asc limit 1)),
       'enabledModules', coalesce(v_commerce.settings_json -> 'enabledModules', jsonb_build_array('dashboard','customers','sales','cash','branches','registers','products','purchases','invoices','tickets','reports','settings')),
       'activePlan', v_commerce.active_plan,
+      'progressiveProfile', jsonb_build_object(
+        'country', v_commerce.onboarding_country,
+        'industry', v_commerce.onboarding_industry,
+        'phone', v_commerce.onboarding_phone,
+        'needsArca', v_commerce.onboarding_needs_arca,
+        'operationalGoals', v_commerce.onboarding_goals,
+        'status', v_commerce.onboarding_status
+      ),
       'documentCounters', coalesce(v_commerce.settings_json -> 'documentCounters', '{}'::jsonb)
     ),
     'branches', coalesce((
