@@ -158,6 +158,7 @@ let accountAlertsOpen = false
 let dismissedAccountAlertIds = new Set()
 let supportMenuOpen = false
 let settingsPanelOpen = ''
+let progressiveProfilePromptOpen = true
 let arcaSetupStep = 1
 let arcaCsrGenerated = false
 let arcaCertificateName = ''
@@ -1611,7 +1612,6 @@ const dashboardView = (ui) => `
       <span class="panel-inline-stat"><strong>${money(ui.pendingInvoices)}</strong><span>Facturas</span></span>
     </div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
-    ${ui.user?.isOwner && ui.progressiveProfile.status !== 'complete' ? `<article class="panel progressive-profile-banner"><div><p class="kicker">Personalización opcional</p><h3>Contanos un poco sobre tu negocio</h3><p>País, rubro, teléfono, necesidad de ARCA y objetivos nos ayudan a personalizar el onboarding, soporte y sugerencias. No afecta el uso del POS.</p></div><button type="button" class="primary-action" data-action="open-progressive-profile">Completar cuando quiera</button></article>` : ''}
     ${ui.user?.isOwner && ui.progressiveProfile.status === 'complete' ? `<div class="info-strip progressive-suggestion"><strong>${ui.progressiveProfile.industry ? `Sugerencia para ${escapeHtml(ui.progressiveProfile.industry)}` : 'Sugerencia para tu operación'}</strong><span>${progressiveSuggestion(ui.progressiveProfile)}</span></div>` : ''}
     <section class="dashboard-grid dashboard-operation-grid">
       <article class="panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Con multiples articulos</p></div></div><div class="list">
@@ -3186,6 +3186,12 @@ const renderCurrentView = (ui) => {
   }
 }
 
+const progressiveProfileModal = (ui) => {
+  if (!progressiveProfilePromptOpen || activeSection !== 'dashboard' || !ui.user?.isOwner || ui.progressiveProfile.status === 'complete') return ''
+  const profile = ui.progressiveProfile
+  return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title"><button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button><p class="kicker">Configuración rápida</p><h2 id="progressive-profile-title">Personalicemos PCLAF para tu negocio</h2><p class="progressive-profile-copy">Esto es opcional. Nos sirve solo para adaptar el onboarding, el soporte y las sugerencias. Podés cerrarlo y usar el POS ahora mismo.</p><form class="form-grid compact-form progressive-profile-modal-form" data-form="progressive-profile"><label>País<input type="text" name="country" value="${escapeHtml(profile.country || '')}" placeholder="Ej. Argentina" /></label><label>Rubro<input type="text" name="industry" value="${escapeHtml(profile.industry || '')}" placeholder="Ej. Kiosco, indumentaria, servicios" /></label><label>Teléfono de contacto<input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="Opcional" /></label><label>¿Necesitás facturación ARCA?<select name="needsArca"><option value="">Todavía no lo sé</option><option value="yes" ${profile.needsArca === true ? 'selected' : ''}>Sí</option><option value="no" ${profile.needsArca === false ? 'selected' : ''}>No por ahora</option></select></label><fieldset class="full-span progressive-goals"><legend>¿Qué querés resolver primero?</legend><span>Elegí hasta 5 opciones.</span><div>${[['vender','Vender más rápido'],['stock','Controlar stock'],['caja','Ordenar caja'],['clientes','Gestionar clientes'],['facturacion','Emitir comprobantes'],['sucursales','Trabajar con sucursales']].map(([value,label]) => `<label class="checkbox-row"><input type="checkbox" name="operationalGoals" value="${value}" ${profile.operationalGoals.includes(value) ? 'checked' : ''} /><span>${label}</span></label>`).join('')}</div></fieldset><div class="progressive-profile-actions full-span"><button type="submit" class="primary-action">Guardar y personalizar</button><button type="button" class="ghost-action" data-action="close-progressive-profile">Ahora no, seguir usando PCLAF</button></div></form></section></div>`
+}
+
 const renderApp = (ui) => {
   const allowedNav = getAllowedNav(ui)
   if (!allowedNav.some((item) => item.id === activeSection)) activeSection = allowedNav[0]?.id || 'dashboard'
@@ -3279,6 +3285,7 @@ const renderApp = (ui) => {
           </div>
         </header>
         <main class="page">${renderCurrentView(ui)}</main>
+        ${progressiveProfileModal(ui)}
       </div>
     </div>
   `
@@ -3898,6 +3905,7 @@ const handleSubmit = async (event) => {
   if (kind === 'progressive-profile') {
     const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), needsArca: formData.get('needsArca') === 'yes' ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
     feedbackMessage = result.message || ''
+    if (result.ok) progressiveProfilePromptOpen = false
   }
   if (kind === 'cloud-connection') {
     cloudSyncBusy = true
@@ -5218,7 +5226,8 @@ const bindEvents = () => {
       render()
     })
   }
-  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { activeSection = 'ajustes'; settingsPanelOpen = 'progressive-profile'; requestScrollTop(); render() })
+  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = true; activeSection = 'dashboard'; requestScrollTop(); render() })
+  for (const button of document.querySelectorAll('[data-action="close-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; render() })
   for (const arcaGuideButton of document.querySelectorAll('[data-action="open-arca-guide"]')) {
     arcaGuideButton.addEventListener('click', () => {
       window.open('https://www.arca.gob.ar/fe/ayuda/documentos/AccionesarealizarparaconsumirunWebservicedeFacturaElectr.pdf', '_blank', 'noopener,noreferrer')

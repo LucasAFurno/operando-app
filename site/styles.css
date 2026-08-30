@@ -3321,13 +3321,17 @@ input[type='search'] { color: var(--text); }
   margin-top: 16px;
 }
 
-.progressive-profile-banner { display: flex; align-items: center; justify-content: space-between; gap: 18px; border-color: color-mix(in srgb, var(--accent) 42%, var(--line)); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }
-.progressive-profile-banner h3 { margin: 2px 0 6px; }
-.progressive-profile-banner p { margin: 0; color: var(--muted); max-width: 780px; }
 .progressive-goals { display: grid; gap: 10px; border: 0; padding: 0; margin: 0; }
 .progressive-goals > span { color: var(--muted); font-size: .82rem; }
 .progressive-goals > div { display: flex; flex-wrap: wrap; gap: 8px 16px; }
-@media (max-width: 680px) { .progressive-profile-banner { align-items: flex-start; flex-direction: column; } }
+.progressive-profile-overlay { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; overflow-y: auto; background: rgba(3, 7, 18, .84); backdrop-filter: blur(8px); }
+.progressive-profile-dialog { position: relative; width: min(760px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; padding: clamp(24px, 4vw, 42px); border: 1px solid color-mix(in srgb, var(--accent) 62%, var(--line)); border-radius: 24px; background: var(--panel); box-shadow: 0 28px 90px rgba(0, 0, 0, .55); }
+.progressive-profile-dialog h2 { margin: 4px 34px 10px 0; font-size: clamp(1.55rem, 3vw, 2.2rem); }
+.progressive-profile-copy { margin: 0; color: var(--muted); line-height: 1.55; }
+.progressive-profile-close { position: absolute; top: 16px; right: 16px; display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--panel-soft); color: var(--text); font-size: 1.35rem; cursor: pointer; }
+.progressive-profile-modal-form { margin-top: 24px; }
+.progressive-profile-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+@media (max-width: 680px) { .progressive-profile-overlay { padding: 12px; align-items: end; } .progressive-profile-dialog { max-height: calc(100vh - 24px); border-radius: 20px; } .progressive-profile-actions { display: grid; } }
 
 .stacked-section {
   display: grid;
