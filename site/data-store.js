@@ -266,7 +266,7 @@ const seedData = {
     currentRegisterId: '',
     enabledModules: modulePresets.full,
     activePlan: 'full',
-    progressiveProfile: { country: '', industry: '', phone: '', needsArca: null, operationalGoals: [], status: 'pending' },
+    progressiveProfile: { country: '', industry: '', phone: '', email: '', needsArca: null, operationalGoals: [], status: 'pending' },
     documentCounters: {
       invoiceA: 1,
       invoiceB: 184,
@@ -1606,14 +1606,15 @@ export const createBrowserDataStore = (options = {}) => {
     const goals = Array.isArray(payload.operationalGoals) ? [...new Set(payload.operationalGoals.map((goal) => String(goal).trim()).filter(Boolean))] : []
     const allowedGoals = new Set(['vender', 'stock', 'caja', 'clientes', 'facturacion', 'sucursales'])
     if (goals.length > 5 || goals.some((goal) => !allowedGoals.has(goal))) return { ok: false, message: 'Revisa los objetivos seleccionados.' }
-    const normalizedPayload = { country: String(payload.country || '').trim().slice(0, 80), industry: String(payload.industry || '').trim().slice(0, 100), phone: String(payload.phone || '').trim().slice(0, 30), needsArca: typeof payload.needsArca === 'boolean' ? payload.needsArca : null, operationalGoals: goals, status: payload.status === 'complete' ? 'complete' : 'pending' }
-    if (normalizedPayload.phone && !/^[+()0-9\s-]{6,30}$/.test(normalizedPayload.phone)) return { ok: false, message: 'Ingresa un teléfono válido o déjalo vacío.' }
+    const normalizedPayload = { country: String(payload.country || '').trim().slice(0, 80), industry: String(payload.industry || '').trim().slice(0, 100), phone: String(payload.phone || '').trim().slice(0, 30), email: String(payload.email || '').trim().toLowerCase().slice(0, 254), needsArca: typeof payload.needsArca === 'boolean' ? payload.needsArca : null, operationalGoals: goals, status: payload.status === 'complete' ? 'complete' : 'pending' }
+    if (!/^[+()0-9\s-]{6,30}$/.test(normalizedPayload.phone)) return { ok: false, message: 'Ingresa un teléfono de contacto válido.' }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPayload.email)) return { ok: false, message: 'Ingresa un email de contacto válido.' }
     const before = clone(state.business.progressiveProfile)
     const remoteProfile = cloudCoreAdapter ? await cloudCoreAdapter.updateProgressiveProfile(normalizedPayload) : normalizedPayload
-    state.business.progressiveProfile = { country: remoteProfile?.onboarding_country ?? normalizedPayload.country, industry: remoteProfile?.onboarding_industry ?? normalizedPayload.industry, phone: remoteProfile?.onboarding_phone ?? normalizedPayload.phone, needsArca: remoteProfile?.onboarding_needs_arca ?? normalizedPayload.needsArca, operationalGoals: remoteProfile?.onboarding_goals ?? normalizedPayload.operationalGoals, status: remoteProfile?.onboarding_status ?? normalizedPayload.status }
+    state.business.progressiveProfile = { country: remoteProfile?.onboarding_country ?? normalizedPayload.country, industry: remoteProfile?.onboarding_industry ?? normalizedPayload.industry, phone: remoteProfile?.onboarding_phone ?? normalizedPayload.phone, email: remoteProfile?.onboarding_email ?? normalizedPayload.email, needsArca: remoteProfile?.onboarding_needs_arca ?? normalizedPayload.needsArca, operationalGoals: remoteProfile?.onboarding_goals ?? normalizedPayload.operationalGoals, status: remoteProfile?.onboarding_status ?? normalizedPayload.status }
     pushAudit(state, currentUser().id, 'progressive_profile', null, 'updated', clone(state.business.progressiveProfile), before)
     save({ skipCloud: Boolean(cloudCoreAdapter) })
-    return { ok: true, message: 'Perfil opcional guardado. Podés cambiarlo cuando quieras.' }
+    return { ok: true, message: 'Datos de contacto guardados. Podés actualizarlos cuando quieras.' }
   }
 
   const createProduct = async (payload) => {

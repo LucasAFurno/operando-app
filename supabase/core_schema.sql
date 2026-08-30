@@ -34,6 +34,7 @@ alter table public.commerce_accounts
   add column if not exists onboarding_country text not null default '',
   add column if not exists onboarding_industry text not null default '',
   add column if not exists onboarding_phone text not null default '',
+  add column if not exists onboarding_email text not null default '',
   add column if not exists onboarding_needs_arca boolean,
   add column if not exists onboarding_goals jsonb not null default '[]'::jsonb,
   add column if not exists onboarding_status text not null default 'pending';

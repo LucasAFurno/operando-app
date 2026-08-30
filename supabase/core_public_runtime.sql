@@ -174,6 +174,7 @@ begin
       'onboarding_country', v_commerce.onboarding_country,
       'onboarding_industry', v_commerce.onboarding_industry,
       'onboarding_phone', v_commerce.onboarding_phone,
+      'onboarding_email', v_commerce.onboarding_email,
       'onboarding_needs_arca', v_commerce.onboarding_needs_arca,
       'onboarding_goals', v_commerce.onboarding_goals,
       'onboarding_status', v_commerce.onboarding_status
@@ -755,6 +756,7 @@ begin
         'country', v_commerce.onboarding_country,
         'industry', v_commerce.onboarding_industry,
         'phone', v_commerce.onboarding_phone,
+        'email', v_commerce.onboarding_email,
         'needsArca', v_commerce.onboarding_needs_arca,
         'operationalGoals', v_commerce.onboarding_goals,
         'status', v_commerce.onboarding_status
