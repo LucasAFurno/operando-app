@@ -234,6 +234,12 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     completeRecovery,
     clearRecoveryState,
     restoreSession,
+    updateSessionProfile: (patch = {}) => {
+      if (!session?.profile || !patch || typeof patch !== 'object') return session
+      session = { ...session, profile: { ...session.profile, ...patch } }
+      persistSession()
+      return session
+    },
     signOut,
   }
 }

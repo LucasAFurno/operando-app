@@ -1056,6 +1056,7 @@ export const createBrowserDataStore = (options = {}) => {
       isPlatformAdmin: Boolean(entry.is_platform_admin || entry.isPlatformAdmin),
       allowedModules: normalizeStringList(entry.allowed_modules || entry.allowedModules, validModuleKeys),
       blockedPermissions: normalizeStringList(entry.blocked_permissions || entry.blockedPermissions, validPermissionKeys),
+      productGuideSeenAt: entry.product_guide_seen_at || entry.productGuideSeenAt || '',
       createdAt: entry.created_at || entry.createdAt || todayIso(),
       updatedAt: entry.updated_at || entry.updatedAt || todayIso(),
     }
@@ -2888,6 +2889,16 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Conexion cloud desactivada.' }
   }
 
+  const markProductGuideSeen = async () => {
+    if (!cloudCoreAdapter?.markProductGuideSeen) return { ok: true, productGuideSeenAt: new Date().toISOString() }
+    const result = await cloudCoreAdapter.markProductGuideSeen()
+    const productGuideSeenAt = result?.product_guide_seen_at || result?.productGuideSeenAt || new Date().toISOString()
+    if (cloudAuthProfile) cloudAuthProfile.productGuideSeenAt = productGuideSeenAt
+    const user = state.users.find((entry) => entry.id === state.session.userId)
+    if (user) user.productGuideSeenAt = productGuideSeenAt
+    return { ok: true, productGuideSeenAt }
+  }
+
   const updatePlatformCommerce = async (payload = {}) => {
     if (!cloudCoreAdapter?.updatePlatformCommerce) return { ok: false, message: 'La consola PCLAF no esta disponible.' }
     const result = await cloudCoreAdapter.updatePlatformCommerce(payload)
@@ -2943,6 +2954,7 @@ export const createBrowserDataStore = (options = {}) => {
     getCloudConnection,
     setCloudConnection,
     clearCloudConnection,
+    markProductGuideSeen,
     setCloudAccessToken,
     setCloudAuthSession,
     clearCloudAuthSession,

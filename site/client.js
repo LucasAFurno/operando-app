@@ -14,6 +14,7 @@ const sectionStorageKey = 'pclaf-control-section'
 const instanceStorageKey = 'pclaf-control-instance'
 const dataStorageKey = 'pclaf-control-data'
 const cloudConfigStorageKey = 'pclaf-control-cloud-config'
+const onboardingStorageKey = 'pclaf-control-onboarding-v1'
 const defaultSupabaseUrl = 'https://rfwsnqmjkclxhbmidbkm.supabase.co'
 const canPersistInBrowser = Boolean(globalThis.window?.pclafDesktop?.isDesktop)
 
@@ -152,6 +153,7 @@ let recoveryState = null
 let hardwareScanBuffer = ''
 let hardwareScanTimer = null
 let hardwareScanListenerBound = false
+let onboardingKeyListenerBound = false
 let feedbackTimer = null
 let pendingScrollTop = false
 let accountAlertsOpen = false
@@ -169,7 +171,42 @@ let platformUserFilter = 'all'
 let platformUserSearchQuery = ''
 let pendingScrollSelector = ''
 let userDraftRoleId = 'role-cashier'
+let onboarding = { visible: false, step: 0, completed: [] }
+let onboardingLoadedFor = ''
+let onboardingSeenReportedFor = ''
 const pageSizeOptions = [10, 20, 50, 100, 1000]
+
+const onboardingSteps = [
+  { id: 'product', section: 'productos', selector: '[data-action="open-product-form"]', title: 'Cargá un producto', text: 'Usá “Agregar producto” para dar de alta el primer artículo.' },
+  { id: 'category', section: 'productos', selector: '[data-guide-category]', title: 'Definí la categoría', text: 'Esta categoría ordena tu catálogo y acelera las búsquedas.' },
+  { id: 'cash', section: 'caja', selector: '[data-cash-operation]', title: 'Abrí la caja', text: 'Abrí una caja antes de cobrar en efectivo. Transferencias y cuenta no la requieren.' },
+  { id: 'cart', section: 'ventas', selector: 'input[name="quickAddCode"]', title: 'Buscá o escaneá', text: 'Escribí, elegí de la lista o escaneá el artículo para sumarlo al carrito.' },
+  { id: 'charge', section: 'ventas', selector: '.pos-charge-button', title: 'Confirmá el cobro', text: 'Revisá el medio de pago y cobrá una sola vez. El botón se desactiva mientras se procesa.' },
+  { id: 'receipt', section: 'ventas', selector: '[data-sale-action="invoice"]', title: 'Emití el comprobante', text: 'Desde el historial podés generar el comprobante de una venta ya registrada.' },
+]
+
+const getOnboardingStorageKey = () => `${onboardingStorageKey}:${commerceContext?.commerce_id || authInstanceKey || 'local'}:${store?.getSnapshot?.().meta?.currentUserId || 'user'}`
+const saveOnboarding = () => safeStorage.setItem(getOnboardingStorageKey(), JSON.stringify(onboarding))
+const loadOnboarding = (guideSeenAt = '') => {
+  onboarding = { visible: !guideSeenAt, step: 0, completed: [] }
+  if (guideSeenAt) return
+  try {
+    const saved = JSON.parse(safeStorage.getItem(getOnboardingStorageKey(), ''))
+    if (saved && Array.isArray(saved.completed)) onboarding = { visible: false, step: Number(saved.step) || 0, completed: saved.completed }
+  } catch { /* La guía es opcional: un estado inválido no afecta la operación. */ }
+}
+const currentOnboardingStep = () => onboardingSteps[onboarding.step] || onboardingSteps.find((step) => !onboarding.completed.includes(step.id)) || null
+const completeOnboardingStep = (id) => {
+  if (!onboarding.completed.includes(id)) onboarding.completed.push(id)
+  onboarding.step = onboardingSteps.findIndex((step) => !onboarding.completed.includes(step.id))
+  saveOnboarding()
+}
+const guideCard = () => {
+  const step = onboarding.visible ? currentOnboardingStep() : null
+  if (!step) return ''
+  const position = Math.max(1, onboardingSteps.findIndex((entry) => entry.id === step.id) + 1)
+  return `<aside class="onboarding-card" aria-labelledby="onboarding-title" aria-live="polite"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p>${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="focus-onboarding-control">Ir al control</button><button type="button" class="text-action" data-action="next-onboarding-step">Siguiente</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside>`
+}
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
 const callArca = async (action, payload = {}) => {
@@ -2068,7 +2105,7 @@ const productsView = (ui) => {
             <label>Precio venta<input type="number" name="salePrice" min="0" required /></label>
             <label>Costo<input type="number" name="costPrice" min="0" required /></label>
             <label>Minimo<input type="number" name="minStock" min="0" required /></label>
-            <label>Categoria<input type="text" name="category" required /></label>
+            <label>Categoria<input type="text" name="category" data-guide-category required /></label>
             <label class="field-check full-span"><input type="checkbox" name="trackStock" checked /><span class="field-check-box" aria-hidden="true"></span><span>Controlar stock de este articulo</span></label>
             <div class="full-span inline-action-group scanner-row">
               <button type="button" class="inline-action" data-action="focus-product-barcode">Usar lector</button>
@@ -3042,6 +3079,19 @@ const renderCurrentView = (ui) => {
 }
 
 const renderApp = (ui) => {
+  const onboardingKey = getOnboardingStorageKey()
+  if (onboardingLoadedFor !== onboardingKey) {
+    onboardingLoadedFor = onboardingKey
+    loadOnboarding(ui.user?.productGuideSeenAt)
+  }
+  if (!ui.user?.productGuideSeenAt && onboarding.visible && onboardingSeenReportedFor !== onboardingKey) {
+    onboardingSeenReportedFor = onboardingKey
+    store.markProductGuideSeen().then((result) => {
+      if (result?.ok) authManager?.updateSessionProfile?.({ product_guide_seen_at: result.productGuideSeenAt })
+    }).catch(() => {
+      // La guía sigue siendo opcional si la red se corta durante este aviso.
+    })
+  }
   const allowedNav = getAllowedNav(ui)
   if (!allowedNav.some((item) => item.id === activeSection)) activeSection = allowedNav[0]?.id || 'dashboard'
   saveSection()
@@ -3096,6 +3146,7 @@ const renderApp = (ui) => {
             </form>`}
           </div>
           <div class="${topbarRightClass}">
+            <button type="button" class="topbar-guide-action" data-action="resume-onboarding" aria-label="Abrir guía inicial">Guía inicial</button>
             ${isDevEnvironment ? `<span class="topbar-runtime is-dev">${environmentLabel}</span>` : ''}
             <div class="account-alerts-wrap">
               <button class="account-card compact-meta ${accountAlertsOpen ? 'is-open' : ''}" type="button" data-action="toggle-account-alerts" aria-label="Abrir menu de cuenta" aria-expanded="${accountAlertsOpen ? 'true' : 'false'}">
@@ -3133,7 +3184,7 @@ const renderApp = (ui) => {
             </div>
           </div>
         </header>
-        <main class="page">${renderCurrentView(ui)}</main>
+        <main class="page">${guideCard()}${renderCurrentView(ui)}</main>
       </div>
     </div>
   `
@@ -3576,6 +3627,9 @@ const importData = async (event) => {
 const handleSubmit = async (event) => {
   event.preventDefault()
   const form = event.currentTarget
+  if (form.dataset.submitting === 'true') return
+  form.dataset.submitting = 'true'
+  for (const button of form.querySelectorAll('button[type="submit"]')) button.disabled = true
   const formData = new FormData(form, event.submitter)
   const kind = form.dataset.form
 
@@ -3765,6 +3819,7 @@ const handleSubmit = async (event) => {
   if (kind === 'product') {
     const result = await store.createProduct({ name: formData.get('name'), sku: formData.get('sku'), barcode: formData.get('barcode'), stock: formData.get('stock'), salePrice: formData.get('salePrice'), costPrice: formData.get('costPrice'), minStock: formData.get('minStock'), category: formData.get('category'), trackStock: formData.get('trackStock') === 'on' })
     feedbackMessage = result.message || ''
+    if (result.ok) { completeOnboardingStep('product'); completeOnboardingStep('category') }
     productFormOpen = false
   }
   if (kind === 'product-inline') {
@@ -3902,6 +3957,7 @@ const handleSubmit = async (event) => {
   if (kind === 'open-cash') {
     const result = await store.openCashSession({ registerId: formData.get('registerId'), openingAmount: formData.get('openingAmount') })
     feedbackMessage = result.message || ''
+    if (result.ok) completeOnboardingStep('cash')
     cashFormOpen = false
   }
   if (kind === 'close-cash') {
@@ -4011,6 +4067,7 @@ const handleSubmit = async (event) => {
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
     feedbackMessage = result.message || ''
+    if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge') }
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
@@ -4053,6 +4110,54 @@ const bindEvents = () => {
     })
   }
   for (const form of document.querySelectorAll('form[data-form]')) form.addEventListener('submit', handleSubmit)
+  const focusOnboardingControl = () => {
+    const step = currentOnboardingStep()
+    if (!step) return
+    activeSection = step.section
+    if (step.id === 'product' || step.id === 'category') productFormOpen = true
+    if (step.id === 'cash') cashFormOpen = true
+    onboarding.visible = true
+    requestScrollTop()
+    render()
+    window.requestAnimationFrame(() => {
+      document.querySelectorAll('.is-onboarding-target').forEach((element) => element.classList.remove('is-onboarding-target'))
+      const target = document.querySelector(step.selector)
+      target?.classList.add('is-onboarding-target')
+      target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+      target?.focus?.({ preventScroll: true })
+    })
+  }
+  for (const button of document.querySelectorAll('[data-action="resume-onboarding"]')) button.addEventListener('click', () => {
+    onboarding.step = onboardingSteps.findIndex((step) => !onboarding.completed.includes(step.id))
+    if (onboarding.step < 0) {
+      feedbackMessage = 'Ya completaste la guía inicial. Podés seguir operando normalmente.'
+      render()
+      return
+    }
+    onboarding.visible = true
+    saveOnboarding()
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="dismiss-onboarding"]')) button.addEventListener('click', () => {
+    onboarding.visible = false
+    saveOnboarding()
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="next-onboarding-step"]')) button.addEventListener('click', () => {
+    onboarding.step = Math.min(onboarding.step + 1, onboardingSteps.length - 1)
+    saveOnboarding()
+    focusOnboardingControl()
+  })
+  for (const button of document.querySelectorAll('[data-action="focus-onboarding-control"]')) button.addEventListener('click', focusOnboardingControl)
+  if (!onboardingKeyListenerBound) {
+    onboardingKeyListenerBound = true
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !onboarding.visible) return
+      onboarding.visible = false
+      saveOnboarding()
+      render()
+    })
+  }
   const updateSaleTotals = () => {
     let subtotal = 0
     for (const input of document.querySelectorAll('input[name^="qty_"]')) {
@@ -4105,6 +4210,7 @@ const bindEvents = () => {
     }
     saleDraftQuantities = { ...readCurrentSaleQuantities(), [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1 }
     saleQuickAddCode = ''
+    completeOnboardingStep('cart')
     feedbackMessage = ''
     render()
   }
@@ -4827,18 +4933,21 @@ const bindEvents = () => {
       }
       if (button.dataset.saleAction === 'receipt') {
         printReceipt(button.dataset.id)
+        completeOnboardingStep('receipt')
         feedbackMessage = 'Comprobante listo para imprimir.'
         render()
         return
       }
       if (button.dataset.saleAction === 'receipt-80') {
         printThermalReceipt(button.dataset.id, '80')
+        completeOnboardingStep('receipt')
         feedbackMessage = 'Ticket 80 mm listo para imprimir.'
         render()
         return
       }
       if (button.dataset.saleAction === 'receipt-58') {
         printThermalReceipt(button.dataset.id, '58')
+        completeOnboardingStep('receipt')
         feedbackMessage = 'Ticket 58 mm listo para imprimir.'
         render()
         return
@@ -4855,6 +4964,7 @@ const bindEvents = () => {
             ? store.cancelSale(button.dataset.id)
             : store.createReturnFromSale(button.dataset.id)
       feedbackMessage = result.message || ''
+      if (result.ok && button.dataset.saleAction === 'invoice') completeOnboardingStep('receipt')
       render()
     })
   }

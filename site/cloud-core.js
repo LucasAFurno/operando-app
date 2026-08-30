@@ -115,6 +115,11 @@ export const createSupabaseCoreAdapter = (config) => {
         p_allow_public_signup: typeof payload?.allowPublicSignup === 'boolean' ? payload.allowPublicSignup : null,
       })
     },
+    async markProductGuideSeen() {
+      return rpc('app_public_mark_product_guide_seen', {
+        p_session_token: getSessionToken(),
+      })
+    },
     async upsertCustomer(payload) {
       return rpc('app_public_upsert_customer', {
         p_session_token: getSessionToken(),
