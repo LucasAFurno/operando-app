@@ -3343,6 +3343,9 @@ input[type='search'] { color: var(--text); }
 .progressive-profile-step-label { display: inline-block; margin-bottom: 7px; color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .progressive-profile-step-intro h3 { margin: 0; font-size: 1.1rem; }
 .progressive-profile-step-intro p { margin: 7px 0 0; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.progressive-profile-fields label b { color: var(--accent); }
+.progressive-contact-status { min-height: 1.3em; margin: -4px 0 0; color: var(--muted); font-size: .8rem; }
+.progressive-profile-actions .primary-action:disabled { cursor: not-allowed; opacity: .48; filter: saturate(.35); }
 .goal-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .goal-option { position: relative; display: flex; align-items: center; gap: 9px; min-height: 46px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-soft); color: var(--text); cursor: pointer; font-size: .82rem; font-weight: 700; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
 .goal-option:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
