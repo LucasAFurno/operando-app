@@ -1713,8 +1713,8 @@ const marketingStyles = `
         box-shadow: 0 20px 40px rgba(0,0,0,0.28);
         text-decoration: none;
       }
-      body .marketing-grid,
-      body .marketing-grid-compact {
+      body[data-page="home"] .marketing-grid,
+      body[data-page="home"] .marketing-grid-compact {
         display: none;
       }
       @media (max-width: 1024px) {
