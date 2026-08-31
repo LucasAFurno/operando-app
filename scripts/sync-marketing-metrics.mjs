@@ -39,7 +39,7 @@ const onboardingMinutes = Number(source.onboardingMinutes || 0)
 source.metrics = [
   { value: commerces, prefix: '+', suffix: '', label: 'comercios registrados' },
   { value: operations, prefix: '+', suffix: '', label: 'ventas procesadas' },
-  { value: operations * averageSaleAmount, prefix: '$', suffix: '', label: 'ARS procesados' },
+  { value: operations * averageSaleAmount, prefix: '+$', suffix: 'M', format: 'millions', label: 'ARS procesados' },
   { value: onboardingMinutes, prefix: '', suffix: ' min', label: 'para empezar' },
 ]
 await writeFile(metricsPath, `${JSON.stringify(source, null, 2)}\n`)

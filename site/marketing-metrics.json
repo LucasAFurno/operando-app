@@ -4,7 +4,7 @@
   "metrics": [
     { "value": 11, "prefix": "+", "suffix": "", "label": "comercios registrados" },
     { "value": 14620, "prefix": "+", "suffix": "", "label": "ventas procesadas" },
-    { "value": 1169600000, "prefix": "$", "suffix": "", "label": "ARS procesados" },
+    { "value": 1169600000, "prefix": "+$", "suffix": "M", "format": "millions", "label": "ARS procesados" },
     { "value": 5, "prefix": "", "suffix": " min", "label": "para empezar" }
   ],
   "verticals": ["repuestos", "kioscos", "accesorios", "indumentaria", "servicio técnico"]

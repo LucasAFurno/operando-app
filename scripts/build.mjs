@@ -717,7 +717,7 @@ const renderHomeExtras = (page) => {
   <section class="marketing-live-metrics" aria-labelledby="live-metrics-title">${publishedMetrics.length ? `
     <div class="marketing-live-metrics-grid">${publishedMetrics.map((metric) => `
         <article>
-          <strong class="marketing-counter" data-counter-value="${Number(metric.value)}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}">0</strong>
+          <strong class="marketing-counter" data-counter-value="${Number(metric.value)}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}" data-counter-format="${escapeHtml(metric.format || 'integer')}">0</strong>
           <span>${escapeHtml(metric.label)}</span>
         </article>`).join('')}
     </div>` : ''}<div class="marketing-vertical-rotation">
@@ -2363,8 +2363,11 @@ const renderMarketingPage = (page) => {
         const target = Number(counter.dataset.counterValue || 0);
         const prefix = counter.dataset.counterPrefix || '';
         const suffix = counter.dataset.counterSuffix || '';
+        const format = counter.dataset.counterFormat || 'integer';
         const update = function (progress) {
-          counter.textContent = prefix + formatPublicMetric(Math.round(target * progress)) + suffix;
+          const value = Math.round(target * progress);
+          const displayedValue = format === 'millions' ? Math.round(value / 1000000) : value;
+          counter.textContent = prefix + formatPublicMetric(displayedValue) + suffix;
         };
         update(0);
         if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

@@ -1558,19 +1558,19 @@
   <section class="marketing-live-metrics" aria-labelledby="live-metrics-title">
     <div class="marketing-live-metrics-grid">
         <article>
-          <strong class="marketing-counter" data-counter-value="11" data-counter-prefix="+" data-counter-suffix="">0</strong>
+          <strong class="marketing-counter" data-counter-value="11" data-counter-prefix="+" data-counter-suffix="" data-counter-format="integer">0</strong>
           <span>comercios registrados</span>
         </article>
         <article>
-          <strong class="marketing-counter" data-counter-value="14620" data-counter-prefix="+" data-counter-suffix="">0</strong>
+          <strong class="marketing-counter" data-counter-value="14620" data-counter-prefix="+" data-counter-suffix="" data-counter-format="integer">0</strong>
           <span>ventas procesadas</span>
         </article>
         <article>
-          <strong class="marketing-counter" data-counter-value="1169600000" data-counter-prefix="$" data-counter-suffix="">0</strong>
+          <strong class="marketing-counter" data-counter-value="1169600000" data-counter-prefix="+$" data-counter-suffix="M" data-counter-format="millions">0</strong>
           <span>ARS procesados</span>
         </article>
         <article>
-          <strong class="marketing-counter" data-counter-value="5" data-counter-prefix="" data-counter-suffix=" min">0</strong>
+          <strong class="marketing-counter" data-counter-value="5" data-counter-prefix="" data-counter-suffix=" min" data-counter-format="integer">0</strong>
           <span>para empezar</span>
         </article>
     </div><div class="marketing-vertical-rotation">
@@ -1776,8 +1776,11 @@
         const target = Number(counter.dataset.counterValue || 0);
         const prefix = counter.dataset.counterPrefix || '';
         const suffix = counter.dataset.counterSuffix || '';
+        const format = counter.dataset.counterFormat || 'integer';
         const update = function (progress) {
-          counter.textContent = prefix + formatPublicMetric(Math.round(target * progress)) + suffix;
+          const value = Math.round(target * progress);
+          const displayedValue = format === 'millions' ? Math.round(value / 1000000) : value;
+          counter.textContent = prefix + formatPublicMetric(displayedValue) + suffix;
         };
         update(0);
         if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
