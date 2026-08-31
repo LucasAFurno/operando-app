@@ -1886,17 +1886,6 @@ const marketingStyles = `
         background: #e8e3da;
         overflow: hidden;
       }
-      .marketing-control-image-frame::before {
-        content: "PCLAF · CONTROL EN MARCHA";
-        position: absolute;
-        top: 12px;
-        right: 14px;
-        z-index: 1;
-        color: #f8f4ed;
-        font-size: 0.62rem;
-        font-weight: 800;
-        letter-spacing: 0.09em;
-      }
       .marketing-control-image-frame img {
         display: block;
         width: 100%;
