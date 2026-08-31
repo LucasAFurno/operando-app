@@ -2537,7 +2537,9 @@ const marketingStyles = `
           white-space: nowrap;
         }
         .marketing-nav-menu-panel {
-          left: 0;
+          right: -1px;
+          left: auto;
+          max-width: calc(100vw - 22px);
           transform: none;
         }
         .marketing-hero {
