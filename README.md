@@ -12,6 +12,16 @@ Construir un sistema comercial web que despues se pueda vender por modulos:
 - comprobantes
 - sucursales, cajas y usuarios
 
+## Alcance comercial actual
+
+La comunicación pública de PCLAF Control se apoya en funciones ya presentes en la operación: sucursales, cajas asociadas a puestos, transferencias y movimientos con historial, compras y proveedores, y usuarios con roles, módulos y permisos configurables.
+
+La configuración de ARCA se encuentra orientada a homologación. No debe comunicarse como emisión fiscal productiva hasta completar esa salida con cada comercio.
+
+### Métricas de la web pública
+
+`site/marketing-metrics.json` es la fuente de los indicadores y de los rubros rotativos de la portada. Actualizar únicamente valores agregados y autorizados; nunca datos de un comercio, usuario o transacción identificable.
+
 ## Stack recomendado
 
 - frontend: Vite + JavaScript

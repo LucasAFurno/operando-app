@@ -13,8 +13,7 @@ const selectedCloudConfigFile = isDevBuild ? 'cloud-config.dev.json' : 'cloud-co
 const siteOrigin = 'https://www.pclafcontrol.com.ar'
 const appPath = '/app/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20quiero%20informacion%20de%20PCLAF%20Control.'
-const configuredGaMeasurementId = String(process.env.PCLAF_GA4_ID || 'G-R0TVQX7DJJ').trim()
-const gaMeasurementId = /^G-[A-Z0-9]+$/i.test(configuredGaMeasurementId) ? configuredGaMeasurementId : ''
+const gaMeasurementId = String(process.env.PCLAF_GA4_ID || '').trim()
 
 const clientJs = await readFile(path.join(root, 'site', 'client.js'), 'utf8')
 const dataStoreJs = await readFile(path.join(root, 'site', 'data-store.js'), 'utf8')
@@ -23,6 +22,7 @@ const cloudAuthJs = await readFile(path.join(root, 'site', 'cloud-auth.js'), 'ut
 const cloudCoreJs = await readFile(path.join(root, 'site', 'cloud-core.js'), 'utf8')
 const stylesCss = await readFile(path.join(root, 'site', 'styles.css'), 'utf8')
 const cloudConfigJson = await readFile(path.join(root, 'site', selectedCloudConfigFile), 'utf8')
+const marketingMetrics = JSON.parse(await readFile(path.join(root, 'site', 'marketing-metrics.json'), 'utf8'))
 const assetVersion = createHash('sha256').update(`${clientJs}${dataStoreJs}${cloudSyncJs}${cloudAuthJs}${cloudCoreJs}${stylesCss}${cloudConfigJson}`).digest('hex').slice(0, 12)
 const releaseRevision = String(process.env.GITHUB_SHA || process.env.PCLAF_RELEASE_VERSION || assetVersion).trim().slice(0, 12)
 const releaseVersion = `v${releaseRevision}`
@@ -98,7 +98,6 @@ const buildArticleJsonLd = (page) => {
 
 const topLinks = [
   { href: '/funciones/', label: 'Funciones' },
-  { href: '/precios/', label: 'Gratis' },
   { href: '/preguntas-frecuentes/', label: 'FAQ' },
 ]
 
@@ -133,26 +132,26 @@ const marketingCards = [
 
 const homeFeatureRows = [
   {
-    eyebrow: 'Ventas y caja',
-    title: 'Vende y cobra rapido',
-    body: 'Registra ventas, combina medios de pago y controla la caja del dia desde una pantalla clara, pensada para atender sin demoras.',
-    image: '/pclaf-control-punto-venta-real.png',
-    alt: 'Punto de venta real de PCLAF Control',
+    eyebrow: 'Velocidad en mostrador',
+    title: 'Cobrá rápido. Sabé exactamente qué pasó.',
+    body: 'Registrá ventas y medios de pago sin salir de la pantalla de venta. Cada operación queda asociada a la caja y al puesto que la realizó.',
+    image: '/pantalla-ventas-pclaf-control.svg',
+    alt: 'Pantalla de ventas y cobros de PCLAF Control',
   },
   {
-    eyebrow: 'Productos y stock',
-    title: 'Controla stock sin planillas',
-    body: 'Carga productos, recibe alertas de faltantes y, si ya tienes una planilla, nuestro equipo te ayuda a migrarla.',
-    image: '/pclaf-control-stock-real.png',
-    alt: 'Catalogo y stock real de PCLAF Control',
+    eyebrow: 'Stock entre locales',
+    title: 'Mové mercadería con trazabilidad',
+    body: 'Consultá el stock por sucursal, registrá ajustes y transferencias, y mantené visible el origen y destino de cada movimiento.',
+    image: '/control-stock-por-sucursal.svg',
+    alt: 'Control de stock por sucursal en PCLAF Control',
     reverse: true,
   },
   {
-    eyebrow: 'Siempre disponible',
-    title: 'Entra desde PC o celular',
-    body: 'Trabaja desde cualquier navegador, sin instalar programas y con la informacion del negocio disponible cuando la necesitas.',
-    image: '/pclaf-control-mobile-devices.png',
-    alt: 'PCLAF Control en tablet y telefono',
+    eyebrow: 'Operación conectada',
+    title: 'Compras, caja y sucursales en la misma operación',
+    body: 'Registrá recepciones de proveedores, costos y movimientos de caja desde una sola base, disponible desde PC o celular.',
+    image: '/cierre-caja-comercio.svg',
+    alt: 'Operacion comercial desde cualquier dispositivo',
   },
 ]
 
@@ -176,36 +175,99 @@ const importTemplateDownloads = [{
   body: 'Envia tu planilla a soporte. Revisamos su formato y migramos los productos de forma controlada.',
 }]
 
+const controlStories = [
+  {
+    number: '01',
+    eyebrow: 'Multi sucursal',
+    title: 'Cada local en foco. Todo el negocio en perspectiva.',
+    body: 'Separá la operación por sucursal para consultar stock, cajas y resultados con el contexto correcto. Cuando necesitás mirar el conjunto, seguís trabajando sobre la misma base.',
+    details: ['Stock y movimientos por sucursal', 'Cajas y puestos ligados a cada local'],
+    image: '/control-stock-por-sucursal.svg',
+    alt: 'Vista de control de stock por sucursal en PCLAF Control',
+    caption: 'La operación se organiza por local, sin perder una visión común.',
+  },
+  {
+    number: '02',
+    eyebrow: 'Caja por puesto',
+    title: 'Un cobro rápido también puede quedar bien respaldado.',
+    body: 'Vinculá cada venta, apertura, cierre, movimiento y diferencia a la caja desde la que se operó. El equipo sigue atendiendo; vos conservás una lectura clara del turno.',
+    details: ['Apertura y cierre por caja', 'Movimientos y diferencias por puesto'],
+    image: '/cierre-caja-comercio.svg',
+    alt: 'Resumen de caja y cierre operativo en PCLAF Control',
+    caption: 'Cada puesto mantiene su propio recorrido de caja.',
+  },
+  {
+    number: '03',
+    eyebrow: 'Trazabilidad',
+    title: 'Cuando algo cambia, podés volver a entender por qué.',
+    body: 'Ventas, movimientos de caja, ajustes, compras y transferencias conservan un historial operativo. No se trata de vigilar de más: se trata de poder revisar sin reconstruir la historia a mano.',
+    details: ['Historial de acciones relevantes', 'Origen y destino en transferencias'],
+    image: '/pantalla-ventas-pclaf-control.svg',
+    alt: 'Pantalla de ventas de PCLAF Control',
+    caption: 'La operación diaria deja contexto para la revisión posterior.',
+  },
+  {
+    number: '04',
+    eyebrow: 'Compras y proveedores',
+    title: 'Reponer deja de ser una conversación suelta.',
+    body: 'Registrá proveedores, recepciones y costos dentro de la misma operación. Así, cuando llega mercadería, el stock recibe el movimiento y la compra conserva su referencia.',
+    details: ['Recepciones con costo y proveedor', 'Compras que actualizan el stock'],
+    image: '/control-stock-por-sucursal.svg',
+    alt: 'Control de productos y stock en PCLAF Control',
+    caption: 'Compras y stock se encuentran en el mismo flujo.',
+  },
+  {
+    number: '05',
+    eyebrow: 'Permisos',
+    title: 'Cada persona entra para hacer lo que le toca.',
+    body: 'Definí roles, módulos habilitados y permisos bloqueados según la responsabilidad de cada usuario. Reducís pantallas innecesarias sin sumar pasos para quien necesita operar.',
+    details: ['Roles para caja, depósito y administración', 'Módulos y acciones por usuario'],
+    image: '/pantalla-ventas-pclaf-control.svg',
+    alt: 'Operación de ventas en PCLAF Control',
+    caption: 'La interfaz puede acompañar el rol de quien trabaja.',
+  },
+  {
+    number: '06',
+    eyebrow: 'Preparación ARCA',
+    title: 'Prepará la conexión fiscal antes de llevarla a producción.',
+    body: 'Cargá los datos fiscales, generá la solicitud de certificado y verificá la conexión con ARCA en homologación. La salida fiscal productiva se define con tu comercio antes de operar.',
+    details: ['Configuración fiscal guiada', 'Verificación en homologación'],
+    image: '/cierre-caja-comercio.svg',
+    alt: 'Resumen operativo de PCLAF Control',
+    caption: 'La preparación fiscal se comunica con el alcance correcto.',
+  },
+]
+
 const marketingPages = [
   {
     slug: '',
     seoTitle: 'Sistema de ventas y stock | PCLAF Control',
-    description: 'Gestiona ventas, caja, stock, clientes y compras desde una sola plataforma. Prueba PCLAF Control gratis desde PC o celular.',
+    description: 'Sistema de ventas, caja y stock para comercios con sucursales, permisos y trazabilidad operativa. Probá PCLAF Control desde PC o celular.',
     kicker: 'Sistema comercial web',
-    h1: 'Tu negocio ordenado, desde la venta hasta el cierre de caja',
-    lead: 'Vende, controla stock y administra tu comercio desde una plataforma simple. Crea tu cuenta y empieza a usarla ahora, sin instalar nada.',
+    h1: 'Más control para tu negocio, sin perder velocidad en el mostrador',
+    lead: 'Vendé, cobrá y seguí cada movimiento desde una sola plataforma. PCLAF Control conecta sucursales, cajas, stock, compras y permisos sin sumar vueltas a la operación.',
     primaryCta: { href: `${appPath}?view=signup`, label: 'Probar gratis' },
     secondaryCta: { href: `${appPath}?view=login`, label: 'Iniciar sesion' },
     whatsAppPrompt: 'Hola PCLAF, quiero probar PCLAF Control en mi comercio.',
-    image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Panel de control real de PCLAF Control en una computadora',
+    image: '/pantalla-ventas-pclaf-control.svg',
+    imageAlt: 'Pantalla de ventas de PCLAF Control en una computadora',
     stats: [
-      ['Ventas', 'Rapidas y claras'],
-      ['Stock', 'Siempre actualizado'],
-      ['Caja', 'Cierres con control'],
+      ['Por sucursal', 'Stock y resultados separados'],
+      ['Por puesto', 'Caja ligada a cada cobro'],
+      ['Por acción', 'Historial para revisar'],
     ],
     sections: [
       {
-        title: 'Todo mas ordenado',
-        body: 'Centraliza clientes, ventas, stock y proveedores para no trabajar con datos repartidos en planillas o papeles.',
+        title: 'Una operación, menos cruces',
+        body: 'Centralizá clientes, ventas, stock, compras y proveedores para evitar datos repartidos entre planillas, papeles y chats.',
       },
       {
-        title: 'Simple para empezar',
-        body: 'Arrancas con lo basico y luego sumas compras, facturas, usuarios, cajas o sucursales segun tu negocio.',
+        title: 'Control que acompaña el ritmo',
+        body: 'Abrí y cerrá caja por puesto, registrá movimientos y consultá diferencias sin frenar la atención.',
       },
       {
-        title: 'Listo para crecer',
-        body: 'Acompana kioscos, tiendas, comercios y servicios tecnicos con una base cloud real y modulos por necesidad.',
+        title: 'Listo para crecer por local y equipo',
+        body: 'Sumá sucursales, puestos de cobro y usuarios con roles definidos, conservando una vista ordenada de la operación.',
       },
     ],
     downloads: importTemplateDownloads,
@@ -216,40 +278,38 @@ const marketingPages = [
     seoTitle: 'Funciones del sistema comercial | PCLAF Control',
     description: 'Conoce todas las funciones de PCLAF Control: ventas, caja, stock, compras, clientes, tickets, facturacion, sucursales y reportes.',
     kicker: 'Funciones',
-    h1: 'Funciones claras para operar mejor tu negocio',
-    lead: 'Estas son las herramientas principales para vender, cobrar, controlar stock y ordenar la operacion diaria sin mezclar todo en una sola pantalla.',
+    h1: 'Funciones para ganar control operativo sin sumar fricción',
+    lead: 'Vendé y cobrá con agilidad, mientras cada caja, sucursal, compra y movimiento queda ordenado para consultarlo cuando lo necesitás.',
     image: '/pantalla-ventas-pclaf-control.svg',
     imageAlt: 'Pantalla de ventas y cobros de PCLAF Control',
     whatsAppPrompt: 'Hola PCLAF, quiero ver todas las funciones de PCLAF Control.',
     sections: [
-      { title: 'Ventas y caja', body: 'Venta multi item, medios de pago, apertura y cierre, diferencias, tickets y facturacion opcional desde la venta.' },
-      { title: 'Stock y productos', body: 'Catalogo, stock por sucursal, transferencias, ajustes, importacion masiva y alertas por faltantes.' },
-      { title: 'Clientes y compras', body: 'Base comercial, cuentas corrientes, proveedores, recepcion de compras y comprobantes asociados.' },
-      { title: 'Usuarios y permisos', body: 'Accesos por rol, modulos por cuenta, cajeros, administradores y control de acciones sensibles.' },
+      { title: 'Ventas y caja por puesto', body: 'Venta multi ítem y medios de pago, con apertura, cierre, diferencias y movimientos ligados a la caja que opera cada puesto.' },
+      { title: 'Stock y trazabilidad', body: 'Catálogo, stock por sucursal, ajustes y transferencias con historial de los movimientos de inventario.' },
+      { title: 'Clientes, compras y proveedores', body: 'Base comercial, cuentas corrientes, proveedores, recepción de compras, costos y comprobantes asociados.' },
+      { title: 'Usuarios y permisos', body: 'Roles, módulos habilitados y permisos bloqueables para definir qué puede consultar u operar cada persona.' },
       { title: 'Tickets y seguimiento', body: 'Recepcion de equipos, estados de trabajo, historial operativo y control por sucursal.' },
-      { title: 'Reportes', body: 'Ventas, facturas, caja y movimientos filtrados por fechas, caja o sucursal.' },
+      { title: 'ARCA en preparación', body: 'La configuración fiscal y la verificación con ARCA se realizan en homologación. La salida fiscal en producción se define con tu comercio antes de operar.' },
     ],
     featureList: ['Ventas', 'Caja', 'Stock', 'Clientes', 'Compras', 'Facturacion', 'Tickets', 'Reportes'],
   },
   {
     slug: 'precios',
-    seoTitle: 'PCLAF Control gratis hasta nuevo aviso | Planes y modulos',
-    description: 'PCLAF Control esta gratis hasta nuevo aviso. Gestiona ventas, caja, stock, clientes, compras y sucursales desde una sola web.',
-    kicker: 'Gratis hasta nuevo aviso',
-    h1: 'PCLAF Control esta gratis hasta nuevo aviso',
-    lead: 'Crea tu cuenta y usa las herramientas disponibles para ventas, caja, stock y operacion comercial sin costo durante esta etapa. Si la modalidad cambia, avisaremos antes a los titulares de las cuentas.',
+    seoTitle: 'Planes y modulos | PCLAF Control',
+    description: 'Descubre los planes de PCLAF Control para comercios que necesitan ventas, caja, stock, clientes, compras y sucursales.',
+    kicker: 'Planes',
+    h1: 'Elige los modulos que necesita tu comercio, sin abrumarte con todo de entrada',
+    lead: 'Los planes se piensan por necesidad operativa. Puedes comenzar con un negocio simple y luego sumar cajas, sucursales, usuarios o herramientas mas avanzadas.',
     image: '/cierre-caja-comercio.svg',
     imageAlt: 'Resumen de caja y cierre operativo de PCLAF Control',
-    primaryCta: { href: `${appPath}?view=signup`, label: 'Crear cuenta gratis' },
-    whatsAppPrompt: 'Hola PCLAF, quiero crear una cuenta gratis en PCLAF Control.',
+    whatsAppPrompt: 'Hola PCLAF, quiero conocer los planes y modulos de PCLAF Control.',
     sections: [
-      { title: 'Oferta vigente', body: 'El acceso es gratis hasta nuevo aviso. No hay cargos por crear tu cuenta ni cargos retroactivos por el uso realizado durante esta etapa.' },
       { title: 'Gestion Base', body: 'Clientes, productos, ventas simples y comprobantes para negocios que quieren dejar Excel y empezar ordenados.' },
       { title: 'Mostrador', body: 'Caja diaria, cobros mixtos, apertura y cierre, ticket rapido y operadores para puestos de venta.' },
       { title: 'Operacion', body: 'Compras, proveedores, stock por sucursal, facturas, reportes y mejores controles del negocio.' },
       { title: 'Multi Sucursal', body: 'Varias sucursales, cajas, transferencias, usuarios por puesto y reportes separados por local.' },
     ],
-    featureList: ['Gratis hasta nuevo aviso', 'Sin instalar', 'Modulos para crecer', 'Acceso web desde PC o celular'],
+    featureList: ['Prueba gratis', 'Sin instalar', 'Escalable por modulos', 'Acceso web desde PC o celular'],
   },
   {
     slug: 'sistema-de-ventas',
@@ -267,74 +327,6 @@ const marketingPages = [
       { title: 'Comprobantes listos', body: 'Relaciona la venta con ticket o factura y sigue lo cobrado o pendiente.' },
     ],
     featureList: ['Ventas', 'Cobros', 'Caja', 'Facturas', 'Historial comercial'],
-  },
-  {
-    slug: 'sistema-de-compras',
-    seoTitle: 'Sistema de compras y proveedores | PCLAF Control',
-    description: 'Registra compras, proveedores, costos y recepcion de mercaderia para mantener ordenados stock y caja.',
-    kicker: 'Compras y proveedores',
-    h1: 'Compras y proveedores en la misma operacion comercial',
-    lead: 'Registra ingresos de mercaderia, consulta proveedores y conecta los costos con tus productos sin trabajar en planillas separadas.',
-    image: '/control-stock-por-sucursal.svg',
-    imageAlt: 'Control de productos y stock en PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero ordenar las compras y proveedores de mi comercio.',
-    sections: [
-      { title: 'Recepcion de compras', body: 'Carga productos, cantidades y costos para registrar la entrada de mercaderia de forma ordenada.' },
-      { title: 'Proveedores centralizados', body: 'Conserva los datos comerciales de cada proveedor y consulta el historial desde la misma plataforma.' },
-      { title: 'Impacto en stock', body: 'Las compras se integran con productos y existencias para que el inventario refleje la operacion real.' },
-    ],
-    featureList: ['Compras', 'Proveedores', 'Costos', 'Productos', 'Stock'],
-  },
-  {
-    slug: 'facturacion',
-    seoTitle: 'Facturacion y comprobantes para comercios | PCLAF Control',
-    description: 'Organiza comprobantes y facturas relacionadas con tus ventas desde la misma plataforma comercial.',
-    kicker: 'Facturacion',
-    h1: 'Comprobantes y facturas asociados a cada venta',
-    lead: 'Mantiene la relacion entre ventas, cobros, clientes y comprobantes para que puedas consultar la operacion comercial con mas claridad.',
-    image: '/pantalla-ventas-pclaf-control.svg',
-    imageAlt: 'Pantalla de ventas y comprobantes de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero conocer la facturacion y comprobantes del sistema.',
-    sections: [
-      { title: 'Comprobantes por venta', body: 'Relaciona cada venta con sus comprobantes para seguir lo emitido, cobrado o pendiente.' },
-      { title: 'Clientes y saldos', body: 'Consulta los comprobantes junto con el historial comercial del cliente cuando lo necesites.' },
-      { title: 'Consulta operativa', body: 'Encuentra ventas y facturas en una misma base sin duplicar la informacion comercial.' },
-    ],
-    featureList: ['Facturas', 'Comprobantes', 'Ventas', 'Clientes', 'Historial'],
-  },
-  {
-    slug: 'sistema-de-tickets',
-    seoTitle: 'Sistema de tickets para servicio tecnico | PCLAF Control',
-    description: 'Registra tickets, equipos, estados y clientes para seguir reparaciones y servicios desde una sola web.',
-    kicker: 'Tickets y seguimiento',
-    h1: 'Sistema de tickets para ordenar servicios y reparaciones',
-    lead: 'Registra equipos, tareas y estados de trabajo; relaciona cada ticket con el cliente y mantene el seguimiento operativo por sucursal.',
-    image: '/cierre-caja-comercio.svg',
-    imageAlt: 'Operacion comercial y seguimiento de tickets en PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero probar el sistema de tickets para mi servicio tecnico.',
-    sections: [
-      { title: 'Ingreso de equipos', body: 'Registra el detalle del equipo y del trabajo para conservar una recepcion clara.' },
-      { title: 'Estados de trabajo', body: 'Sigue cada ticket desde su ingreso hasta la entrega con un historial operativo.' },
-      { title: 'Relacion comercial', body: 'Conecta el ticket con el cliente, repuestos, ventas y caja cuando corresponda.' },
-    ],
-    featureList: ['Tickets', 'Clientes', 'Estados', 'Repuestos', 'Sucursales'],
-  },
-  {
-    slug: 'reportes',
-    seoTitle: 'Reportes de ventas, caja y stock | PCLAF Control',
-    description: 'Consulta reportes de ventas, caja, stock, compras y comprobantes por fecha, sucursal y operador.',
-    kicker: 'Reportes y control',
-    h1: 'Reportes para entender la operacion diaria de tu comercio',
-    lead: 'Consulta ventas, movimientos de caja, stock y comprobantes con filtros por fecha, sucursal o caja para tomar decisiones con datos.',
-    image: '/cierre-caja-comercio.svg',
-    imageAlt: 'Resumen de caja y reportes comerciales de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero conocer los reportes del sistema.',
-    sections: [
-      { title: 'Ventas y cobros', body: 'Revisa ventas y medios de pago para entender la actividad comercial por periodo.' },
-      { title: 'Caja y movimientos', body: 'Consulta aperturas, cierres, diferencias e ingresos o egresos de cada caja.' },
-      { title: 'Stock y compras', body: 'Relaciona existencias y movimientos de mercaderia con la operacion de compras.' },
-    ],
-    featureList: ['Ventas', 'Caja', 'Stock', 'Compras', 'Sucursales'],
   },
   {
     slug: 'control-de-stock',
@@ -359,15 +351,15 @@ const marketingPages = [
     seoTitle: 'Sistema de caja para negocios | PCLAF Control',
     description: 'Sistema de caja para negocios con apertura, cierre, diferencias, movimientos y control por operador.',
     kicker: 'Caja',
-    h1: 'Sistema de caja para negocios que necesitan ordenar apertura, cierre y cobros',
-    lead: 'Abre y cierra caja, controla efectivo esperado, registra ingresos o egresos y sigue la operacion diaria sin perder trazabilidad.',
+    h1: 'Sistema de caja por puesto para cobrar rápido y cerrar con respaldo',
+    lead: 'Abrí y cerrá cada caja, controlá el efectivo esperado y registrá ingresos o egresos. Así mantenés la velocidad de venta y la trazabilidad de la operación.',
     image: '/cierre-caja-comercio.svg',
     imageAlt: 'Cierre de caja comercial de PCLAF Control',
     whatsAppPrompt: 'Hola PCLAF, quiero mejorar la apertura y cierre de caja de mi negocio.',
     sections: [
-      { title: 'Apertura y cierre', body: 'Define monto inicial, efectivo contado y diferencia final por caja o puesto de cobro.' },
-      { title: 'Movimientos manuales', body: 'Registra ingresos, gastos, retiros, depositos y ajustes con responsable y detalle.' },
-      { title: 'Reportes por caja', body: 'Consulta el movimiento del turno y separa resultados por sucursal y caja.' },
+      { title: 'Apertura y cierre por puesto', body: 'Definí monto inicial, efectivo contado y diferencia final para cada caja o puesto de cobro.' },
+      { title: 'Movimientos con responsable', body: 'Registrá ingresos, gastos, retiros, depósitos y ajustes con el detalle de la operación.' },
+      { title: 'Resultados por caja y sucursal', body: 'Consultá el movimiento del turno y separá resultados según la caja y el local que correspondan.' },
     ],
     featureList: ['Apertura', 'Cierre', 'Diferencias', 'Cobros', 'Movimientos'],
   },
@@ -427,15 +419,15 @@ const marketingPages = [
     seoTitle: 'Gestion de clientes y compras | PCLAF Control',
     description: 'Gestiona clientes, compras, cuentas corrientes, historial comercial y proveedores desde una sola web.',
     kicker: 'Clientes',
-    h1: 'Gestion de clientes, compras y proveedores para comercios que quieren trabajar mas ordenados',
-    lead: 'Centraliza tu base comercial y evita datos sueltos para poder vender, cobrar y comprar con mejor seguimiento.',
+    h1: 'Compras y proveedores para reponer con más criterio y menos vueltas',
+    lead: 'Centralizá clientes, proveedores y recepciones de compra para que costos, stock y seguimiento comercial no queden en sistemas separados.',
     image: '/control-stock-por-sucursal.svg',
     imageAlt: 'Gestion de clientes, compras y proveedores de PCLAF Control',
     whatsAppPrompt: 'Hola PCLAF, quiero ordenar clientes y compras en mi comercio.',
     sections: [
       { title: 'Base comercial', body: 'Crea clientes, historiales y saldos sin obligar a pedir datos innecesarios.' },
-      { title: 'Compras y proveedores', body: 'Registra recepciones, costos, categorias y saldo comercial con cada proveedor.' },
-      { title: 'Mas control del negocio', body: 'Clientes y compras alimentan ventas, caja y reportes para ver el negocio completo.' },
+      { title: 'Compras y proveedores', body: 'Registrá recepciones, costos, categorías y saldo comercial para consultar cada proveedor con contexto.' },
+      { title: 'Impacto visible en la operación', body: 'Las compras actualizan el stock y quedan dentro de la misma base que ventas, caja y reportes.' },
     ],
     featureList: ['Clientes', 'Compras', 'Proveedores', 'Saldos', 'Historial'],
   },
@@ -444,15 +436,15 @@ const marketingPages = [
     seoTitle: 'Sistema multi sucursal | PCLAF Control',
     description: 'Gestiona sucursales, cajas, usuarios, permisos y transferencias de stock desde una sola plataforma.',
     kicker: 'Escala',
-    h1: 'Sistema multi sucursal con usuarios, cajas y transferencias bajo control',
-    lead: 'Cuando el comercio crece, PCLAF Control permite separar resultados por sucursal, ligar cajas a locales y transferir mercaderia con trazabilidad.',
+    h1: 'Sistema multi sucursal para ver cada local sin perder el control del conjunto',
+    lead: 'Separá resultados por sucursal, vinculá cajas a cada local y transferí mercadería con trazabilidad. Todo sin obligar al equipo a trabajar más lento.',
     image: '/control-stock-por-sucursal.svg',
     imageAlt: 'Control multi sucursal de PCLAF Control',
     whatsAppPrompt: 'Hola PCLAF, necesito varias sucursales y cajas en el sistema.',
     sections: [
-      { title: 'Sucursales y cajas', body: 'Cada local puede tener su caja, numeracion, operadores y reportes propios.' },
-      { title: 'Permisos por usuario', body: 'Un administrador decide que puede ver o tocar cada empleado segun su rol.' },
-      { title: 'Transferencias de stock', body: 'Mueve productos entre sucursales y conserva historial de origen y destino.' },
+      { title: 'Sucursales y cajas por puesto', body: 'Cada local puede tener sus cajas, puestos de cobro, operadores y reportes separados.' },
+      { title: 'Permisos por usuario', body: 'Un administrador define roles, módulos habilitados y permisos bloqueados según la responsabilidad de cada persona.' },
+      { title: 'Transferencias con trazabilidad', body: 'Mové productos entre sucursales y conservá el historial de origen, destino y detalle del movimiento.' },
     ],
     featureList: ['Multi sucursal', 'Usuarios', 'Permisos', 'Transferencias', 'Cajas'],
   },
@@ -472,7 +464,7 @@ const marketingPages = [
       ['Puedo usar lector de codigos?', 'Si. El sistema acepta lectores USB tipo teclado y busqueda manual.'],
       ['Permite varias cajas?', 'Si. Puedes ligar ventas y caja a una caja especifica y separar reportes por puesto de cobro.'],
       ['Como cargo una planilla de productos?', 'Habla con soporte y envianos el archivo. Revisamos sus columnas y hacemos una carga controlada para evitar duplicados o datos mal interpretados.'],
-      ['El sistema es gratis?', 'Si. PCLAF Control esta gratis hasta nuevo aviso. No cobramos de forma retroactiva: si la modalidad cambia, avisaremos antes al titular de la cuenta.'],
+      ['Que incluye la prueba gratis?', 'Acceso inicial para conocer ventas, caja, stock y flujo del sistema antes de definir el pack ideal.'],
     ],
     featureList: ['FAQ', 'Prueba gratis', 'Soporte', 'Carga asistida', 'Caja'],
   },
@@ -532,10 +524,10 @@ const marketingPages = [
   {
     slug: 'privacidad',
     seoTitle: 'Politica de privacidad | PCLAF Control',
-    description: 'Conoce como PCLAF Control trata datos comerciales, accesos, comunicaciones, soporte y preferencias de cookies.',
+    description: 'Conoce como PCLAF Control trata datos comerciales, accesos, comunicaciones y soporte.',
     kicker: 'Legal',
     h1: 'Politica de privacidad de PCLAF Control',
-    lead: 'Esta página resume cómo tratamos datos de acceso, datos comerciales, consultas y preferencias de cookies en el sitio público.',
+    lead: 'Esta pagina resume como tratamos datos de acceso, datos comerciales y consultas enviadas por formularios o WhatsApp.',
     image: '/og-pclaf-control.svg',
     imageAlt: 'Politica de privacidad de PCLAF Control',
     whatsAppPrompt: 'Hola PCLAF, quiero consultar sobre privacidad y datos.',
@@ -543,27 +535,23 @@ const marketingPages = [
       { title: 'Datos de acceso', body: 'Los accesos se usan para identificar usuarios y proteger la operacion de cada comercio.' },
       { title: 'Datos operativos', body: 'La informacion de ventas, caja, stock y clientes pertenece al comercio que usa la plataforma.' },
       { title: 'Soporte y contacto', body: 'Los mensajes enviados por WhatsApp o formularios se usan para responder consultas comerciales o tecnicas.' },
-      { title: 'Cookies necesarias', body: 'Guardamos localmente tu elección de privacidad para recordar la configuración. Este almacenamiento es necesario para respetar tu decisión y no se usa para medir navegación.' },
-      { title: 'Analíticas opcionales', body: 'Solo cargamos Google Analytics 4 si aceptás la categoría analítica de forma expresa. Sirve para conocer páginas y acciones comerciales de manera agregada. Podés retirar o cambiar el consentimiento desde “Preferencias de cookies” en el pie de página; al rechazarlo, no cargamos GA4 ni Meta o TikTok.' },
     ],
     featureList: ['Privacidad', 'Accesos', 'Datos comerciales', 'Soporte'],
   },
   {
     slug: 'terminos',
     seoTitle: 'Terminos de uso | PCLAF Control',
-    description: 'Terminos de uso, oferta gratuita vigente, soporte y operacion responsable de PCLAF Control.',
+    description: 'Terminos generales de uso, prueba, soporte y operacion de PCLAF Control.',
     kicker: 'Legal',
     h1: 'Terminos de uso de PCLAF Control',
-    lead: 'El uso de PCLAF Control se presta bajo condiciones claras de acceso, soporte, seguridad y operacion responsable.',
+    lead: 'La prueba y el uso comercial del sistema se prestan bajo condiciones claras de acceso, soporte, seguridad y operacion responsable.',
     image: '/og-pclaf-control.svg',
     imageAlt: 'Terminos de uso de PCLAF Control',
     whatsAppPrompt: 'Hola PCLAF, quiero consultar los terminos de uso del sistema.',
     sections: [
-      { title: 'Oferta gratuita vigente', body: 'PCLAF Control esta disponible sin costo hasta nuevo aviso. La creacion y el uso de la cuenta durante esta etapa no generan cargos retroactivos.' },
-      { title: 'Cambios de modalidad', body: 'Si en el futuro se modifica la modalidad gratuita, avisaremos antes al titular de la cuenta por los canales de contacto disponibles. Podra decidir si continua bajo las nuevas condiciones.' },
-      { title: 'Alcance del acceso', body: 'Las funciones habilitadas dependen de la configuracion de cada comercio y de la disponibilidad operativa del servicio. La oferta gratuita no garantiza una duracion permanente.' },
+      { title: 'Prueba y acceso', body: 'La prueba inicial permite conocer el sistema antes de definir el pack comercial adecuado.' },
       { title: 'Uso responsable', body: 'Cada comercio administra sus usuarios, roles y claves para operar de manera segura.' },
-      { title: 'Soporte y datos', body: 'El soporte acompana configuracion y dudas operativas. La informacion comercial pertenece al comercio; ante una consulta de acceso o continuidad, el titular puede contactar a soporte.' },
+      { title: 'Soporte y continuidad', body: 'El soporte acompana configuracion, dudas comerciales y continuidad operativa segun el alcance acordado.' },
     ],
     featureList: ['Terminos', 'Prueba', 'Soporte', 'Uso comercial'],
   },
@@ -580,9 +568,9 @@ const buildSoftwareJsonLd = (page) => ({
   url: pageUrl(page.slug),
   image: `${siteOrigin}/og-pclaf-control.svg`,
   screenshot: [
-    `${siteOrigin}/pclaf-control-punto-venta-real.png`,
-    `${siteOrigin}/pclaf-control-stock-real.png`,
-    `${siteOrigin}/pclaf-control-mobile-devices.png`,
+    `${siteOrigin}/pantalla-ventas-pclaf-control.svg`,
+    `${siteOrigin}/control-stock-por-sucursal.svg`,
+    `${siteOrigin}/cierre-caja-comercio.svg`,
   ],
   softwareVersion: assetVersion,
   description: page.description,
@@ -590,7 +578,7 @@ const buildSoftwareJsonLd = (page) => ({
   offers: {
     '@type': 'Offer',
     availability: 'https://schema.org/InStock',
-    description: 'PCLAF Control esta gratis hasta nuevo aviso.',
+    description: 'Prueba gratis y planes comerciales para comercios.',
     url: `${siteOrigin}/precios/`,
   },
 })
@@ -631,7 +619,7 @@ const renderTopbar = () => `
       <img src="/pclaf-logo.png" alt="PCLAF Control" width="48" height="46" />
       <div>
         <strong>PCLAF Control</strong>
-        <p>Ventas, caja y stock en una sola web</p>
+        <p>Ventas ágiles, control operativo</p>
       </div>
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
@@ -642,7 +630,6 @@ const renderTopbar = () => `
       <a class="is-primary" href="${appPath}?view=signup" data-analytics="header_signup">Probar gratis</a>
     </div>
   </header>
-  <p class="marketing-free-notice" role="status"><strong>Gratis hasta nuevo aviso.</strong> Crea tu cuenta y empieza a usar PCLAF Control sin costo.</p>
 `
 
 const renderFooter = () => `
@@ -659,24 +646,12 @@ const renderFooter = () => `
       </nav>
     </div>
     <div class="marketing-footer-links">
-      <p class="marketing-footer-title">Soluciones</p>
-      <nav>
-        <a href="/sistema-de-ventas/" data-analytics="footer_sales">Ventas y caja</a>
-        <a href="/control-de-stock/" data-analytics="footer_stock">Stock</a>
-        <a href="/sistema-de-compras/" data-analytics="footer_purchases">Compras</a>
-        <a href="/facturacion/" data-analytics="footer_invoices">Facturacion</a>
-        <a href="/sistema-de-tickets/" data-analytics="footer_tickets">Tickets</a>
-        <a href="/reportes/" data-analytics="footer_reports">Reportes</a>
-      </nav>
-    </div>
-    <div class="marketing-footer-links">
       <p class="marketing-footer-title">Mas informacion</p>
       <nav>
         <a href="/funciones/" data-analytics="footer_funciones">Funciones</a>
         <a href="/preguntas-frecuentes/" data-analytics="footer_faq">Preguntas frecuentes</a>
         <a href="/privacidad/" data-analytics="footer_privacidad">Privacidad</a>
         <a href="/terminos/" data-analytics="footer_terminos">Terminos</a>
-        <button type="button" class="marketing-cookie-link" data-consent-open>Preferencias de cookies</button>
       </nav>
     </div>
     <div class="marketing-footer-actions">
@@ -735,6 +710,73 @@ const renderHomeExtras = (page) => page.slug ? '' : `
         </div>
       </article>
     `).join('')}
+  </section>
+  <section class="marketing-live-metrics" aria-labelledby="live-metrics-title">
+    <div class="marketing-live-metrics-head">
+      <p class="marketing-metrics-status">PCLAF CONTROL · OPERACIÓN EN MARCHA</p>
+      <p>Ventas, stock, caja y equipo conectados</p>
+    </div>
+    <div class="marketing-live-metrics-grid">${(marketingMetrics.metrics || []).map((metric) => `
+        <article>
+          <strong class="marketing-counter" data-counter-value="${Number(metric.value) || 0}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}">0</strong>
+          <span>${escapeHtml(metric.label)}</span>
+        </article>`).join('')}
+    </div>
+    <div class="marketing-vertical-rotation">
+      <p class="marketing-kicker">Diseñado para crecer con tu rubro</p>
+      <h2 id="live-metrics-title">Herramientas para comercios de <em data-vertical-rotation data-verticals="${escapeHtml(JSON.stringify(marketingMetrics.verticals || []))}">${escapeHtml(marketingMetrics.verticals?.[0] || 'tu rubro')}</em></h2>
+      <p>Una misma plataforma para vender, controlar y organizar la operación de todos los días.</p>
+    </div>
+  </section>
+  <section class="marketing-support" aria-labelledby="support-title">
+    <div class="marketing-support-copy">
+      <p class="marketing-kicker">Soporte 24/7</p>
+      <h2 id="support-title">Una persona del otro lado, cuando tu negocio la necesita.</h2>
+      <p>Si algo no cierra en caja, el stock se comporta distinto o necesitás una mano para configurar una operación, podés escribirnos. El soporte está disponible las 24 horas, todos los días.</p>
+      <ol class="marketing-support-points">
+        <li><span>01</span><div><strong>Disponible 24/7</strong><p>Para acompañar la operación, incluso fuera del horario de mostrador.</p></div></li>
+        <li><span>02</span><div><strong>Directo por WhatsApp</strong><p>Escribinos como le escribirías a alguien de tu equipo.</p></div></li>
+        <li><span>03</span><div><strong>Ayuda sobre la operación</strong><p>Stock, caja, productos y configuración, con el contexto del día a día.</p></div></li>
+      </ol>
+    </div>
+    <div class="marketing-support-phone" aria-label="Ejemplo ilustrativo de una conversación de soporte">
+      <div class="marketing-phone-head"><span class="marketing-phone-dot"></span><div><strong>Soporte PCLAF</strong><small>Ejemplo de conversación</small></div></div>
+      <div class="marketing-phone-chat">
+        <p class="marketing-chat-day">HOY</p>
+        <p class="marketing-message is-client">Hola! Tengo un desajuste con el stock 😅<small>21:52</small></p>
+        <p class="marketing-message is-support">Hola, contame qué estás viendo y lo revisamos.<small>21:52</small></p>
+        <p class="marketing-message is-client">Me aparecen algunos productos en negativo.<small>21:53</small></p>
+        <p class="marketing-message is-support">Ya encontré el movimiento. Era un ajuste de inventario cargado dos veces. Lo corregimos paso a paso.<small>21:55</small></p>
+        <p class="marketing-message is-client">Listo, ahora coincide 🙌 Gracias!<small>21:56</small></p>
+        <p class="marketing-message is-client">Y el cierre de ayer me da una diferencia.<small>22:03</small></p>
+        <p class="marketing-message is-support">Revisá los cobros en efectivo del turno. Si querés, te acompaño desde el reporte de caja.<small>22:04</small></p>
+        <p class="marketing-message is-client">Ahí lo encontré. Me faltaba registrar uno 😅<small>22:05</small></p>
+        <p class="marketing-message is-support">Perfecto. Escribinos cuando lo necesites.<small>22:05</small></p>
+      </div>
+      <div class="marketing-phone-input"><span>Escribí un mensaje…</span><b>↑</b></div>
+    </div>
+  </section>
+  <section class="marketing-control-panel" aria-labelledby="control-panel-title">
+    <div class="marketing-control-panel-intro">
+      <p class="marketing-kicker">Recorrido de control</p>
+      <h2 id="control-panel-title">Seis capas para mirar mejor, sin operar más lento</h2>
+      <p>Una bitácora visual de la operación: cada capa suma contexto sobre el negocio, sin alejar a tu equipo de la venta o del mostrador.</p>
+    </div>
+    <div class="marketing-control-progress" aria-hidden="true"><span>01</span><i></i><span>06</span></div>
+    <div class="marketing-control-stories">${controlStories.map((story, index) => `
+        <article class="marketing-control-story ${index % 2 ? 'is-reverse' : ''}">
+          <div class="marketing-control-story-copy">
+            <p class="marketing-control-index"><span>${story.number}</span>${escapeHtml(story.eyebrow)}</p>
+            <h3>${escapeHtml(story.title)}</h3>
+            <p>${escapeHtml(story.body)}</p>
+            <ul>${story.details.map((detail) => `<li>${escapeHtml(detail)}</li>`).join('')}</ul>
+          </div>
+          <figure class="marketing-control-story-media">
+            <div class="marketing-control-image-frame"><img src="${story.image}" alt="${escapeHtml(story.alt)}" width="1200" height="800" loading="lazy" /></div>
+            <figcaption>${escapeHtml(story.caption)}</figcaption>
+          </figure>
+        </article>`).join('')}
+    </div>
   </section>
   <section class="marketing-home-cta marketing-card">
     <div>
@@ -1203,25 +1245,6 @@ const marketingStyles = `
       body[data-page="home"] .marketing-grid-compact {
         display: none;
       }
-      .marketing-cookie-link { appearance: none; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
-      .marketing-cookie-link:hover { color: #d51d22; }
-      .marketing-consent { position: fixed; z-index: 20; right: 20px; bottom: 20px; width: min(460px, calc(100vw - 40px)); padding: 22px; border: 1px solid #ded9d0; border-radius: 18px; background: #fffdf8; color: #181818; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28); }
-      .marketing-consent[hidden], .marketing-consent-modal[hidden] { display: none; }
-      .marketing-consent h2, .marketing-consent-panel h2 { margin: 0 0 8px; font-size: 1.2rem; }
-      .marketing-consent p, .marketing-consent-option span { margin: 0; color: #625e57; line-height: 1.5; }
-      .marketing-consent p + p { margin-top: 10px; }
-      .marketing-consent a { color: #aa161a; }
-      .marketing-consent-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
-      .marketing-consent button { min-height: 42px; padding: 0 14px; border: 1px solid #bdb7ae; border-radius: 10px; background: #fff; color: #181818; cursor: pointer; font: inherit; font-weight: 700; }
-      .marketing-consent button.is-primary { border-color: #db1616; background: #db1616; color: #fff; }
-      .marketing-consent button:focus-visible, .marketing-cookie-link:focus-visible { outline: 3px solid #1e70c9; outline-offset: 3px; }
-      .marketing-consent-modal { position: fixed; z-index: 21; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, 0.55); }
-      .marketing-consent-panel { width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 24px; border-radius: 18px; background: #fffdf8; color: #181818; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35); }
-      .marketing-consent-option { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; padding: 14px; border: 1px solid #ded9d0; border-radius: 12px; }
-      .marketing-consent-option input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: #db1616; }
-      .marketing-consent-option strong, .marketing-consent-option span { display: block; }
-      .marketing-consent-option span { margin-top: 4px; }
-      @media (max-width: 640px) { .marketing-consent { right: 12px; bottom: 12px; width: calc(100vw - 24px); } .marketing-consent-actions { display: grid; grid-template-columns: 1fr; } .marketing-consent-actions button { width: 100%; } }
       @media (max-width: 1024px) {
         .marketing-topbar {
           grid-template-columns: 1fr;
@@ -1345,15 +1368,6 @@ const marketingStyles = `
         margin-top: 2px;
         color: #6f6a62;
         font-size: 0.82rem;
-      }
-      .marketing-free-notice {
-        margin: 0;
-        padding: 10px 16px;
-        border-bottom: 1px solid #ded9d0;
-        background: #fff3cd;
-        color: #5c3f00;
-        text-align: center;
-        font-size: 0.92rem;
       }
       .marketing-nav a,
       .marketing-auth-links a:not(.is-primary) {
@@ -1527,6 +1541,373 @@ const marketingStyles = `
       .marketing-story .marketing-kicker {
         color: #171717;
       }
+      .marketing-live-metrics {
+        margin-inline: calc((100vw - min(1320px, calc(100vw - 48px))) / -2);
+        padding: clamp(54px, 7vw, 90px) max(24px, calc((100vw - min(1320px, calc(100vw - 48px))) / 2));
+        background: #181818;
+        color: #f7f4ee;
+      }
+      .marketing-live-metrics-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+        color: #bcb5ab;
+        font-size: 0.78rem;
+      }
+      .marketing-live-metrics-head p { margin: 0; }
+      .marketing-metrics-status {
+        color: #ffb0aa;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .marketing-live-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+        padding: 34px 0 clamp(58px, 7vw, 88px);
+      }
+      .marketing-live-metrics-grid article { min-width: 0; }
+      .marketing-live-metrics-grid strong {
+        display: block;
+        color: #fff;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(2.1rem, 4vw, 4.1rem);
+        font-weight: 780;
+        letter-spacing: -0.06em;
+        line-height: 1;
+      }
+      .marketing-live-metrics-grid span {
+        display: block;
+        margin-top: 10px;
+        color: #bcb5ab;
+        font-size: 0.86rem;
+        line-height: 1.45;
+      }
+      .marketing-vertical-rotation {
+        max-width: 1020px;
+        margin: 0 auto;
+        text-align: center;
+      }
+      .marketing-vertical-rotation .marketing-kicker { color: #ff8e87; }
+      .marketing-vertical-rotation h2 {
+        margin: 14px 0 20px;
+        color: #fff;
+        font-size: clamp(2.45rem, 5.6vw, 5.8rem);
+        font-weight: 760;
+        letter-spacing: -0.064em;
+        line-height: 0.98;
+      }
+      .marketing-vertical-rotation em {
+        display: inline-block;
+        color: #ff5e55;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-weight: 400;
+        letter-spacing: -0.06em;
+      }
+      .marketing-vertical-rotation em.is-changing { animation: vertical-word-change 380ms ease both; }
+      .marketing-vertical-rotation > p:last-child {
+        max-width: 64ch;
+        margin: 0 auto;
+        color: #bcb5ab;
+        font-size: 1.03rem;
+        line-height: 1.7;
+      }
+      @keyframes vertical-word-change {
+        0% { opacity: 0; transform: translateY(8px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      .marketing-support {
+        display: grid;
+        grid-template-columns: minmax(0, 0.94fr) minmax(370px, 0.76fr);
+        align-items: center;
+        gap: clamp(42px, 9vw, 132px);
+        padding: clamp(70px, 10vw, 132px) 0;
+        border-bottom: 1px solid #ded9d0;
+      }
+      .marketing-support-copy h2 {
+        max-width: 11ch;
+        margin: 0 0 20px;
+        color: #181818;
+        font-size: clamp(2.5rem, 4.5vw, 4.5rem);
+        font-weight: 760;
+        letter-spacing: -0.055em;
+        line-height: 1;
+      }
+      .marketing-support-copy > p:not(.marketing-kicker) {
+        max-width: 48ch;
+        margin: 0;
+        color: #625e57;
+        font-size: 1.06rem;
+        line-height: 1.72;
+      }
+      .marketing-support-points {
+        display: grid;
+        margin: 34px 0 0;
+        padding: 0;
+        list-style: none;
+        border-top: 1px solid #ded9d0;
+      }
+      .marketing-support-points li {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 14px;
+        padding: 18px 0;
+        border-bottom: 1px solid #ded9d0;
+      }
+      .marketing-support-points > li > span {
+        color: #b91c1c;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+      .marketing-support-points strong { color: #24211e; }
+      .marketing-support-points p {
+        margin: 5px 0 0;
+        color: #716c64;
+        font-size: 0.94rem;
+        line-height: 1.5;
+      }
+      .marketing-support-phone {
+        width: min(390px, 100%);
+        justify-self: center;
+        overflow: hidden;
+        border: 8px solid #181818;
+        border-radius: 34px;
+        background: #181818;
+        box-shadow: 0 28px 60px rgba(34, 30, 24, 0.23);
+      }
+      .marketing-phone-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px;
+        background: #292622;
+        color: #fff;
+      }
+      .marketing-phone-dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #ff8b84 0 16%, #e52329 18% 53%, #9e1116 55%);
+      }
+      .marketing-phone-head strong,
+      .marketing-phone-head small { display: block; }
+      .marketing-phone-head strong { font-size: 0.92rem; }
+      .marketing-phone-head small { margin-top: 2px; color: #ffaaa5; font-size: 0.74rem; }
+      .marketing-phone-chat {
+        display: grid;
+        gap: 10px;
+        height: 390px;
+        padding: 15px 12px 22px;
+        overflow-y: auto;
+        scrollbar-color: #6d6258 transparent;
+        background: linear-gradient(180deg, #201e1b, #171615);
+      }
+      .marketing-chat-day {
+        margin: 0;
+        color: #bcb5ab;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-align: center;
+      }
+      .marketing-message {
+        max-width: 85%;
+        margin: 0;
+        padding: 10px 11px 6px;
+        border-radius: 12px;
+        color: #ecf4f1;
+        font-size: 0.85rem;
+        line-height: 1.38;
+      }
+      .marketing-message.is-client { justify-self: end; border-top-right-radius: 3px; background: #c82027; }
+      .marketing-message.is-support { justify-self: start; border-top-left-radius: 3px; background: #3b3732; }
+      .marketing-message small { display: block; margin-top: 5px; color: rgba(255,255,255,0.62); font-size: 0.64rem; text-align: right; }
+      .marketing-phone-input {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px;
+        background: #292622;
+        color: #bcb5ab;
+        font-size: 0.8rem;
+      }
+      .marketing-phone-input span { padding-left: 8px; }
+      .marketing-phone-input b {
+        display: grid;
+        width: 31px;
+        height: 31px;
+        place-items: center;
+        border-radius: 50%;
+        background: #e52329;
+        color: #fff;
+        font-size: 1rem;
+      }
+      .marketing-control-panel {
+        position: relative;
+        padding: clamp(58px, 8vw, 100px) 0;
+        border-bottom: 1px solid #ded9d0;
+      }
+      .marketing-control-panel-intro h2 {
+        max-width: 14ch;
+        margin: 0 0 18px;
+        color: #181818;
+        font-size: clamp(2.25rem, 4vw, 4rem);
+        font-weight: 750;
+        letter-spacing: -0.045em;
+        line-height: 1.02;
+      }
+      .marketing-control-panel-intro > p:not(.marketing-kicker) {
+        max-width: 52ch;
+        margin: 0;
+        color: #625e57;
+        font-size: 1.04rem;
+        line-height: 1.72;
+      }
+      .marketing-control-progress {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 12px;
+        max-width: 720px;
+        margin: 34px 0 clamp(48px, 7vw, 86px);
+        color: #b91c1c;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+      }
+      .marketing-control-progress i {
+        display: block;
+        height: 1px;
+        background: linear-gradient(90deg, #e52329 0 38%, #ded9d0 38% 100%);
+      }
+      .marketing-control-stories {
+        display: grid;
+        gap: clamp(62px, 10vw, 134px);
+      }
+      .marketing-control-story {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 0.78fr) minmax(380px, 1.22fr);
+        align-items: center;
+        gap: clamp(36px, 7vw, 100px);
+        min-height: 500px;
+      }
+      .marketing-control-story.is-reverse {
+        grid-template-columns: minmax(380px, 1.22fr) minmax(0, 0.78fr);
+      }
+      .marketing-control-story.is-reverse .marketing-control-story-copy { order: 2; }
+      .marketing-control-story.is-reverse .marketing-control-story-media { order: 1; }
+      .marketing-control-story-copy {
+        position: relative;
+        z-index: 1;
+      }
+      .marketing-control-index {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 16px;
+        color: #b91c1c;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+      .marketing-control-index span {
+        display: inline-grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 50%;
+        background: #e52329;
+        color: #fff;
+        font-size: 0.74rem;
+      }
+      .marketing-control-story h3 {
+        max-width: 12ch;
+        margin: 0 0 18px;
+        color: #181818;
+        font-size: clamp(2.15rem, 3.7vw, 3.8rem);
+        font-weight: 750;
+        letter-spacing: -0.047em;
+        line-height: 1.02;
+      }
+      .marketing-control-story-copy > p:not(.marketing-control-index) {
+        margin: 0;
+        color: #625e57;
+        font-size: 1.05rem;
+        line-height: 1.72;
+      }
+      .marketing-control-story ul {
+        display: grid;
+        gap: 8px;
+        margin: 24px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .marketing-control-story li {
+        display: flex;
+        gap: 9px;
+        color: #38342f;
+        font-size: 0.94rem;
+        line-height: 1.45;
+      }
+      .marketing-control-story li::before {
+        content: "↗";
+        color: #e52329;
+        font-weight: 800;
+      }
+      .marketing-control-story-media {
+        margin: 0;
+      }
+      .marketing-control-image-frame {
+        position: relative;
+        padding: clamp(12px, 2.2vw, 24px);
+        border-radius: 28px;
+        background: #e8e3da;
+        overflow: hidden;
+      }
+      .marketing-control-image-frame::before {
+        content: "PCLAF · CONTROL EN MARCHA";
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        z-index: 1;
+        color: #f8f4ed;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+      }
+      .marketing-control-image-frame img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 14px;
+        box-shadow: 0 22px 46px rgba(35, 30, 24, 0.17);
+        transition: transform 700ms cubic-bezier(.2,.8,.2,1);
+      }
+      .marketing-control-story:hover .marketing-control-image-frame img { transform: scale(1.018); }
+      .marketing-control-story-media figcaption {
+        margin: 13px 4px 0;
+        color: #716c64;
+        font-size: 0.87rem;
+        line-height: 1.5;
+      }
+      @supports (animation-timeline: view()) {
+        .marketing-control-story {
+          animation: marketing-story-reveal linear both;
+          animation-timeline: view();
+          animation-range: entry 8% cover 35%;
+        }
+      }
+      @keyframes marketing-story-reveal {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
       .marketing-home-cta {
         margin-top: 0;
         padding: clamp(54px, 7vw, 86px);
@@ -1631,6 +2012,18 @@ const marketingStyles = `
         .marketing-story.is-reverse .marketing-story-copy {
           order: initial;
         }
+        .marketing-control-story,
+        .marketing-control-story.is-reverse {
+          min-height: 0;
+          grid-template-columns: 1fr;
+          gap: 34px;
+        }
+        .marketing-control-story.is-reverse .marketing-control-story-copy,
+        .marketing-control-story.is-reverse .marketing-control-story-media {
+          order: initial;
+        }
+        .marketing-live-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .marketing-support { grid-template-columns: 1fr; gap: 42px; }
       }
       @media (max-width: 640px) {
         html,
@@ -1646,11 +2039,6 @@ const marketingStyles = `
         .marketing-topbar {
           min-height: 70px;
           gap: 10px;
-        }
-        .marketing-free-notice {
-          padding: 9px 12px;
-          font-size: 0.83rem;
-          line-height: 1.4;
         }
         .marketing-brand img {
           width: 40px;
@@ -1710,23 +2098,47 @@ const marketingStyles = `
         }
         .marketing-story,
         .marketing-story.is-reverse {
-          gap: 26px;
-          padding: 44px 0;
-        }
-        /* The hero already presents sales and cash. On mobile, skip the
-           repeated image and move directly to the benefit. */
-        .marketing-home-rows .marketing-story:first-child {
-          gap: 0;
-        }
-        .marketing-home-rows .marketing-story:first-child .marketing-story-media {
-          display: none;
+          padding: 52px 0;
         }
         .marketing-story-media {
           padding: 10px;
           border-radius: 16px;
         }
         .marketing-story-copy h2 {
-          font-size: clamp(2rem, 9vw, 2.45rem);
+          font-size: 2.45rem;
+        }
+        .marketing-live-metrics {
+          margin-inline: -11px;
+          padding: 44px 18px 52px;
+        }
+        .marketing-live-metrics-head { align-items: flex-start; flex-direction: column; gap: 8px; }
+        .marketing-live-metrics-grid { gap: 30px 18px; padding: 28px 0 56px; }
+        .marketing-live-metrics-grid strong { font-size: 2.35rem; }
+        .marketing-live-metrics-grid span { font-size: 0.78rem; }
+        .marketing-vertical-rotation h2 { font-size: clamp(2.45rem, 13vw, 3.8rem); }
+        .marketing-support { padding: 68px 0; }
+        .marketing-support-phone { width: min(100%, 390px); }
+        .marketing-control-panel {
+          margin: 0;
+          padding: 52px 0;
+        }
+        .marketing-control-progress {
+          margin: 28px 0 56px;
+        }
+        .marketing-control-stories {
+          gap: 70px;
+        }
+        .marketing-control-story h3 {
+          font-size: 2.45rem;
+        }
+        .marketing-control-image-frame {
+          padding: 10px;
+          border-radius: 18px;
+        }
+        .marketing-control-image-frame::before {
+          top: 8px;
+          right: 10px;
+          font-size: 0.53rem;
         }
         .marketing-home-cta {
           margin-inline: -11px;
@@ -1746,6 +2158,67 @@ const marketingStyles = `
           font-size: 0.86rem;
         }
       }
+      @media (prefers-reduced-motion: reduce) {
+        .marketing-control-story,
+        .marketing-control-image-frame img,
+        .marketing-vertical-rotation em {
+          animation: none;
+          transition: none;
+        }
+      }
+      /* Home palette: warm charcoal supplied for PCLAF, with its red accent. */
+      html:has(body[data-page="home"]),
+      body[data-page="home"] {
+        background: #1a1a1a;
+        color: #f7f4ee;
+      }
+      body[data-page="home"] .marketing-topbar {
+        border-bottom-color: #3b3936;
+        background: rgba(26, 26, 26, 0.94);
+      }
+      body[data-page="home"] .marketing-brand strong,
+      body[data-page="home"] .marketing-nav a,
+      body[data-page="home"] .marketing-auth-links a:not(.is-primary),
+      body[data-page="home"] .marketing-hero-copy h1,
+      body[data-page="home"] .marketing-story-copy h2,
+      body[data-page="home"] .marketing-support-copy h2,
+      body[data-page="home"] .marketing-control-panel-intro h2,
+      body[data-page="home"] .marketing-control-story h3 {
+        color: #f7f4ee;
+      }
+      body[data-page="home"] .marketing-brand p,
+      body[data-page="home"] .marketing-lead,
+      body[data-page="home"] .marketing-story-copy p:not(.marketing-kicker),
+      body[data-page="home"] .marketing-support-copy > p:not(.marketing-kicker),
+      body[data-page="home"] .marketing-control-panel-intro > p:not(.marketing-kicker),
+      body[data-page="home"] .marketing-control-story-copy > p:not(.marketing-control-index),
+      body[data-page="home"] .marketing-control-story li,
+      body[data-page="home"] .marketing-footer p,
+      body[data-page="home"] .marketing-footer-title {
+        color: #bcb5ab;
+      }
+      body[data-page="home"] .marketing-home-rows,
+      body[data-page="home"] .marketing-story,
+      body[data-page="home"] .marketing-support,
+      body[data-page="home"] .marketing-control-panel,
+      body[data-page="home"] .marketing-footer,
+      body[data-page="home"] .marketing-support-points,
+      body[data-page="home"] .marketing-support-points li {
+        border-color: #3b3936;
+      }
+      body[data-page="home"] .marketing-story-media,
+      body[data-page="home"] .marketing-control-image-frame {
+        background: #292622;
+      }
+      body[data-page="home"] .marketing-story .marketing-kicker { color: #ffaaa5; }
+      body[data-page="home"] .marketing-support-points strong { color: #f7f4ee; }
+      body[data-page="home"] .marketing-support-points p,
+      body[data-page="home"] .marketing-control-story-media figcaption { color: #aaa39a; }
+      body[data-page="home"] .marketing-control-progress i {
+        background: linear-gradient(90deg, #e52329 0 38%, #3b3936 38% 100%);
+      }
+      body[data-page="home"] .marketing-footer nav a,
+      body[data-page="home"] .marketing-footer-actions a { color: #f7f4ee; }
 `
 
 const renderMarketingPage = (page) => {
@@ -1782,6 +2255,14 @@ const renderMarketingPage = (page) => {
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
     <title>${escapeHtml(page.seoTitle)}</title>
     <style>${marketingStyles}</style>
+    ${gaMeasurementId ? `
+    <script async src="https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${gaMeasurementId}');
+    </script>` : ''}
     <script type="application/ld+json">${structuredData}</script>
     <script type="application/ld+json">${organizationData}</script>
     ${faqData ? `<script type="application/ld+json">${JSON.stringify(faqData)}</script>` : ''}
@@ -1825,21 +2306,7 @@ const renderMarketingPage = (page) => {
       ${renderFooter()}
     </div>
     <a href="${pageSupportUrl}" class="marketing-floating-whatsapp" target="_blank" rel="noreferrer" data-analytics="whatsapp_support">Hablar por WhatsApp</a>
-    <section class="marketing-consent" id="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" hidden><h2 id="cookie-consent-title">Tu privacidad</h2><p>Usamos almacenamiento necesario para recordar esta elección. Las cookies analíticas son opcionales.</p><p><a href="/privacidad/">Consulta nuestra política de privacidad</a>.</p><div class="marketing-consent-actions"><button type="button" data-consent-reject>Rechazar analíticas</button><button type="button" data-consent-settings>Configurar</button><button type="button" class="is-primary" data-consent-accept>Aceptar analíticas</button></div></section>
-    <div class="marketing-consent-modal" id="cookie-preferences" role="dialog" aria-modal="true" aria-labelledby="cookie-preferences-title" hidden><div class="marketing-consent-panel"><h2 id="cookie-preferences-title" tabindex="-1">Preferencias de cookies</h2><p>Podés cambiar tu elección en cualquier momento. No usamos píxeles de Meta ni TikTok.</p><label class="marketing-consent-option"><input type="checkbox" checked disabled /><span><strong>Necesarias</strong><span>Guardan tu preferencia de privacidad y permiten el funcionamiento básico del sitio.</span></span></label><label class="marketing-consent-option"><input type="checkbox" id="analytics-consent" /><span><strong>Analíticas</strong><span>Si las aceptás, cargamos Google Analytics 4 para medir páginas y acciones comerciales de forma agregada.</span></span></label><div class="marketing-consent-actions"><button type="button" data-consent-close>Cancelar</button><button type="button" class="is-primary" data-consent-save>Guardar preferencias</button></div></div></div>
     <script>
-      (function () {
-        var key = 'pclaf_cookie_preferences_v1', id = ${JSON.stringify(gaMeasurementId)}, banner = document.getElementById('cookie-consent'), modal = document.getElementById('cookie-preferences'), input = document.getElementById('analytics-consent'), trigger;
-        function read() { try { var value = localStorage.getItem(key); return value ? JSON.parse(value) : null; } catch (error) { return null; } }
-        function clearGaCookies() { var names = ['_ga', '_gid', '_gat']; if (id) names.push('_ga_' + id.replace(/^G-/, '')); names.forEach(function (name) { document.cookie = name + '=; Max-Age=0; path=/'; document.cookie = name + '=; Max-Age=0; path=/; domain=.' + location.hostname.split('.').slice(-2).join('.'); }); }
-        function load() { if (!id || window.__pclafGa4Loaded) return; window.__pclafGa4Loaded = true; window.dataLayer = window.dataLayer || []; window.gtag = function () { window.dataLayer.push(arguments); }; window.gtag('js', new Date()); window.gtag('config', id); var script = document.createElement('script'); script.async = true; script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id); document.head.appendChild(script); }
-        function save(analytics) { try { localStorage.setItem(key, JSON.stringify({ necessary: true, analytics: !!analytics, updatedAt: new Date().toISOString() })); } catch (error) {} window.__pclafAnalyticsAllowed = !!analytics; if (analytics) load(); else { clearGaCookies(); } banner.hidden = true; modal.hidden = true; }
-        function open(button) { trigger = button || document.activeElement; var saved = read(); input.checked = !!(saved && saved.analytics); banner.hidden = true; modal.hidden = false; document.getElementById('cookie-preferences-title').focus(); }
-        function close() { modal.hidden = true; if (!read()) banner.hidden = false; if (trigger && trigger.focus) trigger.focus(); }
-        var saved = read(); window.__pclafAnalyticsAllowed = !!(saved && saved.analytics); if (window.__pclafAnalyticsAllowed) load(); else if (!saved) banner.hidden = false;
-        document.querySelectorAll('[data-consent-open]').forEach(function (button) { button.addEventListener('click', function () { open(button); }); });
-        document.querySelector('[data-consent-reject]').addEventListener('click', function () { save(false); }); document.querySelector('[data-consent-accept]').addEventListener('click', function () { save(true); }); document.querySelector('[data-consent-settings]').addEventListener('click', function () { open(); }); document.querySelector('[data-consent-save]').addEventListener('click', function () { save(input.checked); }); document.querySelector('[data-consent-close]').addEventListener('click', close); document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !modal.hidden) close(); });
-      }());
       const demoForm = document.querySelector('[data-demo-form]');
       if (demoForm) {
         demoForm.addEventListener('submit', function (event) {
@@ -1854,7 +2321,7 @@ const renderMarketingPage = (page) => {
             data.get('cajas') ? 'Cajas: ' + data.get('cajas') : ''
           ].filter(Boolean);
           const href = 'https://wa.me/5491135708345?text=' + encodeURIComponent(parts.join('\\n'));
-          if (window.__pclafAnalyticsAllowed && typeof window.gtag === 'function') {
+          if (typeof window.gtag === 'function') {
             window.gtag('event', 'generate_lead', {
               page_title: document.title,
               page_location: window.location.href
@@ -1865,7 +2332,7 @@ const renderMarketingPage = (page) => {
       }
       document.querySelectorAll('[data-analytics]').forEach(function (element) {
         element.addEventListener('click', function () {
-          if (window.__pclafAnalyticsAllowed && typeof window.gtag === 'function') {
+          if (typeof window.gtag === 'function') {
             window.gtag('event', element.getAttribute('data-analytics'), {
               page_title: document.title,
               page_location: window.location.href
@@ -1873,6 +2340,50 @@ const renderMarketingPage = (page) => {
           }
         });
       });
+      const formatPublicMetric = function (value) {
+        return new Intl.NumberFormat('es-AR').format(value);
+      };
+      document.querySelectorAll('[data-counter-value]').forEach(function (counter) {
+        const target = Number(counter.dataset.counterValue || 0);
+        const prefix = counter.dataset.counterPrefix || '';
+        const suffix = counter.dataset.counterSuffix || '';
+        const update = function (progress) {
+          counter.textContent = prefix + formatPublicMetric(Math.round(target * progress)) + suffix;
+        };
+        update(0);
+        if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          update(1);
+          return;
+        }
+        const observer = new IntersectionObserver(function (entries) {
+          if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+          const startedAt = performance.now();
+          const duration = 1100;
+          const tick = function (now) {
+            const progress = Math.min(1, (now - startedAt) / duration);
+            update(1 - Math.pow(1 - progress, 3));
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+          observer.disconnect();
+        }, { threshold: 0.35 });
+        observer.observe(counter);
+      });
+      const vertical = document.querySelector('[data-vertical-rotation]');
+      if (vertical && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        let verticals = [];
+        try { verticals = JSON.parse(vertical.dataset.verticals || '[]'); } catch (error) { verticals = []; }
+        if (verticals.length > 1) {
+          let index = 0;
+          window.setInterval(function () {
+            index = (index + 1) % verticals.length;
+            vertical.classList.remove('is-changing');
+            void vertical.offsetWidth;
+            vertical.textContent = verticals[index];
+            vertical.classList.add('is-changing');
+          }, 2600);
+        }
+      }
     </script>
   </body>
 </html>
@@ -1888,7 +2399,7 @@ const appHtml = `<!doctype html>
     <meta name="robots" content="noindex,nofollow" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co wss://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
     <link rel="canonical" href="${siteOrigin}${appPath}" />
     <link rel="icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
@@ -2001,12 +2512,10 @@ pageEntries.push({
   filePath: 'app/index.html',
   cacheControl: 'no-store',
 })
-const appModuleRoutes = ['clientes', 'ventas', 'caja-diaria', 'productos', 'compras', 'facturacion', 'tickets', 'reportes', 'auditoria', 'ajustes', 'mi-admin', 'sucursales', 'cajeros']
-for (const route of appModuleRoutes) pageEntries.push({ pathname: `${appPath}${route}/`, html: appHtml, filePath: `app/${route}/index.html`, cacheControl: 'no-store' })
 
 const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pageEntries.filter((entry) => !entry.pathname.startsWith(appPath)).map((entry) => `  <url>
+${pageEntries.filter((entry) => entry.pathname !== appPath).map((entry) => `  <url>
     <loc>${siteOrigin}${entry.pathname}</loc>
     <changefreq>${entry.pathname === '/' ? 'weekly' : 'monthly'}</changefreq>
     <priority>${entry.pathname === '/' ? '1.0' : '0.8'}</priority>
