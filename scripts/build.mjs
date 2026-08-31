@@ -543,6 +543,8 @@ const marketingPages = [
     lead: 'Vendé, cobrá y seguí cada movimiento desde una sola plataforma. PCLAF Control conecta sucursales, cajas, stock, compras y permisos sin sumar vueltas a la operación.',
     primaryCta: { href: `${appPath}?view=signup`, label: 'Probar gratis' },
     secondaryCta: { href: `${appPath}?view=login`, label: 'Iniciar sesion' },
+    h1: 'Vendé rápido. Controlá caja, stock y equipo.',
+    lead: 'Caja, stock, compras, sucursales y permisos en una sola plataforma para operar con claridad.',
     whatsAppPrompt: 'Hola PCLAF, quiero probar PCLAF Control en mi comercio.',
     image: '/pclaf-control-punto-venta-real.png',
     imageAlt: 'Pantalla de ventas de PCLAF Control en una computadora',
@@ -1013,6 +1015,14 @@ const renderTopbar = (page) => `
         </div>
       </details>
     </nav>
+    <details class="marketing-mobile-menu">
+      <summary>Menú</summary>
+      <nav aria-label="Navegación móvil">
+        ${topLinks.map((link) => `<a href="${link.href}" data-analytics="mobile_nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
+        <a href="/como-funciona/" data-analytics="mobile_nav_como_funciona">Cómo funciona</a>
+        <a href="/blog/" data-analytics="mobile_nav_blog">Blog</a>
+      </nav>
+    </details>
     <div class="marketing-auth-links">
       <a href="${appPath}?view=login" data-analytics="header_login">Iniciar sesion</a>
       <a class="is-primary" href="${appPath}?view=signup" data-analytics="header_signup">Probar gratis</a>
@@ -1162,11 +1172,11 @@ const renderHomeExtras = (page) => {
   <section class="marketing-control-panel" aria-labelledby="control-panel-title">
     <div class="marketing-control-panel-intro">
       <p class="marketing-kicker">Recorrido de control</p>
-      <h2 id="control-panel-title">Seis capas para mirar mejor, sin operar más lento</h2>
-      <p>Una bitácora visual de la operación: cada capa suma contexto sobre el negocio, sin alejar a tu equipo de la venta o del mostrador.</p>
+      <h2 id="control-panel-title">Tres controles para operar con más contexto</h2>
+      <p>Lo esencial para vender, controlar y revisar sin sumar pasos en el mostrador.</p>
     </div>
-    <div class="marketing-control-progress" aria-hidden="true"><span>01</span><i></i><span>06</span></div>
-    <div class="marketing-control-stories">${controlStories.map((story, index) => `
+    <div class="marketing-control-progress" aria-hidden="true"><span>01</span><i></i><span>03</span></div>
+    <div class="marketing-control-stories">${controlStories.slice(0, 3).map((story, index) => `
         <article class="marketing-control-story ${index % 2 ? 'is-reverse' : ''}">
           <div class="marketing-control-story-copy">
             <p class="marketing-control-index"><span>${story.number}</span>${escapeHtml(story.eyebrow)}</p>
@@ -1180,6 +1190,7 @@ const renderHomeExtras = (page) => {
           </figure>
         </article>`).join('')}
     </div>
+    <p class="marketing-control-more"><a href="/funciones/" data-analytics="home_control_more">Ver todas las funciones</a></p>
   </section>
   <section class="marketing-home-cta marketing-card">
     <div>
@@ -1868,13 +1879,14 @@ const marketingStyles = `
         background: #c8171d;
         transform: translateY(-1px);
       }
+      .marketing-mobile-menu { display: none; }
       .marketing-hero {
-        min-height: 620px;
+        min-height: 0;
         grid-template-columns: minmax(0, 0.86fr) minmax(480px, 1.14fr);
         gap: clamp(36px, 6vw, 88px);
         align-items: center;
         margin-top: 0;
-        padding: clamp(58px, 8vw, 104px) 0;
+        padding: clamp(38px, 5vw, 68px) 0;
       }
       .marketing-hero > *,
       .marketing-story > * {
@@ -1902,10 +1914,10 @@ const marketingStyles = `
         letter-spacing: 0.16em;
       }
       .marketing-hero-copy h1 {
-        max-width: 12ch;
+        max-width: 14ch;
         margin: 0 0 24px;
         color: #171717;
-        font-size: clamp(3rem, 5.8vw, 5.7rem);
+        font-size: clamp(2.8rem, 4.5vw, 4.4rem);
         font-weight: 780;
         letter-spacing: -0.055em;
         line-height: 0.98;
@@ -2374,6 +2386,16 @@ const marketingStyles = `
         font-size: 0.87rem;
         line-height: 1.5;
       }
+      .marketing-control-more {
+        margin: 32px 0 0;
+        text-align: center;
+      }
+      .marketing-control-more a {
+        color: #b91c1c;
+        font-weight: 750;
+        text-decoration-thickness: 0.12em;
+        text-underline-offset: 0.2em;
+      }
       @supports (animation-timeline: view()) {
         .marketing-control-story {
           animation: marketing-story-reveal linear both;
@@ -2526,6 +2548,46 @@ const marketingStyles = `
           padding-inline: 14px;
           font-size: 0.86rem;
         }
+        .marketing-nav { display: none; }
+        .marketing-mobile-menu {
+          position: relative;
+          display: block;
+        }
+        .marketing-mobile-menu summary {
+          min-height: 40px;
+          display: inline-flex;
+          align-items: center;
+          cursor: pointer;
+          color: #3f3b36;
+          font-size: 0.86rem;
+          font-weight: 750;
+          list-style: none;
+        }
+        .marketing-mobile-menu summary::-webkit-details-marker { display: none; }
+        .marketing-mobile-menu summary::after { content: '⌄'; margin-left: 5px; }
+        .marketing-mobile-menu nav {
+          position: absolute;
+          z-index: 30;
+          top: calc(100% + 8px);
+          right: 0;
+          display: grid;
+          min-width: 180px;
+          padding: 8px;
+          border: 1px solid #ded9d0;
+          border-radius: 12px;
+          background: #f7f4ee;
+          box-shadow: 0 18px 42px rgba(35, 30, 24, 0.16);
+        }
+        .marketing-mobile-menu nav a {
+          padding: 10px 12px;
+          border-radius: 8px;
+          color: #3f3b36;
+          font-size: 0.9rem;
+          font-weight: 650;
+          text-decoration: none;
+        }
+        .marketing-mobile-menu nav a:hover,
+        .marketing-mobile-menu nav a:focus-visible { color: #b91c1c; background: #eee8df; }
         .marketing-nav {
           gap: 14px;
           overflow: visible;
