@@ -2890,7 +2890,7 @@ const renderMarketingPage = (page) => {
           counter.textContent = prefix + formatPublicMetric(displayedValue) + suffix;
         };
         update(0);
-        if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (!target) {
           update(1);
           return null;
         }
