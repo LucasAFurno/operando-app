@@ -1002,7 +1002,7 @@ const renderTopbar = (page) => `
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
       ${topLinks.map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
-      ${page.slug ? `<details class="marketing-nav-menu">
+      <details class="marketing-nav-menu">
         <summary>Informacion</summary>
         <div class="marketing-nav-menu-panel">
           <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">POS por rubro</a>
@@ -1011,7 +1011,7 @@ const renderTopbar = (page) => `
           <a href="/como-funciona/" data-analytics="nav_como_funciona">Como funciona</a>
           <a href="/blog/" data-analytics="nav_blog">Blog</a>
         </div>
-      </details>` : ''}
+      </details>
     </nav>
     <div class="marketing-auth-links">
       <a href="${appPath}?view=login" data-analytics="header_login">Iniciar sesion</a>
