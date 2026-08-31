@@ -4161,7 +4161,9 @@ const bindEvents = () => {
     const step = currentOnboardingStep()
     if (!step) return
     activeSection = step.section
-    if (step.id === 'product' || step.id === 'category') productFormOpen = true
+    // El primer paso debe señalar el botón que abre el formulario; si lo abrimos antes,
+    // el control objetivo desaparece y la guía no tiene nada que resaltar.
+    if (step.id === 'category') productFormOpen = true
     if (step.id === 'cash') cashFormOpen = true
     onboarding.visible = true
     requestScrollTop()
