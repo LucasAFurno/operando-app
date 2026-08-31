@@ -272,14 +272,30 @@
       .marketing-story.is-reverse .marketing-story-copy {
         order: 1;
       }
+      .marketing-story-media {
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        background: #111216;
+      }
+      .marketing-story-media::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(115deg, transparent 36%, rgba(255,255,255,0.08) 49%, transparent 62%);
+        transform: translateX(-120%);
+        animation: marketing-interface-sheen 9s ease-in-out infinite;
+      }
       .marketing-story-media img {
         width: 100%;
         height: auto;
         display: block;
-        border-radius: 18px;
         border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.02);
+        transition: transform 700ms cubic-bezier(.2,.8,.2,1), filter 700ms cubic-bezier(.2,.8,.2,1);
       }
+      .marketing-story:hover .marketing-story-media img { transform: scale(1.018); filter: brightness(1.04); }
+      @keyframes marketing-interface-sheen { 0%, 68% { transform: translateX(-120%); } 82%, 100% { transform: translateX(120%); } }
       .marketing-story-copy h2 {
         margin: 0 0 12px;
         font-family: Oswald, Arial, sans-serif;
@@ -1382,6 +1398,8 @@
       @media (prefers-reduced-motion: reduce) {
         .marketing-control-story,
         .marketing-control-image-frame img,
+        .marketing-story-media::after,
+        .marketing-story-media img,
         .marketing-vertical-rotation em,
         .marketing-vertical-carousel span {
           animation: none;
@@ -1512,7 +1530,7 @@
     
       <article class="marketing-story ">
         <div class="marketing-story-media">
-          <img src="/pantalla-ventas-pclaf-control.svg" alt="Pantalla de ventas y cobros de PCLAF Control" width="1200" height="800" loading="lazy" />
+          <img src="/pclaf-control-punto-venta-real.png" alt="Punto de venta de PCLAF Control" width="1200" height="800" loading="lazy" />
         </div>
         <div class="marketing-story-copy">
           <p class="marketing-kicker">Velocidad en mostrador</p>
@@ -1523,7 +1541,7 @@
     
       <article class="marketing-story is-reverse">
         <div class="marketing-story-media">
-          <img src="/control-stock-por-sucursal.svg" alt="Control de stock por sucursal en PCLAF Control" width="1200" height="800" loading="lazy" />
+          <img src="/pclaf-control-stock-real.png" alt="Catálogo y stock de PCLAF Control" width="1200" height="800" loading="lazy" />
         </div>
         <div class="marketing-story-copy">
           <p class="marketing-kicker">Stock entre locales</p>
@@ -1534,7 +1552,7 @@
     
       <article class="marketing-story ">
         <div class="marketing-story-media">
-          <img src="/cierre-caja-comercio.svg" alt="Operacion comercial desde cualquier dispositivo" width="1200" height="800" loading="lazy" />
+          <img src="/pclaf-control-panel-real.png" alt="Panel operativo de PCLAF Control" width="1200" height="800" loading="lazy" />
         </div>
         <div class="marketing-story-copy">
           <p class="marketing-kicker">Operación conectada</p>

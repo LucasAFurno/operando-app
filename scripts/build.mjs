@@ -135,23 +135,23 @@ const homeFeatureRows = [
     eyebrow: 'Velocidad en mostrador',
     title: 'Cobrá rápido. Sabé exactamente qué pasó.',
     body: 'Registrá ventas y medios de pago sin salir de la pantalla de venta. Cada operación queda asociada a la caja y al puesto que la realizó.',
-    image: '/pantalla-ventas-pclaf-control.svg',
-    alt: 'Pantalla de ventas y cobros de PCLAF Control',
+    image: '/pclaf-control-punto-venta-real.png',
+    alt: 'Punto de venta de PCLAF Control',
   },
   {
     eyebrow: 'Stock entre locales',
     title: 'Mové mercadería con trazabilidad',
     body: 'Consultá el stock por sucursal, registrá ajustes y transferencias, y mantené visible el origen y destino de cada movimiento.',
-    image: '/control-stock-por-sucursal.svg',
-    alt: 'Control de stock por sucursal en PCLAF Control',
+    image: '/pclaf-control-stock-real.png',
+    alt: 'Catálogo y stock de PCLAF Control',
     reverse: true,
   },
   {
     eyebrow: 'Operación conectada',
     title: 'Compras, caja y sucursales en la misma operación',
     body: 'Registrá recepciones de proveedores, costos y movimientos de caja desde una sola base, disponible desde PC o celular.',
-    image: '/cierre-caja-comercio.svg',
-    alt: 'Operacion comercial desde cualquier dispositivo',
+    image: '/pclaf-control-panel-real.png',
+    alt: 'Panel operativo de PCLAF Control',
   },
 ]
 
@@ -1055,14 +1055,30 @@ const marketingStyles = `
       .marketing-story.is-reverse .marketing-story-copy {
         order: 1;
       }
+      .marketing-story-media {
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        background: #111216;
+      }
+      .marketing-story-media::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(115deg, transparent 36%, rgba(255,255,255,0.08) 49%, transparent 62%);
+        transform: translateX(-120%);
+        animation: marketing-interface-sheen 9s ease-in-out infinite;
+      }
       .marketing-story-media img {
         width: 100%;
         height: auto;
         display: block;
-        border-radius: 18px;
         border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.02);
+        transition: transform 700ms cubic-bezier(.2,.8,.2,1), filter 700ms cubic-bezier(.2,.8,.2,1);
       }
+      .marketing-story:hover .marketing-story-media img { transform: scale(1.018); filter: brightness(1.04); }
+      @keyframes marketing-interface-sheen { 0%, 68% { transform: translateX(-120%); } 82%, 100% { transform: translateX(120%); } }
       .marketing-story-copy h2 {
         margin: 0 0 12px;
         font-family: Oswald, Arial, sans-serif;
@@ -2165,6 +2181,8 @@ const marketingStyles = `
       @media (prefers-reduced-motion: reduce) {
         .marketing-control-story,
         .marketing-control-image-frame img,
+        .marketing-story-media::after,
+        .marketing-story-media img,
         .marketing-vertical-rotation em,
         .marketing-vertical-carousel span {
           animation: none;
