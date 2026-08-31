@@ -2454,7 +2454,9 @@ const marketingStyles = `
           grid-template-columns: auto 1fr auto;
         }
         .marketing-nav {
-          display: none;
+          grid-column: 1 / -1;
+          justify-content: flex-start;
+          padding: 2px 0 4px;
         }
       }
       @media (max-width: 920px) {
@@ -2522,6 +2524,21 @@ const marketingStyles = `
           min-height: 40px;
           padding-inline: 14px;
           font-size: 0.86rem;
+        }
+        .marketing-nav {
+          gap: 14px;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .marketing-nav::-webkit-scrollbar { display: none; }
+        .marketing-nav a,
+        .marketing-nav-menu summary {
+          font-size: 0.86rem;
+          white-space: nowrap;
+        }
+        .marketing-nav-menu-panel {
+          left: 0;
+          transform: none;
         }
         .marketing-hero {
           width: 100%;
