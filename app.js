@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=2c34e01fabbe'
-import { createCloudAuthManager } from './cloud-auth.js?v=2c34e01fabbe'
+import { createBrowserDataStore } from './data-store.js?v=97ec6950a048'
+import { createCloudAuthManager } from './cloud-auth.js?v=97ec6950a048'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'PCLAF Control'
-const appVersion = 'v2c34e01fabbe'
+const appVersion = 'v97ec6950a048'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20soporte%20de%20PCLAF%20Control.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20PCLAF%20Control.'
 const publicSiteUrl = 'https://www.pclafcontrol.com.ar'
@@ -209,7 +209,7 @@ const guideCard = () => {
   const step = onboarding.visible ? currentOnboardingStep() : null
   if (!step) return ''
   const position = Math.max(1, onboardingSteps.findIndex((entry) => entry.id === step.id) + 1)
-  return `<div class="onboarding-layer"><div class="onboarding-scrim" aria-hidden="true"></div><aside class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-live="polite"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p>${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="focus-onboarding-control">Mostrar dónde hacerlo</button><button type="button" class="text-action" data-action="next-onboarding-step">Siguiente</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside></div>`
+  return `<div class="onboarding-layer"><div class="onboarding-scrim onboarding-scrim-top" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-right" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-bottom" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-left" aria-hidden="true"></div><aside class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-live="polite"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p>${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="focus-onboarding-control">Mostrar dónde hacerlo</button><button type="button" class="text-action" data-action="next-onboarding-step">Siguiente</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside></div>`
 }
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
@@ -4171,9 +4171,26 @@ const bindEvents = () => {
     window.requestAnimationFrame(() => {
       document.querySelectorAll('.is-onboarding-target').forEach((element) => element.classList.remove('is-onboarding-target'))
       const target = document.querySelector(step.selector)
+      const layer = document.querySelector('.onboarding-layer')
       target?.classList.add('is-onboarding-target')
-      target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+      target?.scrollIntoView?.({ block: 'center' })
       target?.focus?.({ preventScroll: true })
+      window.requestAnimationFrame(() => {
+        if (!target || !layer) return
+        const rect = target.getBoundingClientRect()
+        const padding = 14
+        const left = Math.max(0, rect.left - padding)
+        const top = Math.max(0, rect.top - padding)
+        const right = Math.max(0, window.innerWidth - rect.right - padding)
+        const bottom = Math.max(0, window.innerHeight - rect.bottom - padding)
+        layer.classList.add('has-onboarding-target')
+        layer.style.setProperty('--onboarding-target-left', `${left}px`)
+        layer.style.setProperty('--onboarding-target-top', `${top}px`)
+        layer.style.setProperty('--onboarding-target-right', `${right}px`)
+        layer.style.setProperty('--onboarding-target-bottom', `${bottom}px`)
+        layer.style.setProperty('--onboarding-target-width', `${Math.max(0, rect.width + padding * 2)}px`)
+        layer.style.setProperty('--onboarding-target-height', `${Math.max(0, rect.height + padding * 2)}px`)
+      })
     })
   }
   for (const button of document.querySelectorAll('[data-action="resume-onboarding"]')) button.addEventListener('click', () => {
@@ -4725,8 +4742,13 @@ const bindEvents = () => {
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-product-form"]')) button.addEventListener('click', () => {
+    const isGuidedProductAction = onboarding.visible && currentOnboardingStep()?.id === 'product'
     closeProductUtilityForms()
     productFormOpen = true
+    if (isGuidedProductAction) {
+      onboarding.visible = false
+      saveOnboarding()
+    }
     queueScrollToSelector('form[data-form="product"]')
     render()
   })
