@@ -22,7 +22,7 @@ La configuración de ARCA se encuentra orientada a homologación. No debe comuni
 
 `site/marketing-metrics.json` es la fuente de los indicadores y de los rubros rotativos de la portada. Actualizar únicamente valores agregados y autorizados; nunca datos de un comercio, usuario o transacción identificable.
 
-Para actualizar los dos indicadores comerciales desde Supabase, ejecutar `npm run sync:marketing-metrics` en un entorno server-side que tenga `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`. El script sólo escribe los conteos agregados de comercios y operaciones; la credencial nunca llega al sitio público.
+Para actualizar los cuatro indicadores comerciales desde Supabase, ejecutar `npm run sync:marketing-metrics` en un entorno server-side que tenga `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`. El script sólo escribe conteos agregados de comercios y ventas; el total ARS se calcula con el promedio configurado en `site/marketing-metrics.json` y la credencial nunca llega al sitio público.
 
 ## Stack recomendado
 

@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=5a82d0fc8424'
-import { createCloudAuthManager } from './cloud-auth.js?v=5a82d0fc8424'
+import { createBrowserDataStore } from './data-store.js?v=6bacf133aa62'
+import { createCloudAuthManager } from './cloud-auth.js?v=6bacf133aa62'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'PCLAF Control'
-const appVersion = 'v5a82d0fc8424'
+const appVersion = 'v6bacf133aa62'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20soporte%20de%20PCLAF%20Control.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20PCLAF%20Control.'
 const publicSiteUrl = 'https://www.pclafcontrol.com.ar'
