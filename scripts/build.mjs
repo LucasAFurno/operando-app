@@ -2527,10 +2527,9 @@ const marketingStyles = `
         }
         .marketing-nav {
           gap: 14px;
-          overflow-x: auto;
-          scrollbar-width: none;
+          overflow: visible;
+          flex-wrap: wrap;
         }
-        .marketing-nav::-webkit-scrollbar { display: none; }
         .marketing-nav a,
         .marketing-nav-menu summary {
           font-size: 0.86rem;
