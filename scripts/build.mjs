@@ -98,8 +98,6 @@ const buildArticleJsonLd = (page) => {
 
 const topLinks = [
   { href: '/funciones/', label: 'Funciones' },
-  { href: '/pos-por-rubro/', label: 'Rubros' },
-  { href: '/comparar-sistemas-de-gestion/', label: 'Comparar' },
   { href: '/preguntas-frecuentes/', label: 'FAQ' },
 ]
 
@@ -193,20 +191,20 @@ const marketingSectors = sectorPages.map((sector) => ({
 
 const sectorLandingPages = sectorPages.map((sector) => ({
   slug: `pos-por-rubro/${sector.slug}`,
-  seoTitle: `Sistema POS para ${sector.title} | PCLAFCONTROL`,
-  description: `Sistema de gestion para ${sector.title.toLowerCase()} con ventas, caja, stock, clientes y compras en PCLAFCONTROL.`,
+  seoTitle: `Sistema POS para ${sector.title} | PCLAF Control`,
+  description: `Sistema de gestion para ${sector.title.toLowerCase()} con ventas, caja, stock, clientes y compras en PCLAF Control.`,
   kicker: 'POS por rubro',
   h1: `Sistema POS para ${sector.title}: ventas, caja y stock en una sola operacion`,
   lead: sector.focus,
   image: '/pclaf-control-panel-real.png',
-  imageAlt: `Gestion comercial para ${sector.title} con PCLAFCONTROL`,
-  whatsAppPrompt: `Hola PCLAFCONTROL, quiero conocer el sistema para mi ${sector.title.toLowerCase()}.`,
+  imageAlt: `Gestion comercial para ${sector.title} con PCLAF Control`,
+  whatsAppPrompt: `Hola PCLAF Control, quiero conocer el sistema para mi ${sector.title.toLowerCase()}.`,
   sections: [
     { title: 'Ventas y cobros', body: 'Registra operaciones, descuentos, clientes y medios de pago con una caja asignada cuando corresponde.' },
     { title: 'Productos y stock', body: 'Mantene catalogo, precios, costos, codigo de barras, stock minimo, compras y movimientos por sucursal.' },
     { title: 'Control del negocio', body: 'Consulta ventas, caja, clientes, proveedores y reportes con permisos y trazabilidad por usuario.' },
   ],
-  faq: [[`¿PCLAFCONTROL se adapta a un ${sector.title.toLowerCase()}?`, `PCLAFCONTROL cubre la operacion comercial de ventas, caja, stock, clientes y compras. Consulta con el equipo si necesitas una integracion especifica de este rubro.`]],
+  faq: [[`¿PCLAF Control se adapta a un ${sector.title.toLowerCase()}?`, `PCLAF Control cubre la operacion comercial de ventas, caja, stock, clientes y compras. Consulta con el equipo si necesitas una integracion especifica de este rubro.`]],
   featureList: ['Ventas', 'Caja', 'Stock', 'Clientes', 'Compras'],
 }))
 
@@ -231,14 +229,14 @@ const blogGuides = [
 const comparisonPages = [
   {
     slug: 'pclafcontrol-vs-dux-software',
-    seoTitle: 'PCLAFCONTROL vs Dux Software | Comparacion para comercios',
-    description: 'Compara PCLAFCONTROL y Dux Software para elegir un sistema de gestion segun ventas, stock, sucursales, tickets y canales de venta.',
+    seoTitle: 'PCLAF Control vs Dux Software | Comparacion para comercios',
+    description: 'Compara PCLAF Control y Dux Software para elegir un sistema de gestion segun ventas, stock, sucursales, tickets y canales de venta.',
     kicker: 'Comparacion',
-    h1: 'PCLAFCONTROL vs Dux Software: que sistema se adapta mejor a tu operacion',
+    h1: 'PCLAF Control vs Dux Software: que sistema se adapta mejor a tu operacion',
     lead: 'Los dos cubren ventas, stock y sucursales. La diferencia esta en si tu prioridad es la operacion comercial con tickets o una plataforma ERP con e-commerce e integraciones.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Panel de gestion comercial de PCLAFCONTROL',
-    whatsAppPrompt: 'Hola PCLAFCONTROL, quiero comparar PCLAFCONTROL con Dux Software.',
+    imageAlt: 'Panel de gestion comercial de PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Dux Software.',
     comparison: { alternative: 'Dux Software', rows: [
       ['Ventas, caja y stock', 'Gestion comercial y POS', 'Ventas, caja, stock y trazabilidad por sucursal'],
       ['Tickets de servicio tecnico', 'No se presenta como flujo central', 'Recepcion, estados, cliente, equipo y vinculo con ventas'],
@@ -248,20 +246,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Dux puede convenir mas', body: 'Si tu operacion depende de Mercado Libre, Tienda Nube, picking, contabilidad o tesoreria integrada, Dux presenta hoy una cobertura mas amplia.' },
-      { title: 'Cuando PCLAFCONTROL puede convenir mas', body: 'Si necesitas unir ventas, caja, stock, clientes y tickets de servicio tecnico en una misma operacion, sin sumar una capa ERP orientada a e-commerce.' },
+      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si necesitas unir ventas, caja, stock, clientes y tickets de servicio tecnico en una misma operacion, sin sumar una capa ERP orientada a e-commerce.' },
     ],
     featureList: ['Ventas', 'Stock', 'Sucursales', 'Tickets', 'Roles'],
   },
   {
     slug: 'pclafcontrol-vs-alegra',
-    seoTitle: 'PCLAFCONTROL vs Alegra | Comparacion para comercios',
-    description: 'Compara PCLAFCONTROL y Alegra para evaluar ventas, stock, caja, usuarios, tickets y necesidades administrativas.',
+    seoTitle: 'PCLAF Control vs Alegra | Comparacion para comercios',
+    description: 'Compara PCLAF Control y Alegra para evaluar ventas, stock, caja, usuarios, tickets y necesidades administrativas.',
     kicker: 'Comparacion',
-    h1: 'PCLAFCONTROL vs Alegra: operacion comercial o gestion administrativa',
-    lead: 'Alegra concentra facturacion y administracion. PCLAFCONTROL se orienta a la operacion diaria de comercios y suma tickets para trabajos o servicios.',
+    h1: 'PCLAF Control vs Alegra: operacion comercial o gestion administrativa',
+    lead: 'Alegra concentra facturacion y administracion. PCLAF Control se orienta a la operacion diaria de comercios y suma tickets para trabajos o servicios.',
     image: '/pclaf-control-punto-venta-real.png',
-    imageAlt: 'Punto de venta de PCLAFCONTROL',
-    whatsAppPrompt: 'Hola PCLAFCONTROL, quiero comparar PCLAFCONTROL con Alegra.',
+    imageAlt: 'Punto de venta de PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Alegra.',
     comparison: { alternative: 'Alegra', rows: [
       ['Ventas, caja y stock', 'POS, inventario, terminales y reportes', 'Ventas, caja, stock y reportes por caja o sucursal'],
       ['Tickets de servicio tecnico', 'No se presenta como flujo central', 'Recepcion, seguimiento y estados de equipos o servicios'],
@@ -271,20 +269,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Alegra puede convenir mas', body: 'Si la necesidad principal es facturacion electronica, contabilidad, impuestos o balanzas, Alegra tiene esas capacidades publicadas.' },
-      { title: 'Cuando PCLAFCONTROL puede convenir mas', body: 'Si el comercio necesita un flujo operativo con caja, stock, cuentas, sucursales, permisos y tickets de servicio tecnico relacionados con clientes y ventas.' },
+      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si el comercio necesita un flujo operativo con caja, stock, cuentas, sucursales, permisos y tickets de servicio tecnico relacionados con clientes y ventas.' },
     ],
     featureList: ['Ventas', 'Caja', 'Stock', 'Tickets', 'Auditoria'],
   },
   {
     slug: 'pclafcontrol-vs-treinta',
-    seoTitle: 'PCLAFCONTROL vs Treinta | Comparacion para comercios',
-    description: 'Compara PCLAFCONTROL y Treinta para evaluar operaciones de mostrador, stock, clientes, sucursales y control por roles.',
+    seoTitle: 'PCLAF Control vs Treinta | Comparacion para comercios',
+    description: 'Compara PCLAF Control y Treinta para evaluar operaciones de mostrador, stock, clientes, sucursales y control por roles.',
     kicker: 'Comparacion',
-    h1: 'PCLAFCONTROL vs Treinta: control operativo para comercios en crecimiento',
-    lead: 'Treinta se posiciona como una app simple para celular. PCLAFCONTROL cubre una operacion de comercio con cajas, sucursales, permisos y seguimiento auditable.',
+    h1: 'PCLAF Control vs Treinta: control operativo para comercios en crecimiento',
+    lead: 'Treinta se posiciona como una app simple para celular. PCLAF Control cubre una operacion de comercio con cajas, sucursales, permisos y seguimiento auditable.',
     image: '/pclaf-control-mobile-devices.png',
-    imageAlt: 'PCLAFCONTROL en dispositivos de trabajo',
-    whatsAppPrompt: 'Hola PCLAFCONTROL, quiero comparar PCLAFCONTROL con Treinta.',
+    imageAlt: 'PCLAF Control en dispositivos de trabajo',
+    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Treinta.',
     comparison: { alternative: 'Treinta', rows: [
       ['Acceso principal', 'App movil y web segun plan', 'Web y variante de escritorio Electron'],
       ['Ventas y stock', 'Ventas, gastos e inventario', 'Ventas, compras, stock, ajustes y transferencias'],
@@ -294,20 +292,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Treinta puede convenir mas', body: 'Si buscas una operacion muy centrada en celular y un catalogo simple para un negocio pequeno, Treinta esta enfocado en ese uso.' },
-      { title: 'Cuando PCLAFCONTROL puede convenir mas', body: 'Si necesitas separar responsabilidades por caja, sucursal y usuario, controlar compras y proveedores, o trabajar con tickets de servicio tecnico.' },
+      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si necesitas separar responsabilidades por caja, sucursal y usuario, controlar compras y proveedores, o trabajar con tickets de servicio tecnico.' },
     ],
     featureList: ['Sucursales', 'Cajas', 'Usuarios', 'Compras', 'Tickets'],
   },
   {
     slug: 'pclafcontrol-vs-contabilium',
-    seoTitle: 'PCLAFCONTROL vs Contabilium | Comparacion para comercios',
-    description: 'Compara PCLAFCONTROL y Contabilium para elegir entre operacion comercial con tickets y un ERP con contabilidad e integraciones de e-commerce.',
+    seoTitle: 'PCLAF Control vs Contabilium | Comparacion para comercios',
+    description: 'Compara PCLAF Control y Contabilium para elegir entre operacion comercial con tickets y un ERP con contabilidad e integraciones de e-commerce.',
     kicker: 'Comparacion',
-    h1: 'PCLAFCONTROL vs Contabilium: operacion de comercio o ERP administrativo',
-    lead: 'Contabilium ofrece una cobertura ERP amplia. PCLAFCONTROL se enfoca en los flujos cotidianos de ventas, caja, stock, sucursales y tickets.',
+    h1: 'PCLAF Control vs Contabilium: operacion de comercio o ERP administrativo',
+    lead: 'Contabilium ofrece una cobertura ERP amplia. PCLAF Control se enfoca en los flujos cotidianos de ventas, caja, stock, sucursales y tickets.',
     image: '/control-stock-por-sucursal.svg',
-    imageAlt: 'Control de stock por sucursal en PCLAFCONTROL',
-    whatsAppPrompt: 'Hola PCLAFCONTROL, quiero comparar PCLAFCONTROL con Contabilium.',
+    imageAlt: 'Control de stock por sucursal en PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Contabilium.',
     comparison: { alternative: 'Contabilium', rows: [
       ['Ventas, stock y cajas', 'ERP con punto de venta, multideposito y cajas', 'Operacion de ventas, caja y stock separada por sucursal'],
       ['Contabilidad e impuestos', 'Incluye contabilidad, libros, balances e impuestos', 'No se ofrece como sistema contable'],
@@ -317,20 +315,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Contabilium puede convenir mas', body: 'Si tu operacion necesita contabilidad, impuestos, multi CUIT, e-commerce o marketplaces integrados, Contabilium publica una propuesta mas completa.' },
-      { title: 'Cuando PCLAFCONTROL puede convenir mas', body: 'Si el centro del negocio es el mostrador, la caja, el stock por sucursal y el seguimiento de servicios o reparaciones, sin requerir un ERP contable.' },
+      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si el centro del negocio es el mostrador, la caja, el stock por sucursal y el seguimiento de servicios o reparaciones, sin requerir un ERP contable.' },
     ],
     featureList: ['Ventas', 'Caja', 'Stock', 'Sucursales', 'Tickets'],
   },
   {
     slug: 'pclafcontrol-vs-gestion-comercio',
-    seoTitle: 'PCLAFCONTROL vs Gestion Comercio | Comparacion para comercios',
-    description: 'Compara PCLAFCONTROL y Gestion Comercio para evaluar punto de venta, stock, sucursales, balanzas, escritorio y tickets de servicio.',
+    seoTitle: 'PCLAF Control vs Gestion Comercio | Comparacion para comercios',
+    description: 'Compara PCLAF Control y Gestion Comercio para evaluar punto de venta, stock, sucursales, balanzas, escritorio y tickets de servicio.',
     kicker: 'Comparacion',
-    h1: 'PCLAFCONTROL vs Gestion Comercio: gestion comercial segun tu forma de operar',
+    h1: 'PCLAF Control vs Gestion Comercio: gestion comercial segun tu forma de operar',
     lead: 'Los dos abordan ventas, stock y sucursales. La eleccion depende de si necesitas balanzas y una instalacion local tradicional, o una operacion web con tickets de servicio.',
     image: '/cierre-caja-comercio.svg',
-    imageAlt: 'Control de caja de PCLAFCONTROL',
-    whatsAppPrompt: 'Hola PCLAFCONTROL, quiero comparar PCLAFCONTROL con Gestion Comercio.',
+    imageAlt: 'Control de caja de PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Gestion Comercio.',
     comparison: { alternative: 'Gestion Comercio', rows: [
       ['Punto de venta y stock', 'POS, stock por local y transferencias', 'Ventas, caja, stock, ajustes y transferencias por sucursal'],
       ['Balanzas y perifericos', 'Publica integracion con balanzas y QR Mercado Pago', 'No se ofrece como integracion publica'],
@@ -340,7 +338,7 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Gestion Comercio puede convenir mas', body: 'Si necesitas integracion con balanzas, QR Mercado Pago o una operacion local ya establecida para mostrador, esas capacidades estan publicadas por Gestion Comercio.' },
-      { title: 'Cuando PCLAFCONTROL puede convenir mas', body: 'Si buscas una operacion web con accesos por rol, trazabilidad, sucursales y tickets de servicio tecnico junto con ventas, caja y stock.' },
+      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si buscas una operacion web con accesos por rol, trazabilidad, sucursales y tickets de servicio tecnico junto con ventas, caja y stock.' },
     ],
     featureList: ['Web', 'Escritorio', 'Sucursales', 'Auditoria', 'Tickets'],
   },
@@ -354,7 +352,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que registra un POS', body: 'Productos, cantidades, precios, descuentos, medio de pago y, cuando hace falta, los datos del cliente o comprobante.' },
       { title: 'Por que reemplaza al cuaderno', body: 'La misma operacion deja un historial de venta y evita volver a cargar los datos para controlar caja o stock.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'PCLAFCONTROL combina carrito multiitem, medios de pago, cliente, descuentos, comprobantes y trazabilidad por operacion.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'PCLAF Control combina carrito multiitem, medios de pago, cliente, descuentos, comprobantes y trazabilidad por operacion.' },
     ],
     faq: [['¿Un POS sirve solo para cobrar?', 'No. Tambien permite relacionar la venta con productos, caja, cliente y comprobantes para poder controlar la operacion.']],
   },
@@ -365,7 +363,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Movimientos que cambian el stock', body: 'Una venta descuenta unidades; una compra o recepcion las incorpora; un ajuste corrige una diferencia registrada.' },
       { title: 'Por que importa la trazabilidad', body: 'Cuando aparece una diferencia, hace falta conocer si vino de una venta, compra, transferencia o ajuste y quien lo registro.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'El catalogo incluye SKU, codigo de barras, costo, stock minimo, importacion CSV, ajustes y transferencias entre sucursales.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'El catalogo incluye SKU, codigo de barras, costo, stock minimo, importacion CSV, ajustes y transferencias entre sucursales.' },
     ],
     faq: [['¿Se puede corregir una diferencia de stock?', 'Si, mediante un ajuste registrado. El ajuste debe conservar el motivo y no puede dejar existencias negativas.']],
   },
@@ -376,7 +374,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Para que sirve', body: 'Ayuda a priorizar compras antes de que un producto se agote y a ordenar la reposicion del comercio.' },
       { title: 'Como definirlo', body: 'Considera la rotacion, el plazo del proveedor y el margen que necesitas para no quedarte sin mercaderia.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'Cada producto puede conservar su nivel minimo junto con precio, costo, SKU y existencias por sucursal.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'Cada producto puede conservar su nivel minimo junto con precio, costo, SKU y existencias por sucursal.' },
     ],
     faq: [['¿El stock minimo reemplaza el inventario fisico?', 'No. Es una alerta operativa; el conteo fisico sigue siendo necesario para detectar diferencias reales.']],
   },
@@ -387,7 +385,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que incluye un cierre', body: 'Monto inicial, ventas y movimientos de efectivo, monto esperado, efectivo contado y diferencia final.' },
       { title: 'Por que no conviene cerrar de memoria', body: 'Separar ventas, retiros, gastos y cobros evita que una diferencia quede oculta dentro de un total general.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'Cada cierre queda asociado a caja, sucursal y responsable, con los movimientos manuales incluidos en el esperado.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'Cada cierre queda asociado a caja, sucursal y responsable, con los movimientos manuales incluidos en el esperado.' },
     ],
     faq: [['¿Que pasa si hay una diferencia?', 'Debe quedar registrada para poder revisarla con el responsable y los movimientos del turno.']],
   },
@@ -398,7 +396,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Arqueo y cierre no son lo mismo', body: 'El arqueo verifica lo que hay; el cierre registra el resultado del turno y deja trazabilidad de la diferencia.' },
       { title: 'Que revisar', body: 'Efectivo, transferencias, Mercado Pago, e-cheques, cuenta corriente y cualquier retiro o ingreso manual.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'La venta admite medios de pago separados y la caja conserva movimientos, efectivo esperado, contado y diferencia.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'La venta admite medios de pago separados y la caja conserva movimientos, efectivo esperado, contado y diferencia.' },
     ],
     faq: [['¿Cada cajero necesita su propia caja?', 'Depende de la operacion. Separar caja y responsable ayuda a atribuir correctamente los movimientos y las diferencias.']],
   },
@@ -409,7 +407,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que evita', body: 'Evita anotar deudas en mensajes o cuadernos separados de la venta original y perder el detalle de cada saldo.' },
       { title: 'Como se mantiene actualizada', body: 'Cada venta a cuenta incrementa el saldo; cada abono documentado lo reduce sin superar el importe pendiente.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'Clientes, ventas, comprobantes y abonos se relacionan para consultar saldo e historial comercial desde la misma base.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'Clientes, ventas, comprobantes y abonos se relacionan para consultar saldo e historial comercial desde la misma base.' },
     ],
     faq: [['¿Una cuenta corriente es solo para clientes frecuentes?', 'Puede usarse con cualquier cliente al que se le otorgue pago pendiente, siempre con condiciones y seguimiento claros.']],
   },
@@ -420,7 +418,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que debe validar', body: 'La sucursal de origen y destino deben ser diferentes y el origen necesita existencias suficientes antes de mover unidades.' },
       { title: 'Por que no conviene editar cantidades a mano', body: 'Un cambio manual no explica desde que local salio la mercaderia ni permite conciliar el movimiento entre ambos inventarios.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'La transferencia descuenta el origen, suma el destino y deja el movimiento asociado al producto y a las sucursales.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'La transferencia descuenta el origen, suma el destino y deja el movimiento asociado al producto y a las sucursales.' },
     ],
     faq: [['¿Una transferencia cambia el total de mercaderia?', 'No. Cambia la ubicacion de las unidades entre sucursales, no la existencia total del comercio.']],
   },
@@ -431,7 +429,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que necesita el catalogo', body: 'Cada producto debe tener un codigo asociado, ademas de nombre, precio y existencias para que la busqueda sea confiable.' },
       { title: 'Que problema resuelve', body: 'Reduce errores al tipear y acelera la atencion cuando hay muchos productos parecidos o alta rotacion.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'El catalogo admite codigo de barras y la venta permite agregar productos mediante lector o busqueda manual.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'El catalogo admite codigo de barras y la venta permite agregar productos mediante lector o busqueda manual.' },
     ],
     faq: [['¿Se puede vender si un producto no tiene codigo?', 'Si. El producto tambien puede buscarse manualmente desde el catalogo.']],
   },
@@ -442,7 +440,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que informacion conviene registrar', body: 'Cliente, sucursal, equipo, detalle del problema, estado del trabajo y observaciones para evitar confusiones al entregar.' },
       { title: 'Por que debe estar vinculado a ventas', body: 'Repuestos, mano de obra y cobros no deberian quedar aislados del trabajo que los origino.' },
-      { title: 'Como lo aplica PCLAFCONTROL', body: 'Los tickets conservan recepcion y seguimiento de equipos o servicios y pueden originarse desde una venta.' },
+      { title: 'Como lo aplica PCLAF Control', body: 'Los tickets conservan recepcion y seguimiento de equipos o servicios y pueden originarse desde una venta.' },
     ],
     faq: [['¿Sirve para servicios sin equipo fisico?', 'Si. El ticket puede registrar un servicio, siempre que conserve cliente, detalle y estado de seguimiento.']],
   },
@@ -450,17 +448,17 @@ const glossaryTerms = [
 
 const glossaryPages = glossaryTerms.map((term) => ({
   slug: `glosario-pos/${term.slug}`,
-  seoTitle: `${term.title} | Glosario PCLAFCONTROL`,
+  seoTitle: `${term.title} | Glosario PCLAF Control`,
   description: term.description,
-  kicker: 'Glosario PCLAFCONTROL',
+  kicker: 'Glosario PCLAF Control',
   h1: `${term.title}: que es y como se aplica en un comercio`,
   lead: term.lead,
   image: '/pclaf-control-panel-real.png',
-  imageAlt: `Gestion comercial en PCLAFCONTROL: ${term.title}`,
-  whatsAppPrompt: `Hola PCLAFCONTROL, quiero ayuda con ${term.title.toLowerCase()}.`,
+  imageAlt: `Gestion comercial en PCLAF Control: ${term.title}`,
+  whatsAppPrompt: `Hola PCLAF Control, quiero ayuda con ${term.title.toLowerCase()}.`,
   sections: term.sections,
   faq: term.faq,
-  featureList: ['Guia practica', 'Operacion comercial', 'PCLAFCONTROL'],
+  featureList: ['Guia practica', 'Operacion comercial', 'PCLAF Control'],
 }))
 
 const comparisonRows = [
@@ -718,7 +716,7 @@ const marketingPages = [
   },
   {
     slug: 'pos-por-rubro',
-    seoTitle: 'Sistema POS por rubro | PCLAFCONTROL',
+    seoTitle: 'Sistema POS por rubro | PCLAF Control',
     description: 'Conoce como PCLAF Control acompana kioscos, tiendas y servicios tecnicos con ventas, caja, stock y seguimiento operativo.',
     kicker: 'POS por rubro',
     h1: 'Un sistema comercial que se adapta a la forma de trabajar de tu negocio',
@@ -763,16 +761,16 @@ const marketingPages = [
   },
   {
     slug: 'comparar-sistemas-de-gestion',
-    seoTitle: 'Comparar sistemas de gestion para comercios | PCLAFCONTROL',
-    description: 'Compara PCLAFCONTROL con otras plataformas de gestion para elegir segun ventas, stock, caja, sucursales, tickets, e-commerce y contabilidad.',
+    seoTitle: 'Comparar sistemas de gestion para comercios | PCLAF Control',
+    description: 'Compara PCLAF Control con otras plataformas de gestion para elegir segun ventas, stock, caja, sucursales, tickets, e-commerce y contabilidad.',
     kicker: 'Comparaciones honestas',
     h1: 'Compara sistemas de gestion y elegi el que mejor se adapta a tu comercio',
     lead: 'No todos los sistemas resuelven lo mismo. Revisa funciones, tipo de operacion y limites concretos antes de decidir.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Panel de gestion de PCLAFCONTROL',
-    whatsAppPrompt: 'Hola PCLAFCONTROL, quiero ayuda para elegir el sistema adecuado para mi comercio.',
+    imageAlt: 'Panel de gestion de PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF Control, quiero ayuda para elegir el sistema adecuado para mi comercio.',
     sections: comparisonPages.map((page) => ({
-      title: page.h1.replace(/^PCLAFCONTROL vs /, 'PCLAFCONTROL vs '),
+      title: page.h1.replace(/^PCLAF Control vs /, 'PCLAF Control vs '),
       body: page.lead,
       href: `/${page.slug}/`,
       linkLabel: 'Ver comparacion',
@@ -782,14 +780,14 @@ const marketingPages = [
   ...comparisonPages,
   {
     slug: 'glosario-pos',
-    seoTitle: 'Glosario POS para comercios | PCLAFCONTROL',
-    description: 'Glosario de terminos de ventas, caja, stock, clientes, sucursales y tickets basado en la operacion real de PCLAFCONTROL.',
+    seoTitle: 'Glosario POS para comercios | PCLAF Control',
+    description: 'Glosario de terminos de ventas, caja, stock, clientes, sucursales y tickets basado en la operacion real de PCLAF Control.',
     kicker: 'Glosario POS',
     h1: 'Conceptos de gestion comercial explicados para el dia a dia del comercio',
     lead: 'Entende los terminos de ventas, caja, stock, clientes y servicios con ejemplos conectados a una operacion comercial real.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Operacion comercial con PCLAFCONTROL',
-    whatsAppPrompt: 'Hola PCLAFCONTROL, quiero ayuda para ordenar la gestion de mi comercio.',
+    imageAlt: 'Operacion comercial con PCLAF Control',
+    whatsAppPrompt: 'Hola PCLAF Control, quiero ayuda para ordenar la gestion de mi comercio.',
     sections: glossaryTerms.map((term) => ({
       title: term.title,
       body: term.lead,
@@ -1017,7 +1015,6 @@ const renderTopbar = (page) => `
           <a href="/glosario-pos/" data-analytics="nav_glosario">Glosario POS</a>
           <a href="/como-funciona/" data-analytics="nav_como_funciona">Como funciona</a>
           <a href="/blog/" data-analytics="nav_blog">Blog</a>
-          <a href="/preguntas-frecuentes/" data-analytics="nav_faq_menu">Preguntas frecuentes</a>
         </div>
       </details>` : ''}
     </nav>
@@ -1079,11 +1076,11 @@ const renderComparison = (comparison) => comparison ? `
   <section class="marketing-compare" aria-labelledby="comparison-title">
     <div class="marketing-compare-copy">
       <p class="marketing-kicker">Funcion a funcion</p>
-      <h2 id="comparison-title">PCLAFCONTROL vs ${escapeHtml(comparison.alternative)}</h2>
-      <p>Esta comparacion usa informacion publica de cada alternativa y las funciones verificadas de PCLAFCONTROL. Revisa siempre el plan vigente antes de contratar.</p>
+      <h2 id="comparison-title">PCLAF Control vs ${escapeHtml(comparison.alternative)}</h2>
+      <p>Esta comparacion usa informacion publica de cada alternativa y las funciones verificadas de PCLAF Control. Revisa siempre el plan vigente antes de contratar.</p>
     </div>
     <div class="marketing-compare-table" role="region" aria-label="Tabla comparativa" tabindex="0">
-      <div class="marketing-compare-head"><span>Aspecto</span><span>${escapeHtml(comparison.alternative)}</span><span>PCLAFCONTROL</span></div>
+      <div class="marketing-compare-head"><span>Aspecto</span><span>${escapeHtml(comparison.alternative)}</span><span>PCLAF Control</span></div>
       ${comparison.rows.map(([feature, alternative, pclaf]) => `<div class="marketing-compare-row"><strong>${escapeHtml(feature)}</strong><span>${escapeHtml(alternative)}</span><span>${escapeHtml(pclaf)}</span></div>`).join('')}
     </div>
   </section>
@@ -1859,6 +1856,21 @@ const marketingStyles = `
       .marketing-auth-links a:not(.is-primary):hover,
       .marketing-hero-helper a {
         color: #d51d22;
+      }
+      .marketing-nav-menu summary {
+        color: #4f4b45;
+        font-weight: 600;
+      }
+      .marketing-nav-menu summary::after { color: #777169; }
+      .marketing-nav-menu-panel {
+        border-color: #ded9d0;
+        background: #fffdf9;
+        box-shadow: 0 18px 44px rgba(66, 54, 41, 0.16);
+      }
+      .marketing-nav-menu-panel a { color: #292622; }
+      .marketing-nav-menu-panel a:hover {
+        color: #c61d24;
+        background: #f5f0e8;
       }
       .marketing-auth-links .is-primary,
       .marketing-cta-row .is-primary {
