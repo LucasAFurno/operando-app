@@ -187,7 +187,7 @@ const onboardingSteps = [
   { id: 'cash', section: 'caja', selector: '[data-action="open-cash-form"]', title: 'Abrí la caja', text: 'Usá “Abrir caja” antes de cobrar en efectivo. Transferencias y cuenta no la requieren.' },
   { id: 'cart', section: 'ventas', selector: '.scanner-row', title: 'Buscá o escaneá', text: 'Escribí o escaneá el artículo y tocá “Agregar” para sumarlo al carrito.' },
   { id: 'charge', section: 'ventas', selector: '.pos-charge-button', title: 'Confirmá el cobro', text: 'Revisá el medio de pago y cobrá una sola vez. El botón se desactiva mientras se procesa.' },
-  { id: 'receipt', section: 'ventas', selector: 'details.row-more-menu--sales > summary', title: 'Emití el comprobante', text: 'Abrí las acciones de una venta y elegí “Factura” o uno de los tickets.' },
+  { id: 'receipt', section: 'ventas', selector: '.sales-history-row details.row-more-menu--sales > summary, .sales-table', title: 'Emití el comprobante', text: 'Después de registrar una venta, encontrala en el historial, abrí sus acciones y elegí “Factura” o uno de los tickets.' },
 ]
 
 const getOnboardingStorageKey = () => `${onboardingStorageKey}:${commerceContext?.commerce_id || authInstanceKey || 'local'}:${store?.getSnapshot?.().meta?.currentUserId || 'user'}`
@@ -199,6 +199,7 @@ const loadOnboarding = (guideSeenAt = '') => {
     const saved = JSON.parse(safeStorage.getItem(getOnboardingStorageKey(), ''))
     if (saved && Array.isArray(saved.completed)) onboarding = { visible: false, step: Number(saved.step) || 0, completed: saved.completed }
   } catch { /* La guía es opcional: un estado inválido no afecta la operación. */ }
+  if (onboarding.visible && currentOnboardingStep()) pendingOnboardingFocus = true
 }
 const currentOnboardingStep = () => onboardingSteps[onboarding.step] || onboardingSteps.find((step) => !onboarding.completed.includes(step.id)) || null
 const completeOnboardingStep = (id) => {
@@ -222,7 +223,45 @@ const guideCard = () => {
   const step = onboarding.visible ? currentOnboardingStep() : null
   if (!step) return ''
   const position = Math.max(1, onboardingSteps.findIndex((entry) => entry.id === step.id) + 1)
-  return `<div class="onboarding-layer"><div class="onboarding-scrim onboarding-scrim-top" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-right" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-bottom" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-left" aria-hidden="true"></div><div class="onboarding-target-ring" aria-hidden="true"></div><aside class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-live="polite"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p>${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="focus-onboarding-control">Mostrar dónde hacerlo</button><button type="button" class="text-action" data-action="next-onboarding-step">Siguiente</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside></div>`
+  const isLastStep = position === onboardingSteps.length
+  return `<div class="onboarding-layer"><div class="onboarding-scrim onboarding-scrim-top" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-right" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-bottom" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-left" aria-hidden="true"></div><div class="onboarding-target-ring" aria-hidden="true"></div><aside class="onboarding-card" role="dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-description" aria-live="polite" tabindex="-1"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p id="onboarding-description">${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="next-onboarding-step">${isLastStep ? 'Finalizar guía' : 'Siguiente'}</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside></div>`
+}
+
+const revealOnboardingTarget = () => {
+  const step = currentOnboardingStep()
+  if (!onboarding.visible || !step) return
+  if (activeSection !== step.section) {
+    activeSection = step.section
+    requestScrollTop()
+    render()
+    window.requestAnimationFrame(revealOnboardingTarget)
+    return
+  }
+  window.requestAnimationFrame(() => {
+    document.querySelectorAll('.is-onboarding-target').forEach((element) => element.classList.remove('is-onboarding-target'))
+    const target = document.querySelector(step.selector)
+    const layer = document.querySelector('.onboarding-layer')
+    const card = document.querySelector('.onboarding-card')
+    target?.classList.add('is-onboarding-target')
+    target?.scrollIntoView?.({ block: 'center', inline: 'nearest', behavior: 'auto' })
+    card?.focus?.({ preventScroll: true })
+    window.requestAnimationFrame(() => {
+      if (!target || !layer) return
+      const rect = target.getBoundingClientRect()
+      const padding = 14
+      const left = Math.max(0, rect.left - padding)
+      const top = Math.max(0, rect.top - padding)
+      const right = Math.max(0, window.innerWidth - rect.right - padding)
+      const bottom = Math.max(0, window.innerHeight - rect.bottom - padding)
+      layer.classList.add('has-onboarding-target')
+      layer.style.setProperty('--onboarding-target-left', `${left}px`)
+      layer.style.setProperty('--onboarding-target-top', `${top}px`)
+      layer.style.setProperty('--onboarding-target-right', `${right}px`)
+      layer.style.setProperty('--onboarding-target-bottom', `${bottom}px`)
+      layer.style.setProperty('--onboarding-target-width', `${Math.max(0, rect.width + padding * 2)}px`)
+      layer.style.setProperty('--onboarding-target-height', `${Math.max(0, rect.height + padding * 2)}px`)
+    })
+  })
 }
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
@@ -3275,7 +3314,7 @@ const render = () => {
   bindEvents()
   if (pendingOnboardingFocus) {
     pendingOnboardingFocus = false
-    window.requestAnimationFrame(() => document.querySelector('[data-action="focus-onboarding-control"]')?.click())
+    window.requestAnimationFrame(revealOnboardingTarget)
   }
   clearFeedbackSoon()
   flushScrollTop()
@@ -4178,38 +4217,6 @@ const bindEvents = () => {
     })
   }
   for (const form of document.querySelectorAll('form[data-form]')) form.addEventListener('submit', handleSubmit)
-  const focusOnboardingControl = () => {
-    const step = currentOnboardingStep()
-    if (!step) return
-    activeSection = step.section
-    onboarding.visible = true
-    requestScrollTop()
-    render()
-    window.requestAnimationFrame(() => {
-      document.querySelectorAll('.is-onboarding-target').forEach((element) => element.classList.remove('is-onboarding-target'))
-      const target = document.querySelector(step.selector)
-      const layer = document.querySelector('.onboarding-layer')
-      target?.classList.add('is-onboarding-target')
-      target?.scrollIntoView?.({ block: 'center' })
-      target?.focus?.({ preventScroll: true })
-      window.requestAnimationFrame(() => {
-        if (!target || !layer) return
-        const rect = target.getBoundingClientRect()
-        const padding = 14
-        const left = Math.max(0, rect.left - padding)
-        const top = Math.max(0, rect.top - padding)
-        const right = Math.max(0, window.innerWidth - rect.right - padding)
-        const bottom = Math.max(0, window.innerHeight - rect.bottom - padding)
-        layer.classList.add('has-onboarding-target')
-        layer.style.setProperty('--onboarding-target-left', `${left}px`)
-        layer.style.setProperty('--onboarding-target-top', `${top}px`)
-        layer.style.setProperty('--onboarding-target-right', `${right}px`)
-        layer.style.setProperty('--onboarding-target-bottom', `${bottom}px`)
-        layer.style.setProperty('--onboarding-target-width', `${Math.max(0, rect.width + padding * 2)}px`)
-        layer.style.setProperty('--onboarding-target-height', `${Math.max(0, rect.height + padding * 2)}px`)
-      })
-    })
-  }
   const pauseOnboardingFor = (stepId, removeLayer = false) => {
     if (!onboarding.visible || currentOnboardingStep()?.id !== stepId) return false
     onboarding.visible = false
@@ -4225,32 +4232,44 @@ const bindEvents = () => {
     summary.addEventListener('click', () => pauseOnboardingFor('receipt', true))
   }
   for (const button of document.querySelectorAll('[data-action="resume-onboarding"]')) button.addEventListener('click', () => {
-    onboarding.step = onboardingSteps.findIndex((step) => !onboarding.completed.includes(step.id))
-    if (onboarding.step < 0) {
+    if (!currentOnboardingStep()) {
       feedbackMessage = 'Ya completaste la guía inicial. Podés seguir operando normalmente.'
       render()
       return
     }
     onboarding.visible = true
+    pendingOnboardingFocus = true
     saveOnboarding()
     render()
   })
   for (const button of document.querySelectorAll('[data-action="dismiss-onboarding"]')) button.addEventListener('click', () => {
     onboarding.visible = false
+    pendingOnboardingFocus = false
     saveOnboarding()
     render()
   })
   for (const button of document.querySelectorAll('[data-action="next-onboarding-step"]')) button.addEventListener('click', () => {
-    onboarding.step = Math.min(onboarding.step + 1, onboardingSteps.length - 1)
+    if (onboarding.step >= onboardingSteps.length - 1) {
+      onboarding.completed = onboardingSteps.map((step) => step.id)
+      onboarding.visible = false
+      pendingOnboardingFocus = false
+      feedbackMessage = 'Guía inicial finalizada. Podés abrirla de nuevo cuando quieras.'
+      saveOnboarding()
+      render()
+      return
+    }
+    onboarding.step += 1
+    onboarding.visible = true
+    pendingOnboardingFocus = true
     saveOnboarding()
-    focusOnboardingControl()
+    render()
   })
-  for (const button of document.querySelectorAll('[data-action="focus-onboarding-control"]')) button.addEventListener('click', focusOnboardingControl)
   if (!onboardingKeyListenerBound) {
     onboardingKeyListenerBound = true
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape' || !onboarding.visible) return
       onboarding.visible = false
+      pendingOnboardingFocus = false
       saveOnboarding()
       render()
     })
