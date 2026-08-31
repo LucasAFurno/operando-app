@@ -991,7 +991,7 @@ const buildFaqJsonLd = (page) => {
   }
 }
 
-const renderTopbar = () => `
+const renderTopbar = (page) => `
   <header class="marketing-topbar">
     <a class="marketing-brand" href="/">
       <img src="/pclaf-logo.png" alt="PCLAF Control" width="48" height="46" />
@@ -1002,6 +1002,16 @@ const renderTopbar = () => `
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
       ${topLinks.map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
+      ${page.slug ? `<details class="marketing-nav-menu">
+        <summary>Informacion</summary>
+        <div class="marketing-nav-menu-panel">
+          <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">POS por rubro</a>
+          <a href="/comparar-sistemas-de-gestion/" data-analytics="nav_comparaciones_menu">Comparaciones</a>
+          <a href="/glosario-pos/" data-analytics="nav_glosario">Glosario POS</a>
+          <a href="/como-funciona/" data-analytics="nav_como_funciona">Como funciona</a>
+          <a href="/blog/" data-analytics="nav_blog">Blog</a>
+        </div>
+      </details>` : ''}
     </nav>
     <div class="marketing-auth-links">
       <a href="${appPath}?view=login" data-analytics="header_login">Iniciar sesion</a>
@@ -1299,6 +1309,46 @@ const marketingStyles = `
       .marketing-nav a:hover,
       .marketing-auth-links a:not(.is-primary):hover {
         color: #ffffff;
+      }
+      .marketing-nav-menu {
+        position: relative;
+      }
+      .marketing-nav-menu summary {
+        cursor: pointer;
+        color: #f7f4ee;
+        font-size: 0.93rem;
+        font-weight: 600;
+        list-style: none;
+      }
+      .marketing-nav-menu summary::-webkit-details-marker { display: none; }
+      .marketing-nav-menu summary::after {
+        content: '⌄';
+        margin-left: 5px;
+        color: #bcb5ab;
+      }
+      .marketing-nav-menu-panel {
+        position: absolute;
+        z-index: 30;
+        top: calc(100% + 12px);
+        left: 50%;
+        min-width: 218px;
+        padding: 8px;
+        transform: translateX(-50%);
+        border: 1px solid #5c5750;
+        border-radius: 14px;
+        background: #292622;
+        box-shadow: 0 18px 44px rgba(0,0,0,0.4);
+      }
+      .marketing-nav-menu-panel a {
+        display: block;
+        padding: 10px 12px;
+        border-radius: 9px;
+        color: #f7f4ee;
+        text-decoration: none;
+      }
+      .marketing-nav-menu-panel a:hover {
+        color: #ffffff;
+        background: #3b3936;
       }
       .marketing-footer nav a,
       .marketing-footer-actions a {
@@ -2719,7 +2769,7 @@ const renderMarketingPage = (page) => {
   </head>
   <body data-page="${page.slug ? escapeHtml(page.slug) : 'home'}">
     <div class="marketing-shell">
-      ${renderTopbar()}
+      ${renderTopbar(page)}
       <main>
         <section class="marketing-hero">
           <div class="marketing-hero-copy">
