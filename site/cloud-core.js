@@ -22,6 +22,7 @@ export const createSupabaseCoreAdapter = (config) => {
   const mutationRpcNames = new Set([
     'app_public_update_commerce_profile',
     'app_public_update_commerce_runtime',
+    'app_public_update_progressive_profile',
     'app_public_upsert_customer',
     'app_public_upsert_branch',
     'app_public_upsert_register',
@@ -48,6 +49,7 @@ export const createSupabaseCoreAdapter = (config) => {
     app_public_create_sale: ['sales', 'cash', 'products', 'customers', 'invoices'], app_public_register_invoice_payment: ['invoices', 'sales', 'cash', 'customers'],
     app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock'], app_public_upsert_document: ['invoices', 'tickets', 'sales', 'audit'],
     app_public_upsert_branch: ['settings', 'cash'], app_public_upsert_register: ['settings', 'cash'], app_public_upsert_user: ['settings'], app_public_toggle_user_active: ['settings'],
+    app_public_update_progressive_profile: ['settings'],
   }
   const rpc = async (fnName, body) => {
     const response = await fetch(`${baseUrl}/rest/v1/rpc/${fnName}`, {

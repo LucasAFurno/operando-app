@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=aa2bfb1a83f9'
-import { createCloudAuthManager } from './cloud-auth.js?v=aa2bfb1a83f9'
+import { createBrowserDataStore } from './data-store.js?v=ca768899343d'
+import { createCloudAuthManager } from './cloud-auth.js?v=ca768899343d'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'PCLAF Control'
-const appVersion = 'vaa2bfb1a83f9'
+const appVersion = 'vca768899343d'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20soporte%20de%20PCLAF%20Control.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20PCLAF%20Control.'
 const publicSiteUrl = 'https://www.pclafcontrol.com.ar'
@@ -163,6 +163,7 @@ let settingsPanelOpen = ''
 let progressiveProfilePromptOpen = true
 let progressiveProfileStep = 1
 let progressiveProfileGoalsDraft = null
+let progressiveProfileError = ''
 let arcaSetupStep = 1
 let arcaCsrGenerated = false
 let arcaCertificateName = ''
@@ -3110,7 +3111,7 @@ const progressiveProfileModal = (ui) => {
   const stepContent = isGoalsStep
     ? `<fieldset class="progressive-goals"><legend>Elegí hasta 5 prioridades</legend><div class="goal-option-grid">${goals.map(([value,label]) => `<label class="goal-option"><input type="checkbox" name="operationalGoals" value="${value}" ${selectedGoals.includes(value) ? 'checked' : ''} /><span class="goal-option-mark">✓</span><span>${label}</span></label>`).join('')}</div><p class="progressive-goal-feedback" aria-live="polite">Elegí las que más impacten hoy. Podés continuar con menos de cinco.</p></fieldset><div class="progressive-profile-actions"><button type="button" class="primary-action" data-action="progressive-profile-next">Continuar</button><button type="button" class="ghost-action" data-action="close-progressive-profile">Ahora no</button></div>`
     : isContactStep
-      ? `<div class="progressive-profile-step-intro"><span class="progressive-profile-step-label">Paso 2 de 3</span><h3>¿Cómo te contactamos?</h3><p>Teléfono y email son necesarios para acompañarte. País, rubro y ARCA siguen siendo opcionales.</p></div>${selectedGoals.map((goal) => `<input type="hidden" name="operationalGoals" value="${goal}" />`).join('')}<div class="form-grid compact-form progressive-profile-fields"><label>Teléfono de contacto <b aria-hidden="true">*</b><input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="Ej.: 11 4567-8901" autocomplete="tel" inputmode="tel" pattern="[+()0-9\\s-]{6,30}" required /></label><label>Email de contacto <b aria-hidden="true">*</b><input type="email" name="email" value="${escapeHtml(profile.email || '')}" placeholder="nombre@negocio.com" autocomplete="email" required /></label><label>País (opcional)<input type="text" name="country" value="${escapeHtml(profile.country || '')}" placeholder="Ej. Argentina" /></label><label>Rubro (opcional)<input type="text" name="industry" value="${escapeHtml(profile.industry || '')}" placeholder="Ej. Kiosco, indumentaria" /></label><label>¿Necesitás ARCA?<select name="needsArca"><option value="">Todavía no lo sé</option><option value="yes" ${profile.needsArca === true ? 'selected' : ''}>Sí</option><option value="no" ${profile.needsArca === false ? 'selected' : ''}>No por ahora</option></select></label></div><p class="progressive-contact-status" aria-live="polite">${contactReady ? 'Listo para guardar tus datos.' : 'Completá teléfono y email para continuar.'}</p><div class="progressive-profile-actions"><button type="button" class="ghost-action" data-action="progressive-profile-previous">Volver</button><button type="submit" class="primary-action" data-progressive-contact-submit ${contactReady ? '' : 'disabled'}>Guardar y continuar</button></div>`
+      ? `<div class="progressive-profile-step-intro"><span class="progressive-profile-step-label">Paso 2 de 3</span><h3>¿Cómo te contactamos?</h3><p>Teléfono y email son necesarios para acompañarte. País, rubro y ARCA siguen siendo opcionales.</p></div>${selectedGoals.map((goal) => `<input type="hidden" name="operationalGoals" value="${goal}" />`).join('')}<div class="form-grid compact-form progressive-profile-fields"><label>Teléfono de contacto <b aria-hidden="true">*</b><input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="Ej.: 11 4567-8901" autocomplete="tel" inputmode="tel" pattern="[+()0-9\\s-]{6,30}" required /></label><label>Email de contacto <b aria-hidden="true">*</b><input type="email" name="email" value="${escapeHtml(profile.email || '')}" placeholder="nombre@negocio.com" autocomplete="email" required /></label><label>País (opcional)<input type="text" name="country" value="${escapeHtml(profile.country || '')}" placeholder="Ej. Argentina" /></label><label>Rubro (opcional)<input type="text" name="industry" value="${escapeHtml(profile.industry || '')}" placeholder="Ej. Kiosco, indumentaria" /></label><label>¿Necesitás ARCA?<select name="needsArca"><option value="">Todavía no lo sé</option><option value="yes" ${profile.needsArca === true ? 'selected' : ''}>Sí</option><option value="no" ${profile.needsArca === false ? 'selected' : ''}>No por ahora</option></select></label></div><p class="progressive-contact-status ${progressiveProfileError ? 'is-error' : ''}" aria-live="polite">${escapeHtml(progressiveProfileError || (contactReady ? 'Listo para guardar tus datos.' : 'Completá teléfono y email para continuar.'))}</p><div class="progressive-profile-actions"><button type="button" class="ghost-action" data-action="progressive-profile-previous">Volver</button><button type="submit" class="primary-action" data-progressive-contact-submit ${contactReady ? '' : 'disabled'}>Guardar y continuar</button></div>`
       : `<div class="progressive-profile-success"><span class="progressive-profile-step-label">Paso 3 de 3</span><span class="progressive-profile-success-mark">✓</span><h3>Datos guardados.</h3><p>Ya tenemos la información necesaria para acompañarte. Podés empezar a operar y retomar la configuración cuando quieras.</p><button type="button" class="primary-action" data-action="finish-progressive-profile">Empezar a operar</button></div>`
   return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title">${isGoalsStep ? '<button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button>' : ''}<div class="progressive-profile-layout"><aside class="progressive-profile-route"><span class="progressive-profile-step">0${progressiveProfileStep}</span><p class="kicker">Puesta a punto</p><h2>${isGoalsStep ? 'Tu operación,<br />a tu medida.' : isContactStep ? 'Sumemos<br />contexto.' : 'Todo<br />listo.'}</h2><p>${isGoalsStep ? 'Elegí qué querés resolver primero. El resto es opcional.' : isContactStep ? 'Datos de contacto para acompañarte cuando lo necesites.' : 'Ya podés seguir con tu operación.'}</p><span class="progressive-profile-time">Paso ${progressiveProfileStep} de 3 · Menos de 1 minuto</span></aside><div class="progressive-profile-content"><p class="kicker">Configuración rápida</p><h2 id="progressive-profile-title">${isGoalsStep ? '¿Por dónde empezamos?' : isContactStep ? 'Personalicemos la ayuda' : 'Perfil completo'}</h2><p class="progressive-profile-copy">Usamos estas respuestas solo para ajustar sugerencias y soporte. No cambia tu acceso ni frena el POS.</p><form class="progressive-profile-modal-form" data-form="progressive-profile">${stepContent}</form></div></div></section></div>`
 }
@@ -3843,9 +3844,11 @@ const handleSubmit = async (event) => {
     feedbackMessage = result.message || ''
   }
   if (kind === 'progressive-profile') {
+    progressiveProfileError = ''
     const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), email: String(formData.get('email') || '').trim(), needsArca: formData.get('needsArca') === 'yes' ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
     feedbackMessage = result.message || ''
     if (result.ok) progressiveProfileStep = 3
+    else progressiveProfileError = result.message || 'No se pudieron guardar los datos. Intentá nuevamente.'
   }
   if (kind === 'cloud-connection') {
     cloudSyncBusy = true
@@ -4123,6 +4126,7 @@ const handleSubmit = async (event) => {
   form.reset()
   } catch (error) {
     if (kind === 'sale') saleSubmissionInFlight = false
+    if (kind === 'progressive-profile') progressiveProfileError = 'No se pudieron guardar los datos. Revisá la conexión e intentá nuevamente.'
     feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo completar la accion.', kind === 'instance-setup' ? 'signup' : 'login')
   }
   render()
@@ -5213,11 +5217,11 @@ const bindEvents = () => {
       render()
     })
   }
-  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = true; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; activeSection = 'dashboard'; requestScrollTop(); render() })
-  for (const button of document.querySelectorAll('[data-action="close-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; render() })
-  for (const button of document.querySelectorAll('[data-action="finish-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; feedbackMessage = 'Perfil listo. Ya podés operar normalmente.'; render() })
-  for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { progressiveProfileGoalsDraft = [...document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]:checked')].map((input) => input.value); progressiveProfileStep = 2; render() })
-  for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { progressiveProfileStep = 1; render() })
+  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = true; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileError = ''; activeSection = 'dashboard'; requestScrollTop(); render() })
+  for (const button of document.querySelectorAll('[data-action="close-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileError = ''; render() })
+  for (const button of document.querySelectorAll('[data-action="finish-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileError = ''; feedbackMessage = 'Perfil listo. Ya podés operar normalmente.'; render() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { progressiveProfileGoalsDraft = [...document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]:checked')].map((input) => input.value); progressiveProfileError = ''; progressiveProfileStep = 2; render() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { progressiveProfileError = ''; progressiveProfileStep = 1; render() })
   const updateProgressiveContactState = () => {
     const phone = document.querySelector('.progressive-profile-modal-form input[name="phone"]')
     const email = document.querySelector('.progressive-profile-modal-form input[name="email"]')
