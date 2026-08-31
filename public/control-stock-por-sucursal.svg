@@ -1,22 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img">
-  <rect width="1200" height="630" fill="#0b0b0b"/>
-  <rect x="40" y="34" width="1120" height="562" rx="30" fill="#111111" stroke="#252525"/>
-  <text x="80" y="96" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif" letter-spacing="4">PRODUCTOS</text>
-  <text x="80" y="148" fill="#ffffff" font-size="52" font-weight="700" font-family="Arial, sans-serif">Control de stock por sucursal</text>
-
-  <rect x="80" y="198" width="1040" height="94" rx="22" fill="#151515" stroke="#2a2a2a"/>
-  <text x="118" y="252" fill="#f5f7fb" font-size="28" font-weight="700" font-family="Arial, sans-serif">Catálogo centralizado</text>
-
-  <rect x="80" y="328" width="320" height="210" rx="24" fill="#151515" stroke="#2a2a2a"/>
-  <rect x="440" y="328" width="320" height="210" rx="24" fill="#151515" stroke="#2a2a2a"/>
-  <rect x="800" y="328" width="320" height="210" rx="24" fill="#151515" stroke="#2a2a2a"/>
-
-  <text x="114" y="392" fill="#ffffff" font-size="28" font-weight="700" font-family="Arial, sans-serif">Stock actual</text>
-  <text x="114" y="430" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif">Por sucursal y producto</text>
-
-  <text x="474" y="392" fill="#ffffff" font-size="28" font-weight="700" font-family="Arial, sans-serif">Ajustes</text>
-  <text x="474" y="430" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif">Conteos y diferencias</text>
-
-  <text x="834" y="392" fill="#ffffff" font-size="28" font-weight="700" font-family="Arial, sans-serif">Importación</text>
-  <text x="834" y="430" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif">Excel o CSV con preview</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Catálogo y stock de PCLAF Control</title>
+  <desc id="desc">Captura ilustrativa de inventario, productos y acciones de stock de PCLAF Control.</desc>
+  <image href="/pclaf-control-stock-real.png" width="1200" height="630" preserveAspectRatio="xMidYMid slice" />
 </svg>

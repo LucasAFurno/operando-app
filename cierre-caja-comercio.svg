@@ -1,22 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img">
-  <rect width="1200" height="630" fill="#0b0b0b"/>
-  <rect x="40" y="34" width="1120" height="562" rx="30" fill="#111111" stroke="#252525"/>
-  <text x="80" y="96" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif" letter-spacing="4">CAJA</text>
-  <text x="80" y="148" fill="#ffffff" font-size="52" font-weight="700" font-family="Arial, sans-serif">Apertura y cierre del negocio</text>
-
-  <rect x="80" y="206" width="300" height="126" rx="22" fill="#151515" stroke="#2a2a2a"/>
-  <rect x="410" y="206" width="300" height="126" rx="22" fill="#151515" stroke="#2a2a2a"/>
-  <rect x="740" y="206" width="300" height="126" rx="22" fill="#151515" stroke="#2a2a2a"/>
-  <text x="114" y="252" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif">Estado</text>
-  <text x="114" y="296" fill="#ffffff" font-size="38" font-weight="700" font-family="Arial, sans-serif">Caja abierta</text>
-  <text x="444" y="252" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif">Efectivo</text>
-  <text x="444" y="296" fill="#ffffff" font-size="38" font-weight="700" font-family="Arial, sans-serif">$ 248.000</text>
-  <text x="774" y="252" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif">Movimientos</text>
-  <text x="774" y="296" fill="#ffffff" font-size="38" font-weight="700" font-family="Arial, sans-serif">18</text>
-
-  <rect x="80" y="370" width="960" height="150" rx="24" fill="#151515" stroke="#2a2a2a"/>
-  <text x="114" y="432" fill="#ffffff" font-size="30" font-weight="700" font-family="Arial, sans-serif">Balance rápido</text>
-  <rect x="114" y="466" width="220" height="14" rx="7" fill="#ff3b30"/>
-  <rect x="350" y="466" width="180" height="14" rx="7" fill="#79c81c"/>
-  <rect x="546" y="466" width="126" height="14" rx="7" fill="#f59e0b"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Panel operativo de PCLAF Control</title>
+  <desc id="desc">Captura ilustrativa del panel con ventas, caja y alertas de stock de PCLAF Control.</desc>
+  <image href="/pclaf-control-panel-real.png" width="1200" height="630" preserveAspectRatio="xMidYMid slice" />
 </svg>

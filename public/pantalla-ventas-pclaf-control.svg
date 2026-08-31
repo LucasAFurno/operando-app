@@ -1,22 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img">
-  <rect width="1200" height="630" fill="#0b0b0b"/>
-  <rect x="40" y="34" width="1120" height="562" rx="30" fill="#111111" stroke="#252525"/>
-  <text x="80" y="96" fill="#9ca3af" font-size="18" font-family="Arial, sans-serif" letter-spacing="4">VENTAS</text>
-  <text x="80" y="148" fill="#ffffff" font-size="52" font-weight="700" font-family="Arial, sans-serif">Pantalla de ventas y cobros</text>
-
-  <rect x="80" y="192" width="1040" height="352" rx="26" fill="#151515" stroke="#2a2a2a"/>
-  <rect x="108" y="220" width="330" height="74" rx="18" fill="#181818" stroke="#303030"/>
-  <text x="138" y="266" fill="#f5f7fb" font-size="28" font-weight="700" font-family="Arial, sans-serif">Venta rápida</text>
-
-  <rect x="108" y="322" width="330" height="182" rx="22" fill="#121212" stroke="#292929"/>
-  <rect x="466" y="220" width="626" height="132" rx="22" fill="#121212" stroke="#292929"/>
-  <rect x="466" y="372" width="300" height="132" rx="22" fill="#121212" stroke="#292929"/>
-  <rect x="792" y="372" width="300" height="132" rx="22" fill="#121212" stroke="#292929"/>
-
-  <rect x="136" y="360" width="178" height="46" rx="14" fill="#ff3b30"/>
-  <text x="164" y="389" fill="#ffffff" font-size="20" font-weight="700" font-family="Arial, sans-serif">Registrar</text>
-
-  <text x="500" y="272" fill="#ffffff" font-size="26" font-weight="700" font-family="Arial, sans-serif">Cliente, canal y cobro</text>
-  <text x="500" y="426" fill="#ffffff" font-size="26" font-weight="700" font-family="Arial, sans-serif">Lector</text>
-  <text x="826" y="426" fill="#ffffff" font-size="26" font-weight="700" font-family="Arial, sans-serif">Historial</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Punto de venta de PCLAF Control</title>
+  <desc id="desc">Captura ilustrativa de la interfaz de punto de venta de PCLAF Control.</desc>
+  <image href="/pclaf-control-punto-venta-real.png" width="1200" height="630" preserveAspectRatio="xMidYMid slice" />
 </svg>
