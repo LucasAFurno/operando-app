@@ -1,11 +1,11 @@
 {
   "averageSaleAmount": 80000,
-  "onboardingMinutes": 5,
+  "supportAvailability": 24,
   "metrics": [
     { "value": 11, "prefix": "+", "suffix": "", "label": "comercios registrados" },
     { "value": 14620, "prefix": "+", "suffix": "", "label": "ventas procesadas" },
     { "value": 1169600000, "prefix": "+$", "suffix": "M", "format": "millions", "label": "ARS procesados" },
-    { "value": 5, "prefix": "", "suffix": " min", "label": "para empezar" }
+    { "value": 24, "prefix": "", "suffix": "/7", "label": "soporte operativo" }
   ],
   "verticals": ["repuestos", "kioscos", "accesorios", "indumentaria", "servicio técnico"]
 }

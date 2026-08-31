@@ -35,12 +35,12 @@ const [commerces, operations] = await Promise.all([
 
 const source = JSON.parse(await readFile(metricsPath, 'utf8'))
 const averageSaleAmount = Number(source.averageSaleAmount || 0)
-const onboardingMinutes = Number(source.onboardingMinutes || 0)
+const supportAvailability = Number(source.supportAvailability || 24)
 source.metrics = [
   { value: commerces, prefix: '+', suffix: '', label: 'comercios registrados' },
   { value: operations, prefix: '+', suffix: '', label: 'ventas procesadas' },
   { value: operations * averageSaleAmount, prefix: '+$', suffix: 'M', format: 'millions', label: 'ARS procesados' },
-  { value: onboardingMinutes, prefix: '', suffix: ' min', label: 'para empezar' },
+  { value: supportAvailability, prefix: '', suffix: '/7', label: 'soporte operativo' },
 ]
 await writeFile(metricsPath, `${JSON.stringify(source, null, 2)}\n`)
 process.stdout.write(`Métricas sincronizadas: ${commerces} comercios, ${operations} ventas y $${operations * averageSaleAmount} ARS.\n`)
