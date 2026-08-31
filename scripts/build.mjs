@@ -1300,41 +1300,6 @@ const marketingStyles = `
       .marketing-auth-links a:not(.is-primary):hover {
         color: #ffffff;
       }
-      .marketing-nav-menu {
-        position: relative;
-      }
-      .marketing-nav-menu summary {
-        cursor: pointer;
-        color: #d6dde8;
-        font-size: 0.93rem;
-        list-style: none;
-      }
-      .marketing-nav-menu summary::-webkit-details-marker { display: none; }
-      .marketing-nav-menu summary::after {
-        content: '⌄';
-        margin-left: 5px;
-        color: #9ca3af;
-      }
-      .marketing-nav-menu-panel {
-        position: absolute;
-        z-index: 4;
-        top: calc(100% + 10px);
-        left: 50%;
-        min-width: 210px;
-        padding: 10px;
-        transform: translateX(-50%);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 14px;
-        background: #171717;
-        box-shadow: 0 18px 44px rgba(0,0,0,0.35);
-      }
-      .marketing-nav-menu-panel a {
-        display: block;
-        padding: 10px;
-        color: #e5e7eb;
-        text-decoration: none;
-      }
-      .marketing-nav-menu-panel a:hover { color: #fff; background: rgba(255,255,255,0.06); }
       .marketing-footer nav a,
       .marketing-footer-actions a {
         display: inline-flex;
@@ -1698,8 +1663,8 @@ const marketingStyles = `
         box-shadow: 0 20px 40px rgba(0,0,0,0.28);
         text-decoration: none;
       }
-      body[data-page="home"] .marketing-grid,
-      body[data-page="home"] .marketing-grid-compact {
+      body .marketing-grid,
+      body .marketing-grid-compact {
         display: none;
       }
       @media (max-width: 1024px) {
@@ -1835,21 +1800,6 @@ const marketingStyles = `
       .marketing-auth-links a:not(.is-primary):hover,
       .marketing-hero-helper a {
         color: #d51d22;
-      }
-      .marketing-nav-menu summary {
-        color: #4f4b45;
-        font-weight: 600;
-      }
-      .marketing-nav-menu summary::after { color: #777169; }
-      .marketing-nav-menu-panel {
-        border-color: #ded9d0;
-        background: #fffdf9;
-        box-shadow: 0 18px 44px rgba(66, 54, 41, 0.16);
-      }
-      .marketing-nav-menu-panel a { color: #292622; }
-      .marketing-nav-menu-panel a:hover {
-        color: #c61d24;
-        background: #f5f0e8;
       }
       .marketing-auth-links .is-primary,
       .marketing-cta-row .is-primary {
@@ -2436,21 +2386,6 @@ const marketingStyles = `
       .marketing-compare-copy p {
         color: #625e57;
       }
-      body:not([data-page="home"]) .marketing-grid .marketing-card,
-      body:not([data-page="home"]) .marketing-faq,
-      body:not([data-page="home"]) .marketing-compare-copy,
-      body:not([data-page="home"]) .marketing-compare-table {
-        border: 1px solid #ded9d0;
-        background: rgba(255, 255, 255, 0.56);
-      }
-      body:not([data-page="home"]) .marketing-card > a {
-        border-color: #cbc5bb;
-        color: #292622;
-      }
-      body:not([data-page="home"]) .marketing-card > a:hover {
-        border-color: #d51d22;
-        color: #d51d22;
-      }
       .marketing-compare-head {
         color: #777169;
         border-bottom-color: #ded9d0;
@@ -2654,59 +2589,83 @@ const marketingStyles = `
         }
         .marketing-vertical-carousel span:not(:first-child) { display: none; }
       }
-      /* Home palette: warm charcoal supplied for PCLAF, with its red accent. */
-      html:has(body[data-page="home"]),
-      body[data-page="home"] {
+      /* Public palette: warm charcoal supplied for PCLAF, with its red accent. */
+      html,
+      body {
         background: #1a1a1a;
         color: #f7f4ee;
       }
-      body[data-page="home"] .marketing-topbar {
+      body .marketing-topbar {
         border-bottom-color: #3b3936;
         background: rgba(26, 26, 26, 0.94);
       }
-      body[data-page="home"] .marketing-brand strong,
-      body[data-page="home"] .marketing-nav a,
-      body[data-page="home"] .marketing-auth-links a:not(.is-primary),
-      body[data-page="home"] .marketing-hero-copy h1,
-      body[data-page="home"] .marketing-story-copy h2,
-      body[data-page="home"] .marketing-support-copy h2,
-      body[data-page="home"] .marketing-control-panel-intro h2,
-      body[data-page="home"] .marketing-control-story h3 {
+      body .marketing-brand strong,
+      body .marketing-nav a,
+      body .marketing-auth-links a:not(.is-primary),
+      body .marketing-hero-copy h1,
+      body .marketing-card h2,
+      body .marketing-faq h2,
+      body .marketing-faq summary,
+      body .marketing-compare-copy h2,
+      body .marketing-compare-table strong,
+      body .marketing-story-copy h2,
+      body .marketing-support-copy h2,
+      body .marketing-control-panel-intro h2,
+      body .marketing-control-story h3 {
         color: #f7f4ee;
       }
-      body[data-page="home"] .marketing-brand p,
-      body[data-page="home"] .marketing-lead,
-      body[data-page="home"] .marketing-story-copy p:not(.marketing-kicker),
-      body[data-page="home"] .marketing-support-copy > p:not(.marketing-kicker),
-      body[data-page="home"] .marketing-control-panel-intro > p:not(.marketing-kicker),
-      body[data-page="home"] .marketing-control-story-copy > p:not(.marketing-control-index),
-      body[data-page="home"] .marketing-control-story li,
-      body[data-page="home"] .marketing-footer p,
-      body[data-page="home"] .marketing-footer-title {
+      body .marketing-brand p,
+      body .marketing-lead,
+      body .marketing-card p,
+      body .marketing-faq p,
+      body .marketing-compare-row,
+      body .marketing-compare-copy p,
+      body .marketing-story-copy p:not(.marketing-kicker),
+      body .marketing-support-copy > p:not(.marketing-kicker),
+      body .marketing-control-panel-intro > p:not(.marketing-kicker),
+      body .marketing-control-story-copy > p:not(.marketing-control-index),
+      body .marketing-control-story li,
+      body .marketing-footer p,
+      body .marketing-footer-title {
         color: #bcb5ab;
       }
-      body[data-page="home"] .marketing-home-rows,
-      body[data-page="home"] .marketing-story,
-      body[data-page="home"] .marketing-support,
-      body[data-page="home"] .marketing-control-panel,
-      body[data-page="home"] .marketing-footer,
-      body[data-page="home"] .marketing-support-points,
-      body[data-page="home"] .marketing-support-points li {
+      body .marketing-home-rows,
+      body .marketing-story,
+      body .marketing-support,
+      body .marketing-control-panel,
+      body .marketing-footer,
+      body .marketing-support-points,
+      body .marketing-support-points li {
         border-color: #3b3936;
       }
-      body[data-page="home"] .marketing-story-media,
-      body[data-page="home"] .marketing-control-image-frame {
+      body .marketing-story-media,
+      body .marketing-control-image-frame {
         background: #292622;
       }
-      body[data-page="home"] .marketing-story .marketing-kicker { color: #ffaaa5; }
-      body[data-page="home"] .marketing-support-points strong { color: #f7f4ee; }
-      body[data-page="home"] .marketing-support-points p,
-      body[data-page="home"] .marketing-control-story-media figcaption { color: #aaa39a; }
-      body[data-page="home"] .marketing-control-progress i {
+      body .marketing-grid .marketing-card,
+      body .marketing-faq,
+      body .marketing-compare-copy,
+      body .marketing-compare-table {
+        border: 1px solid #3b3936;
+        background: #292622;
+      }
+      body .marketing-card > a {
+        border-color: #5c5750;
+        color: #f7f4ee;
+      }
+      body .marketing-card > a:hover {
+        border-color: #e52329;
+        color: #ffffff;
+      }
+      body .marketing-story .marketing-kicker { color: #ffaaa5; }
+      body .marketing-support-points strong { color: #f7f4ee; }
+      body .marketing-support-points p,
+      body .marketing-control-story-media figcaption { color: #aaa39a; }
+      body .marketing-control-progress i {
         background: linear-gradient(90deg, #e52329 0 38%, #3b3936 38% 100%);
       }
-      body[data-page="home"] .marketing-footer nav a,
-      body[data-page="home"] .marketing-footer-actions a { color: #f7f4ee; }
+      body .marketing-footer nav a,
+      body .marketing-footer-actions a { color: #f7f4ee; }
 `
 
 const renderMarketingPage = (page) => {
