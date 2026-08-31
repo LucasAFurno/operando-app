@@ -101,11 +101,6 @@ const topLinks = [
   { href: '/preguntas-frecuentes/', label: 'FAQ' },
 ]
 
-const homeTopLinks = [
-  { href: '/funciones/', label: 'Funciones' },
-  { href: '/preguntas-frecuentes/', label: 'FAQ' },
-]
-
 const footerLinks = [
   { href: '/sistema-de-ventas/', label: 'Sistema de ventas' },
   { href: '/control-de-stock/', label: 'Control de stock' },
@@ -996,7 +991,7 @@ const buildFaqJsonLd = (page) => {
   }
 }
 
-const renderTopbar = (page) => `
+const renderTopbar = () => `
   <header class="marketing-topbar">
     <a class="marketing-brand" href="/">
       <img src="/pclaf-logo.png" alt="PCLAF Control" width="48" height="46" />
@@ -1006,17 +1001,7 @@ const renderTopbar = (page) => `
       </div>
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
-      ${(page.slug ? topLinks : homeTopLinks).map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
-      ${page.slug ? `<details class="marketing-nav-menu">
-        <summary>Informacion</summary>
-        <div class="marketing-nav-menu-panel">
-          <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">POS por rubro</a>
-          <a href="/comparar-sistemas-de-gestion/" data-analytics="nav_comparaciones_menu">Comparaciones</a>
-          <a href="/glosario-pos/" data-analytics="nav_glosario">Glosario POS</a>
-          <a href="/como-funciona/" data-analytics="nav_como_funciona">Como funciona</a>
-          <a href="/blog/" data-analytics="nav_blog">Blog</a>
-        </div>
-      </details>` : ''}
+      ${topLinks.map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
     </nav>
     <div class="marketing-auth-links">
       <a href="${appPath}?view=login" data-analytics="header_login">Iniciar sesion</a>
@@ -1025,7 +1010,7 @@ const renderTopbar = (page) => `
   </header>
 `
 
-const renderFooter = (page) => `
+const renderFooter = () => `
   <footer class="marketing-footer">
     <div class="marketing-footer-brand">
       <strong>PCLAF Control</strong>
@@ -1042,12 +1027,6 @@ const renderFooter = (page) => `
       <p class="marketing-footer-title">Mas informacion</p>
       <nav>
         <a href="/funciones/" data-analytics="footer_funciones">Funciones</a>
-        ${page.slug ? `
-        <a href="/pos-por-rubro/" data-analytics="footer_rubros">POS por rubro</a>
-        <a href="/comparar-sistemas-de-gestion/" data-analytics="footer_comparar">Comparar sistemas</a>
-        <a href="/glosario-pos/" data-analytics="footer_glosario">Glosario POS</a>
-        <a href="/como-funciona/" data-analytics="footer_como_funciona">Como funciona</a>
-        <a href="/blog/" data-analytics="footer_blog">Blog</a>` : ''}
         <a href="/preguntas-frecuentes/" data-analytics="footer_faq">Preguntas frecuentes</a>
         <a href="/privacidad/" data-analytics="footer_privacidad">Privacidad</a>
         <a href="/terminos/" data-analytics="footer_terminos">Terminos</a>
@@ -2781,7 +2760,7 @@ const renderMarketingPage = (page) => {
   </head>
   <body data-page="${page.slug ? escapeHtml(page.slug) : 'home'}">
     <div class="marketing-shell">
-      ${renderTopbar(page)}
+      ${renderTopbar()}
       <main>
         <section class="marketing-hero">
           <div class="marketing-hero-copy">
@@ -2814,7 +2793,7 @@ const renderMarketingPage = (page) => {
         ${downloadSection}
       ${faqSection}
       </main>
-      ${renderFooter(page)}
+      ${renderFooter()}
     </div>
     <a href="${pageSupportUrl}" class="marketing-floating-whatsapp" target="_blank" rel="noreferrer" data-analytics="whatsapp_support">Hablar por WhatsApp</a>
     <script>
