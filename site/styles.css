@@ -3343,6 +3343,10 @@ input[type='search'] { color: var(--text); }
 .progressive-profile-step-label { display: inline-block; margin-bottom: 7px; color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .progressive-profile-step-intro h3 { margin: 0; font-size: 1.1rem; }
 .progressive-profile-step-intro p { margin: 7px 0 0; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.progressive-profile-success { display: grid; justify-items: start; gap: 10px; min-height: 250px; align-content: center; }
+.progressive-profile-success-mark { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: color-mix(in srgb, #39c776 18%, var(--panel-soft)); color: #48d886; font-size: 1.3rem; font-weight: 900; }
+.progressive-profile-success h3 { margin: 0; font-size: 1.35rem; }
+.progressive-profile-success p { max-width: 32rem; margin: 0; color: var(--muted); line-height: 1.5; }
 .progressive-profile-fields label b { color: var(--accent); }
 .progressive-contact-status { min-height: 1.3em; margin: -4px 0 0; color: var(--muted); font-size: .8rem; }
 .progressive-profile-actions .primary-action:disabled { cursor: not-allowed; opacity: .48; filter: saturate(.35); }
