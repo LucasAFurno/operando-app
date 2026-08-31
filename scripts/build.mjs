@@ -1003,13 +1003,13 @@ const renderTopbar = (page) => `
     <nav class="marketing-nav" aria-label="Navegacion principal">
       ${topLinks.map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
       <details class="marketing-nav-menu">
-        <summary>Informacion</summary>
+        <summary>Explorá PCLAF</summary>
         <div class="marketing-nav-menu-panel">
-          <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">POS por rubro</a>
-          <a href="/comparar-sistemas-de-gestion/" data-analytics="nav_comparaciones_menu">Comparaciones</a>
-          <a href="/glosario-pos/" data-analytics="nav_glosario">Glosario POS</a>
-          <a href="/como-funciona/" data-analytics="nav_como_funciona">Como funciona</a>
-          <a href="/blog/" data-analytics="nav_blog">Blog</a>
+          <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">Soluciones por actividad</a>
+          <a href="/comparar-sistemas-de-gestion/" data-analytics="nav_comparaciones_menu">Elegí tu sistema</a>
+          <a href="/glosario-pos/" data-analytics="nav_glosario">Diccionario comercial</a>
+          <a href="/como-funciona/" data-analytics="nav_como_funciona">Cómo empezar</a>
+          <a href="/blog/" data-analytics="nav_blog">Guías para tu negocio</a>
         </div>
       </details>
     </nav>
