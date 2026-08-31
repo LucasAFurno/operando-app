@@ -178,6 +178,8 @@ let userDraftRoleId = 'role-cashier'
 let onboarding = { visible: false, step: 0, completed: [] }
 let onboardingLoadedFor = ''
 let onboardingSeenReportedFor = ''
+let onboardingPausedFor = ''
+let pendingOnboardingFocus = false
 const pageSizeOptions = [10, 20, 50, 100, 1000]
 
 const onboardingSteps = [
@@ -204,11 +206,23 @@ const completeOnboardingStep = (id) => {
   onboarding.step = onboardingSteps.findIndex((step) => !onboarding.completed.includes(step.id))
   saveOnboarding()
 }
+const resumeOnboardingAfterStep = (id) => {
+  if (onboardingPausedFor !== id) return
+  onboardingPausedFor = ''
+  if (!currentOnboardingStep()) {
+    onboarding.visible = false
+    saveOnboarding()
+    return
+  }
+  onboarding.visible = true
+  pendingOnboardingFocus = true
+  saveOnboarding()
+}
 const guideCard = () => {
   const step = onboarding.visible ? currentOnboardingStep() : null
   if (!step) return ''
   const position = Math.max(1, onboardingSteps.findIndex((entry) => entry.id === step.id) + 1)
-  return `<div class="onboarding-layer"><div class="onboarding-scrim onboarding-scrim-top" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-right" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-bottom" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-left" aria-hidden="true"></div><aside class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-live="polite"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p>${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="focus-onboarding-control">Mostrar dónde hacerlo</button><button type="button" class="text-action" data-action="next-onboarding-step">Siguiente</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside></div>`
+  return `<div class="onboarding-layer"><div class="onboarding-scrim onboarding-scrim-top" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-right" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-bottom" aria-hidden="true"></div><div class="onboarding-scrim onboarding-scrim-left" aria-hidden="true"></div><div class="onboarding-target-ring" aria-hidden="true"></div><aside class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-live="polite"><div class="onboarding-card-head"><span>Guía inicial · ${position}/${onboardingSteps.length}</span><button type="button" class="onboarding-close" data-action="dismiss-onboarding" aria-label="Omitir guía">×</button></div><h2 id="onboarding-title">${step.title}</h2><p>${step.text}</p><div class="onboarding-actions"><button type="button" class="primary-action" data-action="focus-onboarding-control">Mostrar dónde hacerlo</button><button type="button" class="text-action" data-action="next-onboarding-step">Siguiente</button><button type="button" class="text-action" data-action="dismiss-onboarding">Omitir por ahora</button></div></aside></div>`
 }
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
@@ -3255,6 +3269,10 @@ const render = () => {
   applyFieldGuidance()
   markBootComplete()
   bindEvents()
+  if (pendingOnboardingFocus) {
+    pendingOnboardingFocus = false
+    window.requestAnimationFrame(() => document.querySelector('[data-action="focus-onboarding-control"]')?.click())
+  }
   clearFeedbackSoon()
   flushScrollTop()
   flushPendingScrollTarget()
@@ -3864,7 +3882,7 @@ const handleSubmit = async (event) => {
   if (kind === 'product') {
     const result = await store.createProduct({ name: formData.get('name'), sku: formData.get('sku'), barcode: formData.get('barcode'), stock: formData.get('stock'), salePrice: formData.get('salePrice'), costPrice: formData.get('costPrice'), minStock: formData.get('minStock'), category: formData.get('category'), trackStock: formData.get('trackStock') === 'on' })
     feedbackMessage = result.message || ''
-    if (result.ok) completeOnboardingStep('product')
+    if (result.ok) { completeOnboardingStep('product'); resumeOnboardingAfterStep('product') }
     productFormOpen = false
   }
   if (kind === 'product-inline') {
@@ -4002,7 +4020,7 @@ const handleSubmit = async (event) => {
   if (kind === 'open-cash') {
     const result = await store.openCashSession({ registerId: formData.get('registerId'), openingAmount: formData.get('openingAmount') })
     feedbackMessage = result.message || ''
-    if (result.ok) completeOnboardingStep('cash')
+    if (result.ok) { completeOnboardingStep('cash'); resumeOnboardingAfterStep('cash') }
     cashFormOpen = false
   }
   if (kind === 'close-cash') {
@@ -4112,7 +4130,7 @@ const handleSubmit = async (event) => {
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
     feedbackMessage = result.message || ''
-    if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge') }
+    if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
@@ -4191,6 +4209,7 @@ const bindEvents = () => {
   const pauseOnboardingFor = (stepId, removeLayer = false) => {
     if (!onboarding.visible || currentOnboardingStep()?.id !== stepId) return false
     onboarding.visible = false
+    onboardingPausedFor = stepId
     saveOnboarding()
     if (removeLayer) document.querySelector('.onboarding-layer')?.remove()
     return true
@@ -4286,6 +4305,7 @@ const bindEvents = () => {
     saleDraftQuantities = { ...readCurrentSaleQuantities(), [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1 }
     saleQuickAddCode = ''
     completeOnboardingStep('cart')
+    resumeOnboardingAfterStep('cart')
     feedbackMessage = ''
     render()
   }
@@ -5011,6 +5031,7 @@ const bindEvents = () => {
       if (button.dataset.saleAction === 'receipt') {
         printReceipt(button.dataset.id)
         completeOnboardingStep('receipt')
+        resumeOnboardingAfterStep('receipt')
         feedbackMessage = 'Comprobante listo para imprimir.'
         render()
         return
@@ -5018,6 +5039,7 @@ const bindEvents = () => {
       if (button.dataset.saleAction === 'receipt-80') {
         printThermalReceipt(button.dataset.id, '80')
         completeOnboardingStep('receipt')
+        resumeOnboardingAfterStep('receipt')
         feedbackMessage = 'Ticket 80 mm listo para imprimir.'
         render()
         return
@@ -5025,6 +5047,7 @@ const bindEvents = () => {
       if (button.dataset.saleAction === 'receipt-58') {
         printThermalReceipt(button.dataset.id, '58')
         completeOnboardingStep('receipt')
+        resumeOnboardingAfterStep('receipt')
         feedbackMessage = 'Ticket 58 mm listo para imprimir.'
         render()
         return
@@ -5041,7 +5064,7 @@ const bindEvents = () => {
             ? store.cancelSale(button.dataset.id)
             : store.createReturnFromSale(button.dataset.id)
       feedbackMessage = result.message || ''
-      if (result.ok && button.dataset.saleAction === 'invoice') completeOnboardingStep('receipt')
+      if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
       render()
     })
   }
