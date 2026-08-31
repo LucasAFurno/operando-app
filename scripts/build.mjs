@@ -2879,7 +2879,7 @@ const renderMarketingPage = (page) => {
       const formatPublicMetric = function (value) {
         return new Intl.NumberFormat('es-AR').format(value);
       };
-      document.querySelectorAll('[data-counter-value]').forEach(function (counter) {
+      const animatedCounters = Array.from(document.querySelectorAll('[data-counter-value]')).map(function (counter) {
         const target = Number(counter.dataset.counterValue || 0);
         const prefix = counter.dataset.counterPrefix || '';
         const suffix = counter.dataset.counterSuffix || '';
@@ -2892,30 +2892,40 @@ const renderMarketingPage = (page) => {
         update(0);
         if (!target || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
           update(1);
-          return;
+          return null;
         }
+        return { update: update, target: target };
+      }).filter(Boolean);
+      const metricsGrid = document.querySelector('.marketing-live-metrics-grid');
+      if (metricsGrid && animatedCounters.length) {
         let isAnimating = false;
+        let hasCompleted = false;
         const observer = new IntersectionObserver(function (entries) {
           const isVisible = entries.some(function (entry) { return entry.isIntersecting; });
           if (!isVisible) {
             isAnimating = false;
-            update(0);
+            hasCompleted = false;
+            animatedCounters.forEach(function (counter) { counter.update(0); });
             return;
           }
-          if (isAnimating) return;
+          if (isAnimating || hasCompleted) return;
           isAnimating = true;
           const startedAt = performance.now();
           const duration = 1600;
           const tick = function (now) {
             const progress = Math.min(1, (now - startedAt) / duration);
-            update(1 - Math.pow(1 - progress, 3));
+            const easedProgress = 1 - Math.pow(1 - progress, 3);
+            animatedCounters.forEach(function (counter) { counter.update(easedProgress); });
             if (progress < 1) requestAnimationFrame(tick);
-            else isAnimating = false;
+            else {
+              isAnimating = false;
+              hasCompleted = true;
+            }
           };
           requestAnimationFrame(tick);
-        }, { threshold: 0.35 });
-        observer.observe(counter);
-      });
+        }, { threshold: 0.45, rootMargin: '0px 0px -35% 0px' });
+        observer.observe(metricsGrid);
+      }
       const vertical = document.querySelector('[data-vertical-rotation]');
       if (vertical && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         let verticals = [];
