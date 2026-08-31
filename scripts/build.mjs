@@ -696,7 +696,10 @@ const renderDownloads = (downloads = []) => downloads.length ? `
   </section>
 ` : ''
 
-const renderHomeExtras = (page) => page.slug ? '' : `
+const renderHomeExtras = (page) => {
+  if (page.slug) return ''
+  const publishedMetrics = (marketingMetrics.metrics || []).filter((metric) => Number(metric.value) > 0)
+  return `
   <section class="marketing-home-rows">
     ${homeFeatureRows.map((row) => `
       <article class="marketing-story ${row.reverse ? 'is-reverse' : ''}">
@@ -711,20 +714,15 @@ const renderHomeExtras = (page) => page.slug ? '' : `
       </article>
     `).join('')}
   </section>
-  <section class="marketing-live-metrics" aria-labelledby="live-metrics-title">
-    <div class="marketing-live-metrics-head">
-      <p class="marketing-metrics-status">PCLAF CONTROL · OPERACIÓN EN MARCHA</p>
-      <p>Ventas, stock, caja y equipo conectados</p>
-    </div>
-    <div class="marketing-live-metrics-grid">${(marketingMetrics.metrics || []).map((metric) => `
+  <section class="marketing-live-metrics" aria-labelledby="live-metrics-title">${publishedMetrics.length ? `
+    <div class="marketing-live-metrics-grid">${publishedMetrics.map((metric) => `
         <article>
-          <strong class="marketing-counter" data-counter-value="${Number(metric.value) || 0}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}">0</strong>
+          <strong class="marketing-counter" data-counter-value="${Number(metric.value)}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}">0</strong>
           <span>${escapeHtml(metric.label)}</span>
         </article>`).join('')}
-    </div>
-    <div class="marketing-vertical-rotation">
+    </div>` : ''}<div class="marketing-vertical-rotation">
       <p class="marketing-kicker">Diseñado para crecer con tu rubro</p>
-      <h2 id="live-metrics-title">Herramientas para comercios de <em data-vertical-rotation data-verticals="${escapeHtml(JSON.stringify(marketingMetrics.verticals || []))}">${escapeHtml(marketingMetrics.verticals?.[0] || 'tu rubro')}</em></h2>
+      <h2 id="live-metrics-title">Herramientas para comercios de <em class="marketing-vertical-carousel" style="--vertical-count:${Math.max(1, marketingMetrics.verticals?.length || 0)}">${(marketingMetrics.verticals || ['tu rubro']).map((vertical, index) => `<span style="--vertical-index:${index}">${escapeHtml(vertical)}</span>`).join('')}</em></h2>
       <p>Una misma plataforma para vender, controlar y organizar la operación de todos los días.</p>
     </div>
   </section>
@@ -740,7 +738,7 @@ const renderHomeExtras = (page) => page.slug ? '' : `
       </ol>
     </div>
     <div class="marketing-support-phone" aria-label="Ejemplo ilustrativo de una conversación de soporte">
-      <div class="marketing-phone-head"><span class="marketing-phone-dot"></span><div><strong>Soporte PCLAF</strong><small>Ejemplo de conversación</small></div></div>
+      <div class="marketing-phone-head"><img class="marketing-phone-logo" src="/pclaf-logo.png" alt="" width="36" height="36" /><div><strong>Soporte PCLAF</strong><small>En línea</small></div><span class="marketing-phone-actions" aria-hidden="true">⌕　⋮</span></div>
       <div class="marketing-phone-chat">
         <p class="marketing-chat-day">HOY</p>
         <p class="marketing-message is-client">Hola! Tengo un desajuste con el stock 😅<small>21:52</small></p>
@@ -790,6 +788,7 @@ const renderHomeExtras = (page) => page.slug ? '' : `
     </div>
   </section>
 `
+}
 
 const renderHeroStats = (stats = []) => stats.length ? `
   <div class="marketing-hero-stats">
@@ -1543,7 +1542,7 @@ const marketingStyles = `
       }
       .marketing-live-metrics {
         margin-inline: calc((100vw - min(1320px, calc(100vw - 48px))) / -2);
-        padding: clamp(54px, 7vw, 90px) max(24px, calc((100vw - min(1320px, calc(100vw - 48px))) / 2));
+        padding: clamp(72px, 10vw, 132px) max(24px, calc((100vw - min(1320px, calc(100vw - 48px))) / 2));
         background: #181818;
         color: #f7f4ee;
       }
@@ -1601,13 +1600,24 @@ const marketingStyles = `
         line-height: 0.98;
       }
       .marketing-vertical-rotation em {
+        position: relative;
         display: inline-block;
+        min-width: 8ch;
+        height: 1.05em;
         color: #ff5e55;
         font-family: Georgia, 'Times New Roman', serif;
         font-weight: 400;
         letter-spacing: -0.06em;
+        vertical-align: bottom;
       }
-      .marketing-vertical-rotation em.is-changing { animation: vertical-word-change 380ms ease both; }
+      .marketing-vertical-carousel span {
+        position: absolute;
+        right: 0;
+        left: 0;
+        opacity: 0;
+        animation: vertical-word-cycle calc(var(--vertical-count) * 2.15s) infinite ease-in-out;
+        animation-delay: calc(var(--vertical-index) * -2.15s);
+      }
       .marketing-vertical-rotation > p:last-child {
         max-width: 64ch;
         margin: 0 auto;
@@ -1615,9 +1625,10 @@ const marketingStyles = `
         font-size: 1.03rem;
         line-height: 1.7;
       }
-      @keyframes vertical-word-change {
-        0% { opacity: 0; transform: translateY(8px); }
-        100% { opacity: 1; transform: translateY(0); }
+      @keyframes vertical-word-cycle {
+        0%, 14% { opacity: 1; transform: translateY(0); }
+        20%, 94% { opacity: 0; transform: translateY(-12px); }
+        100% { opacity: 0; transform: translateY(10px); }
       }
       .marketing-support {
         display: grid;
@@ -1684,31 +1695,34 @@ const marketingStyles = `
         align-items: center;
         gap: 10px;
         padding: 16px;
-        background: #292622;
+        background: #075e54;
         color: #fff;
       }
-      .marketing-phone-dot {
-        width: 32px;
-        height: 32px;
+      .marketing-phone-logo {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 auto;
         border-radius: 50%;
-        background: radial-gradient(circle at 35% 35%, #ff8b84 0 16%, #e52329 18% 53%, #9e1116 55%);
+        background: #fff;
+        object-fit: contain;
       }
       .marketing-phone-head strong,
       .marketing-phone-head small { display: block; }
       .marketing-phone-head strong { font-size: 0.92rem; }
-      .marketing-phone-head small { margin-top: 2px; color: #ffaaa5; font-size: 0.74rem; }
+      .marketing-phone-head small { margin-top: 2px; color: #d6f4ea; font-size: 0.74rem; }
+      .marketing-phone-actions { margin-left: auto; color: #e7f5f0; font-size: 1.05rem; letter-spacing: 0.08em; }
       .marketing-phone-chat {
         display: grid;
         gap: 10px;
         height: 390px;
         padding: 15px 12px 22px;
         overflow-y: auto;
-        scrollbar-color: #6d6258 transparent;
-        background: linear-gradient(180deg, #201e1b, #171615);
+        scrollbar-color: #49635d transparent;
+        background: #0b141a;
       }
       .marketing-chat-day {
         margin: 0;
-        color: #bcb5ab;
+        color: #8fa6a0;
         font-size: 0.7rem;
         font-weight: 800;
         letter-spacing: 0.1em;
@@ -1723,8 +1737,8 @@ const marketingStyles = `
         font-size: 0.85rem;
         line-height: 1.38;
       }
-      .marketing-message.is-client { justify-self: end; border-top-right-radius: 3px; background: #c82027; }
-      .marketing-message.is-support { justify-self: start; border-top-left-radius: 3px; background: #3b3732; }
+      .marketing-message.is-client { justify-self: end; border-top-right-radius: 3px; background: #005c4b; }
+      .marketing-message.is-support { justify-self: start; border-top-left-radius: 3px; background: #202c33; }
       .marketing-message small { display: block; margin-top: 5px; color: rgba(255,255,255,0.62); font-size: 0.64rem; text-align: right; }
       .marketing-phone-input {
         display: flex;
@@ -1732,8 +1746,8 @@ const marketingStyles = `
         justify-content: space-between;
         gap: 10px;
         padding: 12px;
-        background: #292622;
-        color: #bcb5ab;
+        background: #202c33;
+        color: #aebfba;
         font-size: 0.8rem;
       }
       .marketing-phone-input span { padding-left: 8px; }
@@ -2161,10 +2175,12 @@ const marketingStyles = `
       @media (prefers-reduced-motion: reduce) {
         .marketing-control-story,
         .marketing-control-image-frame img,
-        .marketing-vertical-rotation em {
+        .marketing-vertical-rotation em,
+        .marketing-vertical-carousel span {
           animation: none;
           transition: none;
         }
+        .marketing-vertical-carousel span:not(:first-child) { display: none; }
       }
       /* Home palette: warm charcoal supplied for PCLAF, with its red accent. */
       html:has(body[data-page="home"]),

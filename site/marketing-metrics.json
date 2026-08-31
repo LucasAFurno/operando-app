@@ -1,9 +1,7 @@
 {
   "metrics": [
-    { "value": 0, "prefix": "+", "suffix": "", "label": "comercios" },
-    { "value": 0, "prefix": "+", "suffix": "", "label": "operaciones" },
-    { "value": 0, "prefix": "$", "suffix": "", "label": "ARS procesados" },
-    { "value": 0, "prefix": "", "suffix": " min", "label": "para empezar" }
+    { "value": 11, "prefix": "+", "suffix": "", "label": "comercios registrados" },
+    { "value": 24, "prefix": "", "suffix": "/7", "label": "soporte disponible" }
   ],
   "verticals": ["repuestos", "kioscos", "accesorios", "indumentaria", "servicio técnico"]
 }

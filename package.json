@@ -11,6 +11,7 @@
     "build": "node scripts/build.mjs prod",
     "build:prod": "node scripts/build.mjs prod",
     "build:dev": "node scripts/build.mjs dev",
+    "sync:marketing-metrics": "node scripts/sync-marketing-metrics.mjs",
     "preview": "vite preview",
     "test": "node --test",
     "test:notifications": "node fiscal-server/scripts/notify-discord.mjs",
