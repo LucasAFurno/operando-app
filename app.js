@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=97ec6950a048'
-import { createCloudAuthManager } from './cloud-auth.js?v=97ec6950a048'
+import { createBrowserDataStore } from './data-store.js?v=eb6820dba8ca'
+import { createCloudAuthManager } from './cloud-auth.js?v=eb6820dba8ca'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'PCLAF Control'
-const appVersion = 'v97ec6950a048'
+const appVersion = 'veb6820dba8ca'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20soporte%20de%20PCLAF%20Control.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20PCLAF%20Control.'
 const publicSiteUrl = 'https://www.pclafcontrol.com.ar'
@@ -182,11 +182,10 @@ const pageSizeOptions = [10, 20, 50, 100, 1000]
 
 const onboardingSteps = [
   { id: 'product', section: 'productos', selector: '[data-action="open-product-form"]', title: 'Cargá un producto', text: 'Usá “Agregar producto” para dar de alta el primer artículo.' },
-  { id: 'category', section: 'productos', selector: '[data-guide-category]', title: 'Definí la categoría', text: 'Esta categoría ordena tu catálogo y acelera las búsquedas.' },
-  { id: 'cash', section: 'caja', selector: '[data-cash-operation]', title: 'Abrí la caja', text: 'Abrí una caja antes de cobrar en efectivo. Transferencias y cuenta no la requieren.' },
-  { id: 'cart', section: 'ventas', selector: 'input[name="quickAddCode"]', title: 'Buscá o escaneá', text: 'Escribí, elegí de la lista o escaneá el artículo para sumarlo al carrito.' },
+  { id: 'cash', section: 'caja', selector: '[data-action="open-cash-form"]', title: 'Abrí la caja', text: 'Usá “Abrir caja” antes de cobrar en efectivo. Transferencias y cuenta no la requieren.' },
+  { id: 'cart', section: 'ventas', selector: '.scanner-row', title: 'Buscá o escaneá', text: 'Escribí o escaneá el artículo y tocá “Agregar” para sumarlo al carrito.' },
   { id: 'charge', section: 'ventas', selector: '.pos-charge-button', title: 'Confirmá el cobro', text: 'Revisá el medio de pago y cobrá una sola vez. El botón se desactiva mientras se procesa.' },
-  { id: 'receipt', section: 'ventas', selector: '[data-sale-action="invoice"]', title: 'Emití el comprobante', text: 'Desde el historial podés generar el comprobante de una venta ya registrada.' },
+  { id: 'receipt', section: 'ventas', selector: 'details.row-more-menu--sales > summary', title: 'Emití el comprobante', text: 'Abrí las acciones de una venta y elegí “Factura” o uno de los tickets.' },
 ]
 
 const getOnboardingStorageKey = () => `${onboardingStorageKey}:${commerceContext?.commerce_id || authInstanceKey || 'local'}:${store?.getSnapshot?.().meta?.currentUserId || 'user'}`
@@ -3865,7 +3864,7 @@ const handleSubmit = async (event) => {
   if (kind === 'product') {
     const result = await store.createProduct({ name: formData.get('name'), sku: formData.get('sku'), barcode: formData.get('barcode'), stock: formData.get('stock'), salePrice: formData.get('salePrice'), costPrice: formData.get('costPrice'), minStock: formData.get('minStock'), category: formData.get('category'), trackStock: formData.get('trackStock') === 'on' })
     feedbackMessage = result.message || ''
-    if (result.ok) { completeOnboardingStep('product'); completeOnboardingStep('category') }
+    if (result.ok) completeOnboardingStep('product')
     productFormOpen = false
   }
   if (kind === 'product-inline') {
@@ -4161,10 +4160,6 @@ const bindEvents = () => {
     const step = currentOnboardingStep()
     if (!step) return
     activeSection = step.section
-    // El primer paso debe señalar el botón que abre el formulario; si lo abrimos antes,
-    // el control objetivo desaparece y la guía no tiene nada que resaltar.
-    if (step.id === 'category') productFormOpen = true
-    if (step.id === 'cash') cashFormOpen = true
     onboarding.visible = true
     requestScrollTop()
     render()
@@ -4192,6 +4187,19 @@ const bindEvents = () => {
         layer.style.setProperty('--onboarding-target-height', `${Math.max(0, rect.height + padding * 2)}px`)
       })
     })
+  }
+  const pauseOnboardingFor = (stepId, removeLayer = false) => {
+    if (!onboarding.visible || currentOnboardingStep()?.id !== stepId) return false
+    onboarding.visible = false
+    saveOnboarding()
+    if (removeLayer) document.querySelector('.onboarding-layer')?.remove()
+    return true
+  }
+  for (const form of document.querySelectorAll('form[data-form="sale"]')) {
+    form.addEventListener('submit', () => pauseOnboardingFor('charge'))
+  }
+  for (const summary of document.querySelectorAll('details.row-more-menu--sales > summary')) {
+    summary.addEventListener('click', () => pauseOnboardingFor('receipt', true))
   }
   for (const button of document.querySelectorAll('[data-action="resume-onboarding"]')) button.addEventListener('click', () => {
     onboarding.step = onboardingSteps.findIndex((step) => !onboarding.completed.includes(step.id))
@@ -4264,6 +4272,7 @@ const bindEvents = () => {
   if (saleDiscountMode) saleDiscountMode.addEventListener('change', updateSaleTotals)
   const quickAddInput = document.querySelector('input[name="quickAddCode"]')
   const runQuickAdd = () => {
+    pauseOnboardingFor('cart')
     const currentCode = String(quickAddInput?.value || '').trim()
     const normalizedCode = currentCode.toLowerCase()
     const scopedMatches = getUiState().scopedProducts.filter((item) => [item.name, item.sku, item.barcode]
@@ -4734,6 +4743,7 @@ const bindEvents = () => {
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-cash-form"]')) button.addEventListener('click', () => {
+    pauseOnboardingFor('cash')
     cashFormOpen = true
     render()
   })
@@ -4742,13 +4752,9 @@ const bindEvents = () => {
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-product-form"]')) button.addEventListener('click', () => {
-    const isGuidedProductAction = onboarding.visible && currentOnboardingStep()?.id === 'product'
+    pauseOnboardingFor('product')
     closeProductUtilityForms()
     productFormOpen = true
-    if (isGuidedProductAction) {
-      onboarding.visible = false
-      saveOnboarding()
-    }
     queueScrollToSelector('form[data-form="product"]')
     render()
   })
