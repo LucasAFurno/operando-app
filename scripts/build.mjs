@@ -539,12 +539,10 @@ const marketingPages = [
     seoTitle: 'Sistema de ventas y stock | PCLAF Control',
     description: 'Sistema de ventas, caja y stock para comercios con sucursales, permisos y trazabilidad operativa. Probá PCLAF Control desde PC o celular.',
     kicker: 'Sistema comercial web',
-    h1: 'Más control para tu negocio, sin perder velocidad en el mostrador',
-    lead: 'Vendé, cobrá y seguí cada movimiento desde una sola plataforma. PCLAF Control conecta sucursales, cajas, stock, compras y permisos sin sumar vueltas a la operación.',
-    primaryCta: { href: `${appPath}?view=signup`, label: 'Probar gratis' },
-    secondaryCta: { href: `${appPath}?view=login`, label: 'Iniciar sesion' },
     h1: 'Vendé rápido. Controlá caja, stock y equipo.',
     lead: 'Caja, stock, compras, sucursales y permisos en una sola plataforma para operar con claridad.',
+    primaryCta: { href: `${appPath}?view=signup`, label: 'Probar gratis' },
+    secondaryCta: { href: supportUrl, label: 'Hablar por WhatsApp' },
     whatsAppPrompt: 'Hola PCLAF, quiero probar PCLAF Control en mi comercio.',
     image: '/pclaf-control-punto-venta-real.png',
     imageAlt: 'Pantalla de ventas de PCLAF Control en una computadora',
@@ -736,10 +734,10 @@ const marketingPages = [
     imageAlt: 'PCLAF Control funcionando en computadora, tablet y celular',
     whatsAppPrompt: 'Hola PCLAF, quiero que me expliquen como empezar a usar PCLAF Control.',
     sections: [
-      { title: '1. Crea tu cuenta', body: 'Registra tu comercio y entra desde el navegador, sin una instalacion tecnica para empezar.', href: '/app/?view=signup', linkLabel: 'Crear cuenta' },
-      { title: '2. Carga tu catalogo', body: 'Agrega productos de forma manual o pedi una carga asistida si ya trabajas con una planilla.', href: '/control-de-stock/', linkLabel: 'Ver control de stock' },
-      { title: '3. Registra ventas y cobros', body: 'Opera desde el mostrador y relaciona ventas, medios de pago, clientes y comprobantes.', href: '/sistema-de-ventas/', linkLabel: 'Ver sistema de ventas' },
-      { title: '4. Controla caja y seguimiento', body: 'Consulta movimientos, cierres, existencias y reportes desde una misma base comercial.', href: '/sistema-de-caja/', linkLabel: 'Ver sistema de caja' },
+      { title: '1. Crea tu cuenta', body: 'Registra tu comercio y entra desde el navegador, sin una instalacion tecnica para empezar. Creamos Casa central y Caja 1 para que no arranques con una pantalla vacía.', href: '/app/?view=signup', linkLabel: 'Crear cuenta' },
+      { title: '2. Carga tu catalogo', body: 'Agrega productos de forma manual o pedí una carga asistida si ya trabajas con una planilla. El equipo de soporte puede acompañarte 24/7.', href: '/control-de-stock/', linkLabel: 'Ver control de stock' },
+      { title: '3. Registra ventas y cobros', body: 'Opera desde el mostrador y relaciona ventas, medios de pago, clientes y comprobantes. La guía inicial te muestra cada paso dentro del sistema.', href: '/sistema-de-ventas/', linkLabel: 'Ver sistema de ventas' },
+      { title: '4. Controla caja y seguimiento', body: 'Consulta movimientos, cierres, existencias y reportes desde una misma base comercial; después suma sucursales, cajas y usuarios cuando tu operación lo necesite.', href: '/sistema-de-caja/', linkLabel: 'Ver sistema de caja' },
     ],
     featureList: ['Sin instalar', 'Acceso web', 'Carga asistida', 'Modulos escalables'],
   },
@@ -844,7 +842,7 @@ const marketingPages = [
       ['Puedo usar lector de codigos?', 'Si. El sistema acepta lectores USB tipo teclado y busqueda manual.'],
       ['Permite varias cajas?', 'Si. Puedes ligar ventas y caja a una caja especifica y separar reportes por puesto de cobro.'],
       ['Como cargo una planilla de productos?', 'Habla con soporte y envianos el archivo. Revisamos sus columnas y hacemos una carga controlada para evitar duplicados o datos mal interpretados.'],
-      ['Que incluye la prueba gratis?', 'Acceso inicial para conocer ventas, caja, stock y flujo del sistema antes de definir el pack ideal.'],
+      ['Que incluye la prueba gratis?', 'Acceso inicial para conocer ventas, caja, stock y el flujo completo del sistema antes de definir el pack ideal. Al crear la cuenta dejamos configurados tu comercio, Casa central y Caja 1; la guía inicial y el soporte por WhatsApp 24/7 te acompañan para cargar productos y empezar a operar.'],
     ],
     featureList: ['FAQ', 'Prueba gratis', 'Soporte', 'Carga asistida', 'Caja'],
   },
@@ -1136,8 +1134,8 @@ const renderHomeExtras = (page) => {
     </div>` : ''}<div class="marketing-vertical-rotation">
       <p class="marketing-kicker">Diseñado para crecer con tu rubro</p>
       <h2 id="live-metrics-title">Herramientas para comercios de <em>todos los rubros</em></h2>
-      <ul class="marketing-vertical-list" aria-label="Rubros incluidos">${(marketingMetrics.verticals || ['tu rubro']).map((vertical) => `<li>${escapeHtml(vertical)}</li>`).join('')}</ul>
-      <p>Una misma plataforma para vender, controlar y organizar la operación de todos los días.</p>
+      <ul class="marketing-vertical-list" aria-label="Rubros incluidos">${[...(marketingMetrics.verticals || []), 'tu rubro'].map((vertical) => `<li>${escapeHtml(vertical)}</li>`).join('')}</ul>
+      <p>Los rubros son ejemplos: PCLAF Control se adapta a la operación de cualquier comercio que necesite vender, cobrar, controlar stock y trabajar con su equipo.</p>
     </div>
   </section>
   <section class="marketing-support" aria-labelledby="support-title">

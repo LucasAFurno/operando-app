@@ -1259,6 +1259,10 @@ const standaloneAuthView = (ui) => `
             <input type="hidden" name="branchCode" value="CASA" />
             <input type="hidden" name="registerName" value="Caja 1" />
             <input type="hidden" name="registerCode" value="CAJA-01" />
+            <div class="login-inline-note">
+              <strong>Tu operación queda lista para empezar</strong>
+              <span>Al crear la cuenta configuramos tu comercio, tu usuario administrador, Casa central y Caja 1. Después podés editarlos, sumar sucursales y pedir acompañamiento por WhatsApp 24/7.</span>
+            </div>
             ${signupMessage ? `<p class="login-error" role="alert">${signupMessage}</p>` : ''}
             <button type="submit">Crear cuenta y empezar</button>
           </form>
@@ -1573,8 +1577,8 @@ const loginViewV2 = (ui) => `
             <input type="hidden" name="registerName" value="Caja 1" />
             <input type="hidden" name="registerCode" value="CAJA-01" />
             <div class="login-inline-note">
-              <strong>Alta automatica</strong>
-              <span>Se crea tu comercio, tu usuario administrador y la primera caja para arrancar sin pasos tecnicos.</span>
+              <strong>Tu operación queda lista para empezar</strong>
+              <span>Al crear la cuenta configuramos tu comercio, tu usuario administrador, Casa central y Caja 1. Después podés editarlos, sumar sucursales y pedir acompañamiento por WhatsApp 24/7.</span>
             </div>
             ${signupMessage ? `<p class="login-error">${signupMessage}</p>` : ''}
             <button type="submit">Crear cuenta y empezar</button>
