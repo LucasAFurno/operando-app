@@ -5062,7 +5062,7 @@ input[type='search'] { color: var(--text); }
 }
 
 .onboarding-layer { position: fixed; inset: 0; z-index: 9000; pointer-events: none; }
-.onboarding-scrim { position: absolute; inset: 0; background: rgba(2, 5, 11, .72); backdrop-filter: blur(2px); pointer-events: auto; }
+.onboarding-scrim { position: absolute; inset: 0; background: rgba(2, 5, 11, .24); pointer-events: none; }
 .onboarding-card {
   position: fixed;
   z-index: 2;
@@ -5112,6 +5112,7 @@ input[type='search'] { color: var(--text); }
 .is-onboarding-target {
   position: relative;
   z-index: 9001;
+  background: var(--panel) !important;
   outline: 3px solid color-mix(in srgb, var(--accent) 72%, transparent) !important;
   outline-offset: 4px;
   border-radius: 8px;
