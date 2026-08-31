@@ -1125,7 +1125,8 @@ const renderHomeExtras = (page) => {
         </article>`).join('')}
     </div>` : ''}<div class="marketing-vertical-rotation">
       <p class="marketing-kicker">Diseñado para crecer con tu rubro</p>
-      <h2 id="live-metrics-title">Herramientas para comercios de <em class="marketing-vertical-carousel" style="--vertical-count:${Math.max(1, marketingMetrics.verticals?.length || 0)}">${(marketingMetrics.verticals || ['tu rubro']).map((vertical, index) => `<span style="--vertical-index:${index}">${escapeHtml(vertical)}</span>`).join('')}</em></h2>
+      <h2 id="live-metrics-title">Herramientas para comercios de <em>todos los rubros</em></h2>
+      <ul class="marketing-vertical-list" aria-label="Rubros incluidos">${(marketingMetrics.verticals || ['tu rubro']).map((vertical) => `<li>${escapeHtml(vertical)}</li>`).join('')}</ul>
       <p>Una misma plataforma para vender, controlar y organizar la operación de todos los días.</p>
     </div>
   </section>
@@ -2075,7 +2076,7 @@ const marketingStyles = `
       .marketing-vertical-rotation em {
         position: relative;
         display: inline-block;
-        min-width: 8ch;
+        min-width: 0;
         height: 1.05em;
         color: #ff5e55;
         font-family: Georgia, 'Times New Roman', serif;
@@ -2710,6 +2711,24 @@ const marketingStyles = `
       body .marketing-control-image-frame {
         background: #292622;
       }
+      .marketing-vertical-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        max-width: 760px;
+        margin: 0 auto 24px;
+        padding: 0;
+        list-style: none;
+      }
+      .marketing-vertical-list li {
+        padding: 7px 11px;
+        border: 1px solid #5c5750;
+        border-radius: 999px;
+        color: #f7f4ee;
+        font-size: 0.88rem;
+        line-height: 1.2;
+      }
       body .marketing-grid .marketing-card,
       body .marketing-faq,
       body .marketing-compare-copy,
@@ -2875,17 +2894,25 @@ const renderMarketingPage = (page) => {
           update(1);
           return;
         }
+        let isAnimating = false;
         const observer = new IntersectionObserver(function (entries) {
-          if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+          const isVisible = entries.some(function (entry) { return entry.isIntersecting; });
+          if (!isVisible) {
+            isAnimating = false;
+            update(0);
+            return;
+          }
+          if (isAnimating) return;
+          isAnimating = true;
           const startedAt = performance.now();
-          const duration = 1100;
+          const duration = 1600;
           const tick = function (now) {
             const progress = Math.min(1, (now - startedAt) / duration);
             update(1 - Math.pow(1 - progress, 3));
             if (progress < 1) requestAnimationFrame(tick);
+            else isAnimating = false;
           };
           requestAnimationFrame(tick);
-          observer.disconnect();
         }, { threshold: 0.35 });
         observer.observe(counter);
       });
