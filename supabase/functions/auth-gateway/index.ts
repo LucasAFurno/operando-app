@@ -1,4 +1,9 @@
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers } })
+const escapeHtml = (value: string) => String(value).replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] || character))
+const recoveryEmailHtml = (actionUrl: string) => {
+  const safeUrl = escapeHtml(actionUrl)
+  return `<!doctype html><html lang="es"><body style="margin:0;padding:0;background:#090a0b;font-family:Arial,Helvetica,sans-serif;color:#f8fafc"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#090a0b"><tr><td align="center" style="padding:40px 16px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#17191d;border:1px solid #30343a;border-radius:24px;overflow:hidden"><tr><td style="padding:34px 34px 18px"><table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="padding-right:12px"><img src="https://operando.app/operando-logo.png" width="42" height="42" alt="Operando" style="display:block;border-radius:50%;background:#050505" /></td><td><strong style="font-size:20px;line-height:24px;color:#f8fafc">Operando</strong><br /><span style="font-size:13px;line-height:18px;color:#aeb5c0">Gestión comercial online</span></td></tr></table></td></tr><tr><td style="padding:16px 34px 38px"><p style="margin:0 0 12px;color:#ff4b55;font-size:12px;font-weight:bold;letter-spacing:1.6px">RECUPERAR ACCESO</p><h1 style="margin:0 0 16px;font-size:32px;line-height:38px;color:#ffffff">Creá una nueva clave</h1><p style="margin:0 0 28px;font-size:16px;line-height:25px;color:#d2d7df">Recibimos una solicitud para recuperar el acceso a tu cuenta. Usá el botón para elegir una clave nueva y volver a entrar a Operando.</p><a href="${safeUrl}" style="display:inline-block;background:#ff3340;border-radius:12px;color:#ffffff;font-size:16px;font-weight:bold;line-height:20px;padding:15px 22px;text-decoration:none">Crear nueva clave</a><p style="margin:28px 0 0;font-size:14px;line-height:22px;color:#aeb5c0">Este enlace vence pronto y sólo puede usarse una vez. Si no pediste recuperar el acceso, podés ignorar este correo.</p></td></tr><tr><td style="padding:20px 34px;border-top:1px solid #30343a;font-size:12px;line-height:18px;color:#88909c">Operando · operando.app</td></tr></table></td></tr></table></body></html>`
+}
 const configuredOrigins = () => (Deno.env.get('AUTH_ALLOWED_ORIGINS') || 'https://operando.app')
   .split(',').map((value) => value.trim().replace(/\/$/, '')).filter(Boolean)
 const requestOrigin = (request: Request) => String(request.headers.get('origin') || '').trim().replace(/\/$/, '')
@@ -62,7 +67,19 @@ Deno.serve(async (request) => {
       const email = String(body.email || '').trim().toLowerCase()
       const redirectTo = allowedRedirect(body.redirectTo)
       if (!redirectTo) return json({ error: 'invalid_redirect' }, 422, headers)
-      if (email) await fetch(`${supabaseUrl}/auth/v1/otp`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify({ email, create_user: false, options: { email_redirect_to: redirectTo } }) })
+      if (email) {
+        const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
+        if (resendApiKey) {
+          const linkResponse = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify({ type: 'recovery', email, redirect_to: redirectTo }) })
+          const linkPayload = await linkResponse.json()
+          const actionUrl = String(linkPayload?.action_link || '')
+          if (!linkResponse.ok || !actionUrl) throw new Error('recovery_link_unavailable')
+          const emailResponse = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${resendApiKey}`, 'content-type': 'application/json' }, body: JSON.stringify({ from: Deno.env.get('SECURITY_EMAIL_FROM') || 'Operando <notificaciones@operando.app>', to: [email], subject: 'Recuperá tu acceso a Operando', html: recoveryEmailHtml(actionUrl), text: `Recuperá tu acceso a Operando: ${actionUrl}\n\nEste enlace vence pronto y sólo puede usarse una vez.` }) })
+          if (!emailResponse.ok) throw new Error('recovery_email_unavailable')
+        } else {
+          await fetch(`${supabaseUrl}/auth/v1/otp`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify({ email, create_user: false, options: { email_redirect_to: redirectTo } }) })
+        }
+      }
       return json({ ok: true, message: 'Si existe una cuenta con ese correo, te enviamos un enlace para recuperar el acceso.' }, 200, headers)
     }
     const deviceHash = await digest(String(body.deviceId || 'unknown-device'))
