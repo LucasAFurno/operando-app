@@ -1147,7 +1147,7 @@ const renderHomeExtras = (page) => {
   <section class="marketing-live-metrics" aria-labelledby="live-metrics-title">${publishedMetrics.length ? `
     <div class="marketing-live-metrics-grid">${publishedMetrics.map((metric) => `
         <article>
-          <strong class="marketing-counter" data-counter-value="${Number(metric.value)}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}" data-counter-format="${escapeHtml(metric.format || 'integer')}">0</strong>
+          <strong class="marketing-counter" data-counter-value="${Number(metric.value)}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}" data-counter-format="${escapeHtml(metric.format || 'integer')}">${escapeHtml(metric.prefix || '')}${metric.format === 'millions' ? Math.round(Number(metric.value) / 1000000).toLocaleString('es-AR') : Number(metric.value).toLocaleString('es-AR')}${escapeHtml(metric.suffix || '')}</strong>
           <span>${escapeHtml(metric.label)}</span>
         </article>`).join('')}
     </div>` : ''}<div class="marketing-vertical-rotation">
