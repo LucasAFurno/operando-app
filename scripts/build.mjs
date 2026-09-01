@@ -18,7 +18,9 @@ const signupPath = '/crear-cuenta/'
 const recoveryPath = '/recuperar-clave/'
 const resetPasswordPath = '/restablecer-clave/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20quiero%20informacion%20de%20operando.app.'
-const gaMeasurementId = String(process.env.OPERANDO_GA4_ID || '').trim()
+const gtmContainerId = String(process.env.OPERANDO_GTM_ID || '').trim()
+const gtmHeadSnippet = gtmContainerId ? `<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',${JSON.stringify(gtmContainerId)});</script>` : ''
+const gtmBodySnippet = gtmContainerId ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${encodeURIComponent(gtmContainerId)}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>` : ''
 
 const clientJs = await readFile(path.join(root, 'site', 'client.js'), 'utf8')
 const dataStoreJs = await readFile(path.join(root, 'site', 'data-store.js'), 'utf8')
@@ -3016,14 +3018,7 @@ const renderMarketingPage = (page) => {
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <title>${escapeHtml(page.seoTitle)}</title>
     <style>${marketingStyles}</style>
-    ${gaMeasurementId ? `
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '${gaMeasurementId}');
-    </script>` : ''}
+    ${gtmHeadSnippet}
     <script type="application/ld+json">${structuredData}</script>
     <script type="application/ld+json">${organizationData}</script>
     ${faqData ? `<script type="application/ld+json">${JSON.stringify(faqData)}</script>` : ''}
@@ -3031,6 +3026,7 @@ const renderMarketingPage = (page) => {
     ${articleData ? `<script type="application/ld+json">${JSON.stringify(articleData)}</script>` : ''}
   </head>
   <body data-page="${page.slug ? escapeHtml(page.slug) : 'home'}">
+    ${gtmBodySnippet}
     <div class="marketing-shell">
       ${renderTopbar(page)}
       <main>
@@ -3083,8 +3079,9 @@ const renderMarketingPage = (page) => {
             data.get('cajas') ? 'Cajas: ' + data.get('cajas') : ''
           ].filter(Boolean);
           const href = 'https://wa.me/5491135708345?text=' + encodeURIComponent(parts.join('\\n'));
-          if (typeof window.gtag === 'function') {
-            window.gtag('event', 'generate_lead', {
+          if (Array.isArray(window.dataLayer)) {
+            window.dataLayer.push({
+              event: 'generate_lead',
               page_title: document.title,
               page_location: window.location.href
             });
@@ -3094,8 +3091,9 @@ const renderMarketingPage = (page) => {
       }
       document.querySelectorAll('[data-analytics]').forEach(function (element) {
         element.addEventListener('click', function () {
-          if (typeof window.gtag === 'function') {
-            window.gtag('event', element.getAttribute('data-analytics'), {
+          if (Array.isArray(window.dataLayer)) {
+            window.dataLayer.push({
+              event: element.getAttribute('data-analytics'),
               page_title: document.title,
               page_location: window.location.href
             });
@@ -3182,11 +3180,12 @@ const appHtml = (entry = 'panel') => `<!doctype html>
     <meta name="robots" content="noindex,nofollow" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co https://www.google-analytics.com; frame-src https://challenges.cloudflare.com https://www.google.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
     <link rel="canonical" href="${siteOrigin}${entry === 'login' ? loginPath : entry === 'signup' ? signupPath : entry === 'recovery' ? recoveryPath : entry === 'reset' ? resetPasswordPath : panelPath}" />
     <link rel="icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="stylesheet" href="/app.css?v=${assetVersion}" />
+    ${gtmHeadSnippet}
     <title>${entry === 'panel' || entry === 'legacy' ? 'Panel | Operando' : entry === 'reset' ? 'Restablecer clave | Operando' : entry === 'recovery' ? 'Recuperar clave | Operando' : entry === 'signup' ? 'Crear cuenta | Operando' : 'Ingresar | Operando'}</title>
     <style>
       html, body {
@@ -3239,6 +3238,7 @@ const appHtml = (entry = 'panel') => `<!doctype html>
     </style>
   </head>
   <body data-booting="true">
+    ${gtmBodySnippet}
     <div id="app"></div>
     <div id="boot-status">
       <div class="boot-card">
