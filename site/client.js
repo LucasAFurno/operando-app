@@ -487,6 +487,12 @@ const operandoEntry = String(window.__operandoEntry || '').trim().toLowerCase()
 const isPanelRoute = () => /^\/(?:panel|app)(?:\/|$)/i.test(window.location.pathname || '')
 const isStandaloneAppRoute = isPanelRoute
 const isAuthRoute = () => /^\/(?:ingresar|crear-cuenta|recuperar-clave|restablecer-clave)(?:\/|$)/i.test(window.location.pathname || '')
+const authModeFromPath = () => ({
+  ingresar: 'login',
+  'crear-cuenta': 'signup',
+  'recuperar-clave': 'recovery',
+  'restablecer-clave': 'reset',
+})[String(window.location.pathname || '').replace(/^\/+|\/+$/g, '').split('/')[0].toLowerCase()] || ''
 const appSectionPaths = { dashboard: '', clientes: 'clientes', ventas: 'ventas', caja: 'caja', productos: 'catalogo', compras: 'compras', facturacion: 'facturacion', tickets: 'servicios', reportes: 'informes', auditoria: 'actividad', ajustes: 'configuracion', 'mi-admin': 'consola', sucursales: 'sucursales', cajeros: 'cajeros' }
 const legacySectionPaths = { 'caja-diaria': 'caja', productos: 'productos', tickets: 'tickets', reportes: 'reportes', auditoria: 'auditoria', ajustes: 'ajustes', 'mi-admin': 'mi-admin' }
 const sectionFromPath = () => {
@@ -504,6 +510,12 @@ const canonicalizeLegacyPanelRoute = () => {
   const section = legacySectionPaths[legacySection] || Object.entries(appSectionPaths).find(([, path]) => path === legacySection)?.[0] || 'dashboard'
   const target = appSectionPaths[section] ? `/panel/${appSectionPaths[section]}/` : '/panel/'
   window.history.replaceState({}, '', `${target}${window.location.search}${window.location.hash}`)
+}
+const canonicalizeRecoveryRoute = () => {
+  const url = new URL(window.location.href)
+  if (url.searchParams.get('auth_action') !== 'recover' || /^\/restablecer-clave\/?$/i.test(url.pathname)) return
+  url.pathname = '/restablecer-clave/'
+  window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
 }
 const mapPublicAuthError = (message, context = 'login') => {
   const normalized = String(message || '').trim().toLowerCase()
@@ -1227,7 +1239,7 @@ const getUiState = () => {
 }
 
 const standaloneAuthView = (ui) => {
-  const mode = recoveryState ? 'reset' : authViewMode
+  const mode = recoveryState ? 'reset' : (authModeFromPath() || authViewMode)
   const content = mode === 'login' ? `
     <div class="auth-heading"><p class="kicker">Acceso seguro</p><h1 id="auth-title">Entrá a tu operación</h1><p>Ingresá con tus datos para abrir el panel de tu comercio.</p></div>
     <form class="login-form" data-form="login" autocomplete="on">
@@ -3353,10 +3365,11 @@ const readSiteCloudConfig = async () => {
 
 const bootstrap = async () => {
   canonicalizeLegacyPanelRoute()
+  canonicalizeRecoveryRoute()
   const initialCloudConfig = await readSiteCloudConfig()
   window.__pclafTurnstileSiteKey = String(initialCloudConfig?.turnstileSiteKey || '')
   const entryAuthMode = ({ login: 'login', signup: 'signup', recovery: 'recovery', reset: 'reset' })[operandoEntry] || ''
-  authViewMode = entryAuthMode || getRequestedPublicView() || (window.__pclafAppEntry ? 'login' : authViewMode)
+  authViewMode = authModeFromPath() || entryAuthMode || getRequestedPublicView() || (window.__pclafAppEntry ? 'login' : authViewMode)
   activeSection = sectionFromPath()
   if (!window.pclafDesktop) {
     safeStorage.removeItem(dataStorageKey)
