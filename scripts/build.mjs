@@ -186,7 +186,7 @@ const marketingSectors = sectorPages.map((sector) => ({
 
 const sectorLandingPages = sectorPages.map((sector) => ({
   slug: `pos-por-rubro/${sector.slug}`,
-  seoTitle: `Sistema POS para ${sector.title} | operando.app`,
+  seoTitle: `Sistema POS para ${sector.title} | Operando`,
   description: `Sistema de gestion para ${sector.title.toLowerCase()} con ventas, caja, stock, clientes y compras en operando.app.`,
   kicker: 'POS por rubro',
   h1: `Sistema POS para ${sector.title}: ventas, caja y stock en una sola operacion`,
@@ -224,7 +224,7 @@ const blogGuides = [
 const comparisonPages = [
   {
     slug: 'pclafcontrol-vs-dux-software',
-    seoTitle: 'operando.app vs Dux Software | Comparacion para comercios',
+    seoTitle: 'Operando vs Dux Software | Comparacion para comercios',
     description: 'Compara operando.app y Dux Software para elegir un sistema de gestion segun ventas, stock, sucursales, tickets y canales de venta.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Dux Software: que sistema se adapta mejor a tu operacion',
@@ -247,7 +247,7 @@ const comparisonPages = [
   },
   {
     slug: 'pclafcontrol-vs-alegra',
-    seoTitle: 'operando.app vs Alegra | Comparacion para comercios',
+    seoTitle: 'Operando vs Alegra | Comparacion para comercios',
     description: 'Compara operando.app y Alegra para evaluar ventas, stock, caja, usuarios, tickets y necesidades administrativas.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Alegra: operacion comercial o gestion administrativa',
@@ -270,7 +270,7 @@ const comparisonPages = [
   },
   {
     slug: 'pclafcontrol-vs-treinta',
-    seoTitle: 'operando.app vs Treinta | Comparacion para comercios',
+    seoTitle: 'Operando vs Treinta | Comparacion para comercios',
     description: 'Compara operando.app y Treinta para evaluar operaciones de mostrador, stock, clientes, sucursales y control por roles.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Treinta: control operativo para comercios en crecimiento',
@@ -293,7 +293,7 @@ const comparisonPages = [
   },
   {
     slug: 'pclafcontrol-vs-contabilium',
-    seoTitle: 'operando.app vs Contabilium | Comparacion para comercios',
+    seoTitle: 'Operando vs Contabilium | Comparacion para comercios',
     description: 'Compara operando.app y Contabilium para elegir entre operacion comercial con tickets y un ERP con contabilidad e integraciones de e-commerce.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Contabilium: operacion de comercio o ERP administrativo',
@@ -316,7 +316,7 @@ const comparisonPages = [
   },
   {
     slug: 'pclafcontrol-vs-gestion-comercio',
-    seoTitle: 'operando.app vs Gestion Comercio | Comparacion para comercios',
+    seoTitle: 'Operando vs Gestion Comercio | Comparacion para comercios',
     description: 'Compara operando.app y Gestion Comercio para evaluar punto de venta, stock, sucursales, balanzas, escritorio y tickets de servicio.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Gestion Comercio: gestion comercial segun tu forma de operar',
@@ -443,7 +443,7 @@ const glossaryTerms = [
 
 const glossaryPages = glossaryTerms.map((term) => ({
   slug: `glosario-pos/${term.slug}`,
-  seoTitle: `${term.title} | Glosario operando.app`,
+  seoTitle: `${term.title} | Glosario Operando`,
   description: term.description,
   kicker: 'Glosario operando.app',
   h1: `${term.title}: que es y como se aplica en un comercio`,
@@ -536,7 +536,7 @@ const controlStories = [
 const marketingPages = [
   {
     slug: '',
-    seoTitle: 'Sistema de ventas y stock | operando.app',
+    seoTitle: 'Sistema de ventas y stock | Operando',
     description: 'Sistema de ventas, caja y stock para comercios con sucursales, permisos y trazabilidad operativa. Probá operando.app desde PC o celular.',
     kicker: 'Sistema comercial web',
     h1: 'Vendé rápido. Controlá caja, stock y equipo.',
@@ -570,7 +570,7 @@ const marketingPages = [
   },
   {
     slug: 'funciones',
-    seoTitle: 'Funciones del sistema comercial | operando.app',
+    seoTitle: 'Funciones del sistema comercial | Operando',
     description: 'Conoce todas las funciones de operando.app: ventas, caja, stock, compras, clientes, tickets, facturacion, sucursales y reportes.',
     kicker: 'Funciones',
     h1: 'Funciones para ganar control operativo sin sumar fricción',
@@ -590,7 +590,7 @@ const marketingPages = [
   },
   {
     slug: 'precios',
-    seoTitle: 'Planes y modulos | operando.app',
+    seoTitle: 'Planes y modulos | Operando',
     description: 'Descubre los planes de operando.app para comercios que necesitan ventas, caja, stock, clientes, compras y sucursales.',
     kicker: 'Planes',
     h1: 'Elige los modulos que necesita tu comercio, sin abrumarte con todo de entrada',
@@ -608,7 +608,7 @@ const marketingPages = [
   },
   {
     slug: 'sistema-de-ventas',
-    seoTitle: 'Sistema de ventas para comercios | operando.app',
+    seoTitle: 'Sistema de ventas para comercios | Operando',
     description: 'Sistema de ventas para comercios con cobros, tickets, caja y control comercial desde una sola web.',
     kicker: 'Ventas',
     h1: 'Sistema de ventas para comercios que quieren cobrar rapido y trabajar con mas control',
@@ -625,7 +625,7 @@ const marketingPages = [
   },
   {
     slug: 'control-de-stock',
-    seoTitle: 'Programa para controlar stock | operando.app',
+    seoTitle: 'Programa para controlar stock | Operando',
     description: 'Programa para controlar stock, productos, sucursales, transferencias y reposicion desde PC o celular.',
     kicker: 'Stock',
     h1: 'Programa para controlar stock y saber que falta antes de quedarte sin vender',
@@ -643,7 +643,7 @@ const marketingPages = [
   },
   {
     slug: 'sistema-de-caja',
-    seoTitle: 'Sistema de caja para negocios | operando.app',
+    seoTitle: 'Sistema de caja para negocios | Operando',
     description: 'Sistema de caja para negocios con apertura, cierre, diferencias, movimientos y control por operador.',
     kicker: 'Caja',
     h1: 'Sistema de caja por puesto para cobrar rápido y cerrar con respaldo',
@@ -660,7 +660,7 @@ const marketingPages = [
   },
   {
     slug: 'software-para-kioscos',
-    seoTitle: 'Sistema para kioscos | operando.app',
+    seoTitle: 'Sistema para kioscos | Operando',
     description: 'Sistema para kioscos con ventas, caja, stock, precios y control rapido desde navegador.',
     kicker: 'Rubros',
     h1: 'Sistema para kioscos que necesitan vender rapido y controlar stock en serio',
@@ -677,7 +677,7 @@ const marketingPages = [
   },
   {
     slug: 'software-para-tiendas',
-    seoTitle: 'Software para tiendas y locales | operando.app',
+    seoTitle: 'Software para tiendas y locales | Operando',
     description: 'Software para tiendas y locales con ventas, clientes, stock, compras y sucursales desde la web.',
     kicker: 'Rubros',
     h1: 'Software para tiendas y locales que necesitan vender, cobrar y ordenar su operacion',
@@ -694,7 +694,7 @@ const marketingPages = [
   },
   {
     slug: 'software-para-servicio-tecnico',
-    seoTitle: 'Software para servicio tecnico | operando.app',
+    seoTitle: 'Software para servicio tecnico | Operando',
     description: 'Software para servicio tecnico con tickets, clientes, caja, ventas de repuestos y seguimiento operativo.',
     kicker: 'Rubros',
     h1: 'Software para servicio tecnico con tickets, clientes, caja y control operativo',
@@ -711,7 +711,7 @@ const marketingPages = [
   },
   {
     slug: 'pos-por-rubro',
-    seoTitle: 'Sistema POS por rubro | operando.app',
+    seoTitle: 'Sistema POS por rubro | Operando',
     description: 'Conoce como operando.app acompana kioscos, tiendas y servicios tecnicos con ventas, caja, stock y seguimiento operativo.',
     kicker: 'POS por rubro',
     h1: 'Un sistema comercial que se adapta a la forma de trabajar de tu negocio',
@@ -725,7 +725,7 @@ const marketingPages = [
   ...sectorLandingPages,
   {
     slug: 'como-funciona',
-    seoTitle: 'Como funciona operando.app | Sistema para comercios',
+    seoTitle: 'Como funciona Operando | Sistema para comercios',
     description: 'Conoce el recorrido para crear una cuenta, cargar productos, vender, controlar la caja y hacer seguimiento de tu comercio con operando.app.',
     kicker: 'Como funciona',
     h1: 'De la configuracion inicial a una operacion mas ordenada',
@@ -743,7 +743,7 @@ const marketingPages = [
   },
   {
     slug: 'blog',
-    seoTitle: 'Guias para gestionar tu comercio | operando.app',
+    seoTitle: 'Guias para gestionar tu comercio | Operando',
     description: 'Guias practicas sobre stock, caja e importacion de productos para comercios argentinos.',
     kicker: 'Guias para comercios',
     h1: 'Consejos claros para ordenar la gestion diaria de tu comercio',
@@ -756,7 +756,7 @@ const marketingPages = [
   },
   {
     slug: 'comparar-sistemas-de-gestion',
-    seoTitle: 'Comparar sistemas de gestion para comercios | operando.app',
+    seoTitle: 'Comparar sistemas de gestion para comercios | Operando',
     description: 'Compara operando.app con otras plataformas de gestion para elegir segun ventas, stock, caja, sucursales, tickets, e-commerce y contabilidad.',
     kicker: 'Comparaciones honestas',
     h1: 'Compara sistemas de gestion y elegi el que mejor se adapta a tu comercio',
@@ -775,7 +775,7 @@ const marketingPages = [
   ...comparisonPages,
   {
     slug: 'glosario-pos',
-    seoTitle: 'Glosario POS para comercios | operando.app',
+    seoTitle: 'Glosario POS para comercios | Operando',
     description: 'Glosario de terminos de ventas, caja, stock, clientes, sucursales y tickets basado en la operacion real de operando.app.',
     kicker: 'Glosario POS',
     h1: 'Conceptos de gestion comercial explicados para el dia a dia del comercio',
@@ -794,7 +794,7 @@ const marketingPages = [
   ...glossaryPages,
   {
     slug: 'gestion-de-clientes',
-    seoTitle: 'Gestion de clientes y compras | operando.app',
+    seoTitle: 'Gestion de clientes y compras | Operando',
     description: 'Gestiona clientes, compras, cuentas corrientes, historial comercial y proveedores desde una sola web.',
     kicker: 'Clientes',
     h1: 'Compras y proveedores para reponer con más criterio y menos vueltas',
@@ -811,7 +811,7 @@ const marketingPages = [
   },
   {
     slug: 'multi-sucursal',
-    seoTitle: 'Sistema multi sucursal | operando.app',
+    seoTitle: 'Sistema multi sucursal | Operando',
     description: 'Gestiona sucursales, cajas, usuarios, permisos y transferencias de stock desde una sola plataforma.',
     kicker: 'Escala',
     h1: 'Sistema multi sucursal para ver cada local sin perder el control del conjunto',
@@ -828,7 +828,7 @@ const marketingPages = [
   },
   {
     slug: 'preguntas-frecuentes',
-    seoTitle: 'Preguntas frecuentes | operando.app',
+    seoTitle: 'Preguntas frecuentes | Operando',
     description: 'Respuestas sobre instalacion, celulares, lector de codigos, varias cajas, importacion de productos y prueba gratis.',
     kicker: 'FAQ',
     h1: 'Preguntas frecuentes sobre operando.app',
@@ -848,7 +848,7 @@ const marketingPages = [
   },
   {
     slug: 'blog/como-controlar-stock',
-    seoTitle: 'Como controlar stock en un comercio | operando.app',
+    seoTitle: 'Como controlar stock en un comercio | Operando',
     description: 'Aprende como controlar stock en un comercio, detectar faltantes y evitar vender sin mercaderia disponible.',
     kicker: 'Blog',
     h1: 'Como controlar stock en un comercio sin depender de Excel',
@@ -866,7 +866,7 @@ const marketingPages = [
   },
   {
     slug: 'blog/cierre-de-caja-correcto',
-    seoTitle: 'Como hacer un cierre de caja correctamente | operando.app',
+    seoTitle: 'Como hacer un cierre de caja correctamente | Operando',
     description: 'Guia para abrir y cerrar caja correctamente, controlar diferencias y ordenar medios de pago.',
     kicker: 'Blog',
     h1: 'Como hacer un cierre de caja correctamente en un negocio',
@@ -883,7 +883,7 @@ const marketingPages = [
   },
   {
     slug: 'blog/importar-productos-desde-excel',
-    seoTitle: 'Como importar productos desde Excel | operando.app',
+    seoTitle: 'Como importar productos desde Excel | Operando',
     description: 'Migra productos desde Excel o CSV a operando.app con revision y carga asistida para evitar errores de stock y precios.',
     kicker: 'Blog',
     h1: 'Como pasar tus productos desde Excel a operando.app',
@@ -901,7 +901,7 @@ const marketingPages = [
   },
   {
     slug: 'privacidad',
-    seoTitle: 'Politica de privacidad | operando.app',
+    seoTitle: 'Politica de privacidad | Operando',
     description: 'Conoce como operando.app trata datos comerciales, accesos, comunicaciones y soporte.',
     kicker: 'Legal',
     h1: 'Politica de privacidad de operando.app',
@@ -918,7 +918,7 @@ const marketingPages = [
   },
   {
     slug: 'terminos',
-    seoTitle: 'Terminos de uso | operando.app',
+    seoTitle: 'Terminos de uso | Operando',
     description: 'Terminos generales de uso, prueba, soporte y operacion de operando.app.',
     kicker: 'Legal',
     h1: 'Terminos de uso de operando.app',
@@ -996,7 +996,7 @@ const renderTopbar = (page) => `
     <a class="marketing-brand" href="/">
       <img src="/operando-logo.png" alt="operando.app" width="48" height="46" />
       <div>
-        <strong>operando.app</strong>
+        <strong>Operando</strong>
         <p>Ventas ágiles, control operativo</p>
       </div>
     </a>
@@ -1031,7 +1031,7 @@ const renderTopbar = (page) => `
 const renderFooter = () => `
   <footer class="marketing-footer">
     <div class="marketing-footer-brand">
-      <strong>operando.app</strong>
+      <strong>Operando</strong>
       <p>Software comercial web para ventas, caja, stock, clientes, compras, tickets y sucursales.</p>
     </div>
     <div class="marketing-footer-links">
@@ -2813,6 +2813,31 @@ const marketingStyles = `
       }
       body .marketing-footer nav a,
       body .marketing-footer-actions a { color: #f7f4ee; }
+      .marketing-brand img {
+        filter: drop-shadow(0 0 9px rgba(255, 43, 49, 0.52));
+        transform-origin: center;
+        animation: operando-logo-float 3.8s ease-in-out infinite;
+      }
+      .marketing-brand strong {
+        color: transparent;
+        background: linear-gradient(105deg, #ff7b72 0%, #ff252d 42%, #ffd0ca 67%, #ff252d 100%);
+        background-size: 220% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        animation: operando-name-shine 4.6s linear infinite;
+      }
+      @keyframes operando-logo-float {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-3px) scale(1.035); }
+      }
+      @keyframes operando-name-shine {
+        from { background-position: 100% 0; }
+        to { background-position: -120% 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .marketing-brand img,
+        .marketing-brand strong { animation: none; }
+      }
 `
 
 const renderMarketingPage = (page) => {
@@ -3021,7 +3046,7 @@ const appHtml = `<!doctype html>
     <link rel="icon" type="image/png" href="/operando-logo.png?v=20260831" />
     <link rel="shortcut icon" type="image/png" href="/operando-logo.png?v=20260831" />
     <link rel="stylesheet" href="/app.css?v=${assetVersion}" />
-    <title>Acceso al sistema | operando.app</title>
+    <title>Acceso al sistema | Operando</title>
     <style>
       html, body {
         margin: 0;
@@ -3076,7 +3101,7 @@ const appHtml = `<!doctype html>
     <div id="app"></div>
     <div id="boot-status">
       <div class="boot-card">
-        <strong>operando.app</strong>
+        <strong>Operando</strong>
         <p>Cargando sistema...</p>
       </div>
     </div>

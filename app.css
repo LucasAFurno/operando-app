@@ -111,6 +111,9 @@ input[type='search'] { color: var(--text); }
   width: 56px;
   height: auto;
   display: block;
+  filter: drop-shadow(0 0 10px rgba(255, 43, 49, 0.5));
+  transform-origin: center;
+  animation: operando-logo-float 3.8s ease-in-out infinite;
 }
 
 .auth-brand div {
@@ -119,8 +122,13 @@ input[type='search'] { color: var(--text); }
 }
 
 .auth-brand strong {
-  color: #ffffff;
+  color: transparent;
   font-size: 1.05rem;
+  background: linear-gradient(105deg, #ff8f88 0%, #ff2a31 42%, #ffd3cf 67%, #ff2a31 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: operando-name-shine 4.6s linear infinite;
 }
 
 .auth-brand span {
@@ -238,6 +246,9 @@ input[type='search'] { color: var(--text); }
   object-fit: contain;
   flex-shrink: 0;
   display: block;
+  filter: drop-shadow(0 0 10px rgba(255, 43, 49, 0.5));
+  transform-origin: center;
+  animation: operando-logo-float 3.8s ease-in-out infinite;
 }
 
 .public-topbar-copy {
@@ -249,6 +260,33 @@ input[type='search'] { color: var(--text); }
   font-family: 'Oswald', sans-serif;
   font-size: 1.35rem;
   line-height: 1;
+  color: transparent;
+  background: linear-gradient(105deg, #ff8f88 0%, #ff2a31 42%, #ffd3cf 67%, #ff2a31 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: operando-name-shine 4.6s linear infinite;
+}
+
+@keyframes operando-logo-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.035); }
+}
+
+@keyframes operando-name-shine {
+  from { background-position: 100% 0; }
+  to { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-topbar-logo,
+  .brand-logo,
+  .login-logo,
+  .auth-brand img,
+  .public-topbar-copy strong,
+  .auth-brand strong {
+    animation: none;
+  }
 }
 
 .public-topbar-copy span {
@@ -410,6 +448,9 @@ input[type='search'] { color: var(--text); }
   object-fit: contain;
   margin-bottom: 0;
   display: block;
+  filter: drop-shadow(0 0 12px rgba(255, 43, 49, 0.5));
+  transform-origin: center;
+  animation: operando-logo-float 3.8s ease-in-out infinite;
 }
 
 .login-logo-large {
@@ -733,6 +774,9 @@ input[type='search'] { color: var(--text); }
   object-fit: contain;
   border-radius: 0;
   box-shadow: 0 8px 18px rgba(214, 16, 16, 0.14);
+  filter: drop-shadow(0 0 10px rgba(255, 43, 49, 0.45));
+  transform-origin: center;
+  animation: operando-logo-float 3.8s ease-in-out infinite;
 }
 
 .sidebar-nav {

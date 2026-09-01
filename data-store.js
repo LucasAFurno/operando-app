@@ -1,4 +1,4 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=313a4665e3ea'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=315a8a135b22'
 
 const dataStorageKey = 'pclaf-control-data'
 const cloudConfigStorageKey = 'pclaf-control-cloud-config'

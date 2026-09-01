@@ -4,7 +4,7 @@ import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@su
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
-const productName = 'operando.app'
+const productName = 'Operando'
 const appVersion = '__PCLAF_RELEASE_VERSION__'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'

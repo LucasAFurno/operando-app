@@ -8,17 +8,17 @@
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://operando.app/gestion-de-clientes/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Gestion de clientes y compras | operando.app" />
+    <meta property="og:title" content="Gestion de clientes y compras | Operando" />
     <meta property="og:description" content="Gestiona clientes, compras, cuentas corrientes, historial comercial y proveedores desde una sola web." />
     <meta property="og:url" content="https://operando.app/gestion-de-clientes/" />
     <meta property="og:image" content="https://operando.app/operando-logo.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Gestion de clientes y compras | operando.app" />
+    <meta name="twitter:title" content="Gestion de clientes y compras | Operando" />
     <meta name="twitter:description" content="Gestiona clientes, compras, cuentas corrientes, historial comercial y proveedores desde una sola web." />
     <meta name="twitter:image" content="https://operando.app/operando-logo.png" />
     <link rel="icon" type="image/png" href="/operando-logo.png?v=20260831" />
     <link rel="shortcut icon" type="image/png" href="/operando-logo.png?v=20260831" />
-    <title>Gestion de clientes y compras | operando.app</title>
+    <title>Gestion de clientes y compras | Operando</title>
     <style>
       html, body {
         margin: 0;
@@ -1617,9 +1617,34 @@
       }
       body .marketing-footer nav a,
       body .marketing-footer-actions a { color: #f7f4ee; }
+      .marketing-brand img {
+        filter: drop-shadow(0 0 9px rgba(255, 43, 49, 0.52));
+        transform-origin: center;
+        animation: operando-logo-float 3.8s ease-in-out infinite;
+      }
+      .marketing-brand strong {
+        color: transparent;
+        background: linear-gradient(105deg, #ff7b72 0%, #ff252d 42%, #ffd0ca 67%, #ff252d 100%);
+        background-size: 220% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        animation: operando-name-shine 4.6s linear infinite;
+      }
+      @keyframes operando-logo-float {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-3px) scale(1.035); }
+      }
+      @keyframes operando-name-shine {
+        from { background-position: 100% 0; }
+        to { background-position: -120% 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .marketing-brand img,
+        .marketing-brand strong { animation: none; }
+      }
 </style>
 
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"operando.app","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://operando.app/gestion-de-clientes/","image":"https://operando.app/operando-logo.png","screenshot":["https://operando.app/pantalla-ventas-pclaf-control.svg","https://operando.app/control-stock-por-sucursal.svg","https://operando.app/cierre-caja-comercio.svg"],"softwareVersion":"313a4665e3ea","description":"Gestiona clientes, compras, cuentas corrientes, historial comercial y proveedores desde una sola web.","featureList":["Clientes","Compras","Proveedores","Saldos","Historial"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","description":"Prueba gratis y planes comerciales para comercios.","url":"https://operando.app/precios/"}}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"operando.app","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://operando.app/gestion-de-clientes/","image":"https://operando.app/operando-logo.png","screenshot":["https://operando.app/pantalla-ventas-pclaf-control.svg","https://operando.app/control-stock-por-sucursal.svg","https://operando.app/cierre-caja-comercio.svg"],"softwareVersion":"315a8a135b22","description":"Gestiona clientes, compras, cuentas corrientes, historial comercial y proveedores desde una sola web.","featureList":["Clientes","Compras","Proveedores","Saldos","Historial"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","description":"Prueba gratis y planes comerciales para comercios.","url":"https://operando.app/precios/"}}</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"operando.app","url":"https://operando.app","logo":"https://operando.app/operando-logo.png","contactPoint":{"@type":"ContactPoint","contactType":"sales","url":"https://wa.me/5491135708345?text=Hola%20operando.app%2C%20quiero%20informacion%20de%20operando.app.","availableLanguage":["es-AR","es"]}}</script>
 
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://operando.app"},{"@type":"ListItem","position":2,"name":"gestion de clientes","item":"https://operando.app/gestion-de-clientes/"}]}</script>
@@ -1632,7 +1657,7 @@
     <a class="marketing-brand" href="/">
       <img src="/operando-logo.png" alt="operando.app" width="48" height="46" />
       <div>
-        <strong>operando.app</strong>
+        <strong>Operando</strong>
         <p>Ventas ágiles, control operativo</p>
       </div>
     </a>
@@ -1716,7 +1741,7 @@
 
   <footer class="marketing-footer">
     <div class="marketing-footer-brand">
-      <strong>operando.app</strong>
+      <strong>Operando</strong>
       <p>Software comercial web para ventas, caja, stock, clientes, compras, tickets y sucursales.</p>
     </div>
     <div class="marketing-footer-links">
