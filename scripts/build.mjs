@@ -2189,7 +2189,10 @@ const marketingStyles = `
         height: 36px;
         flex: 0 0 auto;
         border-radius: 50%;
-        background: #fff;
+        box-sizing: border-box;
+        padding: 2px;
+        border: 1px solid rgba(255,255,255,0.28);
+        background: #050505;
         object-fit: contain;
       }
       .marketing-phone-head strong,
@@ -3268,7 +3271,7 @@ const appHtml = `<!doctype html>
         shell.innerHTML = '<div class="boot-card is-error"><strong>No se pudo iniciar</strong><p>' + message + '</p><p>Si sigue igual, avisame y reviso el error puntual.</p></div>';
       }, 4000);
     </script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" defer></script>
     <script type="module" src="/app.js?v=${assetVersion}"></script>
   </body>
 </html>

@@ -497,6 +497,9 @@ const syncSectionPath = () => {
 const mapPublicAuthError = (message, context = 'login') => {
   const normalized = String(message || '').trim().toLowerCase()
   if (!normalized) return context === 'signup' ? 'No se pudo crear la cuenta.' : 'No se pudo iniciar sesion.'
+  if (/failed to fetch|fetch failed|networkerror|network request failed|load failed/.test(normalized)) {
+    return 'No pudimos comunicarnos con el sistema. Revisá tu conexión e intentá nuevamente en unos minutos.'
+  }
   const rateLimit = normalized.match(/^login_rate_limited:(\d+)$/)
   if (rateLimit) {
     const minutes = Math.ceil(Number(rateLimit[1]) / 60)
@@ -545,7 +548,9 @@ const mapPublicAuthError = (message, context = 'login') => {
     const remaining = Number(remainingMatch[1])
     return `La clave no coincide. Te queda${remaining === 1 ? '' : 'n'} ${remaining} intento${remaining === 1 ? '' : 's'} antes del bloqueo temporal. Si no la recuerdas, puedes recuperar tu clave.`
   }
-  return messages[normalized] || message
+  return messages[normalized] || (context === 'signup'
+    ? 'No se pudo crear la cuenta. Revisá los datos e intentá nuevamente.'
+    : 'No se pudo completar la operación. Revisá los datos e intentá nuevamente.')
 }
 
 const mapInvoicePaymentError = (message) => {
@@ -1231,7 +1236,7 @@ const standaloneAuthView = (ui) => `
           <form class="login-form" data-form="login" autocomplete="on">
             <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
             <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
-            ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
+            ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
             ${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}
             ${loginMessage?.includes('15 minutos') ? '<button type="button" class="auth-text-action" data-action="recover-password">Recuperar mi clave ahora</button>' : ''}
             <button type="submit">Ingresar</button>
@@ -1385,7 +1390,7 @@ const loginView = (ui) => {
             <form class="login-form" data-form="login" autocomplete="off">
               <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
               <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
-              ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
+              ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
               ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
               <button type="submit">Ingresar</button>
             </form>
@@ -1542,7 +1547,7 @@ const loginViewV2 = (ui) => `
             <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" data-lpignore="true" required /></label>
             <label>Clave<input type="password" name="pin" placeholder="Tu clave" autocomplete="current-password" required /></label>
             <input type="hidden" name="instanceKey" value="${ui.cloudConnection.environment === 'development' ? (ui.cloudConnection.instanceKey || 'pclaf-dev') : ''}" />
-            ${window.__pclafTurnstileSiteKey ? `<div class="cf-turnstile" data-sitekey="${window.__pclafTurnstileSiteKey}" data-action="turnstile-spin-v2" data-size="flexible"></div>` : ''}
+            ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
             <p class="login-hints">Si no recuerdas tu clave, puedes pedir recuperacion o hablar con soporte.</p>
             ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
             <button type="submit">Ingresar</button>
@@ -3243,20 +3248,37 @@ const renderApp = (ui) => {
 }
 
 const renderTurnstileWidget = (attempt = 0) => {
-  const target = app.querySelector('.cf-turnstile')
-  if (!target || target.querySelector('iframe')) return
+  const target = app.querySelector('.turnstile-container')
+  if (!target || target.dataset.rendered === 'true') return
+  const showUnavailableMessage = () => {
+    target.replaceChildren()
+    target.dataset.rendered = 'true'
+    const message = document.createElement('p')
+    message.className = 'login-error'
+    message.setAttribute('role', 'alert')
+    message.textContent = 'La verificacion de seguridad no esta disponible en este momento. Actualiza la pagina o intenta nuevamente en unos minutos.'
+    target.append(message)
+  }
   if (!globalThis.turnstile?.render) {
     if (attempt < 40) window.setTimeout(() => renderTurnstileWidget(attempt + 1), 50)
+    else showUnavailableMessage()
     return
   }
   try {
-    globalThis.turnstile.render(target, {
+    target.dataset.rendered = 'true'
+    let widgetId = ''
+    widgetId = globalThis.turnstile.render(target, {
       sitekey: String(target.dataset.sitekey || ''),
       action: 'turnstile-spin-v2',
       size: 'flexible',
+      theme: 'dark',
+      'error-callback': () => {
+        if (widgetId) globalThis.turnstile?.remove(widgetId)
+        showUnavailableMessage()
+      },
     })
   } catch {
-    // The script may have auto-rendered the element between the checks above.
+    showUnavailableMessage()
   }
 }
 
@@ -3427,7 +3449,7 @@ const bootstrap = async () => {
       await loadCloudAccess()
     }
   } catch (error) {
-    loginMessage = error.message || 'No se pudo iniciar la sesion cloud.'
+    loginMessage = mapPublicAuthError(error?.message, 'login')
     feedbackMessage = ''
     commerceContext = null
     store.clearCloudAuthSession()
