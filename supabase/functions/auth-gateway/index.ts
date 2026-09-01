@@ -35,7 +35,9 @@ Deno.serve(async (request) => {
     const body = await request.json()
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    const secret = Deno.env.get('TURNSTILE_SECRET') || ''
+    // TURNSTILE_SECRET_KEY is the canonical deployment secret. Keep the prior
+    // name as a temporary fallback so an in-flight deployment is not disabled.
+    const secret = Deno.env.get('TURNSTILE_SECRET_KEY') || Deno.env.get('TURNSTILE_SECRET') || ''
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
     if (!supabaseUrl || !serviceKey || !secret) return json({ error: 'security_not_configured' }, 503, headers)
     const turnstileToken = String(body.turnstileToken || '').trim()
