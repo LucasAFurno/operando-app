@@ -11,8 +11,8 @@ permissions:
   id-token: write
 
 env:
-  SERVICE: pclaf-fiscal
-  REPOSITORY: pclaf-containers
+  SERVICE: operando-fiscal
+  REPOSITORY: operando-containers
   REGION: us-central1
 
 jobs:
@@ -24,11 +24,11 @@ jobs:
 
       - name: Notify deploy started
         env:
-          PCLAF_CONTROL_DISCORD_ENABLED: "true"
-          PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
-          PCLAF_CONTROL_TELEGRAM_ENABLED: ${{ vars.PCLAF_CONTROL_TELEGRAM_ENABLED }}
-          PCLAF_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.PCLAF_CONTROL_TELEGRAM_BOT_TOKEN }}
-          PCLAF_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.PCLAF_CONTROL_TELEGRAM_CHAT_ID }}
+          OPERANDO_CONTROL_DISCORD_ENABLED: "true"
+          OPERANDO_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.OPERANDO_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
+          OPERANDO_CONTROL_TELEGRAM_ENABLED: ${{ vars.OPERANDO_CONTROL_TELEGRAM_ENABLED }}
+          OPERANDO_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.OPERANDO_CONTROL_TELEGRAM_BOT_TOKEN }}
+          OPERANDO_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.OPERANDO_CONTROL_TELEGRAM_CHAT_ID }}
           FISCAL_SERVICE_TOKEN: ci-notification-only
           FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: node fiscal-server/scripts/notify-deploy.mjs started --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -55,8 +55,8 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           RUNTIME_SERVICE_ACCOUNT: ${{ vars.FISCAL_RUNTIME_SERVICE_ACCOUNT }}
-          PCLAF_CONTROL_DISCORD_ENABLED: ${{ vars.PCLAF_CONTROL_DISCORD_ENABLED }}
-          PCLAF_CONTROL_TELEGRAM_ENABLED: ${{ vars.PCLAF_CONTROL_TELEGRAM_ENABLED }}
+          OPERANDO_CONTROL_DISCORD_ENABLED: ${{ vars.OPERANDO_CONTROL_DISCORD_ENABLED }}
+          OPERANDO_CONTROL_TELEGRAM_ENABLED: ${{ vars.OPERANDO_CONTROL_TELEGRAM_ENABLED }}
           NOTIFICATIONS_ENVIRONMENT: ${{ vars.NOTIFICATIONS_ENVIRONMENT }}
         run: |
           gcloud run deploy "$SERVICE" \
@@ -65,8 +65,8 @@ jobs:
             --image "$IMAGE" \
             --service-account "$RUNTIME_SERVICE_ACCOUNT" \
             --no-allow-unauthenticated \
-            --set-env-vars "ARCA_ENVIRONMENT=homologacion,FISCAL_STORE=supabase,SUPABASE_URL=${SUPABASE_URL},PCLAF_CONTROL_DISCORD_ENABLED=${PCLAF_CONTROL_DISCORD_ENABLED},PCLAF_CONTROL_TELEGRAM_ENABLED=${PCLAF_CONTROL_TELEGRAM_ENABLED},NOTIFICATIONS_ENVIRONMENT=${NOTIFICATIONS_ENVIRONMENT},ARCA_TIMEOUT_MS=15000,ARCA_ATTEMPT_TIMEOUT_MS=4500,ARCA_MAX_ATTEMPTS=2,ARCA_CIRCUIT_FAILURE_THRESHOLD=3,ARCA_CIRCUIT_COOLDOWN_MS=60000,FISCAL_RATE_WINDOW_MS=60000,FISCAL_GLOBAL_RATE_PER_WINDOW=60,FISCAL_TENANT_RATE_PER_WINDOW=15,FISCAL_INVOICE_RATE_PER_WINDOW=6,FISCAL_EMERGENCY_STOP_CACHE_MS=5000,FISCAL_PROCESSING_LEASE_SECONDS=50" \
-            --set-secrets "FISCAL_MASTER_KEY_BASE64=pclaf-fiscal-master-key:latest,FISCAL_SERVICE_TOKEN=pclaf-fiscal-service-token:latest,SUPABASE_SERVICE_ROLE_KEY=pclaf-supabase-service-role:latest,PCLAF_CONTROL_DISCORD_GENERAL_WEBHOOK_URL=pclaf-control-discord-general-webhook-url:latest,PCLAF_CONTROL_DISCORD_LOGS_WEBHOOK_URL=pclaf-control-discord-logs-webhook-url:latest,PCLAF_CONTROL_DISCORD_ALERTAS_WEBHOOK_URL=pclaf-control-discord-alertas-webhook-url:latest,PCLAF_CONTROL_DISCORD_ARCA_WEBHOOK_URL=pclaf-control-discord-arca-webhook-url:latest,PCLAF_CONTROL_DISCORD_SEGURIDAD_WEBHOOK_URL=pclaf-control-discord-seguridad-webhook-url:latest,PCLAF_CONTROL_TELEGRAM_BOT_TOKEN=pclaf-control-telegram-bot-token:latest,PCLAF_CONTROL_TELEGRAM_CHAT_ID=pclaf-control-telegram-chat-id:latest" \
+            --set-env-vars "ARCA_ENVIRONMENT=homologacion,FISCAL_STORE=supabase,SUPABASE_URL=${SUPABASE_URL},OPERANDO_CONTROL_DISCORD_ENABLED=${OPERANDO_CONTROL_DISCORD_ENABLED},OPERANDO_CONTROL_TELEGRAM_ENABLED=${OPERANDO_CONTROL_TELEGRAM_ENABLED},NOTIFICATIONS_ENVIRONMENT=${NOTIFICATIONS_ENVIRONMENT},ARCA_TIMEOUT_MS=15000,ARCA_ATTEMPT_TIMEOUT_MS=4500,ARCA_MAX_ATTEMPTS=2,ARCA_CIRCUIT_FAILURE_THRESHOLD=3,ARCA_CIRCUIT_COOLDOWN_MS=60000,FISCAL_RATE_WINDOW_MS=60000,FISCAL_GLOBAL_RATE_PER_WINDOW=60,FISCAL_TENANT_RATE_PER_WINDOW=15,FISCAL_INVOICE_RATE_PER_WINDOW=6,FISCAL_EMERGENCY_STOP_CACHE_MS=5000,FISCAL_PROCESSING_LEASE_SECONDS=50" \
+            --set-secrets "FISCAL_MASTER_KEY_BASE64=operando-fiscal-master-key:latest,FISCAL_SERVICE_TOKEN=operando-fiscal-service-token:latest,SUPABASE_SERVICE_ROLE_KEY=operando-supabase-service-role:latest,OPERANDO_CONTROL_DISCORD_GENERAL_WEBHOOK_URL=operando-control-discord-general-webhook-url:latest,OPERANDO_CONTROL_DISCORD_LOGS_WEBHOOK_URL=operando-control-discord-logs-webhook-url:latest,OPERANDO_CONTROL_DISCORD_ALERTAS_WEBHOOK_URL=operando-control-discord-alertas-webhook-url:latest,OPERANDO_CONTROL_DISCORD_ARCA_WEBHOOK_URL=operando-control-discord-arca-webhook-url:latest,OPERANDO_CONTROL_DISCORD_SEGURIDAD_WEBHOOK_URL=operando-control-discord-seguridad-webhook-url:latest,OPERANDO_CONTROL_TELEGRAM_BOT_TOKEN=operando-control-telegram-bot-token:latest,OPERANDO_CONTROL_TELEGRAM_CHAT_ID=operando-control-telegram-chat-id:latest" \
             --port 8080 \
             --cpu 1 \
             --memory 512Mi \
@@ -99,11 +99,11 @@ jobs:
 
       - name: Notify deploy success
         env:
-          PCLAF_CONTROL_DISCORD_ENABLED: "true"
-          PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
-          PCLAF_CONTROL_TELEGRAM_ENABLED: ${{ vars.PCLAF_CONTROL_TELEGRAM_ENABLED }}
-          PCLAF_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.PCLAF_CONTROL_TELEGRAM_BOT_TOKEN }}
-          PCLAF_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.PCLAF_CONTROL_TELEGRAM_CHAT_ID }}
+          OPERANDO_CONTROL_DISCORD_ENABLED: "true"
+          OPERANDO_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.OPERANDO_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
+          OPERANDO_CONTROL_TELEGRAM_ENABLED: ${{ vars.OPERANDO_CONTROL_TELEGRAM_ENABLED }}
+          OPERANDO_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.OPERANDO_CONTROL_TELEGRAM_BOT_TOKEN }}
+          OPERANDO_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.OPERANDO_CONTROL_TELEGRAM_CHAT_ID }}
           FISCAL_SERVICE_TOKEN: ci-notification-only
           FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: node fiscal-server/scripts/notify-deploy.mjs success --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -119,18 +119,18 @@ jobs:
 
       - name: Notify deploy failure
         env:
-          PCLAF_CONTROL_DISCORD_ENABLED: "true"
-          PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
-          PCLAF_CONTROL_TELEGRAM_ENABLED: ${{ vars.PCLAF_CONTROL_TELEGRAM_ENABLED }}
-          PCLAF_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.PCLAF_CONTROL_TELEGRAM_BOT_TOKEN }}
-          PCLAF_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.PCLAF_CONTROL_TELEGRAM_CHAT_ID }}
+          OPERANDO_CONTROL_DISCORD_ENABLED: "true"
+          OPERANDO_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL: ${{ secrets.OPERANDO_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL }}
+          OPERANDO_CONTROL_TELEGRAM_ENABLED: ${{ vars.OPERANDO_CONTROL_TELEGRAM_ENABLED }}
+          OPERANDO_CONTROL_TELEGRAM_BOT_TOKEN: ${{ secrets.OPERANDO_CONTROL_TELEGRAM_BOT_TOKEN }}
+          OPERANDO_CONTROL_TELEGRAM_CHAT_ID: ${{ secrets.OPERANDO_CONTROL_TELEGRAM_CHAT_ID }}
           FISCAL_SERVICE_TOKEN: ci-notification-only
           FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: node fiscal-server/scripts/notify-deploy.mjs failed --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} --detail="El job deploy falló; revisar el pipeline enlazado." || true
       - name: Notify Cloud Run deploy failure
         env:
-          PCLAF_CONTROL_DISCORD_ENABLED: "true"
-          PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
+          OPERANDO_CONTROL_DISCORD_ENABLED: "true"
+          OPERANDO_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL: ${{ secrets.OPERANDO_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL }}
           FISCAL_SERVICE_TOKEN: ci-notification-only
           FISCAL_MASTER_KEY_BASE64: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
         run: node fiscal-server/scripts/notify-deploy.mjs failed --destination=gcp-run --telegram=false --environment=homologacion --commit=${{ github.sha }} --branch=${{ github.ref_name }} --author=${{ github.actor }} --pipeline=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} --detail="El job deploy falló; revisar el pipeline enlazado." || true

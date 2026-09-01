@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
 const dist = path.join(root, 'dist')
 const serverDir = path.join(dist, 'server')
-const buildTarget = (process.argv[2] || process.env.PCLAF_ENV || 'prod').toLowerCase()
+const buildTarget = (process.argv[2] || process.env.OPERANDO_ENV || 'prod').toLowerCase()
 const isDevBuild = buildTarget === 'dev'
 const selectedCloudConfigFile = isDevBuild ? 'cloud-config.dev.json' : 'cloud-config.prod.json'
 const siteOrigin = 'https://operando.app'
@@ -18,7 +18,7 @@ const signupPath = '/crear-cuenta/'
 const recoveryPath = '/recuperar-clave/'
 const resetPasswordPath = '/restablecer-clave/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20quiero%20informacion%20de%20operando.app.'
-const gaMeasurementId = String(process.env.PCLAF_GA4_ID || '').trim()
+const gaMeasurementId = String(process.env.OPERANDO_GA4_ID || '').trim()
 
 const clientJs = await readFile(path.join(root, 'site', 'client.js'), 'utf8')
 const dataStoreJs = await readFile(path.join(root, 'site', 'data-store.js'), 'utf8')
@@ -29,12 +29,12 @@ const stylesCss = await readFile(path.join(root, 'site', 'styles.css'), 'utf8')
 const cloudConfigJson = await readFile(path.join(root, 'site', selectedCloudConfigFile), 'utf8')
 const marketingMetrics = JSON.parse(await readFile(path.join(root, 'site', 'marketing-metrics.json'), 'utf8'))
 const assetVersion = createHash('sha256').update(`${clientJs}${dataStoreJs}${cloudSyncJs}${cloudAuthJs}${cloudCoreJs}${stylesCss}${cloudConfigJson}`).digest('hex').slice(0, 12)
-const releaseRevision = String(process.env.GITHUB_SHA || process.env.PCLAF_RELEASE_VERSION || assetVersion).trim().slice(0, 12)
+const releaseRevision = String(process.env.GITHUB_SHA || process.env.OPERANDO_RELEASE_VERSION || assetVersion).trim().slice(0, 12)
 const releaseVersion = `v${releaseRevision}`
 const builtClientJs = clientJs
-  .replaceAll('__PCLAF_RELEASE_VERSION__', releaseVersion)
-  .replaceAll('__PCLAF_ASSET_VERSION__', assetVersion)
-const builtDataStoreJs = dataStoreJs.replaceAll('__PCLAF_ASSET_VERSION__', assetVersion)
+  .replaceAll('__OPERANDO_RELEASE_VERSION__', releaseVersion)
+  .replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
+const builtDataStoreJs = dataStoreJs.replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
 const faviconSvg = await readFile(path.join(root, 'public', 'favicon.svg'), 'utf8')
 const cnameFile = await readFile(path.join(root, 'public', 'CNAME'), 'utf8')
 
@@ -143,14 +143,14 @@ const homeFeatureRows = [
     eyebrow: 'Velocidad en mostrador',
     title: 'Cobrá rápido. Sabé exactamente qué pasó.',
     body: 'Registrá ventas y medios de pago sin salir de la pantalla de venta. Cada operación queda asociada a la caja y al puesto que la realizó.',
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     alt: 'Punto de venta de operando.app',
   },
   {
     eyebrow: 'Stock entre locales',
     title: 'Mové mercadería con trazabilidad',
     body: 'Consultá el stock por sucursal, registrá ajustes y transferencias, y mantené visible el origen y destino de cada movimiento.',
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     alt: 'Catálogo y stock de operando.app',
     reverse: true,
   },
@@ -158,7 +158,7 @@ const homeFeatureRows = [
     eyebrow: 'Operación conectada',
     title: 'Compras, caja y sucursales en la misma operación',
     body: 'Registrá recepciones de proveedores, costos y movimientos de caja desde una sola base, disponible desde PC o celular.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     alt: 'Panel operativo de operando.app',
   },
 ]
@@ -196,7 +196,7 @@ const sectorLandingPages = sectorPages.map((sector) => ({
   kicker: 'POS por rubro',
   h1: `Sistema POS para ${sector.title}: ventas, caja y stock en una sola operacion`,
   lead: sector.focus,
-  image: '/pclaf-control-panel-real.png',
+  image: '/operando-panel-real.png',
   imageAlt: `Gestion comercial para ${sector.title} con operando.app`,
   whatsAppPrompt: `Hola operando.app, quiero conocer el sistema para mi ${sector.title.toLowerCase()}.`,
   sections: [
@@ -228,13 +228,13 @@ const blogGuides = [
 
 const comparisonPages = [
   {
-    slug: 'pclafcontrol-vs-dux-software',
+    slug: 'operando-vs-dux-software',
     seoTitle: 'Operando vs Dux Software | Comparacion para comercios',
     description: 'Compara operando.app y Dux Software para elegir un sistema de gestion segun ventas, stock, sucursales, tickets y canales de venta.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Dux Software: que sistema se adapta mejor a tu operacion',
     lead: 'Los dos cubren ventas, stock y sucursales. La diferencia esta en si tu prioridad es la operacion comercial con tickets o una plataforma ERP con e-commerce e integraciones.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Panel de gestion comercial de operando.app',
     whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Dux Software.',
     comparison: { alternative: 'Dux Software', rows: [
@@ -251,13 +251,13 @@ const comparisonPages = [
     featureList: ['Ventas', 'Stock', 'Sucursales', 'Tickets', 'Roles'],
   },
   {
-    slug: 'pclafcontrol-vs-alegra',
+    slug: 'operando-vs-alegra',
     seoTitle: 'Operando vs Alegra | Comparacion para comercios',
     description: 'Compara operando.app y Alegra para evaluar ventas, stock, caja, usuarios, tickets y necesidades administrativas.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Alegra: operacion comercial o gestion administrativa',
     lead: 'Alegra concentra facturacion y administracion. operando.app se orienta a la operacion diaria de comercios y suma tickets para trabajos o servicios.',
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     imageAlt: 'Punto de venta de operando.app',
     whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Alegra.',
     comparison: { alternative: 'Alegra', rows: [
@@ -274,13 +274,13 @@ const comparisonPages = [
     featureList: ['Ventas', 'Caja', 'Stock', 'Tickets', 'Auditoria'],
   },
   {
-    slug: 'pclafcontrol-vs-treinta',
+    slug: 'operando-vs-treinta',
     seoTitle: 'Operando vs Treinta | Comparacion para comercios',
     description: 'Compara operando.app y Treinta para evaluar operaciones de mostrador, stock, clientes, sucursales y control por roles.',
     kicker: 'Comparacion',
     h1: 'operando.app vs Treinta: control operativo para comercios en crecimiento',
     lead: 'Treinta se posiciona como una app simple para celular. operando.app cubre una operacion de comercio con cajas, sucursales, permisos y seguimiento auditable.',
-    image: '/pclaf-control-mobile-devices.png',
+    image: '/operando-mobile-devices.png',
     imageAlt: 'operando.app en dispositivos de trabajo',
     whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Treinta.',
     comparison: { alternative: 'Treinta', rows: [
@@ -297,7 +297,7 @@ const comparisonPages = [
     featureList: ['Sucursales', 'Cajas', 'Usuarios', 'Compras', 'Tickets'],
   },
   {
-    slug: 'pclafcontrol-vs-contabilium',
+    slug: 'operando-vs-contabilium',
     seoTitle: 'Operando vs Contabilium | Comparacion para comercios',
     description: 'Compara operando.app y Contabilium para elegir entre operacion comercial con tickets y un ERP con contabilidad e integraciones de e-commerce.',
     kicker: 'Comparacion',
@@ -320,7 +320,7 @@ const comparisonPages = [
     featureList: ['Ventas', 'Caja', 'Stock', 'Sucursales', 'Tickets'],
   },
   {
-    slug: 'pclafcontrol-vs-gestion-comercio',
+    slug: 'operando-vs-gestion-comercio',
     seoTitle: 'Operando vs Gestion Comercio | Comparacion para comercios',
     description: 'Compara operando.app y Gestion Comercio para evaluar punto de venta, stock, sucursales, balanzas, escritorio y tickets de servicio.',
     kicker: 'Comparacion',
@@ -453,7 +453,7 @@ const glossaryPages = glossaryTerms.map((term) => ({
   kicker: 'Glosario operando.app',
   h1: `${term.title}: que es y como se aplica en un comercio`,
   lead: term.lead,
-  image: '/pclaf-control-panel-real.png',
+  image: '/operando-panel-real.png',
   imageAlt: `Gestion comercial en operando.app: ${term.title}`,
   whatsAppPrompt: `Hola operando.app, quiero ayuda con ${term.title.toLowerCase()}.`,
   sections: term.sections,
@@ -482,7 +482,7 @@ const controlStories = [
     title: 'Cada local en foco. Todo el negocio en perspectiva.',
     body: 'Separá la operación por sucursal para consultar stock, cajas y resultados con el contexto correcto. Cuando necesitás mirar el conjunto, seguís trabajando sobre la misma base.',
     details: ['Stock y movimientos por sucursal', 'Cajas y puestos ligados a cada local'],
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     alt: 'Vista de control de stock por sucursal en operando.app',
     caption: 'La operación se organiza por local, sin perder una visión común.',
   },
@@ -492,7 +492,7 @@ const controlStories = [
     title: 'Un cobro rápido también puede quedar bien respaldado.',
     body: 'Vinculá cada venta, apertura, cierre, movimiento y diferencia a la caja desde la que se operó. El equipo sigue atendiendo; vos conservás una lectura clara del turno.',
     details: ['Apertura y cierre por caja', 'Movimientos y diferencias por puesto'],
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     alt: 'Resumen de caja y cierre operativo en operando.app',
     caption: 'Cada puesto mantiene su propio recorrido de caja.',
   },
@@ -502,7 +502,7 @@ const controlStories = [
     title: 'Cuando algo cambia, podés volver a entender por qué.',
     body: 'Ventas, movimientos de caja, ajustes, compras y transferencias conservan un historial operativo. No se trata de vigilar de más: se trata de poder revisar sin reconstruir la historia a mano.',
     details: ['Historial de acciones relevantes', 'Origen y destino en transferencias'],
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     alt: 'Pantalla de ventas de operando.app',
     caption: 'La operación diaria deja contexto para la revisión posterior.',
   },
@@ -512,7 +512,7 @@ const controlStories = [
     title: 'Reponer deja de ser una conversación suelta.',
     body: 'Registrá proveedores, recepciones y costos dentro de la misma operación. Así, cuando llega mercadería, el stock recibe el movimiento y la compra conserva su referencia.',
     details: ['Recepciones con costo y proveedor', 'Compras que actualizan el stock'],
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     alt: 'Control de productos y stock en operando.app',
     caption: 'Compras y stock se encuentran en el mismo flujo.',
   },
@@ -522,7 +522,7 @@ const controlStories = [
     title: 'Cada persona entra para hacer lo que le toca.',
     body: 'Definí roles, módulos habilitados y permisos bloqueados según la responsabilidad de cada usuario. Reducís pantallas innecesarias sin sumar pasos para quien necesita operar.',
     details: ['Roles para caja, depósito y administración', 'Módulos y acciones por usuario'],
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     alt: 'Operación de ventas en operando.app',
     caption: 'La interfaz puede acompañar el rol de quien trabaja.',
   },
@@ -532,7 +532,7 @@ const controlStories = [
     title: 'Prepará la conexión fiscal antes de llevarla a producción.',
     body: 'Cargá los datos fiscales, generá la solicitud de certificado y verificá la conexión con ARCA en homologación. La salida fiscal productiva se define con tu comercio antes de operar.',
     details: ['Configuración fiscal guiada', 'Verificación en homologación'],
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     alt: 'Resumen operativo de operando.app',
     caption: 'La preparación fiscal se comunica con el alcance correcto.',
   },
@@ -549,7 +549,7 @@ const marketingPages = [
     primaryCta: { href: signupPath, label: 'Probar gratis' },
     secondaryCta: { href: supportUrl, label: 'Hablar por WhatsApp' },
     whatsAppPrompt: 'Hola Operando, quiero probar operando.app en mi comercio.',
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     imageAlt: 'Pantalla de ventas de operando.app en una computadora',
     stats: [
       ['Por sucursal', 'Stock y resultados separados'],
@@ -580,7 +580,7 @@ const marketingPages = [
     kicker: 'Funciones',
     h1: 'Funciones para ganar control operativo sin sumar fricción',
     lead: 'Vendé y cobrá con agilidad, mientras cada caja, sucursal, compra y movimiento queda ordenado para consultarlo cuando lo necesitás.',
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     imageAlt: 'Pantalla de ventas y cobros de operando.app',
     whatsAppPrompt: 'Hola Operando, quiero ver todas las funciones de operando.app.',
     sections: [
@@ -600,7 +600,7 @@ const marketingPages = [
     kicker: 'Acceso 2026',
     h1: 'Operando es gratis durante todo 2026',
     lead: 'Usá ventas, caja, stock y el resto de las herramientas sin cargo durante 2026. En 2027 vamos a revisar los planes y precios para acompañar el crecimiento del producto, siempre con comunicación previa y clara.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Resumen de caja y cierre operativo de operando.app',
     whatsAppPrompt: 'Hola Operando, quiero conocer las condiciones de acceso gratis durante 2026.',
     sections: [
@@ -618,7 +618,7 @@ const marketingPages = [
     kicker: 'Ventas',
     h1: 'Sistema de ventas para comercios que quieren cobrar rapido y trabajar con mas control',
     lead: 'operando.app ayuda a registrar ventas, sugerir canales de cobro, emitir tickets y asociar comprobantes sin moverte de la misma herramienta.',
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     imageAlt: 'Pantalla de ventas y cobros de operando.app',
     whatsAppPrompt: 'Hola Operando, quiero ver el sistema de ventas para mi comercio.',
     sections: [
@@ -635,7 +635,7 @@ const marketingPages = [
     kicker: 'Stock',
     h1: 'Programa para controlar stock y saber que falta antes de quedarte sin vender',
     lead: 'Gestiona catalogo, existencias, stock minimo y movimientos de productos en una sola web para no depender de planillas separadas.',
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     imageAlt: 'Control de stock por sucursal de operando.app',
     whatsAppPrompt: 'Hola Operando, necesito controlar stock y reposicion en mi negocio.',
     sections: [
@@ -653,7 +653,7 @@ const marketingPages = [
     kicker: 'Caja',
     h1: 'Sistema de caja por puesto para cobrar rápido y cerrar con respaldo',
     lead: 'Abrí y cerrá cada caja, controlá el efectivo esperado y registrá ingresos o egresos. Así mantenés la velocidad de venta y la trazabilidad de la operación.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Cierre de caja comercial de operando.app',
     whatsAppPrompt: 'Hola Operando, quiero mejorar la apertura y cierre de caja de mi negocio.',
     sections: [
@@ -670,7 +670,7 @@ const marketingPages = [
     kicker: 'Rubros',
     h1: 'Sistema para kioscos que necesitan vender rapido y controlar stock en serio',
     lead: 'Ideal para kioscos con productos de alta rotacion, cobros rapidos y necesidad de saber que se vendio, que falta y cuanto quedo en caja.',
-    image: '/pclaf-control-punto-venta-real.png',
+    image: '/operando-punto-venta-real.png',
     imageAlt: 'Sistema para kioscos con ventas y stock en operando.app',
     whatsAppPrompt: 'Hola Operando, quiero probar operando.app para mi kiosco.',
     sections: [
@@ -687,7 +687,7 @@ const marketingPages = [
     kicker: 'Rubros',
     h1: 'Software para tiendas y locales que necesitan vender, cobrar y ordenar su operacion',
     lead: 'operando.app ayuda a tiendas y locales a trabajar mejor con productos, clientes, historial comercial, caja y reportes desde una sola plataforma.',
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     imageAlt: 'Software para tiendas y locales con control de stock',
     whatsAppPrompt: 'Hola Operando, quiero probar operando.app para mi tienda o local.',
     sections: [
@@ -704,7 +704,7 @@ const marketingPages = [
     kicker: 'Rubros',
     h1: 'Software para servicio tecnico con tickets, clientes, caja y control operativo',
     lead: 'Si trabajas con equipos, reparaciones, repuestos y cobros, puedes combinar tickets activos con ventas, stock y caja en el mismo sistema.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Software para servicio tecnico con tickets y caja',
     whatsAppPrompt: 'Hola Operando, quiero ver operando.app para servicio tecnico.',
     sections: [
@@ -721,7 +721,7 @@ const marketingPages = [
     kicker: 'POS por rubro',
     h1: 'Un sistema comercial que se adapta a la forma de trabajar de tu negocio',
     lead: 'Cada rubro tiene un ritmo distinto. Elegi tu actividad y conoce los flujos de operando.app que sirven para su operacion diaria.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Panel de operando.app para gestionar un comercio',
     whatsAppPrompt: 'Hola Operando, quiero saber si operando.app se adapta a mi rubro.',
     sections: marketingSectors,
@@ -735,7 +735,7 @@ const marketingPages = [
     kicker: 'Como funciona',
     h1: 'De la configuracion inicial a una operacion mas ordenada',
     lead: 'operando.app centraliza el trabajo diario del comercio. Empeza por lo esencial y suma los modulos que tu operacion necesita.',
-    image: '/pclaf-control-mobile-devices.png',
+    image: '/operando-mobile-devices.png',
     imageAlt: 'operando.app funcionando en computadora, tablet y celular',
     whatsAppPrompt: 'Hola Operando, quiero que me expliquen como empezar a usar operando.app.',
     sections: [
@@ -766,7 +766,7 @@ const marketingPages = [
     kicker: 'Comparaciones honestas',
     h1: 'Compara sistemas de gestion y elegi el que mejor se adapta a tu comercio',
     lead: 'No todos los sistemas resuelven lo mismo. Revisa funciones, tipo de operacion y limites concretos antes de decidir.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Panel de gestion de operando.app',
     whatsAppPrompt: 'Hola operando.app, quiero ayuda para elegir el sistema adecuado para mi comercio.',
     sections: comparisonPages.map((page) => ({
@@ -785,7 +785,7 @@ const marketingPages = [
     kicker: 'Glosario POS',
     h1: 'Conceptos de gestion comercial explicados para el dia a dia del comercio',
     lead: 'Entende los terminos de ventas, caja, stock, clientes y servicios con ejemplos conectados a una operacion comercial real.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Operacion comercial con operando.app',
     whatsAppPrompt: 'Hola operando.app, quiero ayuda para ordenar la gestion de mi comercio.',
     sections: glossaryTerms.map((term) => ({
@@ -804,7 +804,7 @@ const marketingPages = [
     kicker: 'Clientes',
     h1: 'Compras y proveedores para reponer con más criterio y menos vueltas',
     lead: 'Centralizá clientes, proveedores y recepciones de compra para que costos, stock y seguimiento comercial no queden en sistemas separados.',
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     imageAlt: 'Gestion de clientes, compras y proveedores de operando.app',
     whatsAppPrompt: 'Hola Operando, quiero ordenar clientes y compras en mi comercio.',
     sections: [
@@ -821,7 +821,7 @@ const marketingPages = [
     kicker: 'Escala',
     h1: 'Sistema multi sucursal para ver cada local sin perder el control del conjunto',
     lead: 'Separá resultados por sucursal, vinculá cajas a cada local y transferí mercadería con trazabilidad. Todo sin obligar al equipo a trabajar más lento.',
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     imageAlt: 'Control multi sucursal de operando.app',
     whatsAppPrompt: 'Hola Operando, necesito varias sucursales y cajas en el sistema.',
     sections: [
@@ -858,7 +858,7 @@ const marketingPages = [
     kicker: 'Blog',
     h1: 'Como controlar stock en un comercio sin depender de Excel',
     lead: 'Controlar stock no es solo saber cuantas unidades quedan. Tambien es conocer que se vendio, que falta comprar y entre que sucursales se movio cada articulo.',
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     imageAlt: 'Articulo sobre como controlar stock con operando.app',
     whatsAppPrompt: 'Hola Operando, vi el articulo de stock y quiero una demo.',
     sections: [
@@ -876,7 +876,7 @@ const marketingPages = [
     kicker: 'Blog',
     h1: 'Como hacer un cierre de caja correctamente en un negocio',
     lead: 'Un buen cierre de caja no solo compara efectivo. Tambien separa cobros, diferencias y movimientos para que el negocio tenga trazabilidad real.',
-    image: '/pclaf-control-panel-real.png',
+    image: '/operando-panel-real.png',
     imageAlt: 'Articulo sobre cierre de caja con operando.app',
     whatsAppPrompt: 'Hola Operando, quiero una demo para ordenar la caja de mi negocio.',
     sections: [
@@ -893,7 +893,7 @@ const marketingPages = [
     kicker: 'Blog',
     h1: 'Como pasar tus productos desde Excel a operando.app',
     lead: 'Cada comercio organiza sus planillas de una forma distinta. Por eso revisamos tu archivo y hacemos la migracion contigo, sin obligarte a adaptar columnas a ciegas.',
-    image: '/pclaf-control-stock-real.png',
+    image: '/operando-stock-real.png',
     imageAlt: 'Importacion masiva de productos desde Excel en operando.app',
     whatsAppPrompt: 'Hola Operando, quiero importar mis productos desde Excel.',
     sections: [
@@ -951,7 +951,7 @@ const buildSoftwareJsonLd = (page) => ({
   url: pageUrl(page.slug),
   image: `${siteOrigin}/operando-logo.png`,
   screenshot: [
-    `${siteOrigin}/pantalla-ventas-pclaf-control.svg`,
+    `${siteOrigin}/pantalla-ventas-operando.svg`,
     `${siteOrigin}/control-stock-por-sucursal.svg`,
     `${siteOrigin}/cierre-caja-comercio.svg`,
   ],
@@ -1085,7 +1085,7 @@ const renderComparison = (comparison) => comparison ? `
     </div>
     <div class="marketing-compare-table" role="region" aria-label="Tabla comparativa" tabindex="0">
       <div class="marketing-compare-head"><span>Aspecto</span><span>${escapeHtml(comparison.alternative)}</span><span>operando.app</span></div>
-      ${comparison.rows.map(([feature, alternative, pclaf]) => `<div class="marketing-compare-row"><strong>${escapeHtml(feature)}</strong><span>${escapeHtml(alternative)}</span><span>${escapeHtml(pclaf)}</span></div>`).join('')}
+      ${comparison.rows.map(([feature, alternative, operando]) => `<div class="marketing-compare-row"><strong>${escapeHtml(feature)}</strong><span>${escapeHtml(alternative)}</span><span>${escapeHtml(operando)}</span></div>`).join('')}
     </div>
   </section>
 ` : ''
@@ -3248,9 +3248,9 @@ const appHtml = (entry = 'panel') => `<!doctype html>
     </div>
     <script>
       window.__operandoEntry = ${JSON.stringify(entry)};
-      window.__pclafAppEntry = ${entry === 'panel' || entry === 'legacy'};
-      window.__pclafBooted = false;
-      window.__pclafBootError = null;
+      window.__operandoAppEntry = ${entry === 'panel' || entry === 'legacy'};
+      window.__operandoBooted = false;
+      window.__operandoBootError = null;
       try {
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
       } catch (error) {}
@@ -3258,11 +3258,11 @@ const appHtml = (entry = 'panel') => `<!doctype html>
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       window.addEventListener('error', function (event) {
-        window.__pclafBootError = event && event.message ? event.message : 'Error inesperado al iniciar la aplicacion.';
+        window.__operandoBootError = event && event.message ? event.message : 'Error inesperado al iniciar la aplicacion.';
       });
       window.addEventListener('unhandledrejection', function (event) {
         var reason = event && event.reason;
-        window.__pclafBootError = reason && reason.message ? reason.message : 'Fallo una promesa al iniciar la aplicacion.';
+        window.__operandoBootError = reason && reason.message ? reason.message : 'Fallo una promesa al iniciar la aplicacion.';
       });
       window.addEventListener('pageshow', function () {
         window.scrollTo(0, 0);
@@ -3270,10 +3270,10 @@ const appHtml = (entry = 'panel') => `<!doctype html>
         document.body.scrollTop = 0;
       });
       window.setTimeout(function () {
-        if (window.__pclafBooted) return;
+        if (window.__operandoBooted) return;
         var shell = document.getElementById('boot-status');
         if (!shell) return;
-        var message = window.__pclafBootError || 'La aplicacion no termino de cargar. Proba recargar con Ctrl + F5.';
+        var message = window.__operandoBootError || 'La aplicacion no termino de cargar. Proba recargar con Ctrl + F5.';
         shell.innerHTML = '<div class="boot-card is-error"><strong>No se pudo iniciar</strong><p>' + message + '</p><p>Si sigue igual, avisame y reviso el error puntual.</p></div>';
       }, 4000);
     </script>

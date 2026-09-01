@@ -1,6 +1,11 @@
 User-agent: *
 Allow: /
 Disallow: /app/
+Disallow: /panel/
+Disallow: /ingresar/
+Disallow: /crear-cuenta/
+Disallow: /recuperar-clave/
+Disallow: /restablecer-clave/
 Disallow: /admin/
 
 Sitemap: https://operando.app/sitemap.xml

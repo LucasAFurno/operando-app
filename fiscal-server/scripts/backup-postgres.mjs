@@ -15,11 +15,11 @@ if (missing.length) {
   process.exitCode = 1
 } else {
   const outputDir = path.resolve(process.env.BACKUP_OUTPUT_DIR || 'backups')
-  const prefix = String(process.env.BACKUP_GCS_PREFIX || 'pclaf-control/backups').trim().replace(/^\/+|\/+$/g, '')
+  const prefix = String(process.env.BACKUP_GCS_PREFIX || 'operando-control/backups').trim().replace(/^\/+|\/+$/g, '')
   const retentionDays = Number(process.env.BACKUP_RETENTION_DAYS || 0)
   if (!Number.isInteger(retentionDays) || retentionDays < 0 || retentionDays > 3650) throw new Error('BACKUP_RETENTION_DAYS debe ser un entero entre 0 y 3650')
 
-  const name = `pclaf-control-${new Date().toISOString().replace(/[:.]/g, '-')}.dump`
+  const name = `operando-control-${new Date().toISOString().replace(/[:.]/g, '-')}.dump`
   const destination = path.join(outputDir, name)
   const objectName = `${prefix}/${name}`
   const metadataName = `${prefix}/last-success.json`

@@ -88,8 +88,8 @@ Proyecto: operando.app
 
 ### Como conviene manejarlo
 
-- `pclaf-prod`: proyecto productivo con clientes reales.
-- `pclaf-dev`: proyecto separado para pruebas, cambios de schema y UI inestable.
+- `operando-prod`: proyecto productivo con clientes reales.
+- `operando-dev`: proyecto separado para pruebas, cambios de schema y UI inestable.
 
 ### Regla importante
 

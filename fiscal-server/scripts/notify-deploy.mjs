@@ -10,8 +10,8 @@ const input = Object.fromEntries(process.argv.slice(3).map((arg) => {
   return [key, parts.join('=')]
 }))
 const destination = ['deploys', 'gcp-run'].includes(input.destination) ? input.destination : 'deploys'
-const required = process.env.PCLAF_CONTROL_DISCORD_ENABLED === 'true'
-  ? missingVariables([destination === 'gcp-run' ? 'PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL' : 'PCLAF_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL'])
+const required = process.env.OPERANDO_CONTROL_DISCORD_ENABLED === 'true'
+  ? missingVariables([destination === 'gcp-run' ? 'OPERANDO_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL' : 'OPERANDO_CONTROL_DISCORD_DEPLOYS_WEBHOOK_URL'])
   : []
 
 if (required.length) {
@@ -38,7 +38,7 @@ if (required.length) {
   const sent = await notifyDiscord(destination, event)
   const notifyTelegramForStatus = status === 'failed' || status === 'rollback'
   const telegramSent = !notifyTelegramForStatus || input.telegram === 'false' ? true : await notifyTelegram(event)
-  if (notifyTelegramForStatus && input.telegram !== 'false' && process.env.PCLAF_CONTROL_TELEGRAM_ENABLED === 'true' && !telegramSent) {
+  if (notifyTelegramForStatus && input.telegram !== 'false' && process.env.OPERANDO_CONTROL_TELEGRAM_ENABLED === 'true' && !telegramSent) {
     process.stdout.write('{"service":"fiscal","event":"telegram_deploy_notification_not_delivered"}\n')
   }
   process.stdout.write(sent ? `Notificacion de deploy ${status} encolada en ${destination}.\n` : 'Discord deshabilitado o sin destino configurado; el deploy continua.\n')

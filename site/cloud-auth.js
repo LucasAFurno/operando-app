@@ -41,10 +41,10 @@ const apiError = (payload, fallback) => {
   return retryAfterSeconds > 0 ? `${code}:${Math.ceil(retryAfterSeconds)}` : code
 }
 
-export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev', turnstileSiteKey = '' }) => {
+export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-dev', turnstileSiteKey = '' }) => {
   const baseUrl = normalizeUrl(url)
   const publishableKey = String(anonKey || '').trim()
-  const currentInstanceKey = String(instanceKey || 'pclaf-dev').trim().toLowerCase()
+  const currentInstanceKey = String(instanceKey || 'operando-dev').trim().toLowerCase()
   const turnstileEnabled = Boolean(String(turnstileSiteKey || '').trim())
   if (!baseUrl || !publishableKey) {
     return null
@@ -97,7 +97,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     return session
   }
 
-  const normalizeInstanceKey = (value) => String(value || currentInstanceKey || 'pclaf-dev').trim().toLowerCase() || 'pclaf-dev'
+  const normalizeInstanceKey = (value) => String(value || currentInstanceKey || 'operando-dev').trim().toLowerCase() || 'operando-dev'
   const normalizeOptionalInstanceKey = (value) => {
     if (value == null) return ''
     const normalized = String(value).trim().toLowerCase()

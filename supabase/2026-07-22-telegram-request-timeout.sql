@@ -13,12 +13,12 @@ declare
 begin
   select decrypted_secret into v_bot_token
   from vault.decrypted_secrets
-  where name = 'pclaf_control_telegram_bot_token'
+  where name = 'operando_control_telegram_bot_token'
   limit 1;
 
   select decrypted_secret into v_chat_id
   from vault.decrypted_secrets
-  where name = 'pclaf_control_telegram_chat_id'
+  where name = 'operando_control_telegram_chat_id'
   limit 1;
 
   if coalesce(v_bot_token, '') = '' or coalesce(v_chat_id, '') = '' then

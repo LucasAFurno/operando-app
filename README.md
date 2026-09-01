@@ -35,18 +35,18 @@ Para actualizar los cuatro indicadores comerciales desde Supabase, ejecutar `npm
 
 Conviene separar desde el arranque:
 
-- `pclaf-dev`: desarrollo y pruebas
-- `pclaf-prod`: produccion real
+- `operando-dev`: desarrollo y pruebas
+- `operando-prod`: produccion real
 
 No mezclar datos de clientes reales con desarrollo.
 
 ## Flujo recomendado
 
 1. Trabajar siempre en local.
-2. Probar contra `pclaf-dev`.
+2. Probar contra `operando-dev`.
 3. Subir cambios a GitHub.
 4. Validar demo web.
-5. Recién después promover a `pclaf-prod`.
+5. Recién después promover a `operando-prod`.
 
 ## Variables
 
@@ -56,9 +56,9 @@ Copiar `.env.example` a `.env` y completar:
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_INSTANCE_ENV`
 - `VITE_INSTANCE_KEY`
-- `PCLAF_GA4_ID` (opcional; ID público de medición GA4 para la web pública)
+- `OPERANDO_GA4_ID` (opcional; ID público de medición GA4 para la web pública)
 
-Para GitHub Pages, configurá `PCLAF_GA4_ID` como una variable del repositorio en
+Para GitHub Pages, configurá `OPERANDO_GA4_ID` como una variable del repositorio en
 **Settings → Secrets and variables → Actions → Variables**. El workflow la pasa al
 build; GA4 se carga únicamente cuando el visitante acepta las cookies analíticas.
 

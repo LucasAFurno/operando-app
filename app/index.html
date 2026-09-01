@@ -8,11 +8,11 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
-    <link rel="canonical" href="https://operando.app/app/" />
+    <link rel="canonical" href="https://operando.app/panel/" />
     <link rel="icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
-    <link rel="stylesheet" href="/app.css?v=002d3930d52f" />
-    <title>Acceso al sistema | Operando</title>
+    <link rel="stylesheet" href="/app.css?v=bf3f72a6055b" />
+    <title>Panel | Operando</title>
     <style>
       html, body {
         margin: 0;
@@ -72,9 +72,10 @@
       </div>
     </div>
     <script>
-      window.__pclafAppEntry = true;
-      window.__pclafBooted = false;
-      window.__pclafBootError = null;
+      window.__operandoEntry = "legacy";
+      window.__operandoAppEntry = true;
+      window.__operandoBooted = false;
+      window.__operandoBootError = null;
       try {
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
       } catch (error) {}
@@ -82,11 +83,11 @@
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       window.addEventListener('error', function (event) {
-        window.__pclafBootError = event && event.message ? event.message : 'Error inesperado al iniciar la aplicacion.';
+        window.__operandoBootError = event && event.message ? event.message : 'Error inesperado al iniciar la aplicacion.';
       });
       window.addEventListener('unhandledrejection', function (event) {
         var reason = event && event.reason;
-        window.__pclafBootError = reason && reason.message ? reason.message : 'Fallo una promesa al iniciar la aplicacion.';
+        window.__operandoBootError = reason && reason.message ? reason.message : 'Fallo una promesa al iniciar la aplicacion.';
       });
       window.addEventListener('pageshow', function () {
         window.scrollTo(0, 0);
@@ -94,14 +95,14 @@
         document.body.scrollTop = 0;
       });
       window.setTimeout(function () {
-        if (window.__pclafBooted) return;
+        if (window.__operandoBooted) return;
         var shell = document.getElementById('boot-status');
         if (!shell) return;
-        var message = window.__pclafBootError || 'La aplicacion no termino de cargar. Proba recargar con Ctrl + F5.';
+        var message = window.__operandoBootError || 'La aplicacion no termino de cargar. Proba recargar con Ctrl + F5.';
         shell.innerHTML = '<div class="boot-card is-error"><strong>No se pudo iniciar</strong><p>' + message + '</p><p>Si sigue igual, avisame y reviso el error puntual.</p></div>';
       }, 4000);
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-    <script type="module" src="/app.js?v=002d3930d52f"></script>
+    <script type="module" src="/app.js?v=bf3f72a6055b"></script>
   </body>
 </html>

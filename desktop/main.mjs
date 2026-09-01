@@ -13,25 +13,25 @@ let localDatabase
 
 const getDatabase = () => {
   if (localDatabase) return localDatabase
-  const dbPath = path.join(app.getPath('userData'), 'data', 'pclaf-control.sqlite')
+  const dbPath = path.join(app.getPath('userData'), 'data', 'operando-control.sqlite')
   localDatabase = createLocalDatabase(dbPath)
   return localDatabase
 }
 
 const registerIpc = () => {
-  ipcMain.on('pclaf:initialize', (event, seedState) => {
+  ipcMain.on('operando:initialize', (event, seedState) => {
     event.returnValue = getDatabase().initialize(seedState)
   })
 
-  ipcMain.on('pclaf:loadSnapshot', (event) => {
+  ipcMain.on('operando:loadSnapshot', (event) => {
     event.returnValue = getDatabase().loadState()
   })
 
-  ipcMain.on('pclaf:saveSnapshot', (event, snapshot) => {
+  ipcMain.on('operando:saveSnapshot', (event, snapshot) => {
     event.returnValue = getDatabase().saveSnapshot(snapshot)
   })
 
-  ipcMain.handle('pclaf:exportPdf', async (_event, payload) => {
+  ipcMain.handle('operando:exportPdf', async (_event, payload) => {
     const pdfWindow = new BrowserWindow({
       show: false,
       webPreferences: {

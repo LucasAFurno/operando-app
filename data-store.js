@@ -1,9 +1,9 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=002d3930d52f'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=bf3f72a6055b'
 
-const dataStorageKey = 'pclaf-control-data'
-const cloudConfigStorageKey = 'pclaf-control-cloud-config'
+const dataStorageKey = 'operando-control-data'
+const cloudConfigStorageKey = 'operando-control-cloud-config'
 const defaultCloudUrl = 'https://rfwsnqmjkclxhbmidbkm.supabase.co'
-const canPersistInBrowser = Boolean(globalThis.window?.pclafDesktop?.isDesktop)
+const canPersistInBrowser = Boolean(globalThis.window?.operandoDesktop?.isDesktop)
 
 const fallbackId = () => `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 const makeId = () => {
@@ -28,19 +28,19 @@ const todayDate = () => todayIso().slice(0, 10)
 const contactDetailsFromNotes = (value) => {
   try {
     const parsed = JSON.parse(String(value || ''))
-    if (parsed?.pclafContact) return { address: String(parsed.pclafContact.address || ''), cuit: String(parsed.pclafContact.cuit || ''), notes: String(parsed.notes || '') }
+    if (parsed?.operandoContact) return { address: String(parsed.operandoContact.address || ''), cuit: String(parsed.operandoContact.cuit || ''), notes: String(parsed.notes || '') }
   } catch {}
   return { address: '', cuit: '', notes: String(value || '') }
 }
-const contactDetailsNotes = ({ address, cuit, notes }) => JSON.stringify({ pclafContact: { address: String(address || '').trim(), cuit: String(cuit || '').trim() }, notes: String(notes || '').trim() })
+const contactDetailsNotes = ({ address, cuit, notes }) => JSON.stringify({ operandoContact: { address: String(address || '').trim(), cuit: String(cuit || '').trim() }, notes: String(notes || '').trim() })
 const customerDetailsFromTag = (value) => {
   try {
     const parsed = JSON.parse(String(value || ''))
-    if (parsed?.pclafCustomer) return { tag: String(parsed.pclafCustomer.tag || ''), address: String(parsed.pclafCustomer.address || ''), cuit: String(parsed.pclafCustomer.cuit || '') }
+    if (parsed?.operandoCustomer) return { tag: String(parsed.operandoCustomer.tag || ''), address: String(parsed.operandoCustomer.address || ''), cuit: String(parsed.operandoCustomer.cuit || '') }
   } catch {}
   return { tag: String(value || 'Cliente'), address: '', cuit: '' }
 }
-const customerDetailsTag = ({ tag, address, cuit }) => JSON.stringify({ pclafCustomer: { tag: String(tag || '').trim(), address: String(address || '').trim(), cuit: String(cuit || '').trim() } })
+const customerDetailsTag = ({ tag, address, cuit }) => JSON.stringify({ operandoCustomer: { tag: String(tag || '').trim(), address: String(address || '').trim(), cuit: String(cuit || '').trim() } })
 const pinHashVersion = 'sha256-v1'
 const clone = (value) => {
   if (typeof globalThis.structuredClone === 'function') return globalThis.structuredClone(value)
@@ -980,7 +980,7 @@ const migrateState = (source) => {
 }
 
 export const createBrowserDataStore = (options = {}) => {
-  const desktopBridge = globalThis.window?.pclafDesktop
+  const desktopBridge = globalThis.window?.operandoDesktop
   const isDesktop = Boolean(desktopBridge?.isDesktop)
   const requireCloud = Boolean(options.requireCloud) && !isDesktop
   const useBrowserBusinessCache = !requireCloud && !isDesktop
@@ -988,7 +988,7 @@ export const createBrowserDataStore = (options = {}) => {
     ? {
         url: String(options.initialCloudConfig.url || '').trim(),
         anonKey: String(options.initialCloudConfig.anonKey || '').trim(),
-        instanceKey: String(options.initialCloudConfig.instanceKey || 'pclaf-dev').trim().toLowerCase(),
+        instanceKey: String(options.initialCloudConfig.instanceKey || 'operando-dev').trim().toLowerCase(),
         environment: String(options.initialCloudConfig.environment || 'production').trim().toLowerCase(),
         environmentLabel: String(options.initialCloudConfig.environmentLabel || '').trim(),
       }
@@ -1003,7 +1003,7 @@ export const createBrowserDataStore = (options = {}) => {
       return {
         url: String(parsed.url || '').trim(),
         anonKey: String(parsed.anonKey || '').trim(),
-        instanceKey: String(parsed.instanceKey || 'pclaf-dev').trim().toLowerCase(),
+        instanceKey: String(parsed.instanceKey || 'operando-dev').trim().toLowerCase(),
         environment: String(parsed.environment || initialCloudConfig?.environment || 'production').trim().toLowerCase(),
         environmentLabel: String(parsed.environmentLabel || initialCloudConfig?.environmentLabel || '').trim(),
       }
@@ -1020,7 +1020,7 @@ export const createBrowserDataStore = (options = {}) => {
     const normalized = {
       url: String(config.url || '').trim().replace(/\/+$/, ''),
       anonKey: String(config.anonKey || '').trim(),
-      instanceKey: String(config.instanceKey || 'pclaf-dev').trim().toLowerCase(),
+      instanceKey: String(config.instanceKey || 'operando-dev').trim().toLowerCase(),
       environment: String(config.environment || cloudConfig?.environment || initialCloudConfig?.environment || 'production').trim().toLowerCase(),
       environmentLabel: String(config.environmentLabel || cloudConfig?.environmentLabel || initialCloudConfig?.environmentLabel || '').trim(),
     }
@@ -1161,7 +1161,7 @@ export const createBrowserDataStore = (options = {}) => {
       adapter: cloudCoreAdapter ? 'supabase-core' : (isDesktop ? 'desktop-sqlite' : (requireCloud ? 'cloud-required' : 'web-disabled')),
       syncStatus: requireCloud && !cloudCoreAdapter ? 'required' : mode,
       lastSyncedAt: syncedAt || state.meta?.lastSyncedAt || '',
-      instanceKey: cloudConfig?.instanceKey || state.meta?.instanceKey || (requireCloud ? 'pclaf-dev' : 'desktop-local'),
+      instanceKey: cloudConfig?.instanceKey || state.meta?.instanceKey || (requireCloud ? 'operando-dev' : 'desktop-local'),
       environment: cloudConfig?.environment || state.meta?.environment || 'production',
       environmentLabel: cloudConfig?.environmentLabel || state.meta?.environmentLabel || '',
     }
@@ -2887,7 +2887,7 @@ export const createBrowserDataStore = (options = {}) => {
     enabled: Boolean(cloudCoreAdapter),
     url: cloudConfig?.url || defaultCloudUrl,
     anonKey: cloudConfig?.anonKey || '',
-    instanceKey: cloudConfig?.instanceKey || 'pclaf-dev',
+    instanceKey: cloudConfig?.instanceKey || 'operando-dev',
     environment: cloudConfig?.environment || 'production',
     environmentLabel: cloudConfig?.environmentLabel || '',
     required: requireCloud,

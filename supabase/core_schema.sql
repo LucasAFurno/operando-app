@@ -495,10 +495,10 @@ begin
   limit 1;
 
   if v_commerce.id is null and v_bootstrap_owner_email <> '' and v_email = v_bootstrap_owner_email then
-    v_slug := regexp_replace(lower(coalesce(nullif(trim(coalesce(p_commerce_name, '')), ''), 'pclaf-control')), '[^a-z0-9]+', '-', 'g');
+    v_slug := regexp_replace(lower(coalesce(nullif(trim(coalesce(p_commerce_name, '')), ''), 'operando-control')), '[^a-z0-9]+', '-', 'g');
     v_slug := trim(both '-' from v_slug);
     if v_slug = '' then
-      v_slug := 'pclaf-control';
+      v_slug := 'operando-control';
     end if;
 
     insert into public.commerce_accounts (
@@ -620,7 +620,7 @@ begin
 end;
 $$;
 
-create or replace function public.import_snapshot_to_core(p_instance_key text default 'pclaf-dev')
+create or replace function public.import_snapshot_to_core(p_instance_key text default 'operando-dev')
 returns jsonb
 language plpgsql
 security definer

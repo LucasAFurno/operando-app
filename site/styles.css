@@ -5190,7 +5190,7 @@ input[type='search'] { color: var(--text); }
 }
 .onboarding-layer.has-onboarding-target .onboarding-target-ring {
   display: block;
-  animation: pclaf-guide-ring-pulse 1.15s ease-in-out infinite;
+  animation: operando-guide-ring-pulse 1.15s ease-in-out infinite;
 }
 .onboarding-card {
   position: fixed;
@@ -5244,7 +5244,7 @@ input[type='search'] { color: var(--text); }
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 76%, white 24%) !important;
 }
 
-@keyframes pclaf-guide-ring-pulse {
+@keyframes operando-guide-ring-pulse {
   50% { box-shadow: 0 0 0 8px rgba(255, 55, 49, .16), 0 0 42px rgba(255, 48, 41, .96); }
 }
 

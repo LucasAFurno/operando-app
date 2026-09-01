@@ -20,8 +20,8 @@ const pemBytes = (pem: string) => {
 
 const mintGoogleIdToken = async (audience: string, encodedCredentials: string) => {
   let account: ServiceAccount
-  try { account = JSON.parse(encodedCredentials) } catch { throw new Error('PCLAF_GCP_INVOKER_SERVICE_ACCOUNT_JSON is invalid') }
-  if (!account.client_email || !account.private_key) throw new Error('PCLAF_GCP_INVOKER_SERVICE_ACCOUNT_JSON is incomplete')
+  try { account = JSON.parse(encodedCredentials) } catch { throw new Error('OPERANDO_GCP_INVOKER_SERVICE_ACCOUNT_JSON is invalid') }
+  if (!account.client_email || !account.private_key) throw new Error('OPERANDO_GCP_INVOKER_SERVICE_ACCOUNT_JSON is incomplete')
   const now = Math.floor(Date.now() / 1000)
   const header = base64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
   const claims = base64Url(JSON.stringify({
@@ -71,11 +71,11 @@ const corsHeaders = (request: Request) => {
 
 Deno.serve(async (request) => {
   const cors = corsHeaders(request)
-  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type, x-pclaf-session' } })
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type, x-operando-session' } })
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
 
   try {
-    const sessionToken = request.headers.get('x-pclaf-session') || ''
+    const sessionToken = request.headers.get('x-operando-session') || ''
     if (!sessionToken) return json({ error: 'unauthorized' }, 401, cors)
     const body = await request.json()
     if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'invalid_request' }, 422, cors)
@@ -90,7 +90,7 @@ Deno.serve(async (request) => {
     const runUrl = (Deno.env.get('FISCAL_RUN_URL') || '').replace(/\/$/, '')
     const audience = Deno.env.get('FISCAL_RUN_AUDIENCE') || runUrl
     const serviceToken = Deno.env.get('FISCAL_SERVICE_TOKEN') || ''
-    const serviceAccount = Deno.env.get('PCLAF_GCP_INVOKER_SERVICE_ACCOUNT_JSON') || ''
+    const serviceAccount = Deno.env.get('OPERANDO_GCP_INVOKER_SERVICE_ACCOUNT_JSON') || ''
     if (!runUrl || !audience || !serviceToken || !serviceAccount) throw new Error('Fiscal gateway is not configured')
     const idToken = await mintGoogleIdToken(audience, serviceAccount)
     const fiscalResponse = await fetch(`${runUrl}/v1/tenants/${encodeURIComponent(tenantId)}/${action}`, {

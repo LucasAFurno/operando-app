@@ -4,12 +4,12 @@ services:
     env_file: .env
     environment:
       FISCAL_HOST: 0.0.0.0
-      FISCAL_DATA_DIR: /var/lib/pclaf-fiscal
+      FISCAL_DATA_DIR: /var/lib/operando-fiscal
     ports:
       # Solo para desarrollo local. En produccion usar red privada/API gateway interno.
       - "127.0.0.1:8787:8787"
     volumes:
-      - fiscal_data:/var/lib/pclaf-fiscal
+      - fiscal_data:/var/lib/operando-fiscal
     restart: unless-stopped
 
 volumes:

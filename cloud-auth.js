@@ -41,10 +41,10 @@ const apiError = (payload, fallback) => {
   return retryAfterSeconds > 0 ? `${code}:${Math.ceil(retryAfterSeconds)}` : code
 }
 
-export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev', turnstileSiteKey = '' }) => {
+export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-dev', turnstileSiteKey = '' }) => {
   const baseUrl = normalizeUrl(url)
   const publishableKey = String(anonKey || '').trim()
-  const currentInstanceKey = String(instanceKey || 'pclaf-dev').trim().toLowerCase()
+  const currentInstanceKey = String(instanceKey || 'operando-dev').trim().toLowerCase()
   const turnstileEnabled = Boolean(String(turnstileSiteKey || '').trim())
   if (!baseUrl || !publishableKey) {
     return null
@@ -97,7 +97,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     return session
   }
 
-  const normalizeInstanceKey = (value) => String(value || currentInstanceKey || 'pclaf-dev').trim().toLowerCase() || 'pclaf-dev'
+  const normalizeInstanceKey = (value) => String(value || currentInstanceKey || 'operando-dev').trim().toLowerCase() || 'operando-dev'
   const normalizeOptionalInstanceKey = (value) => {
     if (value == null) return ''
     const normalized = String(value).trim().toLowerCase()
@@ -164,6 +164,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     const token = readTurnstileToken()
     if (!token) throw new Error('turnstile_required')
     const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, { method: 'POST', headers: buildHeaders(publishableKey), body: JSON.stringify({ mode: 'recovery', email: normalizedEmail, redirectTo, turnstileToken: token }) })
+    const payload = await safeJson(response)
     if (!response.ok) {
       resetTurnstile()
       throw new Error(apiError(payload, 'access_denied'))
@@ -177,10 +178,16 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
 
   const consumeRecoverySession = async () => {
     const url = new URL(window.location.href)
-    const isRecoveryRoute = url.searchParams.get('auth_action') === 'recover'
+    const isRecoveryRoute = /^\/restablecer-clave\/?$/i.test(url.pathname) && url.searchParams.get('auth_action') === 'recover'
+    if (!isRecoveryRoute) return null
     const { data } = await supabase.auth.getSession()
     const sessionData = data?.session || null
-    if (!isRecoveryRoute || !sessionData?.access_token) return null
+    if (!sessionData?.access_token) return null
+    // Supabase entrega el token de recuperación en el fragmento de la URL.
+    // Tras importarlo, lo quitamos de la barra de direcciones y del historial.
+    if (url.hash) {
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`)
+    }
     const payload = {
       email: sessionData.user?.email || readRecovery()?.email || '',
       accessToken: sessionData.access_token,

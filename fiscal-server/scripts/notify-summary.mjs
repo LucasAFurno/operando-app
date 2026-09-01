@@ -63,7 +63,7 @@ if (required.length) {
   ].map(async ([label, value]) => [label, await value]))
   const metrics = Object.fromEntries(entries.filter(([, value]) => value !== null))
   const backupBucket = String(process.env.BACKUP_GCS_BUCKET || '').trim()
-  const backupPrefix = String(process.env.BACKUP_GCS_PREFIX || 'pclaf-control/backups').trim().replace(/^\/+|\/+$/g, '')
+  const backupPrefix = String(process.env.BACKUP_GCS_PREFIX || 'operando-control/backups').trim().replace(/^\/+|\/+$/g, '')
   if (backupBucket) {
     try {
       const [content] = await new Storage().bucket(backupBucket).file(`${backupPrefix}/last-success.json`).download()

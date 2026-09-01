@@ -1,7 +1,7 @@
 {
   "url": "https://rfwsnqmjkclxhbmidbkm.supabase.co",
   "anonKey": "sb_publishable_GQGSD34YFt6cEnsZn5DHtw_35FpnYt3",
-  "instanceKey": "pclaf-prod",
+  "instanceKey": "operando-prod",
   "requireCloud": true,
   "environment": "production",
   "environmentLabel": "Produccion"

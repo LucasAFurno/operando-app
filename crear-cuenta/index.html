@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Acceso a operando.app para operar ventas, caja, stock, clientes, compras y comprobantes." />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
+    <link rel="canonical" href="https://operando.app/crear-cuenta/" />
+    <link rel="icon" type="image/png" href="/favicon.png?v=operando-20260831" />
+    <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
+    <link rel="stylesheet" href="/app.css?v=bf3f72a6055b" />
+    <title>Crear cuenta | Operando</title>
+    <style>
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: linear-gradient(180deg, #050505 0%, #0b0b0b 100%);
+      }
+      body[data-booting='true'] {
+        overflow: hidden;
+      }
+      #app {
+        min-height: 100vh;
+      }
+      #boot-status {
+        position: fixed;
+        inset: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: linear-gradient(180deg, #050505 0%, #0b0b0b 100%);
+        color: #f3f4f6;
+        font-family: Arial, sans-serif;
+        z-index: 9999;
+      }
+      .boot-card {
+        width: min(560px, 100%);
+        padding: 28px;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(17, 17, 17, 0.96);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      }
+      .boot-card strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 28px;
+      }
+      .boot-card p {
+        margin: 0;
+        color: #9ca3af;
+        line-height: 1.5;
+      }
+      .boot-card p + p {
+        margin-top: 10px;
+      }
+      .boot-card.is-error strong {
+        color: #ff5a4f;
+      }
+    </style>
+  </head>
+  <body data-booting="true">
+    <div id="app"></div>
+    <div id="boot-status">
+      <div class="boot-card">
+        <strong>Operando</strong>
+        <p>Cargando sistema...</p>
+      </div>
+    </div>
+    <script>
+      window.__operandoEntry = "signup";
+      window.__operandoAppEntry = false;
+      window.__operandoBooted = false;
+      window.__operandoBootError = null;
+      try {
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      } catch (error) {}
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.addEventListener('error', function (event) {
+        window.__operandoBootError = event && event.message ? event.message : 'Error inesperado al iniciar la aplicacion.';
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event && event.reason;
+        window.__operandoBootError = reason && reason.message ? reason.message : 'Fallo una promesa al iniciar la aplicacion.';
+      });
+      window.addEventListener('pageshow', function () {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
+      window.setTimeout(function () {
+        if (window.__operandoBooted) return;
+        var shell = document.getElementById('boot-status');
+        if (!shell) return;
+        var message = window.__operandoBootError || 'La aplicacion no termino de cargar. Proba recargar con Ctrl + F5.';
+        shell.innerHTML = '<div class="boot-card is-error"><strong>No se pudo iniciar</strong><p>' + message + '</p><p>Si sigue igual, avisame y reviso el error puntual.</p></div>';
+      }, 4000);
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
+    <script type="module" src="/app.js?v=bf3f72a6055b"></script>
+  </body>
+</html>

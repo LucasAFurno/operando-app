@@ -41,7 +41,7 @@ if (required.length) {
   if (severity === 'warning' || severity === 'critical') await notifyDiscord('logs', event)
   if (severity === 'critical') await notifyDiscord('alertas', event)
   if (!discordSent) process.stdout.write('{"service":"fiscal","event":"discord_status_not_delivered"}\n')
-  if (process.env.PCLAF_CONTROL_TELEGRAM_ENABLED === 'true' && !telegramSent) process.stdout.write('{"service":"fiscal","event":"telegram_status_not_delivered"}\n')
+  if (process.env.OPERANDO_CONTROL_TELEGRAM_ENABLED === 'true' && !telegramSent) process.stdout.write('{"service":"fiscal","event":"telegram_status_not_delivered"}\n')
   if (!allHealthy) process.exitCode = 1
   process.stdout.write('Estado operativo notificado.\n')
 }

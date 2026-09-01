@@ -14,7 +14,7 @@ const execute = (bin, args, options = {}) => new Promise((resolve, reject) => {
 })
 
 const withSecureFiles = async (files, callback) => {
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'pclaf-fiscal-'))
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'operando-fiscal-'))
   try {
     for (const [name, content] of Object.entries(files)) {
       const target = path.join(dir, name)

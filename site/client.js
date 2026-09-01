@@ -1,22 +1,22 @@
-import { createBrowserDataStore } from './data-store.js?v=__PCLAF_ASSET_VERSION__'
-import { createCloudAuthManager } from './cloud-auth.js?v=__PCLAF_ASSET_VERSION__'
+import { createBrowserDataStore } from './data-store.js?v=__OPERANDO_ASSET_VERSION__'
+import { createCloudAuthManager } from './cloud-auth.js?v=__OPERANDO_ASSET_VERSION__'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'Operando'
-const appVersion = '__PCLAF_RELEASE_VERSION__'
+const appVersion = '__OPERANDO_RELEASE_VERSION__'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'
 const publicSiteUrl = 'https://operando.app'
-const themeStorageKey = 'pclaf-control-theme'
-const sectionStorageKey = 'pclaf-control-section'
-const instanceStorageKey = 'pclaf-control-instance'
-const dataStorageKey = 'pclaf-control-data'
-const cloudConfigStorageKey = 'pclaf-control-cloud-config'
-const onboardingStorageKey = 'pclaf-control-onboarding-v1'
+const themeStorageKey = 'operando-control-theme'
+const sectionStorageKey = 'operando-control-section'
+const instanceStorageKey = 'operando-control-instance'
+const dataStorageKey = 'operando-control-data'
+const cloudConfigStorageKey = 'operando-control-cloud-config'
+const onboardingStorageKey = 'operando-control-onboarding-v1'
 const defaultSupabaseUrl = 'https://rfwsnqmjkclxhbmidbkm.supabase.co'
-const canPersistInBrowser = Boolean(globalThis.window?.pclafDesktop?.isDesktop)
+const canPersistInBrowser = Boolean(globalThis.window?.operandoDesktop?.isDesktop)
 
 let store = null
 let authManager = null
@@ -232,7 +232,7 @@ const callArca = async (action, payload = {}) => {
   if (!session?.sessionToken || !cloud?.url || !commerceContext?.commerce_id) throw new Error('Inicia sesion como propietario para configurar ARCA.')
   const response = await fetch(`${String(cloud.url).replace(/\/$/, '')}/functions/v1/fiscal-gateway`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-pclaf-session': session.sessionToken },
+    headers: { 'content-type': 'application/json', 'x-operando-session': session.sessionToken },
     body: JSON.stringify({ action, tenantId: arcaTenantId(), ...payload }),
   })
   const result = await response.json().catch(() => ({}))
@@ -248,7 +248,7 @@ const listPagination = {
   'stock-critico': { page: 1, pageSize: 20 },
 }
 
-const normalizeInstanceKey = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-') || 'pclaf-dev'
+const normalizeInstanceKey = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-') || 'operando-dev'
 const createCommerceKey = (value) => String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || `comercio-${Date.now().toString().slice(-6)}`
 const persistInstanceKey = (value) => {
   authInstanceKey = normalizeInstanceKey(value)
@@ -588,7 +588,7 @@ const mapInvoicePaymentError = (message) => {
 }
 const applyTheme = () => { document.documentElement.dataset.theme = theme }
 const markBootComplete = () => {
-  window.__pclafBooted = true
+  window.__operandoBooted = true
   document.body?.removeAttribute('data-booting')
   preloadSite?.setAttribute('hidden', 'hidden')
   bootStatus?.remove()
@@ -610,7 +610,7 @@ const csvEscape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`
 const bulkProductColumns = ['Nombre', 'SKU', 'Codigo de barras', 'Stock inicial', 'Precio de venta', 'Costo', 'Stock minimo', 'Categoria', 'Controlar stock']
 const normalizeImportHeader = (value) => String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
 const parseDelimitedRows = (content, delimiter) => { const rows = []; let row = []; let cell = ''; let quoted = false; for (let index = 0; index < content.length; index += 1) { const character = content[index]; if (character === '"') { if (quoted && content[index + 1] === '"') { cell += '"'; index += 1 } else quoted = !quoted } else if (character === delimiter && !quoted) { row.push(cell.trim()); cell = '' } else if ((character === '\n' || character === '\r') && !quoted) { if (character === '\r' && content[index + 1] === '\n') index += 1; row.push(cell.trim()); if (row.some(Boolean)) rows.push(row); row = []; cell = '' } else cell += character } row.push(cell.trim()); if (row.some(Boolean)) rows.push(row); return rows }
-const downloadBulkProductTemplate = () => { const csv = `\ufeff${[bulkProductColumns, Array(bulkProductColumns.length).fill('')].map((row) => row.map(csvEscape).join(';')).join('\r\n')}`; const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); const link = document.createElement('a'); link.href = url; link.download = 'plantilla-productos-pclaf.csv'; link.click(); URL.revokeObjectURL(url) }
+const downloadBulkProductTemplate = () => { const csv = `\ufeff${[bulkProductColumns, Array(bulkProductColumns.length).fill('')].map((row) => row.map(csvEscape).join(';')).join('\r\n')}`; const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); const link = document.createElement('a'); link.href = url; link.download = 'plantilla-productos-operando.csv'; link.click(); URL.revokeObjectURL(url) }
 const importBulkProductsFile = async (event) => {
   const file = event.target.files?.[0]; if (!file) return
   try {
@@ -1245,7 +1245,7 @@ const standaloneAuthView = (ui) => {
     <form class="login-form" data-form="login" autocomplete="on">
       <label>Correo o usuario<input type="text" name="identifier" placeholder="nombre@comercio.com" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
       <div class="auth-field-row"><label>Clave<input type="password" name="pin" placeholder="Tu clave" autocomplete="current-password" required /></label><a class="auth-inline-link" href="/recuperar-clave/">¿Olvidaste tu clave?</a></div>
-      ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
+      ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
       ${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}
       <button type="submit">Ingresar al panel</button>
     </form>
@@ -1259,7 +1259,7 @@ const standaloneAuthView = (ui) => {
       </form><p class="auth-route-note">¿Ya tenés cuenta? <a href="/ingresar/">Ingresar</a></p>`
     : mode === 'recovery' ? `
       <div class="auth-heading"><p class="kicker">Recuperar acceso</p><h1 id="auth-title">Volvé a entrar</h1><p>Escribí tu correo y te enviaremos un enlace seguro para crear una clave nueva.</p></div>
-      <form class="login-form" data-form="access-recovery" autocomplete="on"><label>Correo electrónico<input type="email" name="email" placeholder="nombre@comercio.com" autocomplete="email" autocapitalize="off" spellcheck="false" required /></label>${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}<button type="submit">Enviar enlace de recuperación</button></form><p class="auth-route-note"><a href="/ingresar/">Volver a ingresar</a></p>`
+      <form class="login-form" data-form="access-recovery" autocomplete="on"><label>Correo electrónico<input type="email" name="email" placeholder="nombre@comercio.com" autocomplete="email" autocapitalize="off" spellcheck="false" required /></label>${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}<button type="submit">Enviar enlace de recuperación</button></form><p class="auth-route-note"><a href="/ingresar/">Volver a ingresar</a></p>`
     : mode === 'reset' && recoveryState ? `
       <div class="auth-heading"><p class="kicker">Restablecer clave</p><h1 id="auth-title">Creá una clave nueva</h1><p>Vas a recuperar el acceso de ${maskEmail(recoveryState.email) || 'tu cuenta'}.</p></div>
       <form class="login-form" data-form="password-recovery" autocomplete="off"><label>Nueva clave<input type="password" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required /></label><label>Repetir nueva clave<input type="password" name="passwordConfirm" placeholder="Repetí la nueva clave" autocomplete="new-password" required /></label>${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}<button type="submit">Guardar nueva clave</button></form>`
@@ -1317,7 +1317,7 @@ const paginatedCardList = (items, listKey, rowTemplate) => {
 }
 
 const loginView = (ui) => {
-  if ((window.__pclafAppEntry || isStandaloneAppRoute()) && authViewMode === 'landing') authViewMode = 'login'
+  if ((window.__operandoAppEntry || isStandaloneAppRoute()) && authViewMode === 'landing') authViewMode = 'login'
   if (recoveryState) {
     authViewMode = 'reset'
     return standaloneAuthView(ui)
@@ -1350,7 +1350,7 @@ const loginView = (ui) => {
             <form class="login-form" data-form="login" autocomplete="off">
               <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
               <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
-              ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
+              ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
               ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
               <button type="submit">Ingresar</button>
             </form>
@@ -1506,8 +1506,8 @@ const loginViewV2 = (ui) => `
           <form class="login-form" data-form="login" autocomplete="off">
             <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" data-lpignore="true" required /></label>
             <label>Clave<input type="password" name="pin" placeholder="Tu clave" autocomplete="current-password" required /></label>
-            <input type="hidden" name="instanceKey" value="${ui.cloudConnection.environment === 'development' ? (ui.cloudConnection.instanceKey || 'pclaf-dev') : ''}" />
-            ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
+            <input type="hidden" name="instanceKey" value="${ui.cloudConnection.environment === 'development' ? (ui.cloudConnection.instanceKey || 'operando-dev') : ''}" />
+            ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
             <p class="login-hints">Si no recuerdas tu clave, puedes pedir recuperacion o hablar con soporte.</p>
             ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
             <button type="submit">Ingresar</button>
@@ -1602,7 +1602,7 @@ const cloudActivationView = (ui) => `
         <div class="login-form-grid-2">
           <label>URL Supabase<input type="url" name="url" value="${ui.cloudConnection.url || defaultSupabaseUrl}" placeholder="https://xxxx.supabase.co" required /></label>
           <label>Clave publica<input type="text" name="anonKey" value="${ui.cloudConnection.anonKey || ''}" placeholder="sb_publishable_xxx o anon key" required /></label>
-          <label class="full-span">Instancia<input type="text" name="instanceKey" value="${ui.cloudConnection.instanceKey || 'pclaf-dev'}" placeholder="pclaf-dev" required /></label>
+          <label class="full-span">Instancia<input type="text" name="instanceKey" value="${ui.cloudConnection.instanceKey || 'operando-dev'}" placeholder="operando-dev" required /></label>
         </div>
         <button type="submit">Activar base</button>
       </form>
@@ -3367,11 +3367,11 @@ const bootstrap = async () => {
   canonicalizeLegacyPanelRoute()
   canonicalizeRecoveryRoute()
   const initialCloudConfig = await readSiteCloudConfig()
-  window.__pclafTurnstileSiteKey = String(initialCloudConfig?.turnstileSiteKey || '')
+  window.__operandoTurnstileSiteKey = String(initialCloudConfig?.turnstileSiteKey || '')
   const entryAuthMode = ({ login: 'login', signup: 'signup', recovery: 'recovery', reset: 'reset' })[operandoEntry] || ''
-  authViewMode = authModeFromPath() || entryAuthMode || getRequestedPublicView() || (window.__pclafAppEntry ? 'login' : authViewMode)
+  authViewMode = authModeFromPath() || entryAuthMode || getRequestedPublicView() || (window.__operandoAppEntry ? 'login' : authViewMode)
   activeSection = sectionFromPath()
-  if (!window.pclafDesktop) {
+  if (!window.operandoDesktop) {
     safeStorage.removeItem(dataStorageKey)
     safeStorage.removeItem(cloudConfigStorageKey)
     safeStorage.removeItem(instanceStorageKey)
@@ -3381,11 +3381,11 @@ const bootstrap = async () => {
   authInstanceKey = normalizeInstanceKey(
     safeStorage.getItem(instanceStorageKey, '')
     || initialCloudConfig?.instanceKey
-    || 'pclaf-dev'
+    || 'operando-dev'
   )
   const storeOptions = {
     initialCloudConfig,
-    requireCloud: !window.pclafDesktop,
+    requireCloud: !window.operandoDesktop,
   }
   store = createBrowserDataStore(storeOptions)
   authManager = initialCloudConfig?.url && initialCloudConfig?.anonKey
@@ -3527,8 +3527,8 @@ const printReceipt = (saleId) => {
 const exportReceipt = async (saleId) => {
   const doc = getReceiptDocument(saleId)
   if (!doc) return
-  if (window.pclafDesktop?.exportPdf) {
-    const result = await window.pclafDesktop.exportPdf({ html: doc.html, filename: doc.filename, pageSize: 'A4' })
+  if (window.operandoDesktop?.exportPdf) {
+    const result = await window.operandoDesktop.exportPdf({ html: doc.html, filename: doc.filename, pageSize: 'A4' })
     feedbackMessage = result.ok ? `PDF exportado en ${result.path}` : (result.message || 'No se pudo exportar el PDF.')
     render()
     return
@@ -3607,8 +3607,8 @@ const printThermalReceipt = (saleId, paperWidth = '80') => {
 const exportThermalReceipt = async (saleId, paperWidth = '80') => {
   const doc = buildThermalReceiptDocument(saleId, paperWidth)
   if (!doc) return
-  if (window.pclafDesktop?.exportPdf) {
-    const result = await window.pclafDesktop.exportPdf({ html: doc.html, filename: doc.filename, pageSize: 'A4' })
+  if (window.operandoDesktop?.exportPdf) {
+    const result = await window.operandoDesktop.exportPdf({ html: doc.html, filename: doc.filename, pageSize: 'A4' })
     feedbackMessage = result.ok ? `PDF exportado en ${result.path}` : (result.message || 'No se pudo exportar el PDF.')
     render()
     return
@@ -3623,7 +3623,7 @@ const exportThermalReceipt = async (saleId, paperWidth = '80') => {
 }
 
 const exportData = () => {
-  if (!window.pclafDesktop) {
+  if (!window.operandoDesktop) {
     feedbackMessage = 'La web publica ya no exporta ni restaura snapshots locales.'
     render()
     return
@@ -3632,7 +3632,7 @@ const exportData = () => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `pclaf-control-backup-${today}.json`
+  link.download = `operando-backup-${today}.json`
   link.click()
   URL.revokeObjectURL(url)
 }
@@ -4703,7 +4703,7 @@ const bindEvents = () => {
     scrollToAuthBlock('#acceso-signup')
   })
   for (const button of document.querySelectorAll('[data-action="back-landing"]')) button.addEventListener('click', () => {
-    if (window.__pclafAppEntry) {
+    if (window.__operandoAppEntry) {
       window.location.href = '/'
       return
     }
@@ -5226,7 +5226,7 @@ const bindEvents = () => {
     store.signOut()
     store.clearCloudAuthSession()
     commerceContext = null
-    authViewMode = (window.__pclafAppEntry || isStandaloneAppRoute()) ? 'login' : 'landing'
+    authViewMode = (window.__operandoAppEntry || isStandaloneAppRoute()) ? 'login' : 'landing'
     if (isPanelRoute()) window.history.replaceState({}, '', '/ingresar/')
     loginMessage = ''
     signupMessage = ''
@@ -5339,7 +5339,7 @@ const bindEvents = () => {
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = 'pclaf-arca-solicitud.csr'
+    anchor.download = 'operando-arca-solicitud.csr'
     anchor.click()
     URL.revokeObjectURL(url)
   })

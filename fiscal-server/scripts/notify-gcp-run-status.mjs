@@ -11,12 +11,12 @@ if (period === 'monthly' && process.env.SUMMARY_REQUIRE_MONTH_END === 'true' && 
   process.exit(0)
 }
 
-const required = missingVariables(['GCP_PROJECT_ID', 'PCLAF_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL'])
+const required = missingVariables(['GCP_PROJECT_ID', 'OPERANDO_CONTROL_DISCORD_GCP_RUN_WEBHOOK_URL'])
 if (required.length) {
   printMissingVariables(required)
   process.exitCode = 1
 } else {
-  const service = String(process.env.CLOUD_RUN_SERVICE || 'pclaf-fiscal').trim()
+  const service = String(process.env.CLOUD_RUN_SERVICE || 'operando-fiscal').trim()
   const region = String(process.env.CLOUD_RUN_REGION || 'us-central1').trim()
   const project = String(process.env.GCP_PROJECT_ID).trim()
   const gcloudBin = String(process.env.GCLOUD_BIN || 'gcloud').trim()

@@ -35,7 +35,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if ($ServiceAccount) {
-  $roleId = 'pclafBackupObjectOperator'
+  $roleId = 'operandoBackupObjectOperator'
   $roleResource = "projects/$ProjectId/roles/$roleId"
   $requiredPermissions = @('storage.objects.create', 'storage.objects.delete', 'storage.objects.get', 'storage.objects.list')
   $roleJson = & gcloud iam roles describe $roleId "--project=$ProjectId" --format=json 2>$null

@@ -50,9 +50,9 @@ Fecha: 2026-07-21
 - Oferta sin precio falso en schema.
 - Landing publica sin cargar el codigo completo de la app.
 - Modulo descargable de plantilla para importacion:
-  - `/plantilla-productos-pclaf-control.csv`
+  - `/plantilla-productos-operando.csv`
 - Medición privacy-first: el banner ofrece categorías necesarias y analíticas; GA4 solo se carga después de aceptar analíticas. La elección se puede modificar desde el pie de página y, sin consentimiento, los eventos no se envían.
-- Eventos listos para GA4 si se define `PCLAF_GA4_ID` (ID público de medición, no una clave secreta) y el visitante acepta analíticas:
+- Eventos listos para GA4 si se define `OPERANDO_GA4_ID` (ID público de medición, no una clave secreta) y el visitante acepta analíticas:
   - header login
   - header signup
   - hero trial
@@ -65,7 +65,7 @@ Fecha: 2026-07-21
 ## Pendiente fuera del codigo
 
 - Configurar Google Search Console y enviar sitemap.
-- Configurar GA4 real con `PCLAF_GA4_ID`. No agregar Meta Pixel ni TikTok Pixel sin una revisión específica de privacidad y consentimiento.
+- Configurar GA4 real con `OPERANDO_GA4_ID`. No agregar Meta Pixel ni TikTok Pixel sin una revisión específica de privacidad y consentimiento.
 - Medir Core Web Vitals reales en produccion.
 - Definir redireccion canonica final si se usa `www` como unica version.
 - Preparar `app.operando.app` si mas adelante se quiere separar por subdominio en vez de `/app/`.
@@ -88,7 +88,7 @@ Fecha: 2026-07-21
    - precios
    - sistema-de-ventas
    - control-de-stock
-3. Configurar `PCLAF_GA4_ID` y comprobar que GA4 solo se solicita después de aceptar analíticas.
+3. Configurar `OPERANDO_GA4_ID` y comprobar que GA4 solo se solicita después de aceptar analíticas.
 4. Medir clics reales en:
    - Probar gratis
    - Iniciar sesion

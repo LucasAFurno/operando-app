@@ -56,7 +56,7 @@ begin
     into v_match_commerce_id, v_match_user_id, v_match_membership_id
     from public.control_users user_row
     join public.commerce_memberships membership on membership.user_id = user_row.id and membership.status = 'active'
-    join public.commerce_accounts commerce_row on commerce_row.id = membership.commerce_id and commerce_row.status = 'active' and lower(coalesce(commerce_row.instance_key, '')) <> 'pclaf-dev'
+    join public.commerce_accounts commerce_row on commerce_row.id = membership.commerce_id and commerce_row.status = 'active' and lower(coalesce(commerce_row.instance_key, '')) <> 'operando-dev'
     where lower(coalesce(user_row.email, '')) = v_identifier
     order by case when user_row.active_commerce_id = commerce_row.id then 0 else 1 end, membership.is_owner desc, membership.updated_at desc, user_row.created_at asc
     limit 1;

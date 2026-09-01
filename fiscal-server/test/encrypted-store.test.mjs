@@ -7,7 +7,7 @@ import { randomBytes } from 'node:crypto'
 import { EncryptedFiscalStore } from '../src/encrypted-store.mjs'
 
 test('stores fiscal material encrypted and does not expose it on disk', async () => {
-  const dataDir = await mkdtemp(path.join(os.tmpdir(), 'pclaf-fiscal-test-'))
+  const dataDir = await mkdtemp(path.join(os.tmpdir(), 'operando-fiscal-test-'))
   try {
     const store = new EncryptedFiscalStore({ dataDir, masterKey: randomBytes(32) })
     await store.createKeyPair('tenant-test', '/CN=Operando Test/serialNumber=20123456789')

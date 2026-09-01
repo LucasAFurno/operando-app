@@ -4,7 +4,7 @@ alter table public.control_users
 update public.control_users
 set is_platform_admin = true
 where lower(coalesce(email, '')) in (
-  'admin@pclaf.control',
+  'admin@operando.control',
   'lucas_yenkoz28@hotmail.com'
 );
 

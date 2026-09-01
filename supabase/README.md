@@ -7,7 +7,7 @@ Proyecto objetivo:
 
 ## 1. Crear la tabla de sincronizacion
 
-Ejecuta el archivo local [app_snapshots.sql](C:\Users\bandido\Documents\pclaf-control\supabase\app_snapshots.sql) en el SQL Editor de Supabase.
+Ejecuta el archivo local [app_snapshots.sql](C:\Users\bandido\Documents\operando-control\supabase\app_snapshots.sql) en el SQL Editor de Supabase.
 
 ## 2. Buscar la clave publica
 
@@ -23,7 +23,7 @@ Entrar a `Ajustes > Conexion cloud` y completar:
 
 - `URL Supabase`: `https://rfwsnqmjkclxhbmidbkm.supabase.co`
 - `Clave publica`: la publishable key del proyecto
-- `Instancia`: `pclaf-dev`
+- `Instancia`: `operando-dev`
 
 Luego usar `Conectar Supabase` y despues `Sincronizar ahora`.
 

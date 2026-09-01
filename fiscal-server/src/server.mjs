@@ -110,7 +110,7 @@ const publicTenant = (record) => record ? {
 
 const handle = async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`)
-  if (request.method === 'GET' && url.pathname === '/health') return json(response, 200, { ok: true, service: 'pclaf-fiscal-service', environment: config.environment })
+  if (request.method === 'GET' && url.pathname === '/health') return json(response, 200, { ok: true, service: 'operando-fiscal-service', environment: config.environment })
   const route = tenantIdFrom(url.pathname)
   if (!route) return json(response, 404, { error: 'not_found' })
   if (!authorized(request)) return json(response, 401, { error: 'unauthorized' })

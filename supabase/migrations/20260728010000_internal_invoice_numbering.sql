@@ -54,7 +54,7 @@ begin
     where sale.id = v_sale_id;
 
     if not exists (select 1 from public.documents where sale_id = v_sale_id) then
-      perform pg_advisory_xact_lock(hashtext('pclaf_internal_invoice:' || v_commerce_id::text));
+      perform pg_advisory_xact_lock(hashtext('operando_internal_invoice:' || v_commerce_id::text));
       select coalesce(max(nullif(substring(document_number from '^INT-0001-([0-9]{8})$'), '')::integer), 0) + 1
         into v_internal_sequence
       from public.documents

@@ -4,7 +4,7 @@
     "action": { "type": "Delete" },
     "condition": {
       "tagState": "any",
-      "packageNamePrefixes": ["pclaf-fiscal"],
+      "packageNamePrefixes": ["operando-fiscal"],
       "olderThan": "30d"
     }
   },
@@ -12,7 +12,7 @@
     "name": "keep-ten-most-recent-fiscal-images",
     "action": { "type": "Keep" },
     "mostRecentVersions": {
-      "packageNamePrefixes": ["pclaf-fiscal"],
+      "packageNamePrefixes": ["operando-fiscal"],
       "keepCount": 10
     }
   }

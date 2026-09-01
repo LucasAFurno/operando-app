@@ -16,22 +16,22 @@ IAM: privado; sin allUsers
 No se usan VM, Serverless VPC Connector, Load Balancer, dominio personalizado, cron, polling ni workers internos.
 
 ```bash
-gcloud run deploy pclaf-fiscal \
+gcloud run deploy operando-fiscal \
   --project="$PROJECT_ID" --region=us-central1 --image="$IMAGE" --service-account="$RUNTIME_SA" \
   --no-allow-unauthenticated --ingress=all --port=8080 \
   --cpu=1 --memory=512Mi --cpu-throttling --min-instances=0 --max-instances=1 \
   --concurrency=4 --timeout=45s \
   --set-env-vars="FISCAL_STORE=supabase,SUPABASE_URL=${SUPABASE_URL},ARCA_TIMEOUT_MS=15000,ARCA_ATTEMPT_TIMEOUT_MS=4500,ARCA_MAX_ATTEMPTS=2,FISCAL_EMERGENCY_STOP_CACHE_MS=5000" \
-  --set-secrets="FISCAL_MASTER_KEY_BASE64=pclaf-fiscal-master-key:latest,FISCAL_SERVICE_TOKEN=pclaf-fiscal-service-token:latest,SUPABASE_SERVICE_ROLE_KEY=pclaf-supabase-service-role:latest"
+  --set-secrets="FISCAL_MASTER_KEY_BASE64=operando-fiscal-master-key:latest,FISCAL_SERVICE_TOKEN=operando-fiscal-service-token:latest,SUPABASE_SERVICE_ROLE_KEY=operando-supabase-service-role:latest"
 ```
 
 `--ingress=all` es necesario para una Edge Function de Supabase externa a Google Cloud. No habilita acceso publico: Cloud Run exige IAM y no se concede `allUsers`.
 
 ## IAM y secretos
 
-La unica cuenta con `roles/run.invoker` es `pclaf-supabase-invoker`. La Edge Function envia el ID token Google en `X-Serverless-Authorization`; Cloud Run lo valida y lo remueve. El Bearer interno se mantiene en `Authorization` y el contenedor lo valida como segunda barrera.
+La unica cuenta con `roles/run.invoker` es `operando-supabase-invoker`. La Edge Function envia el ID token Google en `X-Serverless-Authorization`; Cloud Run lo valida y lo remueve. El Bearer interno se mantiene en `Authorization` y el contenedor lo valida como segunda barrera.
 
-La clave JSON de `pclaf-supabase-invoker` es una credencial de alto riesgo. Tiene exclusivamente `roles/run.invoker`; se guarda solo en Supabase Edge Function Secrets, se rota periodicamente, y se revoca eliminando su key de cuenta de servicio y retirando el binding IAM. Nunca va a tablas, logs, archivos versionados ni frontend. La cuenta de despliegue de GitHub no usa JSON: el workflow usa Workload Identity Federation.
+La clave JSON de `operando-supabase-invoker` es una credencial de alto riesgo. Tiene exclusivamente `roles/run.invoker`; se guarda solo en Supabase Edge Function Secrets, se rota periodicamente, y se revoca eliminando su key de cuenta de servicio y retirando el binding IAM. Nunca va a tablas, logs, archivos versionados ni frontend. La cuenta de despliegue de GitHub no usa JSON: el workflow usa Workload Identity Federation.
 
 El servicio recibe `SUPABASE_SERVICE_ROLE_KEY` desde Secret Manager. Se usa solo para RPCs privadas; nunca se expone al navegador ni se loguea.
 

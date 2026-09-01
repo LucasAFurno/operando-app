@@ -184,7 +184,7 @@ end;
 $$;
 
 create or replace function public.app_get_setup_status(
-  p_instance_key text default 'pclaf-dev'
+  p_instance_key text default 'operando-dev'
 )
 returns jsonb
 language plpgsql
@@ -198,7 +198,7 @@ begin
   select *
   into v_commerce
   from public.commerce_accounts
-  where lower(instance_key) = lower(coalesce(nullif(p_instance_key, ''), 'pclaf-dev'))
+  where lower(instance_key) = lower(coalesce(nullif(p_instance_key, ''), 'operando-dev'))
   limit 1;
 
   if v_commerce.id is not null then
@@ -216,7 +216,7 @@ begin
     'initialized', v_commerce.id is not null and v_user_count > 0,
     'commerce_id', v_commerce.id,
     'commerce_name', coalesce(v_commerce.name, ''),
-    'instance_key', coalesce(v_commerce.instance_key, lower(coalesce(nullif(p_instance_key, ''), 'pclaf-dev'))),
+    'instance_key', coalesce(v_commerce.instance_key, lower(coalesce(nullif(p_instance_key, ''), 'operando-dev'))),
     'user_count', v_user_count
   );
 end;
@@ -240,7 +240,7 @@ security definer
 set search_path = public
 as $$
 declare
-  v_instance_key text := lower(coalesce(nullif(trim(p_instance_key), ''), 'pclaf-dev'));
+  v_instance_key text := lower(coalesce(nullif(trim(p_instance_key), ''), 'operando-dev'));
   v_commerce public.commerce_accounts;
   v_existing_count integer := 0;
   v_user_id uuid := gen_random_uuid();
@@ -501,7 +501,7 @@ begin
     join public.commerce_accounts commerce_row
       on commerce_row.id = membership.commerce_id
      and commerce_row.status = 'active'
-     and lower(coalesce(commerce_row.instance_key, '')) <> 'pclaf-dev'
+     and lower(coalesce(commerce_row.instance_key, '')) <> 'operando-dev'
     where (
         lower(coalesce(user_row.email, '')) = v_identifier
       )

@@ -59,7 +59,7 @@ begin
     join public.commerce_accounts commerce_row
       on commerce_row.id = membership.commerce_id
      and commerce_row.status = 'active'
-     and lower(coalesce(commerce_row.instance_key, '')) <> 'pclaf-dev'
+     and lower(coalesce(commerce_row.instance_key, '')) <> 'operando-dev'
     where (
         lower(coalesce(user_row.email, '')) = v_identifier
       )
