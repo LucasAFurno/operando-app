@@ -543,13 +543,13 @@ const controlStories = [
 const marketingPages = [
   {
     slug: '',
-    seoTitle: 'Sistema de ventas y stock | Operando',
-    description: 'Sistema de ventas, caja y stock para comercios con sucursales, permisos y trazabilidad operativa. Probá operando.app desde PC o celular.',
-    kicker: 'Sistema comercial web',
-    h1: 'Vendé rápido. Controlá caja, stock y equipo.',
-    lead: 'Caja, stock, compras, sucursales y permisos en una sola plataforma para operar con claridad.',
-    primaryCta: { href: signupPath, label: 'Probar gratis' },
-    secondaryCta: { href: supportUrl, label: 'Hablar por WhatsApp' },
+    seoTitle: 'Operando | Sistema de ventas, caja y stock para comercios',
+    description: 'Sistema de ventas, caja y stock para comercios argentinos. Gestioná sucursales, productos, compras y equipo desde una sola plataforma. Probalo gratis.',
+    kicker: 'Software de gestión para comercios',
+    h1: 'Vendé más. Controlá todo. Crecé sin perderte.',
+    lead: 'Operando reúne ventas, caja, stock, compras y sucursales en un solo lugar para que tomes decisiones con información real.',
+    primaryCta: { href: signupPath, label: 'Probá gratis' },
+    secondaryCta: { href: '#como-funciona', label: 'Ver cómo funciona' },
     whatsAppPrompt: 'Hola Operando, quiero probar operando.app en mi comercio.',
     image: '/operando-punto-venta-real.png',
     imageAlt: 'Pantalla de ventas de operando.app en una computadora',
@@ -573,7 +573,12 @@ const marketingPages = [
       },
     ],
     downloads: importTemplateDownloads,
-    featureList: [],
+    featureList: ['Ventas', 'Caja', 'Stock', 'Sucursales', 'Compras'],
+    faq: [
+      ['¿Puedo usar Operando desde el celular?', 'Sí. Operando funciona desde el navegador en PC, tablet o celular, sin instalar un programa.'],
+      ['¿Puedo controlar más de una sucursal?', 'Sí. Podés separar stock, cajas y resultados por local y mantener una visión general del negocio.'],
+      ['¿Qué puedo gestionar?', 'Ventas, medios de pago, caja, productos, stock, compras, clientes, usuarios y permisos.'],
+    ],
   },
   {
     slug: 'funciones',
@@ -1120,7 +1125,12 @@ const renderHomeExtras = (page) => {
   if (page.slug) return ''
   const publishedMetrics = (marketingMetrics.metrics || []).filter((metric) => Number(metric.value) > 0)
   return `
-  <section class="marketing-home-rows">
+  <section id="como-funciona" class="marketing-home-rows" aria-labelledby="beneficios-title">
+    <div class="marketing-section-intro">
+      <p class="marketing-kicker">Una operación más ordenada</p>
+      <h2 id="beneficios-title">Todo lo que necesitás para administrar tu comercio</h2>
+      <p>Menos tiempo buscando datos. Más tiempo atendiendo, comprando y haciendo crecer el negocio.</p>
+    </div>
     ${homeFeatureRows.map((row) => `
       <article class="marketing-story ${row.reverse ? 'is-reverse' : ''}">
         <div class="marketing-story-media">
@@ -1438,11 +1448,14 @@ const marketingStyles = `
         background: rgba(255,255,255,0.03);
         font-size: 0.84rem;
       }
-      .marketing-hero-helper {
-        margin: 14px 0 0;
-        color: #aeb9c8;
-        font-size: 0.95rem;
-      }
+  .marketing-hero-helper {
+  margin: 14px 0 0;
+  color: #aeb9c8;
+  font-size: 0.95rem;
+  }
+  .marketing-section-intro { max-width: 680px; margin: 48px 0 8px; }
+  .marketing-section-intro h2 { margin: 0 0 10px; font-family: Oswald, Arial, sans-serif; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1; }
+  .marketing-section-intro p:last-child { margin: 0; color: #b9c2ce; line-height: 1.6; }
       .marketing-hero-helper a {
         color: #ffffff;
         text-decoration: underline;
@@ -3047,7 +3060,7 @@ const renderMarketingPage = (page) => {
             <div class="marketing-cta-row">
               <a class="is-primary" data-analytics="hero_start_trial" href="${page.primaryCta?.href || signupPath}">${escapeHtml(page.primaryCta?.label || 'Probar gratis')}</a>
             </div>
-            <p class="marketing-hero-helper">Si ya tienes cuenta, <a data-analytics="hero_login_inline" href="${page.secondaryCta?.href || loginPath}">entra aquí</a>.</p>`}
+            <p class="marketing-hero-helper">¿Ya tenés cuenta? <a data-analytics="hero_login_inline" href="${loginPath}">Iniciá sesión</a>.</p>`}
           </div>
           <aside class="marketing-hero-media">
             <img src="${page.image}" alt="${escapeHtml(page.imageAlt || page.h1)}" width="1200" height="630" loading="eager" fetchpriority="high" />
