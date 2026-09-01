@@ -1147,7 +1147,7 @@ const renderHomeExtras = (page) => {
   <section class="marketing-live-metrics" aria-labelledby="live-metrics-title">${publishedMetrics.length ? `
     <div class="marketing-live-metrics-grid">${publishedMetrics.map((metric) => `
         <article>
-          <strong class="marketing-counter" data-counter-value="${Number(metric.value)}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}" data-counter-format="${escapeHtml(metric.format || 'integer')}">0</strong>
+          <strong class="marketing-counter" data-counter-value="${Number(metric.value)}" data-counter-prefix="${escapeHtml(metric.prefix || '')}" data-counter-suffix="${escapeHtml(metric.suffix || '')}" data-counter-format="${escapeHtml(metric.format || 'integer')}">${escapeHtml(metric.prefix || '')}${metric.format === 'millions' ? Math.round(Number(metric.value) / 1000000).toLocaleString('es-AR') : Number(metric.value).toLocaleString('es-AR')}${escapeHtml(metric.suffix || '')}</strong>
           <span>${escapeHtml(metric.label)}</span>
         </article>`).join('')}
     </div>` : ''}<div class="marketing-vertical-rotation">
@@ -2994,6 +2994,13 @@ const marketingStyles = `
         color: #c0c6cf;
       }
       body .marketing-compare-row { border-bottom-color: #30343a; }
+      /* Final approved visual direction: dark navy surfaces with lime conversion accents. */
+      html, body { background: #070b12 !important; color: #f5f7fb !important; }
+      body .marketing-topbar { background: rgba(7, 11, 18, .94) !important; border-color: #26364d !important; }
+      body .marketing-hero-copy, body .marketing-hero-media, body .marketing-card, body .marketing-faq, body .marketing-footer, body .marketing-demo, body .marketing-compare-copy, body .marketing-compare-table { background: linear-gradient(145deg, #162337, #0c131e) !important; border-color: #27384f !important; }
+      body .marketing-hero-copy h1, body .marketing-card h2, body .marketing-faq h2 { color: #f5f7fb !important; }
+      body .marketing-hero-copy h1 em, body .marketing-kicker, body .marketing-nav a:hover, body .marketing-hero-helper a { color: #b8f36b !important; }
+      body .marketing-auth-links .is-primary, body .marketing-cta-row .is-primary { background: #b8f36b !important; border-color: #b8f36b !important; color: #08100a !important; }
 `
 
 const renderMarketingPage = (page) => {
@@ -3126,7 +3133,7 @@ const renderMarketingPage = (page) => {
           const displayedValue = format === 'millions' ? Math.round(value / 1000000) : value;
           counter.textContent = prefix + formatPublicMetric(displayedValue) + suffix;
         };
-        update(0);
+        update(target ? 1 : 0);
         if (!target) {
           update(1);
           return null;
@@ -3142,7 +3149,7 @@ const renderMarketingPage = (page) => {
           if (!isVisible) {
             isAnimating = false;
             hasCompleted = false;
-            animatedCounters.forEach(function (counter) { counter.update(0); });
+            animatedCounters.forEach(function (counter) { counter.update(1); });
             return;
           }
           if (isAnimating || hasCompleted) return;
