@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Servicio privado de facturacion ARCA para PCLAF Control.",
+  "description": "Servicio privado de facturacion ARCA para operando.app.",
   "scripts": {
     "dev": "node --env-file=.env --watch src/server.mjs",
     "start": "node --env-file=.env src/server.mjs",

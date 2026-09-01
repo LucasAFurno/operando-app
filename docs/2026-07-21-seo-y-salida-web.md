@@ -1,4 +1,4 @@
-# PCLAF Control: estado local de SEO y salida web
+# operando.app: estado local de SEO y salida web
 
 Fecha: 2026-07-21
 
@@ -9,7 +9,7 @@ Fecha: 2026-07-21
   - `/app/` queda para login y aplicacion.
 - HTML visible sin depender de JavaScript en toda la web publica.
 - Titulo SEO corto y especifico en portada:
-  - `Sistema de ventas y stock | PCLAF Control`
+  - `Sistema de ventas y stock | operando.app`
 - H1 comercial visible desde el HTML inicial.
 - Metadescripciones por pagina.
 - Canonicals por URL.
@@ -68,7 +68,7 @@ Fecha: 2026-07-21
 - Configurar GA4 real con `PCLAF_GA4_ID`. No agregar Meta Pixel ni TikTok Pixel sin una revisión específica de privacidad y consentimiento.
 - Medir Core Web Vitals reales en produccion.
 - Definir redireccion canonica final si se usa `www` como unica version.
-- Preparar `app.pclafcontrol.com.ar` si mas adelante se quiere separar por subdominio en vez de `/app/`.
+- Preparar `app.operando.app` si mas adelante se quiere separar por subdominio en vez de `/app/`.
 - Agregar testimonios reales y casos de exito reales.
 - Subir videos/demo reales.
 - Conseguir enlaces externos legitimos.

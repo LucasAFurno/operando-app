@@ -26,7 +26,7 @@ const htmlEscape = (value) => String(value)
 
 const asText = (value) => typeof value === 'object' ? JSON.stringify(value) : String(value)
 
-const area = (event) => event.source || 'PCLAF Control'
+const area = (event) => event.source || 'operando.app'
 
 const areaIcon = (event) => {
   if (/arca|fiscal/i.test(area(event))) return '🧾'
@@ -64,12 +64,12 @@ const eventDetails = (event) => {
 const discordEmbed = (event) => {
   const timestamp = event.timestamp || new Date().toISOString()
   return {
-    author: { name: `${areaIcon(event)} PCLAF Control · ${area(event)}` },
+    author: { name: `${areaIcon(event)} operando.app · ${area(event)}` },
     title: `${statusIcon(event)} ${sanitize(event.title || event.type || 'Notificación')}`,
     description: sanitize(event.message || 'Sin detalle adicional.'),
     color: embedColor(event),
     fields: eventDetails(event).slice(0, 25).map(([name, value]) => ({ name, value: value.slice(0, 1024), inline: name === 'Ambiente' || name === 'Área' })),
-    footer: { text: `PCLAF Control · ${argentinaTime(timestamp)}` },
+    footer: { text: `operando.app · ${argentinaTime(timestamp)}` },
     timestamp,
   }
 }
@@ -80,7 +80,7 @@ const telegramText = (event) => {
     .map(([label, value]) => `<b>${htmlEscape(label)}:</b> ${htmlEscape(value)}`)
     .join('\n')
   return [
-    `<b>${areaIcon(event)} PCLAF Control · ${htmlEscape(area(event))}</b>`,
+    `<b>${areaIcon(event)} operando.app · ${htmlEscape(area(event))}</b>`,
     `<b>${statusIcon(event)} ${htmlEscape(sanitize(event.title || event.type || 'Notificación'))}</b>`,
     '──────────────────',
     htmlEscape(sanitize(event.message || 'Sin detalle adicional.')),

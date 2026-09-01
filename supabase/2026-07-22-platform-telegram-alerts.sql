@@ -117,26 +117,26 @@ begin
 
   v_message := case new.event_type
     when 'commerce_created' then format(
-      E'PCLAF Control\nNueva cuenta: %s\nResponsable: %s\nPlan: %s',
+      E'operando.app\nNueva cuenta: %s\nResponsable: %s\nPlan: %s',
       coalesce(v_commerce_name, 'Sin nombre'),
       coalesce(new.payload ->> 'owner_email', '-'),
       coalesce(new.payload ->> 'plan', '-')
     )
     when 'first_product' then format(
-      E'PCLAF Control\n%s cargo su primer producto: %s',
+      E'operando.app\n%s cargo su primer producto: %s',
       coalesce(v_commerce_name, 'Un comercio'),
       coalesce(new.payload ->> 'product_name', '-')
     )
     when 'first_cash_open' then format(
-      E'PCLAF Control\n%s abrio su primera caja.',
+      E'operando.app\n%s abrio su primera caja.',
       coalesce(v_commerce_name, 'Un comercio')
     )
     when 'first_sale' then format(
-      E'PCLAF Control\n%s registro su primera venta por $%s.',
+      E'operando.app\n%s registro su primera venta por $%s.',
       coalesce(v_commerce_name, 'Un comercio'),
       coalesce(new.payload ->> 'total_amount', '0')
     )
-    else 'PCLAF Control: nueva actividad.'
+    else 'operando.app: nueva actividad.'
   end;
 
   select net.http_post(

@@ -21,7 +21,7 @@ if (required.length) {
   const { notifyDiscord, notifyTelegram } = await loadNotifications()
   const title = { started: 'Actualizacion de infraestructura iniciada', success: 'Actualizacion de infraestructura exitosa', failed: 'Actualizacion de infraestructura fallida', rollback: 'Rollback de infraestructura iniciado' }[status]
   const message = {
-    started: 'Se inicio una actualizacion de infraestructura de PCLAF Control. Este flujo despliega el backend privado de facturacion y ARCA; no representa una operacion realizada por un usuario.',
+    started: 'Se inicio una actualizacion de infraestructura de operando.app. Este flujo despliega el backend privado de facturacion y ARCA; no representa una operacion realizada por un usuario.',
     success: 'La actualizacion de infraestructura del backend privado de facturacion y ARCA quedo disponible correctamente.',
     failed: 'La actualizacion de infraestructura no se completo. Abri el enlace del pipeline para identificar el paso que fallo.',
     rollback: 'Se inicio un rollback de infraestructura. Revisa el pipeline para confirmar el resultado.',

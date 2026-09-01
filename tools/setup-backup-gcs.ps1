@@ -40,7 +40,7 @@ if ($ServiceAccount) {
   $requiredPermissions = @('storage.objects.create', 'storage.objects.delete', 'storage.objects.get', 'storage.objects.list')
   $roleJson = & gcloud iam roles describe $roleId "--project=$ProjectId" --format=json 2>$null
   if ($LASTEXITCODE -ne 0) {
-    Invoke-Gcloud @('iam', 'roles', 'create', $roleId, "--project=$ProjectId", '--title=PCLAF backup object operator', '--description=Only creates, gets, lists and deletes PCLAF backup objects', "--permissions=$($requiredPermissions -join ',')")
+    Invoke-Gcloud @('iam', 'roles', 'create', $roleId, "--project=$ProjectId", '--title=Operando backup object operator', '--description=Only creates, gets, lists and deletes Operando backup objects', "--permissions=$($requiredPermissions -join ',')")
   } else {
     $existingPermissions = @((($roleJson | ConvertFrom-Json).includedPermissions) | Sort-Object)
     if (Compare-Object $existingPermissions ($requiredPermissions | Sort-Object)) {

@@ -1,7 +1,7 @@
 # Auditoria final de salida a produccion
 
 Fecha: 2026-07-20
-Proyecto: PCLAF Control
+Proyecto: operando.app
 
 ## 1. Estado actual real
 
@@ -34,10 +34,10 @@ Proyecto: PCLAF Control
 ### Auth
 
 - El login y la recuperacion de acceso ya trabajan con Supabase Auth y sesiones reales.
-- Los correos ya salen con identidad de PCLAF Control.
+- Los correos ya salen con identidad de operando.app.
 - La sesion web depende de Supabase, no de datos locales del navegador.
 
-### Consola PCLAF
+### Consola Operando
 
 - `Mi Admin` ya esta planteado como consola global de plataforma.
 - Muestra comercios, estado, pack, soporte, ultimo acceso, sucursales, cajas y usuarios sin mezclar la operacion diaria del cliente.
@@ -62,7 +62,7 @@ Proyecto: PCLAF Control
 - La base esta separada del frontend publico.
 - Las funciones sensibles trabajan con contexto de sesion y comercio.
 - Los usuarios de comercio ya pueden tener modulos visibles y acciones recortadas por cuenta.
-- La consola global PCLAF no depende de snapshots del navegador.
+- La consola global Operando no depende de snapshots del navegador.
 
 ### Lo que sigue siendo delicado
 
@@ -175,7 +175,7 @@ La forma profesional de hacerlo es:
 
 ## 8. Conclusion honesta
 
-PCLAF Control ya no esta en maqueta. Ya tiene una base productiva real, auth real, consola global y operacion comercial real.
+operando.app ya no esta en maqueta. Ya tiene una base productiva real, auth real, consola global y operacion comercial real.
 
 Lo que le falta no es “hacerlo andar”, sino endurecerlo para venderlo sin miedo:
 

@@ -510,9 +510,9 @@ begin
       settings_json
     )
     values (
-      coalesce(nullif(trim(coalesce(p_commerce_name, '')), ''), 'PCLAF Control'),
+      coalesce(nullif(trim(coalesce(p_commerce_name, '')), ''), 'operando.app'),
       v_slug,
-      coalesce(nullif(trim(coalesce(p_commerce_name, '')), ''), 'PCLAF Control'),
+      coalesce(nullif(trim(coalesce(p_commerce_name, '')), ''), 'operando.app'),
       v_email,
       'full',
       jsonb_build_object('created_from', 'bootstrap')
@@ -667,7 +667,7 @@ begin
   if v_commerce_id is null then
     perform public.bootstrap_control_user(
       coalesce((select full_name from public.control_users where id = (select auth.uid())), 'Administrador'),
-      coalesce(v_business ->> 'name', 'PCLAF Control')
+      coalesce(v_business ->> 'name', 'operando.app')
     );
 
     select cu.id, cu.active_commerce_id

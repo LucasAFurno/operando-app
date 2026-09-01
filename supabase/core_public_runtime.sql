@@ -747,7 +747,7 @@ begin
     ),
     'business', jsonb_build_object(
       'name', v_commerce.name,
-      'organization', 'PCLAF',
+      'organization', 'Operando',
       'currentBranchId', coalesce(v_user.active_branch_id, (select id from public.branches where commerce_id = v_commerce.id order by created_at asc limit 1)),
       'currentRegisterId', coalesce(v_user.assigned_register_id, (select id from public.registers where commerce_id = v_commerce.id order by created_at asc limit 1)),
       'enabledModules', coalesce(v_commerce.settings_json -> 'enabledModules', jsonb_build_array('dashboard','customers','sales','cash','branches','registers','products','purchases','invoices','tickets','reports','settings')),

@@ -1,6 +1,6 @@
 # Servicio fiscal privado
 
-Servicio Node aislado para la integracion ARCA de PCLAF Control. No se importa desde el frontend, Electron ni las RPC publicas.
+Servicio Node aislado para la integracion ARCA de operando.app. No se importa desde el frontend, Electron ni las RPC publicas.
 
 ## Alcance actual
 

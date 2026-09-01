@@ -1,9 +1,9 @@
 {
-  "name": "pclaf-control",
+  "name": "operando-app",
   "version": "0.0.0",
   "private": true,
-  "description": "Sistema comercial web para PCLAF Control.",
-  "author": "PCLAF",
+  "description": "Sistema comercial web para operando.app.",
+  "author": "Operando",
   "main": "desktop/main.mjs",
   "type": "module",
   "scripts": {
@@ -30,8 +30,8 @@
     "vite": "^8.1.1"
   },
   "build": {
-    "appId": "com.pclaf.control",
-    "productName": "PCLAF Control",
+    "appId": "app.operando.desktop",
+    "productName": "operando.app",
     "directories": {
       "output": "release"
     },

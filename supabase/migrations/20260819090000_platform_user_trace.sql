@@ -1,4 +1,4 @@
--- La consola PCLAF ve actividad global solo para el administrador de plataforma.
+-- La consola Operando ve actividad global solo para el administrador de plataforma.
 -- Se exponen metadatos de trazabilidad, nunca payloads ni notas de operaciones.
 create or replace function public.app_public_platform_overview(
   p_session_token text

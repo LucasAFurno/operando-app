@@ -49,7 +49,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
   if (!baseUrl || !publishableKey) {
     return null
   }
-  // Custom PCLAF sessions are memory-only; no bearer credential is persisted.
+  // Custom Operando sessions are memory-only; no bearer credential is persisted.
   let session = null
   const supabase = createClient(baseUrl, publishableKey, {
     auth: {

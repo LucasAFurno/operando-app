@@ -10,9 +10,9 @@ const serverDir = path.join(dist, 'server')
 const buildTarget = (process.argv[2] || process.env.PCLAF_ENV || 'prod').toLowerCase()
 const isDevBuild = buildTarget === 'dev'
 const selectedCloudConfigFile = isDevBuild ? 'cloud-config.dev.json' : 'cloud-config.prod.json'
-const siteOrigin = 'https://www.pclafcontrol.com.ar'
+const siteOrigin = 'https://operando.app'
 const appPath = '/app/'
-const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20quiero%20informacion%20de%20PCLAF%20Control.'
+const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20quiero%20informacion%20de%20operando.app.'
 const gaMeasurementId = String(process.env.PCLAF_GA4_ID || '').trim()
 
 const clientJs = await readFile(path.join(root, 'site', 'client.js'), 'utf8')
@@ -81,7 +81,7 @@ const buildArticleJsonLd = (page) => {
     mainEntityOfPage: pageUrl(page.slug),
     publisher: {
       '@type': 'Organization',
-      name: 'PCLAF Control',
+      name: 'operando.app',
       logo: {
         '@type': 'ImageObject',
         url: `${siteOrigin}/favicon.svg`,
@@ -89,7 +89,7 @@ const buildArticleJsonLd = (page) => {
     },
     author: {
       '@type': 'Organization',
-      name: 'PCLAF Control',
+      name: 'operando.app',
     },
     datePublished: '2026-07-21',
     dateModified: '2026-07-21',
@@ -139,14 +139,14 @@ const homeFeatureRows = [
     title: 'Cobrá rápido. Sabé exactamente qué pasó.',
     body: 'Registrá ventas y medios de pago sin salir de la pantalla de venta. Cada operación queda asociada a la caja y al puesto que la realizó.',
     image: '/pclaf-control-punto-venta-real.png',
-    alt: 'Punto de venta de PCLAF Control',
+    alt: 'Punto de venta de operando.app',
   },
   {
     eyebrow: 'Stock entre locales',
     title: 'Mové mercadería con trazabilidad',
     body: 'Consultá el stock por sucursal, registrá ajustes y transferencias, y mantené visible el origen y destino de cada movimiento.',
     image: '/pclaf-control-stock-real.png',
-    alt: 'Catálogo y stock de PCLAF Control',
+    alt: 'Catálogo y stock de operando.app',
     reverse: true,
   },
   {
@@ -154,7 +154,7 @@ const homeFeatureRows = [
     title: 'Compras, caja y sucursales en la misma operación',
     body: 'Registrá recepciones de proveedores, costos y movimientos de caja desde una sola base, disponible desde PC o celular.',
     image: '/pclaf-control-panel-real.png',
-    alt: 'Panel operativo de PCLAF Control',
+    alt: 'Panel operativo de operando.app',
   },
 ]
 
@@ -186,20 +186,20 @@ const marketingSectors = sectorPages.map((sector) => ({
 
 const sectorLandingPages = sectorPages.map((sector) => ({
   slug: `pos-por-rubro/${sector.slug}`,
-  seoTitle: `Sistema POS para ${sector.title} | PCLAF Control`,
-  description: `Sistema de gestion para ${sector.title.toLowerCase()} con ventas, caja, stock, clientes y compras en PCLAF Control.`,
+  seoTitle: `Sistema POS para ${sector.title} | operando.app`,
+  description: `Sistema de gestion para ${sector.title.toLowerCase()} con ventas, caja, stock, clientes y compras en operando.app.`,
   kicker: 'POS por rubro',
   h1: `Sistema POS para ${sector.title}: ventas, caja y stock en una sola operacion`,
   lead: sector.focus,
   image: '/pclaf-control-panel-real.png',
-  imageAlt: `Gestion comercial para ${sector.title} con PCLAF Control`,
-  whatsAppPrompt: `Hola PCLAF Control, quiero conocer el sistema para mi ${sector.title.toLowerCase()}.`,
+  imageAlt: `Gestion comercial para ${sector.title} con operando.app`,
+  whatsAppPrompt: `Hola operando.app, quiero conocer el sistema para mi ${sector.title.toLowerCase()}.`,
   sections: [
     { title: 'Ventas y cobros', body: 'Registra operaciones, descuentos, clientes y medios de pago con una caja asignada cuando corresponde.' },
     { title: 'Productos y stock', body: 'Mantene catalogo, precios, costos, codigo de barras, stock minimo, compras y movimientos por sucursal.' },
     { title: 'Control del negocio', body: 'Consulta ventas, caja, clientes, proveedores y reportes con permisos y trazabilidad por usuario.' },
   ],
-  faq: [[`¿PCLAF Control se adapta a un ${sector.title.toLowerCase()}?`, `PCLAF Control cubre la operacion comercial de ventas, caja, stock, clientes y compras. Consulta con el equipo si necesitas una integracion especifica de este rubro.`]],
+  faq: [[`¿operando.app se adapta a un ${sector.title.toLowerCase()}?`, `operando.app cubre la operacion comercial de ventas, caja, stock, clientes y compras. Consulta con el equipo si necesitas una integracion especifica de este rubro.`]],
   featureList: ['Ventas', 'Caja', 'Stock', 'Clientes', 'Compras'],
 }))
 
@@ -224,14 +224,14 @@ const blogGuides = [
 const comparisonPages = [
   {
     slug: 'pclafcontrol-vs-dux-software',
-    seoTitle: 'PCLAF Control vs Dux Software | Comparacion para comercios',
-    description: 'Compara PCLAF Control y Dux Software para elegir un sistema de gestion segun ventas, stock, sucursales, tickets y canales de venta.',
+    seoTitle: 'operando.app vs Dux Software | Comparacion para comercios',
+    description: 'Compara operando.app y Dux Software para elegir un sistema de gestion segun ventas, stock, sucursales, tickets y canales de venta.',
     kicker: 'Comparacion',
-    h1: 'PCLAF Control vs Dux Software: que sistema se adapta mejor a tu operacion',
+    h1: 'operando.app vs Dux Software: que sistema se adapta mejor a tu operacion',
     lead: 'Los dos cubren ventas, stock y sucursales. La diferencia esta en si tu prioridad es la operacion comercial con tickets o una plataforma ERP con e-commerce e integraciones.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Panel de gestion comercial de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Dux Software.',
+    imageAlt: 'Panel de gestion comercial de operando.app',
+    whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Dux Software.',
     comparison: { alternative: 'Dux Software', rows: [
       ['Ventas, caja y stock', 'Gestion comercial y POS', 'Ventas, caja, stock y trazabilidad por sucursal'],
       ['Tickets de servicio tecnico', 'No se presenta como flujo central', 'Recepcion, estados, cliente, equipo y vinculo con ventas'],
@@ -241,20 +241,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Dux puede convenir mas', body: 'Si tu operacion depende de Mercado Libre, Tienda Nube, picking, contabilidad o tesoreria integrada, Dux presenta hoy una cobertura mas amplia.' },
-      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si necesitas unir ventas, caja, stock, clientes y tickets de servicio tecnico en una misma operacion, sin sumar una capa ERP orientada a e-commerce.' },
+      { title: 'Cuando operando.app puede convenir mas', body: 'Si necesitas unir ventas, caja, stock, clientes y tickets de servicio tecnico en una misma operacion, sin sumar una capa ERP orientada a e-commerce.' },
     ],
     featureList: ['Ventas', 'Stock', 'Sucursales', 'Tickets', 'Roles'],
   },
   {
     slug: 'pclafcontrol-vs-alegra',
-    seoTitle: 'PCLAF Control vs Alegra | Comparacion para comercios',
-    description: 'Compara PCLAF Control y Alegra para evaluar ventas, stock, caja, usuarios, tickets y necesidades administrativas.',
+    seoTitle: 'operando.app vs Alegra | Comparacion para comercios',
+    description: 'Compara operando.app y Alegra para evaluar ventas, stock, caja, usuarios, tickets y necesidades administrativas.',
     kicker: 'Comparacion',
-    h1: 'PCLAF Control vs Alegra: operacion comercial o gestion administrativa',
-    lead: 'Alegra concentra facturacion y administracion. PCLAF Control se orienta a la operacion diaria de comercios y suma tickets para trabajos o servicios.',
+    h1: 'operando.app vs Alegra: operacion comercial o gestion administrativa',
+    lead: 'Alegra concentra facturacion y administracion. operando.app se orienta a la operacion diaria de comercios y suma tickets para trabajos o servicios.',
     image: '/pclaf-control-punto-venta-real.png',
-    imageAlt: 'Punto de venta de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Alegra.',
+    imageAlt: 'Punto de venta de operando.app',
+    whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Alegra.',
     comparison: { alternative: 'Alegra', rows: [
       ['Ventas, caja y stock', 'POS, inventario, terminales y reportes', 'Ventas, caja, stock y reportes por caja o sucursal'],
       ['Tickets de servicio tecnico', 'No se presenta como flujo central', 'Recepcion, seguimiento y estados de equipos o servicios'],
@@ -264,20 +264,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Alegra puede convenir mas', body: 'Si la necesidad principal es facturacion electronica, contabilidad, impuestos o balanzas, Alegra tiene esas capacidades publicadas.' },
-      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si el comercio necesita un flujo operativo con caja, stock, cuentas, sucursales, permisos y tickets de servicio tecnico relacionados con clientes y ventas.' },
+      { title: 'Cuando operando.app puede convenir mas', body: 'Si el comercio necesita un flujo operativo con caja, stock, cuentas, sucursales, permisos y tickets de servicio tecnico relacionados con clientes y ventas.' },
     ],
     featureList: ['Ventas', 'Caja', 'Stock', 'Tickets', 'Auditoria'],
   },
   {
     slug: 'pclafcontrol-vs-treinta',
-    seoTitle: 'PCLAF Control vs Treinta | Comparacion para comercios',
-    description: 'Compara PCLAF Control y Treinta para evaluar operaciones de mostrador, stock, clientes, sucursales y control por roles.',
+    seoTitle: 'operando.app vs Treinta | Comparacion para comercios',
+    description: 'Compara operando.app y Treinta para evaluar operaciones de mostrador, stock, clientes, sucursales y control por roles.',
     kicker: 'Comparacion',
-    h1: 'PCLAF Control vs Treinta: control operativo para comercios en crecimiento',
-    lead: 'Treinta se posiciona como una app simple para celular. PCLAF Control cubre una operacion de comercio con cajas, sucursales, permisos y seguimiento auditable.',
+    h1: 'operando.app vs Treinta: control operativo para comercios en crecimiento',
+    lead: 'Treinta se posiciona como una app simple para celular. operando.app cubre una operacion de comercio con cajas, sucursales, permisos y seguimiento auditable.',
     image: '/pclaf-control-mobile-devices.png',
-    imageAlt: 'PCLAF Control en dispositivos de trabajo',
-    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Treinta.',
+    imageAlt: 'operando.app en dispositivos de trabajo',
+    whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Treinta.',
     comparison: { alternative: 'Treinta', rows: [
       ['Acceso principal', 'App movil y web segun plan', 'Web y variante de escritorio Electron'],
       ['Ventas y stock', 'Ventas, gastos e inventario', 'Ventas, compras, stock, ajustes y transferencias'],
@@ -287,20 +287,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Treinta puede convenir mas', body: 'Si buscas una operacion muy centrada en celular y un catalogo simple para un negocio pequeno, Treinta esta enfocado en ese uso.' },
-      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si necesitas separar responsabilidades por caja, sucursal y usuario, controlar compras y proveedores, o trabajar con tickets de servicio tecnico.' },
+      { title: 'Cuando operando.app puede convenir mas', body: 'Si necesitas separar responsabilidades por caja, sucursal y usuario, controlar compras y proveedores, o trabajar con tickets de servicio tecnico.' },
     ],
     featureList: ['Sucursales', 'Cajas', 'Usuarios', 'Compras', 'Tickets'],
   },
   {
     slug: 'pclafcontrol-vs-contabilium',
-    seoTitle: 'PCLAF Control vs Contabilium | Comparacion para comercios',
-    description: 'Compara PCLAF Control y Contabilium para elegir entre operacion comercial con tickets y un ERP con contabilidad e integraciones de e-commerce.',
+    seoTitle: 'operando.app vs Contabilium | Comparacion para comercios',
+    description: 'Compara operando.app y Contabilium para elegir entre operacion comercial con tickets y un ERP con contabilidad e integraciones de e-commerce.',
     kicker: 'Comparacion',
-    h1: 'PCLAF Control vs Contabilium: operacion de comercio o ERP administrativo',
-    lead: 'Contabilium ofrece una cobertura ERP amplia. PCLAF Control se enfoca en los flujos cotidianos de ventas, caja, stock, sucursales y tickets.',
+    h1: 'operando.app vs Contabilium: operacion de comercio o ERP administrativo',
+    lead: 'Contabilium ofrece una cobertura ERP amplia. operando.app se enfoca en los flujos cotidianos de ventas, caja, stock, sucursales y tickets.',
     image: '/control-stock-por-sucursal.svg',
-    imageAlt: 'Control de stock por sucursal en PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Contabilium.',
+    imageAlt: 'Control de stock por sucursal en operando.app',
+    whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Contabilium.',
     comparison: { alternative: 'Contabilium', rows: [
       ['Ventas, stock y cajas', 'ERP con punto de venta, multideposito y cajas', 'Operacion de ventas, caja y stock separada por sucursal'],
       ['Contabilidad e impuestos', 'Incluye contabilidad, libros, balances e impuestos', 'No se ofrece como sistema contable'],
@@ -310,20 +310,20 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Contabilium puede convenir mas', body: 'Si tu operacion necesita contabilidad, impuestos, multi CUIT, e-commerce o marketplaces integrados, Contabilium publica una propuesta mas completa.' },
-      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si el centro del negocio es el mostrador, la caja, el stock por sucursal y el seguimiento de servicios o reparaciones, sin requerir un ERP contable.' },
+      { title: 'Cuando operando.app puede convenir mas', body: 'Si el centro del negocio es el mostrador, la caja, el stock por sucursal y el seguimiento de servicios o reparaciones, sin requerir un ERP contable.' },
     ],
     featureList: ['Ventas', 'Caja', 'Stock', 'Sucursales', 'Tickets'],
   },
   {
     slug: 'pclafcontrol-vs-gestion-comercio',
-    seoTitle: 'PCLAF Control vs Gestion Comercio | Comparacion para comercios',
-    description: 'Compara PCLAF Control y Gestion Comercio para evaluar punto de venta, stock, sucursales, balanzas, escritorio y tickets de servicio.',
+    seoTitle: 'operando.app vs Gestion Comercio | Comparacion para comercios',
+    description: 'Compara operando.app y Gestion Comercio para evaluar punto de venta, stock, sucursales, balanzas, escritorio y tickets de servicio.',
     kicker: 'Comparacion',
-    h1: 'PCLAF Control vs Gestion Comercio: gestion comercial segun tu forma de operar',
+    h1: 'operando.app vs Gestion Comercio: gestion comercial segun tu forma de operar',
     lead: 'Los dos abordan ventas, stock y sucursales. La eleccion depende de si necesitas balanzas y una instalacion local tradicional, o una operacion web con tickets de servicio.',
     image: '/cierre-caja-comercio.svg',
-    imageAlt: 'Control de caja de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF Control, quiero comparar PCLAF Control con Gestion Comercio.',
+    imageAlt: 'Control de caja de operando.app',
+    whatsAppPrompt: 'Hola operando.app, quiero comparar operando.app con Gestion Comercio.',
     comparison: { alternative: 'Gestion Comercio', rows: [
       ['Punto de venta y stock', 'POS, stock por local y transferencias', 'Ventas, caja, stock, ajustes y transferencias por sucursal'],
       ['Balanzas y perifericos', 'Publica integracion con balanzas y QR Mercado Pago', 'No se ofrece como integracion publica'],
@@ -333,7 +333,7 @@ const comparisonPages = [
     ] },
     sections: [
       { title: 'Cuando Gestion Comercio puede convenir mas', body: 'Si necesitas integracion con balanzas, QR Mercado Pago o una operacion local ya establecida para mostrador, esas capacidades estan publicadas por Gestion Comercio.' },
-      { title: 'Cuando PCLAF Control puede convenir mas', body: 'Si buscas una operacion web con accesos por rol, trazabilidad, sucursales y tickets de servicio tecnico junto con ventas, caja y stock.' },
+      { title: 'Cuando operando.app puede convenir mas', body: 'Si buscas una operacion web con accesos por rol, trazabilidad, sucursales y tickets de servicio tecnico junto con ventas, caja y stock.' },
     ],
     featureList: ['Web', 'Escritorio', 'Sucursales', 'Auditoria', 'Tickets'],
   },
@@ -347,7 +347,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que registra un POS', body: 'Productos, cantidades, precios, descuentos, medio de pago y, cuando hace falta, los datos del cliente o comprobante.' },
       { title: 'Por que reemplaza al cuaderno', body: 'La misma operacion deja un historial de venta y evita volver a cargar los datos para controlar caja o stock.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'PCLAF Control combina carrito multiitem, medios de pago, cliente, descuentos, comprobantes y trazabilidad por operacion.' },
+      { title: 'Como lo aplica operando.app', body: 'operando.app combina carrito multiitem, medios de pago, cliente, descuentos, comprobantes y trazabilidad por operacion.' },
     ],
     faq: [['¿Un POS sirve solo para cobrar?', 'No. Tambien permite relacionar la venta con productos, caja, cliente y comprobantes para poder controlar la operacion.']],
   },
@@ -358,7 +358,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Movimientos que cambian el stock', body: 'Una venta descuenta unidades; una compra o recepcion las incorpora; un ajuste corrige una diferencia registrada.' },
       { title: 'Por que importa la trazabilidad', body: 'Cuando aparece una diferencia, hace falta conocer si vino de una venta, compra, transferencia o ajuste y quien lo registro.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'El catalogo incluye SKU, codigo de barras, costo, stock minimo, importacion CSV, ajustes y transferencias entre sucursales.' },
+      { title: 'Como lo aplica operando.app', body: 'El catalogo incluye SKU, codigo de barras, costo, stock minimo, importacion CSV, ajustes y transferencias entre sucursales.' },
     ],
     faq: [['¿Se puede corregir una diferencia de stock?', 'Si, mediante un ajuste registrado. El ajuste debe conservar el motivo y no puede dejar existencias negativas.']],
   },
@@ -369,7 +369,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Para que sirve', body: 'Ayuda a priorizar compras antes de que un producto se agote y a ordenar la reposicion del comercio.' },
       { title: 'Como definirlo', body: 'Considera la rotacion, el plazo del proveedor y el margen que necesitas para no quedarte sin mercaderia.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'Cada producto puede conservar su nivel minimo junto con precio, costo, SKU y existencias por sucursal.' },
+      { title: 'Como lo aplica operando.app', body: 'Cada producto puede conservar su nivel minimo junto con precio, costo, SKU y existencias por sucursal.' },
     ],
     faq: [['¿El stock minimo reemplaza el inventario fisico?', 'No. Es una alerta operativa; el conteo fisico sigue siendo necesario para detectar diferencias reales.']],
   },
@@ -380,7 +380,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que incluye un cierre', body: 'Monto inicial, ventas y movimientos de efectivo, monto esperado, efectivo contado y diferencia final.' },
       { title: 'Por que no conviene cerrar de memoria', body: 'Separar ventas, retiros, gastos y cobros evita que una diferencia quede oculta dentro de un total general.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'Cada cierre queda asociado a caja, sucursal y responsable, con los movimientos manuales incluidos en el esperado.' },
+      { title: 'Como lo aplica operando.app', body: 'Cada cierre queda asociado a caja, sucursal y responsable, con los movimientos manuales incluidos en el esperado.' },
     ],
     faq: [['¿Que pasa si hay una diferencia?', 'Debe quedar registrada para poder revisarla con el responsable y los movimientos del turno.']],
   },
@@ -391,7 +391,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Arqueo y cierre no son lo mismo', body: 'El arqueo verifica lo que hay; el cierre registra el resultado del turno y deja trazabilidad de la diferencia.' },
       { title: 'Que revisar', body: 'Efectivo, transferencias, Mercado Pago, e-cheques, cuenta corriente y cualquier retiro o ingreso manual.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'La venta admite medios de pago separados y la caja conserva movimientos, efectivo esperado, contado y diferencia.' },
+      { title: 'Como lo aplica operando.app', body: 'La venta admite medios de pago separados y la caja conserva movimientos, efectivo esperado, contado y diferencia.' },
     ],
     faq: [['¿Cada cajero necesita su propia caja?', 'Depende de la operacion. Separar caja y responsable ayuda a atribuir correctamente los movimientos y las diferencias.']],
   },
@@ -402,7 +402,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que evita', body: 'Evita anotar deudas en mensajes o cuadernos separados de la venta original y perder el detalle de cada saldo.' },
       { title: 'Como se mantiene actualizada', body: 'Cada venta a cuenta incrementa el saldo; cada abono documentado lo reduce sin superar el importe pendiente.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'Clientes, ventas, comprobantes y abonos se relacionan para consultar saldo e historial comercial desde la misma base.' },
+      { title: 'Como lo aplica operando.app', body: 'Clientes, ventas, comprobantes y abonos se relacionan para consultar saldo e historial comercial desde la misma base.' },
     ],
     faq: [['¿Una cuenta corriente es solo para clientes frecuentes?', 'Puede usarse con cualquier cliente al que se le otorgue pago pendiente, siempre con condiciones y seguimiento claros.']],
   },
@@ -413,7 +413,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que debe validar', body: 'La sucursal de origen y destino deben ser diferentes y el origen necesita existencias suficientes antes de mover unidades.' },
       { title: 'Por que no conviene editar cantidades a mano', body: 'Un cambio manual no explica desde que local salio la mercaderia ni permite conciliar el movimiento entre ambos inventarios.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'La transferencia descuenta el origen, suma el destino y deja el movimiento asociado al producto y a las sucursales.' },
+      { title: 'Como lo aplica operando.app', body: 'La transferencia descuenta el origen, suma el destino y deja el movimiento asociado al producto y a las sucursales.' },
     ],
     faq: [['¿Una transferencia cambia el total de mercaderia?', 'No. Cambia la ubicacion de las unidades entre sucursales, no la existencia total del comercio.']],
   },
@@ -424,7 +424,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que necesita el catalogo', body: 'Cada producto debe tener un codigo asociado, ademas de nombre, precio y existencias para que la busqueda sea confiable.' },
       { title: 'Que problema resuelve', body: 'Reduce errores al tipear y acelera la atencion cuando hay muchos productos parecidos o alta rotacion.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'El catalogo admite codigo de barras y la venta permite agregar productos mediante lector o busqueda manual.' },
+      { title: 'Como lo aplica operando.app', body: 'El catalogo admite codigo de barras y la venta permite agregar productos mediante lector o busqueda manual.' },
     ],
     faq: [['¿Se puede vender si un producto no tiene codigo?', 'Si. El producto tambien puede buscarse manualmente desde el catalogo.']],
   },
@@ -435,7 +435,7 @@ const glossaryTerms = [
     sections: [
       { title: 'Que informacion conviene registrar', body: 'Cliente, sucursal, equipo, detalle del problema, estado del trabajo y observaciones para evitar confusiones al entregar.' },
       { title: 'Por que debe estar vinculado a ventas', body: 'Repuestos, mano de obra y cobros no deberian quedar aislados del trabajo que los origino.' },
-      { title: 'Como lo aplica PCLAF Control', body: 'Los tickets conservan recepcion y seguimiento de equipos o servicios y pueden originarse desde una venta.' },
+      { title: 'Como lo aplica operando.app', body: 'Los tickets conservan recepcion y seguimiento de equipos o servicios y pueden originarse desde una venta.' },
     ],
     faq: [['¿Sirve para servicios sin equipo fisico?', 'Si. El ticket puede registrar un servicio, siempre que conserve cliente, detalle y estado de seguimiento.']],
   },
@@ -443,17 +443,17 @@ const glossaryTerms = [
 
 const glossaryPages = glossaryTerms.map((term) => ({
   slug: `glosario-pos/${term.slug}`,
-  seoTitle: `${term.title} | Glosario PCLAF Control`,
+  seoTitle: `${term.title} | Glosario operando.app`,
   description: term.description,
-  kicker: 'Glosario PCLAF Control',
+  kicker: 'Glosario operando.app',
   h1: `${term.title}: que es y como se aplica en un comercio`,
   lead: term.lead,
   image: '/pclaf-control-panel-real.png',
-  imageAlt: `Gestion comercial en PCLAF Control: ${term.title}`,
-  whatsAppPrompt: `Hola PCLAF Control, quiero ayuda con ${term.title.toLowerCase()}.`,
+  imageAlt: `Gestion comercial en operando.app: ${term.title}`,
+  whatsAppPrompt: `Hola operando.app, quiero ayuda con ${term.title.toLowerCase()}.`,
   sections: term.sections,
   faq: term.faq,
-  featureList: ['Guia practica', 'Operacion comercial', 'PCLAF Control'],
+  featureList: ['Guia practica', 'Operacion comercial', 'operando.app'],
 }))
 
 const comparisonRows = [
@@ -465,7 +465,7 @@ const comparisonRows = [
 ]
 
 const importTemplateDownloads = [{
-  href: 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20cargar%20productos%20desde%20una%20planilla.',
+  href: 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla.',
   label: 'Solicitar carga asistida',
   body: 'Envia tu planilla a soporte. Revisamos su formato y migramos los productos de forma controlada.',
 }]
@@ -478,7 +478,7 @@ const controlStories = [
     body: 'Separá la operación por sucursal para consultar stock, cajas y resultados con el contexto correcto. Cuando necesitás mirar el conjunto, seguís trabajando sobre la misma base.',
     details: ['Stock y movimientos por sucursal', 'Cajas y puestos ligados a cada local'],
     image: '/pclaf-control-stock-real.png',
-    alt: 'Vista de control de stock por sucursal en PCLAF Control',
+    alt: 'Vista de control de stock por sucursal en operando.app',
     caption: 'La operación se organiza por local, sin perder una visión común.',
   },
   {
@@ -488,7 +488,7 @@ const controlStories = [
     body: 'Vinculá cada venta, apertura, cierre, movimiento y diferencia a la caja desde la que se operó. El equipo sigue atendiendo; vos conservás una lectura clara del turno.',
     details: ['Apertura y cierre por caja', 'Movimientos y diferencias por puesto'],
     image: '/pclaf-control-panel-real.png',
-    alt: 'Resumen de caja y cierre operativo en PCLAF Control',
+    alt: 'Resumen de caja y cierre operativo en operando.app',
     caption: 'Cada puesto mantiene su propio recorrido de caja.',
   },
   {
@@ -498,7 +498,7 @@ const controlStories = [
     body: 'Ventas, movimientos de caja, ajustes, compras y transferencias conservan un historial operativo. No se trata de vigilar de más: se trata de poder revisar sin reconstruir la historia a mano.',
     details: ['Historial de acciones relevantes', 'Origen y destino en transferencias'],
     image: '/pclaf-control-punto-venta-real.png',
-    alt: 'Pantalla de ventas de PCLAF Control',
+    alt: 'Pantalla de ventas de operando.app',
     caption: 'La operación diaria deja contexto para la revisión posterior.',
   },
   {
@@ -508,7 +508,7 @@ const controlStories = [
     body: 'Registrá proveedores, recepciones y costos dentro de la misma operación. Así, cuando llega mercadería, el stock recibe el movimiento y la compra conserva su referencia.',
     details: ['Recepciones con costo y proveedor', 'Compras que actualizan el stock'],
     image: '/pclaf-control-stock-real.png',
-    alt: 'Control de productos y stock en PCLAF Control',
+    alt: 'Control de productos y stock en operando.app',
     caption: 'Compras y stock se encuentran en el mismo flujo.',
   },
   {
@@ -518,7 +518,7 @@ const controlStories = [
     body: 'Definí roles, módulos habilitados y permisos bloqueados según la responsabilidad de cada usuario. Reducís pantallas innecesarias sin sumar pasos para quien necesita operar.',
     details: ['Roles para caja, depósito y administración', 'Módulos y acciones por usuario'],
     image: '/pclaf-control-punto-venta-real.png',
-    alt: 'Operación de ventas en PCLAF Control',
+    alt: 'Operación de ventas en operando.app',
     caption: 'La interfaz puede acompañar el rol de quien trabaja.',
   },
   {
@@ -528,7 +528,7 @@ const controlStories = [
     body: 'Cargá los datos fiscales, generá la solicitud de certificado y verificá la conexión con ARCA en homologación. La salida fiscal productiva se define con tu comercio antes de operar.',
     details: ['Configuración fiscal guiada', 'Verificación en homologación'],
     image: '/pclaf-control-panel-real.png',
-    alt: 'Resumen operativo de PCLAF Control',
+    alt: 'Resumen operativo de operando.app',
     caption: 'La preparación fiscal se comunica con el alcance correcto.',
   },
 ]
@@ -536,16 +536,16 @@ const controlStories = [
 const marketingPages = [
   {
     slug: '',
-    seoTitle: 'Sistema de ventas y stock | PCLAF Control',
-    description: 'Sistema de ventas, caja y stock para comercios con sucursales, permisos y trazabilidad operativa. Probá PCLAF Control desde PC o celular.',
+    seoTitle: 'Sistema de ventas y stock | operando.app',
+    description: 'Sistema de ventas, caja y stock para comercios con sucursales, permisos y trazabilidad operativa. Probá operando.app desde PC o celular.',
     kicker: 'Sistema comercial web',
     h1: 'Vendé rápido. Controlá caja, stock y equipo.',
     lead: 'Caja, stock, compras, sucursales y permisos en una sola plataforma para operar con claridad.',
     primaryCta: { href: `${appPath}?view=signup`, label: 'Probar gratis' },
     secondaryCta: { href: supportUrl, label: 'Hablar por WhatsApp' },
-    whatsAppPrompt: 'Hola PCLAF, quiero probar PCLAF Control en mi comercio.',
+    whatsAppPrompt: 'Hola Operando, quiero probar operando.app en mi comercio.',
     image: '/pclaf-control-punto-venta-real.png',
-    imageAlt: 'Pantalla de ventas de PCLAF Control en una computadora',
+    imageAlt: 'Pantalla de ventas de operando.app en una computadora',
     stats: [
       ['Por sucursal', 'Stock y resultados separados'],
       ['Por puesto', 'Caja ligada a cada cobro'],
@@ -570,14 +570,14 @@ const marketingPages = [
   },
   {
     slug: 'funciones',
-    seoTitle: 'Funciones del sistema comercial | PCLAF Control',
-    description: 'Conoce todas las funciones de PCLAF Control: ventas, caja, stock, compras, clientes, tickets, facturacion, sucursales y reportes.',
+    seoTitle: 'Funciones del sistema comercial | operando.app',
+    description: 'Conoce todas las funciones de operando.app: ventas, caja, stock, compras, clientes, tickets, facturacion, sucursales y reportes.',
     kicker: 'Funciones',
     h1: 'Funciones para ganar control operativo sin sumar fricción',
     lead: 'Vendé y cobrá con agilidad, mientras cada caja, sucursal, compra y movimiento queda ordenado para consultarlo cuando lo necesitás.',
     image: '/pclaf-control-punto-venta-real.png',
-    imageAlt: 'Pantalla de ventas y cobros de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero ver todas las funciones de PCLAF Control.',
+    imageAlt: 'Pantalla de ventas y cobros de operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero ver todas las funciones de operando.app.',
     sections: [
       { title: 'Ventas y caja por puesto', body: 'Venta multi ítem y medios de pago, con apertura, cierre, diferencias y movimientos ligados a la caja que opera cada puesto.' },
       { title: 'Stock y trazabilidad', body: 'Catálogo, stock por sucursal, ajustes y transferencias con historial de los movimientos de inventario.' },
@@ -590,14 +590,14 @@ const marketingPages = [
   },
   {
     slug: 'precios',
-    seoTitle: 'Planes y modulos | PCLAF Control',
-    description: 'Descubre los planes de PCLAF Control para comercios que necesitan ventas, caja, stock, clientes, compras y sucursales.',
+    seoTitle: 'Planes y modulos | operando.app',
+    description: 'Descubre los planes de operando.app para comercios que necesitan ventas, caja, stock, clientes, compras y sucursales.',
     kicker: 'Planes',
     h1: 'Elige los modulos que necesita tu comercio, sin abrumarte con todo de entrada',
     lead: 'Los planes se piensan por necesidad operativa. Puedes comenzar con un negocio simple y luego sumar cajas, sucursales, usuarios o herramientas mas avanzadas.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Resumen de caja y cierre operativo de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero conocer los planes y modulos de PCLAF Control.',
+    imageAlt: 'Resumen de caja y cierre operativo de operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero conocer los planes y modulos de operando.app.',
     sections: [
       { title: 'Gestion Base', body: 'Clientes, productos, ventas simples y comprobantes para negocios que quieren dejar Excel y empezar ordenados.' },
       { title: 'Mostrador', body: 'Caja diaria, cobros mixtos, apertura y cierre, ticket rapido y operadores para puestos de venta.' },
@@ -608,14 +608,14 @@ const marketingPages = [
   },
   {
     slug: 'sistema-de-ventas',
-    seoTitle: 'Sistema de ventas para comercios | PCLAF Control',
+    seoTitle: 'Sistema de ventas para comercios | operando.app',
     description: 'Sistema de ventas para comercios con cobros, tickets, caja y control comercial desde una sola web.',
     kicker: 'Ventas',
     h1: 'Sistema de ventas para comercios que quieren cobrar rapido y trabajar con mas control',
-    lead: 'PCLAF Control ayuda a registrar ventas, sugerir canales de cobro, emitir tickets y asociar comprobantes sin moverte de la misma herramienta.',
+    lead: 'operando.app ayuda a registrar ventas, sugerir canales de cobro, emitir tickets y asociar comprobantes sin moverte de la misma herramienta.',
     image: '/pclaf-control-punto-venta-real.png',
-    imageAlt: 'Pantalla de ventas y cobros de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero ver el sistema de ventas para mi comercio.',
+    imageAlt: 'Pantalla de ventas y cobros de operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero ver el sistema de ventas para mi comercio.',
     sections: [
       { title: 'Venta multi item', body: 'Agrega varios productos, descuentos, observaciones y medios de pago en una sola pantalla.' },
       { title: 'Cobros mixtos', body: 'Efectivo, transferencia, Mercado Pago y cuenta corriente dentro de la misma operacion.' },
@@ -625,14 +625,14 @@ const marketingPages = [
   },
   {
     slug: 'control-de-stock',
-    seoTitle: 'Programa para controlar stock | PCLAF Control',
+    seoTitle: 'Programa para controlar stock | operando.app',
     description: 'Programa para controlar stock, productos, sucursales, transferencias y reposicion desde PC o celular.',
     kicker: 'Stock',
     h1: 'Programa para controlar stock y saber que falta antes de quedarte sin vender',
     lead: 'Gestiona catalogo, existencias, stock minimo y movimientos de productos en una sola web para no depender de planillas separadas.',
     image: '/pclaf-control-stock-real.png',
-    imageAlt: 'Control de stock por sucursal de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, necesito controlar stock y reposicion en mi negocio.',
+    imageAlt: 'Control de stock por sucursal de operando.app',
+    whatsAppPrompt: 'Hola Operando, necesito controlar stock y reposicion en mi negocio.',
     sections: [
       { title: 'Catalogo centralizado', body: 'Todos tus productos en una sola base, con precio, costo, codigo, SKU y control por sucursal.' },
       { title: 'Ajustes y transferencias', body: 'Corrige diferencias, mueve mercaderia entre locales y deja trazabilidad del inventario.' },
@@ -643,14 +643,14 @@ const marketingPages = [
   },
   {
     slug: 'sistema-de-caja',
-    seoTitle: 'Sistema de caja para negocios | PCLAF Control',
+    seoTitle: 'Sistema de caja para negocios | operando.app',
     description: 'Sistema de caja para negocios con apertura, cierre, diferencias, movimientos y control por operador.',
     kicker: 'Caja',
     h1: 'Sistema de caja por puesto para cobrar rápido y cerrar con respaldo',
     lead: 'Abrí y cerrá cada caja, controlá el efectivo esperado y registrá ingresos o egresos. Así mantenés la velocidad de venta y la trazabilidad de la operación.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Cierre de caja comercial de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero mejorar la apertura y cierre de caja de mi negocio.',
+    imageAlt: 'Cierre de caja comercial de operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero mejorar la apertura y cierre de caja de mi negocio.',
     sections: [
       { title: 'Apertura y cierre por puesto', body: 'Definí monto inicial, efectivo contado y diferencia final para cada caja o puesto de cobro.' },
       { title: 'Movimientos con responsable', body: 'Registrá ingresos, gastos, retiros, depósitos y ajustes con el detalle de la operación.' },
@@ -660,14 +660,14 @@ const marketingPages = [
   },
   {
     slug: 'software-para-kioscos',
-    seoTitle: 'Sistema para kioscos | PCLAF Control',
+    seoTitle: 'Sistema para kioscos | operando.app',
     description: 'Sistema para kioscos con ventas, caja, stock, precios y control rapido desde navegador.',
     kicker: 'Rubros',
     h1: 'Sistema para kioscos que necesitan vender rapido y controlar stock en serio',
     lead: 'Ideal para kioscos con productos de alta rotacion, cobros rapidos y necesidad de saber que se vendio, que falta y cuanto quedo en caja.',
     image: '/pclaf-control-punto-venta-real.png',
-    imageAlt: 'Sistema para kioscos con ventas y stock en PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero probar PCLAF Control para mi kiosco.',
+    imageAlt: 'Sistema para kioscos con ventas y stock en operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero probar operando.app para mi kiosco.',
     sections: [
       { title: 'Mostrador rapido', body: 'Cobros agiles para productos de paso, con caja clara y seguimiento diario.' },
       { title: 'Reposicion simple', body: 'Control de faltantes, compras y proveedores sin cargar pantallas tecnicas innecesarias.' },
@@ -677,14 +677,14 @@ const marketingPages = [
   },
   {
     slug: 'software-para-tiendas',
-    seoTitle: 'Software para tiendas y locales | PCLAF Control',
+    seoTitle: 'Software para tiendas y locales | operando.app',
     description: 'Software para tiendas y locales con ventas, clientes, stock, compras y sucursales desde la web.',
     kicker: 'Rubros',
     h1: 'Software para tiendas y locales que necesitan vender, cobrar y ordenar su operacion',
-    lead: 'PCLAF Control ayuda a tiendas y locales a trabajar mejor con productos, clientes, historial comercial, caja y reportes desde una sola plataforma.',
+    lead: 'operando.app ayuda a tiendas y locales a trabajar mejor con productos, clientes, historial comercial, caja y reportes desde una sola plataforma.',
     image: '/pclaf-control-stock-real.png',
     imageAlt: 'Software para tiendas y locales con control de stock',
-    whatsAppPrompt: 'Hola PCLAF, quiero probar PCLAF Control para mi tienda o local.',
+    whatsAppPrompt: 'Hola Operando, quiero probar operando.app para mi tienda o local.',
     sections: [
       { title: 'Clientes y cuentas', body: 'Lleva historial, saldo y seguimiento comercial para ventas de mostrador o atencion recurrente.' },
       { title: 'Productos y precios', body: 'Ordena catalogo, categorias, stock y reposicion sin depender de planillas separadas.' },
@@ -694,14 +694,14 @@ const marketingPages = [
   },
   {
     slug: 'software-para-servicio-tecnico',
-    seoTitle: 'Software para servicio tecnico | PCLAF Control',
+    seoTitle: 'Software para servicio tecnico | operando.app',
     description: 'Software para servicio tecnico con tickets, clientes, caja, ventas de repuestos y seguimiento operativo.',
     kicker: 'Rubros',
     h1: 'Software para servicio tecnico con tickets, clientes, caja y control operativo',
     lead: 'Si trabajas con equipos, reparaciones, repuestos y cobros, puedes combinar tickets activos con ventas, stock y caja en el mismo sistema.',
     image: '/pclaf-control-panel-real.png',
     imageAlt: 'Software para servicio tecnico con tickets y caja',
-    whatsAppPrompt: 'Hola PCLAF, quiero ver PCLAF Control para servicio tecnico.',
+    whatsAppPrompt: 'Hola Operando, quiero ver operando.app para servicio tecnico.',
     sections: [
       { title: 'Tickets y estados', body: 'Recibe equipos, registra detalle, cambia estado y sigue trabajos por sucursal.' },
       { title: 'Clientes y repuestos', body: 'Relaciona cliente, trabajo, ventas y productos sin duplicar datos.' },
@@ -711,28 +711,28 @@ const marketingPages = [
   },
   {
     slug: 'pos-por-rubro',
-    seoTitle: 'Sistema POS por rubro | PCLAF Control',
-    description: 'Conoce como PCLAF Control acompana kioscos, tiendas y servicios tecnicos con ventas, caja, stock y seguimiento operativo.',
+    seoTitle: 'Sistema POS por rubro | operando.app',
+    description: 'Conoce como operando.app acompana kioscos, tiendas y servicios tecnicos con ventas, caja, stock y seguimiento operativo.',
     kicker: 'POS por rubro',
     h1: 'Un sistema comercial que se adapta a la forma de trabajar de tu negocio',
-    lead: 'Cada rubro tiene un ritmo distinto. Elegi tu actividad y conoce los flujos de PCLAF Control que sirven para su operacion diaria.',
+    lead: 'Cada rubro tiene un ritmo distinto. Elegi tu actividad y conoce los flujos de operando.app que sirven para su operacion diaria.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Panel de PCLAF Control para gestionar un comercio',
-    whatsAppPrompt: 'Hola PCLAF, quiero saber si PCLAF Control se adapta a mi rubro.',
+    imageAlt: 'Panel de operando.app para gestionar un comercio',
+    whatsAppPrompt: 'Hola Operando, quiero saber si operando.app se adapta a mi rubro.',
     sections: marketingSectors,
     featureList: ['Ventas', 'Caja', 'Stock', 'Clientes', 'Soporte'],
   },
   ...sectorLandingPages,
   {
     slug: 'como-funciona',
-    seoTitle: 'Como funciona PCLAF Control | Sistema para comercios',
-    description: 'Conoce el recorrido para crear una cuenta, cargar productos, vender, controlar la caja y hacer seguimiento de tu comercio con PCLAF Control.',
+    seoTitle: 'Como funciona operando.app | Sistema para comercios',
+    description: 'Conoce el recorrido para crear una cuenta, cargar productos, vender, controlar la caja y hacer seguimiento de tu comercio con operando.app.',
     kicker: 'Como funciona',
     h1: 'De la configuracion inicial a una operacion mas ordenada',
-    lead: 'PCLAF Control centraliza el trabajo diario del comercio. Empeza por lo esencial y suma los modulos que tu operacion necesita.',
+    lead: 'operando.app centraliza el trabajo diario del comercio. Empeza por lo esencial y suma los modulos que tu operacion necesita.',
     image: '/pclaf-control-mobile-devices.png',
-    imageAlt: 'PCLAF Control funcionando en computadora, tablet y celular',
-    whatsAppPrompt: 'Hola PCLAF, quiero que me expliquen como empezar a usar PCLAF Control.',
+    imageAlt: 'operando.app funcionando en computadora, tablet y celular',
+    whatsAppPrompt: 'Hola Operando, quiero que me expliquen como empezar a usar operando.app.',
     sections: [
       { title: '1. Crea tu cuenta', body: 'Registra tu comercio y entra desde el navegador, sin una instalacion tecnica para empezar. Creamos Casa central y Caja 1 para que no arranques con una pantalla vacía.', href: '/app/?view=signup', linkLabel: 'Crear cuenta' },
       { title: '2. Carga tu catalogo', body: 'Agrega productos de forma manual o pedí una carga asistida si ya trabajas con una planilla. El equipo de soporte puede acompañarte 24/7.', href: '/control-de-stock/', linkLabel: 'Ver control de stock' },
@@ -743,29 +743,29 @@ const marketingPages = [
   },
   {
     slug: 'blog',
-    seoTitle: 'Guias para gestionar tu comercio | PCLAF Control',
+    seoTitle: 'Guias para gestionar tu comercio | operando.app',
     description: 'Guias practicas sobre stock, caja e importacion de productos para comercios argentinos.',
     kicker: 'Guias para comercios',
     h1: 'Consejos claros para ordenar la gestion diaria de tu comercio',
     lead: 'Recursos practicos sobre ventas, caja, stock y productos, escritos para tomar mejores decisiones en la operacion cotidiana.',
     image: '/control-stock-por-sucursal.svg',
-    imageAlt: 'Control de stock por sucursal en PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero ayuda para ordenar la gestion de mi comercio.',
+    imageAlt: 'Control de stock por sucursal en operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero ayuda para ordenar la gestion de mi comercio.',
     sections: blogGuides,
     featureList: ['Stock', 'Caja', 'Productos', 'Guias practicas'],
   },
   {
     slug: 'comparar-sistemas-de-gestion',
-    seoTitle: 'Comparar sistemas de gestion para comercios | PCLAF Control',
-    description: 'Compara PCLAF Control con otras plataformas de gestion para elegir segun ventas, stock, caja, sucursales, tickets, e-commerce y contabilidad.',
+    seoTitle: 'Comparar sistemas de gestion para comercios | operando.app',
+    description: 'Compara operando.app con otras plataformas de gestion para elegir segun ventas, stock, caja, sucursales, tickets, e-commerce y contabilidad.',
     kicker: 'Comparaciones honestas',
     h1: 'Compara sistemas de gestion y elegi el que mejor se adapta a tu comercio',
     lead: 'No todos los sistemas resuelven lo mismo. Revisa funciones, tipo de operacion y limites concretos antes de decidir.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Panel de gestion de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF Control, quiero ayuda para elegir el sistema adecuado para mi comercio.',
+    imageAlt: 'Panel de gestion de operando.app',
+    whatsAppPrompt: 'Hola operando.app, quiero ayuda para elegir el sistema adecuado para mi comercio.',
     sections: comparisonPages.map((page) => ({
-      title: page.h1.replace(/^PCLAF Control vs /, 'PCLAF Control vs '),
+      title: page.h1.replace(/^operando.app vs /, 'operando.app vs '),
       body: page.lead,
       href: `/${page.slug}/`,
       linkLabel: 'Ver comparacion',
@@ -775,14 +775,14 @@ const marketingPages = [
   ...comparisonPages,
   {
     slug: 'glosario-pos',
-    seoTitle: 'Glosario POS para comercios | PCLAF Control',
-    description: 'Glosario de terminos de ventas, caja, stock, clientes, sucursales y tickets basado en la operacion real de PCLAF Control.',
+    seoTitle: 'Glosario POS para comercios | operando.app',
+    description: 'Glosario de terminos de ventas, caja, stock, clientes, sucursales y tickets basado en la operacion real de operando.app.',
     kicker: 'Glosario POS',
     h1: 'Conceptos de gestion comercial explicados para el dia a dia del comercio',
     lead: 'Entende los terminos de ventas, caja, stock, clientes y servicios con ejemplos conectados a una operacion comercial real.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Operacion comercial con PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF Control, quiero ayuda para ordenar la gestion de mi comercio.',
+    imageAlt: 'Operacion comercial con operando.app',
+    whatsAppPrompt: 'Hola operando.app, quiero ayuda para ordenar la gestion de mi comercio.',
     sections: glossaryTerms.map((term) => ({
       title: term.title,
       body: term.lead,
@@ -794,14 +794,14 @@ const marketingPages = [
   ...glossaryPages,
   {
     slug: 'gestion-de-clientes',
-    seoTitle: 'Gestion de clientes y compras | PCLAF Control',
+    seoTitle: 'Gestion de clientes y compras | operando.app',
     description: 'Gestiona clientes, compras, cuentas corrientes, historial comercial y proveedores desde una sola web.',
     kicker: 'Clientes',
     h1: 'Compras y proveedores para reponer con más criterio y menos vueltas',
     lead: 'Centralizá clientes, proveedores y recepciones de compra para que costos, stock y seguimiento comercial no queden en sistemas separados.',
     image: '/pclaf-control-stock-real.png',
-    imageAlt: 'Gestion de clientes, compras y proveedores de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero ordenar clientes y compras en mi comercio.',
+    imageAlt: 'Gestion de clientes, compras y proveedores de operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero ordenar clientes y compras en mi comercio.',
     sections: [
       { title: 'Base comercial', body: 'Crea clientes, historiales y saldos sin obligar a pedir datos innecesarios.' },
       { title: 'Compras y proveedores', body: 'Registrá recepciones, costos, categorías y saldo comercial para consultar cada proveedor con contexto.' },
@@ -811,14 +811,14 @@ const marketingPages = [
   },
   {
     slug: 'multi-sucursal',
-    seoTitle: 'Sistema multi sucursal | PCLAF Control',
+    seoTitle: 'Sistema multi sucursal | operando.app',
     description: 'Gestiona sucursales, cajas, usuarios, permisos y transferencias de stock desde una sola plataforma.',
     kicker: 'Escala',
     h1: 'Sistema multi sucursal para ver cada local sin perder el control del conjunto',
     lead: 'Separá resultados por sucursal, vinculá cajas a cada local y transferí mercadería con trazabilidad. Todo sin obligar al equipo a trabajar más lento.',
     image: '/pclaf-control-stock-real.png',
-    imageAlt: 'Control multi sucursal de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, necesito varias sucursales y cajas en el sistema.',
+    imageAlt: 'Control multi sucursal de operando.app',
+    whatsAppPrompt: 'Hola Operando, necesito varias sucursales y cajas en el sistema.',
     sections: [
       { title: 'Sucursales y cajas por puesto', body: 'Cada local puede tener sus cajas, puestos de cobro, operadores y reportes separados.' },
       { title: 'Permisos por usuario', body: 'Un administrador define roles, módulos habilitados y permisos bloqueados según la responsabilidad de cada persona.' },
@@ -828,14 +828,14 @@ const marketingPages = [
   },
   {
     slug: 'preguntas-frecuentes',
-    seoTitle: 'Preguntas frecuentes | PCLAF Control',
+    seoTitle: 'Preguntas frecuentes | operando.app',
     description: 'Respuestas sobre instalacion, celulares, lector de codigos, varias cajas, importacion de productos y prueba gratis.',
     kicker: 'FAQ',
-    h1: 'Preguntas frecuentes sobre PCLAF Control',
+    h1: 'Preguntas frecuentes sobre operando.app',
     lead: 'Resolvemos las dudas mas comunes de comercios que quieren probar una web para ventas, caja y stock sin perder tiempo.',
-    image: '/og-pclaf-control.svg',
-    imageAlt: 'Preguntas frecuentes y acceso a PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, tengo dudas antes de probar PCLAF Control.',
+    image: '/operando-logo.png',
+    imageAlt: 'Preguntas frecuentes y acceso a operando.app',
+    whatsAppPrompt: 'Hola Operando, tengo dudas antes de probar operando.app.',
     faq: [
       ['Necesito instalar algo?', 'No en la version web. Entras desde navegador en PC o celular.'],
       ['Funciona desde celular?', 'Si. La interfaz esta pensada para operar y consultar desde distintos dispositivos.'],
@@ -848,14 +848,14 @@ const marketingPages = [
   },
   {
     slug: 'blog/como-controlar-stock',
-    seoTitle: 'Como controlar stock en un comercio | PCLAF Control',
+    seoTitle: 'Como controlar stock en un comercio | operando.app',
     description: 'Aprende como controlar stock en un comercio, detectar faltantes y evitar vender sin mercaderia disponible.',
     kicker: 'Blog',
     h1: 'Como controlar stock en un comercio sin depender de Excel',
     lead: 'Controlar stock no es solo saber cuantas unidades quedan. Tambien es conocer que se vendio, que falta comprar y entre que sucursales se movio cada articulo.',
     image: '/pclaf-control-stock-real.png',
-    imageAlt: 'Articulo sobre como controlar stock con PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, vi el articulo de stock y quiero una demo.',
+    imageAlt: 'Articulo sobre como controlar stock con operando.app',
+    whatsAppPrompt: 'Hola Operando, vi el articulo de stock y quiero una demo.',
     sections: [
       { title: '1. Unifica catalogo y precios', body: 'Empieza con un listado unico de productos que tenga nombre, SKU, codigo de barras, costo y precio de venta.' },
       { title: '2. Registra compras y ventas', body: 'El stock debe actualizarse cuando compras, vendes, ajustas o transfieres productos.' },
@@ -866,14 +866,14 @@ const marketingPages = [
   },
   {
     slug: 'blog/cierre-de-caja-correcto',
-    seoTitle: 'Como hacer un cierre de caja correctamente | PCLAF Control',
+    seoTitle: 'Como hacer un cierre de caja correctamente | operando.app',
     description: 'Guia para abrir y cerrar caja correctamente, controlar diferencias y ordenar medios de pago.',
     kicker: 'Blog',
     h1: 'Como hacer un cierre de caja correctamente en un negocio',
     lead: 'Un buen cierre de caja no solo compara efectivo. Tambien separa cobros, diferencias y movimientos para que el negocio tenga trazabilidad real.',
     image: '/pclaf-control-panel-real.png',
-    imageAlt: 'Articulo sobre cierre de caja con PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero una demo para ordenar la caja de mi negocio.',
+    imageAlt: 'Articulo sobre cierre de caja con operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero una demo para ordenar la caja de mi negocio.',
     sections: [
       { title: 'Apertura clara', body: 'Define el monto inicial y quien opera la caja para arrancar el turno sin dudas.' },
       { title: 'Cobros bien clasificados', body: 'Separa efectivo, transferencia, billeteras y cuenta corriente dentro del mismo turno.' },
@@ -883,14 +883,14 @@ const marketingPages = [
   },
   {
     slug: 'blog/importar-productos-desde-excel',
-    seoTitle: 'Como importar productos desde Excel | PCLAF Control',
-    description: 'Migra productos desde Excel o CSV a PCLAF Control con revision y carga asistida para evitar errores de stock y precios.',
+    seoTitle: 'Como importar productos desde Excel | operando.app',
+    description: 'Migra productos desde Excel o CSV a operando.app con revision y carga asistida para evitar errores de stock y precios.',
     kicker: 'Blog',
-    h1: 'Como pasar tus productos desde Excel a PCLAF Control',
+    h1: 'Como pasar tus productos desde Excel a operando.app',
     lead: 'Cada comercio organiza sus planillas de una forma distinta. Por eso revisamos tu archivo y hacemos la migracion contigo, sin obligarte a adaptar columnas a ciegas.',
     image: '/pclaf-control-stock-real.png',
-    imageAlt: 'Importacion masiva de productos desde Excel en PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero importar mis productos desde Excel.',
+    imageAlt: 'Importacion masiva de productos desde Excel en operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero importar mis productos desde Excel.',
     sections: [
       { title: 'Nos envias tu archivo', body: 'Aceptamos Excel o CSV tal como lo usas hoy. No necesitas aprender una plantilla nueva antes de hablar con nosotros.' },
       { title: 'Revisamos y confirmamos', body: 'Identificamos nombre, codigo, precio, costo y stock; te mostramos que se va a crear o actualizar antes de guardar.' },
@@ -901,14 +901,14 @@ const marketingPages = [
   },
   {
     slug: 'privacidad',
-    seoTitle: 'Politica de privacidad | PCLAF Control',
-    description: 'Conoce como PCLAF Control trata datos comerciales, accesos, comunicaciones y soporte.',
+    seoTitle: 'Politica de privacidad | operando.app',
+    description: 'Conoce como operando.app trata datos comerciales, accesos, comunicaciones y soporte.',
     kicker: 'Legal',
-    h1: 'Politica de privacidad de PCLAF Control',
+    h1: 'Politica de privacidad de operando.app',
     lead: 'Esta pagina resume como tratamos datos de acceso, datos comerciales y consultas enviadas por formularios o WhatsApp.',
-    image: '/og-pclaf-control.svg',
-    imageAlt: 'Politica de privacidad de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero consultar sobre privacidad y datos.',
+    image: '/operando-logo.png',
+    imageAlt: 'Politica de privacidad de operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero consultar sobre privacidad y datos.',
     sections: [
       { title: 'Datos de acceso', body: 'Los accesos se usan para identificar usuarios y proteger la operacion de cada comercio.' },
       { title: 'Datos operativos', body: 'La informacion de ventas, caja, stock y clientes pertenece al comercio que usa la plataforma.' },
@@ -918,14 +918,14 @@ const marketingPages = [
   },
   {
     slug: 'terminos',
-    seoTitle: 'Terminos de uso | PCLAF Control',
-    description: 'Terminos generales de uso, prueba, soporte y operacion de PCLAF Control.',
+    seoTitle: 'Terminos de uso | operando.app',
+    description: 'Terminos generales de uso, prueba, soporte y operacion de operando.app.',
     kicker: 'Legal',
-    h1: 'Terminos de uso de PCLAF Control',
+    h1: 'Terminos de uso de operando.app',
     lead: 'La prueba y el uso comercial del sistema se prestan bajo condiciones claras de acceso, soporte, seguridad y operacion responsable.',
-    image: '/og-pclaf-control.svg',
-    imageAlt: 'Terminos de uso de PCLAF Control',
-    whatsAppPrompt: 'Hola PCLAF, quiero consultar los terminos de uso del sistema.',
+    image: '/operando-logo.png',
+    imageAlt: 'Terminos de uso de operando.app',
+    whatsAppPrompt: 'Hola Operando, quiero consultar los terminos de uso del sistema.',
     sections: [
       { title: 'Prueba y acceso', body: 'La prueba inicial permite conocer el sistema antes de definir el pack comercial adecuado.' },
       { title: 'Uso responsable', body: 'Cada comercio administra sus usuarios, roles y claves para operar de manera segura.' },
@@ -940,11 +940,11 @@ const marketingPageMap = Object.fromEntries(marketingPages.map((page) => [page.s
 const buildSoftwareJsonLd = (page) => ({
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'PCLAF Control',
+  name: 'operando.app',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   url: pageUrl(page.slug),
-  image: `${siteOrigin}/og-pclaf-control.svg`,
+  image: `${siteOrigin}/operando-logo.png`,
   screenshot: [
     `${siteOrigin}/pantalla-ventas-pclaf-control.svg`,
     `${siteOrigin}/control-stock-por-sucursal.svg`,
@@ -964,9 +964,9 @@ const buildSoftwareJsonLd = (page) => ({
 const buildOrganizationJsonLd = () => ({
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'PCLAF Control',
+  name: 'operando.app',
   url: siteOrigin,
-  logo: `${siteOrigin}/pclaf-logo.png`,
+  logo: `${siteOrigin}/operando-logo.png`,
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'sales',
@@ -994,16 +994,16 @@ const buildFaqJsonLd = (page) => {
 const renderTopbar = (page) => `
   <header class="marketing-topbar">
     <a class="marketing-brand" href="/">
-      <img src="/pclaf-logo.png" alt="PCLAF Control" width="48" height="46" />
+      <img src="/operando-logo.png" alt="operando.app" width="48" height="46" />
       <div>
-        <strong>PCLAF Control</strong>
+        <strong>operando.app</strong>
         <p>Ventas ágiles, control operativo</p>
       </div>
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
       ${topLinks.map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
       <details class="marketing-nav-menu">
-        <summary>Explorá PCLAF</summary>
+        <summary>Explorá Operando</summary>
         <div class="marketing-nav-menu-panel">
           <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">Soluciones por actividad</a>
           <a href="/comparar-sistemas-de-gestion/" data-analytics="nav_comparaciones_menu">Elegí tu sistema</a>
@@ -1031,7 +1031,7 @@ const renderTopbar = (page) => `
 const renderFooter = () => `
   <footer class="marketing-footer">
     <div class="marketing-footer-brand">
-      <strong>PCLAF Control</strong>
+      <strong>operando.app</strong>
       <p>Software comercial web para ventas, caja, stock, clientes, compras, tickets y sucursales.</p>
     </div>
     <div class="marketing-footer-links">
@@ -1073,11 +1073,11 @@ const renderComparison = (comparison) => comparison ? `
   <section class="marketing-compare" aria-labelledby="comparison-title">
     <div class="marketing-compare-copy">
       <p class="marketing-kicker">Funcion a funcion</p>
-      <h2 id="comparison-title">PCLAF Control vs ${escapeHtml(comparison.alternative)}</h2>
-      <p>Esta comparacion usa informacion publica de cada alternativa y las funciones verificadas de PCLAF Control. Revisa siempre el plan vigente antes de contratar.</p>
+      <h2 id="comparison-title">operando.app vs ${escapeHtml(comparison.alternative)}</h2>
+      <p>Esta comparacion usa informacion publica de cada alternativa y las funciones verificadas de operando.app. Revisa siempre el plan vigente antes de contratar.</p>
     </div>
     <div class="marketing-compare-table" role="region" aria-label="Tabla comparativa" tabindex="0">
-      <div class="marketing-compare-head"><span>Aspecto</span><span>${escapeHtml(comparison.alternative)}</span><span>PCLAF Control</span></div>
+      <div class="marketing-compare-head"><span>Aspecto</span><span>${escapeHtml(comparison.alternative)}</span><span>operando.app</span></div>
       ${comparison.rows.map(([feature, alternative, pclaf]) => `<div class="marketing-compare-row"><strong>${escapeHtml(feature)}</strong><span>${escapeHtml(alternative)}</span><span>${escapeHtml(pclaf)}</span></div>`).join('')}
     </div>
   </section>
@@ -1118,7 +1118,7 @@ const renderHomeExtras = (page) => {
           <img src="${row.image}" alt="${escapeHtml(row.alt)}" width="1200" height="800" loading="lazy" />
         </div>
         <div class="marketing-story-copy">
-          <p class="marketing-kicker">${escapeHtml(row.eyebrow || 'PCLAF Control')}</p>
+          <p class="marketing-kicker">${escapeHtml(row.eyebrow || 'operando.app')}</p>
           <h2>${escapeHtml(row.title)}</h2>
           <p>${escapeHtml(row.body)}</p>
         </div>
@@ -1135,7 +1135,7 @@ const renderHomeExtras = (page) => {
       <p class="marketing-kicker">Diseñado para crecer con tu rubro</p>
       <h2 id="live-metrics-title">Herramientas para comercios de <em>todos los rubros</em></h2>
       <ul class="marketing-vertical-list" aria-label="Rubros incluidos">${[...(marketingMetrics.verticals || []), 'tu rubro'].map((vertical) => `<li>${escapeHtml(vertical)}</li>`).join('')}</ul>
-      <p>Los rubros son ejemplos: PCLAF Control se adapta a la operación de cualquier comercio que necesite vender, cobrar, controlar stock y trabajar con su equipo.</p>
+      <p>Los rubros son ejemplos: operando.app se adapta a la operación de cualquier comercio que necesite vender, cobrar, controlar stock y trabajar con su equipo.</p>
     </div>
   </section>
   <section class="marketing-support" aria-labelledby="support-title">
@@ -1150,7 +1150,7 @@ const renderHomeExtras = (page) => {
       </ol>
     </div>
     <div class="marketing-support-phone" aria-label="Ejemplo ilustrativo de una conversación de soporte">
-      <div class="marketing-phone-head"><img class="marketing-phone-logo" src="/pclaf-logo.png" alt="" width="36" height="36" /><div><strong>Soporte PCLAF</strong><small>En línea</small></div><span class="marketing-phone-actions" aria-hidden="true">⌕　⋮</span></div>
+      <div class="marketing-phone-head"><img class="marketing-phone-logo" src="/operando-logo.png" alt="" width="36" height="36" /><div><strong>Soporte Operando</strong><small>En línea</small></div><span class="marketing-phone-actions" aria-hidden="true">⌕　⋮</span></div>
       <div class="marketing-phone-chat">
         <p class="marketing-chat-day">HOY</p>
         <p class="marketing-message is-client">Hola, no me aparece una venta que hice recién. ¿Puede haberse perdido?<small>18:41</small></p>
@@ -1193,7 +1193,7 @@ const renderHomeExtras = (page) => {
   <section class="marketing-home-cta marketing-card">
     <div>
       <p class="marketing-kicker">Empieza hoy</p>
-      <h2>Prueba PCLAF Control en tu propio negocio</h2>
+      <h2>Prueba operando.app en tu propio negocio</h2>
       <p>Crea tu cuenta en minutos y conoce la herramienta trabajando con tus productos y tus ventas.</p>
     </div>
     <div class="marketing-cta-row">
@@ -2718,7 +2718,7 @@ const marketingStyles = `
         }
         .marketing-vertical-carousel span:not(:first-child) { display: none; }
       }
-      /* Public palette: warm charcoal supplied for PCLAF, with its red accent. */
+      /* Public palette: warm charcoal supplied for Operando, with its red accent. */
       html,
       body {
         background: #1a1a1a;
@@ -2821,7 +2821,7 @@ const renderMarketingPage = (page) => {
   const faqData = buildFaqJsonLd(page)
   const breadcrumbData = buildBreadcrumbJsonLd(page)
   const articleData = buildArticleJsonLd(page)
-  const pageSupportUrl = `https://wa.me/5491135708345?text=${encodeURIComponent(page.whatsAppPrompt || 'Hola PCLAF, quiero informacion de PCLAF Control.')}`
+  const pageSupportUrl = `https://wa.me/5491135708345?text=${encodeURIComponent(page.whatsAppPrompt || 'Hola Operando, quiero informacion de operando.app.')}`
   const faqSection = renderFaq(page.faq || [])
   const downloadSection = page.slug ? renderDownloads(page.downloads || []) : ''
   const sections = page.slug ? renderSectionCards(page.sections || []) : ''
@@ -2834,20 +2834,20 @@ const renderMarketingPage = (page) => {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="${escapeHtml(page.description)}" />
-    <meta name="keywords" content="sistema de ventas, control de stock, sistema de caja, software para comercios, sistema para kioscos, software para tiendas, PCLAF Control" />
+    <meta name="keywords" content="sistema de ventas, control de stock, sistema de caja, software para comercios, sistema para kioscos, software para tiendas, operando.app" />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="${canonical}" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="${escapeHtml(page.seoTitle)}" />
     <meta property="og:description" content="${escapeHtml(page.description)}" />
     <meta property="og:url" content="${canonical}" />
-    <meta property="og:image" content="${siteOrigin}/og-pclaf-control.svg" />
+    <meta property="og:image" content="${siteOrigin}/operando-logo.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(page.seoTitle)}" />
     <meta name="twitter:description" content="${escapeHtml(page.description)}" />
-    <meta name="twitter:image" content="${siteOrigin}/og-pclaf-control.svg" />
-    <link rel="icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
-    <link rel="shortcut icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
+    <meta name="twitter:image" content="${siteOrigin}/operando-logo.png" />
+    <link rel="icon" type="image/png" href="/operando-logo.png?v=20260831" />
+    <link rel="shortcut icon" type="image/png" href="/operando-logo.png?v=20260831" />
     <title>${escapeHtml(page.seoTitle)}</title>
     <style>${marketingStyles}</style>
     ${gaMeasurementId ? `
@@ -2909,7 +2909,7 @@ const renderMarketingPage = (page) => {
           event.preventDefault();
           const data = new FormData(demoForm);
           const parts = [
-            'Hola PCLAF, quiero solicitar una demo de PCLAF Control.',
+            'Hola Operando, quiero solicitar una demo de operando.app.',
             data.get('nombre') ? 'Nombre: ' + data.get('nombre') : '',
             data.get('comercio') ? 'Comercio: ' + data.get('comercio') : '',
             data.get('whatsapp') ? 'WhatsApp: ' + data.get('whatsapp') : '',
@@ -3004,7 +3004,7 @@ const renderMarketingPage = (page) => {
     </script>
   </body>
 </html>
-`
+`.replace(/[ \t]+$/gm, '')
 }
 
 const appHtml = `<!doctype html>
@@ -3012,16 +3012,16 @@ const appHtml = `<!doctype html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Acceso a PCLAF Control para operar ventas, caja, stock, clientes, compras y comprobantes." />
+    <meta name="description" content="Acceso a operando.app para operar ventas, caja, stock, clientes, compras y comprobantes." />
     <meta name="robots" content="noindex,nofollow" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
     <link rel="canonical" href="${siteOrigin}${appPath}" />
-    <link rel="icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
-    <link rel="shortcut icon" type="image/png" href="/favicon.png?v=pclaf-logo-20260724" />
+    <link rel="icon" type="image/png" href="/operando-logo.png?v=20260831" />
+    <link rel="shortcut icon" type="image/png" href="/operando-logo.png?v=20260831" />
     <link rel="stylesheet" href="/app.css?v=${assetVersion}" />
-    <title>Acceso al sistema | PCLAF Control</title>
+    <title>Acceso al sistema | operando.app</title>
     <style>
       html, body {
         margin: 0;
@@ -3076,7 +3076,7 @@ const appHtml = `<!doctype html>
     <div id="app"></div>
     <div id="boot-status">
       <div class="boot-card">
-        <strong>PCLAF Control</strong>
+        <strong>operando.app</strong>
         <p>Cargando sistema...</p>
       </div>
     </div>

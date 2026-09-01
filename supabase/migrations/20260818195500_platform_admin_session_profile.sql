@@ -1,6 +1,6 @@
 -- El permiso de plataforma se decide en el servidor y debe acompañar cada
 -- inicio/restauración de sesión. Sin este campo, el cliente interpreta al
--- usuario como administrador del comercio y no como administrador PCLAF.
+-- usuario como administrador del comercio y no como administrador Operando.
 create or replace function public.app_build_public_session_payload(
   p_token uuid,
   p_user_id uuid,

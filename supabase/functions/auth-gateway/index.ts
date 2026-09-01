@@ -1,5 +1,5 @@
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...headers } })
-const configuredOrigins = () => (Deno.env.get('AUTH_ALLOWED_ORIGINS') || 'https://www.pclafcontrol.com.ar')
+const configuredOrigins = () => (Deno.env.get('AUTH_ALLOWED_ORIGINS') || 'https://operando.app')
   .split(',').map((value) => value.trim().replace(/\/$/, '')).filter(Boolean)
 const requestOrigin = (request: Request) => String(request.headers.get('origin') || '').trim().replace(/\/$/, '')
 const cors = (request: Request) => {
@@ -67,7 +67,7 @@ Deno.serve(async (request) => {
     const login = await rpc('app_public_sign_in', { p_instance_key: body.instanceKey || '', p_identifier: body.identifier || '', p_pin: body.pin || '', p_device_hash: deviceHash }).then((response) => response.json())
     if (!login?.session_token) return json({ error: 'invalid_credentials' }, 401, headers)
     if (login.new_device && Deno.env.get('RESEND_API_KEY')) {
-      await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${Deno.env.get('RESEND_API_KEY')}`, 'content-type': 'application/json' }, body: JSON.stringify({ from: Deno.env.get('SECURITY_EMAIL_FROM') || 'PCLAF Control <security@pclaf.com>', to: [login.profile?.email], subject: 'Nuevo inicio de sesión en PCLAF Control', text: `Detectamos un nuevo dispositivo iniciando sesión en tu cuenta el ${new Date().toLocaleString('es-AR')}. Si no fuiste vos, recuperá tu clave inmediatamente.` }) })
+      await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${Deno.env.get('RESEND_API_KEY')}`, 'content-type': 'application/json' }, body: JSON.stringify({ from: Deno.env.get('SECURITY_EMAIL_FROM') || 'operando.app <security@pclaf.com>', to: [login.profile?.email], subject: 'Nuevo inicio de sesión en operando.app', text: `Detectamos un nuevo dispositivo iniciando sesión en tu cuenta el ${new Date().toLocaleString('es-AR')}. Si no fuiste vos, recuperá tu clave inmediatamente.` }) })
     }
     return json(login, 200, headers)
   } catch { return json({ error: 'access_denied' }, 403, headers) }

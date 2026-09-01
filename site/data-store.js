@@ -2924,7 +2924,7 @@ export const createBrowserDataStore = (options = {}) => {
   }
 
   const updatePlatformCommerce = async (payload = {}) => {
-    if (!cloudCoreAdapter?.updatePlatformCommerce) return { ok: false, message: 'La consola PCLAF no esta disponible.' }
+    if (!cloudCoreAdapter?.updatePlatformCommerce) return { ok: false, message: 'La consola Operando no esta disponible.' }
     const result = await cloudCoreAdapter.updatePlatformCommerce(payload)
     await refreshPlatformAdminData()
     return { ok: true, message: result?.message || 'Comercio actualizado.' }

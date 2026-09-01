@@ -1,87 +1,267 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.pclafcontrol.com.ar/</loc>
+    <loc>https://operando.app/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/funciones/</loc>
+    <loc>https://operando.app/funciones/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/precios/</loc>
+    <loc>https://operando.app/precios/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/sistema-de-ventas/</loc>
+    <loc>https://operando.app/sistema-de-ventas/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/control-de-stock/</loc>
+    <loc>https://operando.app/control-de-stock/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/sistema-de-caja/</loc>
+    <loc>https://operando.app/sistema-de-caja/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/software-para-kioscos/</loc>
+    <loc>https://operando.app/software-para-kioscos/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/software-para-tiendas/</loc>
+    <loc>https://operando.app/software-para-tiendas/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/software-para-servicio-tecnico/</loc>
+    <loc>https://operando.app/software-para-servicio-tecnico/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/gestion-de-clientes/</loc>
+    <loc>https://operando.app/pos-por-rubro/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/multi-sucursal/</loc>
+    <loc>https://operando.app/pos-por-rubro/kiosco/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/preguntas-frecuentes/</loc>
+    <loc>https://operando.app/pos-por-rubro/almacen/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/blog/como-controlar-stock/</loc>
+    <loc>https://operando.app/pos-por-rubro/farmacia/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/blog/cierre-de-caja-correcto/</loc>
+    <loc>https://operando.app/pos-por-rubro/ferreteria/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/blog/importar-productos-desde-excel/</loc>
+    <loc>https://operando.app/pos-por-rubro/indumentaria/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/privacidad/</loc>
+    <loc>https://operando.app/pos-por-rubro/panaderia/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.pclafcontrol.com.ar/terminos/</loc>
+    <loc>https://operando.app/pos-por-rubro/carniceria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/verduleria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/electronica/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/pet-shop/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/zapateria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/libreria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/gimnasio/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/veterinaria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/peluqueria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/bar-cerveceria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pos-por-rubro/heladeria/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/como-funciona/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/blog/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/comparar-sistemas-de-gestion/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pclafcontrol-vs-dux-software/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pclafcontrol-vs-alegra/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pclafcontrol-vs-treinta/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pclafcontrol-vs-contabilium/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/pclafcontrol-vs-gestion-comercio/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/sistema-pos/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/control-de-stock/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/stock-minimo/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/cierre-de-caja/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/arqueo-de-caja/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/cuenta-corriente/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/transferencia-de-stock/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/lector-de-codigo-de-barras/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/glosario-pos/ticket-de-servicio-tecnico/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/gestion-de-clientes/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/multi-sucursal/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/preguntas-frecuentes/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/blog/como-controlar-stock/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/blog/cierre-de-caja-correcto/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/blog/importar-productos-desde-excel/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/privacidad/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://operando.app/terminos/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -1,4 +1,4 @@
-# Notificaciones de PCLAF Control
+# Notificaciones de operando.app
 
 Los webhooks, tokens y credenciales se configuran exclusivamente en procesos server-side o GitHub Actions. No se exponen al navegador ni se escriben en logs.
 
@@ -11,7 +11,7 @@ Los webhooks, tokens y credenciales se configuran exclusivamente en procesos ser
 - **Logs y alertas:** los warnings reales de conectividad o Cloud Run se reflejan en Discord Logs; los incidentes criticos se reflejan ademas en Discord Alertas.
 - **Deploys:** inicio, exito, fallo y rollback de actualizaciones tecnicas del backend fiscal mediante `npm run notify:deploy` y el workflow de Cloud Run. No representan una operacion de ARCA de un usuario. El fallo se notifica desde un job independiente para que llegue aun cuando falle el job de despliegue.
 - **Resumenes:** actividad diaria, semanal y mensual de comercios, usuarios, clientes nuevos, ventas registradas y metricas fiscales mediante `npm run notify:summary` y **Notify Operational Summaries**. Se envian a las 09:00 Argentina: diario de lunes a jueves, semanal los viernes y mensual el ultimo dia del mes. Discord y Telegram reciben el mismo resumen cuando estan habilitados.
-- **Estado operativo:** a las 09:01 Argentina, todos los dias, verifica la conectividad autenticada con Supabase, Google APIs y el dominio/hosting de PCLAF Control; informa el resultado en Discord General y Telegram.
+- **Estado operativo:** a las 09:01 Argentina, todos los dias, verifica la conectividad autenticada con Supabase, Google APIs y el dominio/hosting de operando.app; informa el resultado en Discord General y Telegram.
 - **Seguridad:** reemplazo de certificado fiscal sin certificado, clave, token ni CUIT completo.
 
 El inicio normal de una instancia fiscal queda solo en Cloud Logging: ocurre en deploys y cold starts de Cloud Run, por lo que no es una alerta accionable.

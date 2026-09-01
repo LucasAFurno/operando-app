@@ -4,11 +4,11 @@ import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@su
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
-const productName = 'PCLAF Control'
+const productName = 'operando.app'
 const appVersion = '__PCLAF_RELEASE_VERSION__'
-const supportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20soporte%20de%20PCLAF%20Control.'
-const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20PCLAF%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20PCLAF%20Control.'
-const publicSiteUrl = 'https://www.pclafcontrol.com.ar'
+const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
+const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'
+const publicSiteUrl = 'https://operando.app'
 const themeStorageKey = 'pclaf-control-theme'
 const sectionStorageKey = 'pclaf-control-section'
 const instanceStorageKey = 'pclaf-control-instance'
@@ -1216,7 +1216,7 @@ const standaloneAuthView = (ui) => `
       <a class="auth-back-link" href="/" aria-label="Volver a la portada">&larr; Volver al sitio</a>
       <section class="login-card auth-standalone-card">
         <div class="auth-brand">
-          <img src="/pclaf-logo.png" alt="PCLAF Control" />
+          <img src="/operando-logo.png" alt="operando.app" />
           <div>
             <strong>${productName}</strong>
             <span>Gestion comercial online</span>
@@ -1244,7 +1244,7 @@ const standaloneAuthView = (ui) => `
           <div class="auth-heading">
             <p class="kicker">Empieza ahora</p>
             <h1 id="auth-title">Crear cuenta</h1>
-            <p>Carga tus datos y empieza a usar PCLAF Control en minutos.</p>
+            <p>Carga tus datos y empieza a usar operando.app en minutos.</p>
           </div>
           <form class="login-form compact-signup-form" data-form="instance-setup" autocomplete="on">
             <div class="login-form-grid-1">
@@ -1329,7 +1329,7 @@ const loginView = (ui) => {
     <div class="recovery-shell">
       <header class="public-topbar">
         <div class="public-topbar-brand">
-          <img class="public-topbar-logo" src="/pclaf-logo.png" alt="PCLAF" />
+          <img class="public-topbar-logo" src="/operando-logo.png" alt="Operando" />
           <div class="public-topbar-copy">
             <strong>${productName}</strong>
             <span>Recuperacion de acceso</span>
@@ -1365,7 +1365,7 @@ const loginView = (ui) => {
     <div class="public-home">
       <header class="public-topbar">
         <div class="public-topbar-brand">
-          <img class="public-topbar-logo" src="/pclaf-logo.png" alt="PCLAF" />
+          <img class="public-topbar-logo" src="/operando-logo.png" alt="Operando" />
           <div class="public-topbar-copy">
             <strong>${productName}</strong>
             <span>Control comercial online</span>
@@ -1437,7 +1437,7 @@ const loginView = (ui) => {
             <span class="login-badge">Comprobantes</span>
           </div>
           <div class="landing-seo-block">
-            <p>PCLAF Control funciona como punto de venta web con control de caja, productos, inventario, clientes, proveedores, tickets y facturacion para comercios que quieren operar desde PC o celular sin instalar programas complejos.</p>
+            <p>operando.app funciona como punto de venta web con control de caja, productos, inventario, clientes, proveedores, tickets y facturacion para comercios que quieren operar desde PC o celular sin instalar programas complejos.</p>
             <p>Empieza simple para no abrumar al cliente y despues crece con usuarios, permisos, sucursales, varias cajas y reportes segun la necesidad real del negocio.</p>
           </div>
           <div class="login-actions landing-primary-actions">
@@ -1484,7 +1484,7 @@ const loginViewV2 = (ui) => `
       <section class="login-overview">
         <div class="login-overview-card">
           <div class="login-brand-row">
-            <img class="login-logo login-logo-large" src="/pclaf-logo.png" alt="PCLAF" />
+            <img class="login-logo login-logo-large" src="/operando-logo.png" alt="Operando" />
             <div class="login-brand-copy">
               <p class="kicker">Sistema de gestion comercial</p>
               <h1>${productName}</h1>
@@ -1498,7 +1498,7 @@ const loginViewV2 = (ui) => `
             <span class="login-badge">Comprobantes</span>
           </div>
           <div class="login-seo-copy">
-            <p>PCLAF Control es un software de gestion comercial para kioscos, locales, tiendas y negocios que necesitan vender, cobrar, ordenar stock y emitir comprobantes desde la web.</p>
+            <p>operando.app es un software de gestion comercial para kioscos, locales, tiendas y negocios que necesitan vender, cobrar, ordenar stock y emitir comprobantes desde la web.</p>
             <p>La herramienta arranca simple para no abrumar y despues puede crecer con usuarios, cajas, sucursales y modulos segun el tipo de comercio.</p>
           </div>
           <div class="login-hero-note">
@@ -1521,7 +1521,7 @@ const loginViewV2 = (ui) => `
           </div>
           <div class="landing-contact">
             <div>
-              <strong>Contacto PCLAF</strong>
+              <strong>Contacto Operando</strong>
               <span>Consultas comerciales, implementacion y soporte por WhatsApp</span>
             </div>
             <button type="button" class="ghost-action" data-action="open-support">Hablar con soporte</button>
@@ -1593,7 +1593,7 @@ const loginViewV2 = (ui) => `
 const setupView = (ui) => `
   <div class="login-shell">
     <div class="login-card login-card-wide">
-      <img class="login-logo" src="/pclaf-logo.png" alt="PCLAF" />
+      <img class="login-logo" src="/operando-logo.png" alt="Operando" />
       <p class="kicker">Alta inicial</p>
       <h1>${productName}</h1>
       <p class="login-copy">Completa tus datos y dejamos listo tu comercio con una cuenta administradora para empezar a trabajar sin configuraciones raras.</p>
@@ -1628,7 +1628,7 @@ const setupView = (ui) => `
 const cloudActivationView = (ui) => `
   <div class="login-shell">
     <div class="login-card login-card-wide">
-      <img class="login-logo" src="/pclaf-logo.png" alt="PCLAF" />
+      <img class="login-logo" src="/operando-logo.png" alt="Operando" />
       <p class="kicker">Activacion requerida</p>
       <h1>${productName}</h1>
       <p class="login-copy">Esta instalacion necesita la base cloud conectada antes de permitir ingresos o pruebas con clientes.</p>
@@ -2943,7 +2943,7 @@ const ownerAdminViewV2 = (ui) => {
     <section class="platform-trace-workspace"><aside class="panel platform-user-directory"><div class="panel-head"><div><p class="kicker">Directorio</p><h3>Usuarios</h3></div><span class="panel-count">${users.length}</span></div><div class="platform-user-filters"><input type="search" value="${escapeHtml(platformUserSearchQuery)}" data-platform-user-search placeholder="Buscar persona o comercio" /><select data-platform-user-filter><option value="all" ${platformUserFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformUserFilter === 'active' ? 'selected' : ''}>Activos</option><option value="inactive" ${platformUserFilter === 'inactive' ? 'selected' : ''}>Inactivos</option></select></div><div class="platform-user-list">${users.length ? users.map((entry) => `<button type="button" class="platform-user-row ${entry.id === selectedUser?.id ? 'is-selected' : ''}" data-platform-user-select="${entry.id}"><span class="platform-user-avatar">${escapeHtml((entry.fullName || '?').slice(0, 1).toUpperCase())}</span><span><strong>${escapeHtml(entry.fullName)}</strong><small>${escapeHtml(entry.email || 'Sin email')}</small><em>${entry.memberships?.[0]?.commerceName || 'Sin comercio'}</em></span><time>${entry.lastLoginAt ? formatDate(entry.lastLoginAt) : 'Sin acceso'}</time></button>`).join('') : '<p class="empty-state">No hay usuarios para este filtro.</p>'}</div></aside>
       ${selectedUser ? `<section class="platform-user-detail"><header class="platform-user-header"><span class="platform-user-avatar large">${escapeHtml((selectedUser.fullName || '?').slice(0, 1).toUpperCase())}</span><div><p class="kicker">Perfil seleccionado</p><h3>${escapeHtml(selectedUser.fullName)}</h3><p>${escapeHtml(selectedUser.email || 'Sin email')} · ${selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}</p></div><div class="platform-user-meta"><span>Alta<strong>${formatDate(selectedUser.createdAt)}</strong></span><span>Último acceso<strong>${formatDate(selectedUser.lastLoginAt)}</strong></span></div></header>
         <section class="platform-membership-panel"><p class="kicker">Comercios y permisos</p><div>${(selectedUser.memberships || []).map((membership) => `<article><strong>${escapeHtml(membership.commerceName)}</strong><span>${escapeHtml(membership.instanceKey)} · ${membership.isOwner ? 'Propietario' : escapeHtml(membership.roleKey)}</span><em class="${membership.status === 'active' ? 'is-active' : ''}">${membership.status === 'active' ? 'Activo' : 'Inactivo'}</em></article>`).join('') || '<p class="empty-state">No tiene comercios asignados.</p>'}</div></section>
-        <section class="panel platform-user-trace-panel"><div class="panel-head"><div><p class="kicker">Auditoría de usuario</p><h3>Línea de trazabilidad</h3><p>Solo metadatos: acción, hora y comercio.</p></div><span class="panel-count">${trace.length} eventos</span></div><div class="platform-user-trace">${trace.length ? trace.map((event) => { const module = entityModule[event.entityType] || 'settings'; return `<article class="platform-trace-event module-${module}"><span class="platform-trace-node"></span><div><div><span class="audit-module-tag module-${module}">${entityLabels[event.entityType] || 'Sistema'}</span><time>${formatDate(event.createdAt)}</time></div><strong>${actionLabels[event.action] || 'Actividad registrada'}</strong><p>${event.commerceName ? `En ${escapeHtml(event.commerceName)}` : 'Registro de cuenta PCLAF'}</p></div></article>` }).join('') : '<p class="empty-state">Todavía no hay eventos auditados para esta persona.</p>'}</div></section>
+        <section class="panel platform-user-trace-panel"><div class="panel-head"><div><p class="kicker">Auditoría de usuario</p><h3>Línea de trazabilidad</h3><p>Solo metadatos: acción, hora y comercio.</p></div><span class="panel-count">${trace.length} eventos</span></div><div class="platform-user-trace">${trace.length ? trace.map((event) => { const module = entityModule[event.entityType] || 'settings'; return `<article class="platform-trace-event module-${module}"><span class="platform-trace-node"></span><div><div><span class="audit-module-tag module-${module}">${entityLabels[event.entityType] || 'Sistema'}</span><time>${formatDate(event.createdAt)}</time></div><strong>${actionLabels[event.action] || 'Actividad registrada'}</strong><p>${event.commerceName ? `En ${escapeHtml(event.commerceName)}` : 'Registro de cuenta Operando'}</p></div></article>` }).join('') : '<p class="empty-state">Todavía no hay eventos auditados para esta persona.</p>'}</div></section>
       </section>` : ''}
     </section>
   </section>`
@@ -3055,13 +3055,13 @@ const settingsViewV2 = (ui) => `
         ${dataTable(['Caja', 'Codigo', 'Sucursal', 'Cajero', 'Accion'], ui.enrichedRegisters.map((register) => `<div class="data-row"><span>${register.name}</span><span>${register.code}</span><span>${register.branchName}</span><span>${register.cashierName}</span><span class="inline-action-group"><button type="button" class="inline-action" data-register-action="select" data-id="${register.id}">Usar</button>${registerActionButtons(register)}</span></div>`))}
       </article>` : ''}
       ${settingsPanelOpen === 'arca' ? `<article class="panel settings-expand-panel" data-settings-content="arca"><div class="panel-head"><div><h3>${arcaConnected ? 'Facturacion ARCA activa' : 'Activar facturacion ARCA'}</h3><p>Configuracion guiada y segura para emitir comprobantes electronicos</p></div><span class="badge ${arcaConnected ? 'is-success' : 'is-warning'}">${arcaConnected ? 'Conexion activa' : 'Demo visual'}</span></div>
-        <div class="info-strip ${arcaConnected ? 'is-success' : 'is-warning'}"><strong>${arcaConnected ? 'ARCA conectada y lista para facturar' : 'Configuracion fiscal pendiente'}</strong><span>${arcaConnected ? 'Certificado, WSAA y punto de venta validados. PCLAF puede emitir comprobantes con CAE.' : 'Los datos se envian al servicio fiscal privado de PCLAF. Tu Clave Fiscal nunca se solicita.'}</span></div>
+        <div class="info-strip ${arcaConnected ? 'is-success' : 'is-warning'}"><strong>${arcaConnected ? 'ARCA conectada y lista para facturar' : 'Configuracion fiscal pendiente'}</strong><span>${arcaConnected ? 'Certificado, WSAA y punto de venta validados. Operando puede emitir comprobantes con CAE.' : 'Los datos se envian al servicio fiscal privado de Operando. Tu Clave Fiscal nunca se solicita.'}</span></div>
         <div class="arca-steps" aria-label="Progreso de activacion">${['Datos fiscales', 'Certificado', 'Cuenta ARCA', 'Verificacion'].map((label, index) => `<span class="${arcaSetupStep === index + 1 ? 'is-active' : arcaSetupStep > index + 1 ? 'is-complete' : ''}"><i>${arcaSetupStep > index + 1 ? '✓' : index + 1}</i>${label}</span>`).join('')}</div>
         ${arcaSetupStep === 1 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Datos fiscales del comercio</h3><p>Se usan para crear el certificado y verificar el punto de venta.</p></div></div><div class="form-grid compact-form settings-wide-form"><label>CUIT<input name="arca-cuit" inputmode="numeric" value="${arcaFiscal.cuit}" placeholder="20-12345678-9" /></label><label class="full-span">Razon social<input name="arca-legal-name" value="${arcaFiscal.legalName || ui.snapshot.business.organization || ui.commerceContext?.legal_name || ui.commerceContext?.commerce_name || ''}" placeholder="Nombre fiscal del comercio" /></label><label>Punto de venta Web Services<input name="arca-point-sale" inputmode="numeric" value="${arcaFiscal.pointOfSale}" placeholder="Ej. 0002" /></label></div><div class="settings-actions"><button type="button" class="primary-action" data-action="arca-save-fiscal">Continuar con certificado</button></div></div>` : ''}
-        ${arcaSetupStep === 2 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Certificado tecnico</h3><p>PCLAF genera y guarda la clave privada cifrada; solo descargás la solicitud CSR.</p></div></div><div class="timeline-list compact-timeline"><div class="timeline-item"><strong>Solicitud de certificado (CSR)</strong><p>${arcaCsrGenerated ? 'Lista para descargar y presentar en ARCA.' : 'Generala para asociarla al servicio de Facturacion Electronica.'}</p></div></div><div class="settings-actions">${arcaCsrGenerated ? '<button type="button" class="primary-action" data-action="arca-download-csr">Descargar solicitud CSR</button><button type="button" class="ghost-action" data-action="arca-next-step">Continuar a ARCA</button>' : '<button type="button" class="primary-action" data-action="arca-generate-csr">Generar solicitud de certificado</button>'}<button type="button" class="ghost-action" data-action="arca-previous-step">Volver</button></div></div>` : ''}
-        ${arcaSetupStep === 3 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Completa la autorizacion en ARCA</h3><p>Este es el unico paso que debe realizar el titular o contador del comercio.</p></div></div><div class="timeline-list compact-timeline"><div class="timeline-item"><strong>1. Habilita el punto de venta</strong><p>Crea un punto de venta exclusivo para Web Services.</p></div><div class="timeline-item"><strong>2. Autoriza el certificado</strong><p>Asocialo al servicio Facturacion Electronica desde tu cuenta ARCA.</p></div><div class="timeline-item"><strong>3. Volve a PCLAF</strong><p>Subi el certificado emitido por ARCA. No subas claves ni compartas tu Clave Fiscal.</p></div></div><label class="arca-upload">Certificado de ARCA (.crt/.pem)<input type="file" accept=".crt,.cer,.pem" data-arca-certificate /><span>${arcaCertificateName || 'Seleccionar certificado'}</span></label><div class="settings-actions"><button type="button" class="primary-action" data-action="open-arca-guide">Abrir guia oficial de ARCA</button><button type="button" class="ghost-action" data-action="arca-next-step" ${arcaCertificateName ? '' : 'disabled'}>Continuar a verificacion</button><button type="button" class="ghost-action" data-action="arca-previous-step">Volver</button></div></div>` : ''}
-        ${arcaSetupStep === 4 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Verificar y activar</h3><p>PCLAF comprueba certificado, WSAA y el punto de venta en homologacion.</p></div></div><div class="arca-verification ${arcaVerificationState}"><strong>${arcaVerificationState === 'verified' ? 'Conexion lista para facturar' : arcaVerificationState === 'checking' ? 'Verificando configuracion…' : 'Listo para verificar'}</strong><span>${arcaVerificationState === 'verified' ? 'La facturacion ARCA de homologacion esta activa.' : 'La verificacion consulta ARCA; no emite ninguna factura.'}</span></div><div class="settings-actions"><button type="button" class="primary-action ${arcaVerificationState === 'verified' ? 'is-success' : ''}" data-action="arca-verify">${arcaVerificationState === 'verified' ? 'Conexion ARCA activa' : 'Verificar y activar'}</button><button type="button" class="ghost-action" data-action="arca-previous-step">Volver</button></div></div>` : ''}
-        <div class="panel-note"><strong>Activacion autoservicio</strong><span>Completa los cuatro pasos de esta pantalla. El soporte general de PCLAF queda disponible por separado en el menu Soporte.</span></div>
+        ${arcaSetupStep === 2 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Certificado tecnico</h3><p>Operando genera y guarda la clave privada cifrada; solo descargás la solicitud CSR.</p></div></div><div class="timeline-list compact-timeline"><div class="timeline-item"><strong>Solicitud de certificado (CSR)</strong><p>${arcaCsrGenerated ? 'Lista para descargar y presentar en ARCA.' : 'Generala para asociarla al servicio de Facturacion Electronica.'}</p></div></div><div class="settings-actions">${arcaCsrGenerated ? '<button type="button" class="primary-action" data-action="arca-download-csr">Descargar solicitud CSR</button><button type="button" class="ghost-action" data-action="arca-next-step">Continuar a ARCA</button>' : '<button type="button" class="primary-action" data-action="arca-generate-csr">Generar solicitud de certificado</button>'}<button type="button" class="ghost-action" data-action="arca-previous-step">Volver</button></div></div>` : ''}
+        ${arcaSetupStep === 3 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Completa la autorizacion en ARCA</h3><p>Este es el unico paso que debe realizar el titular o contador del comercio.</p></div></div><div class="timeline-list compact-timeline"><div class="timeline-item"><strong>1. Habilita el punto de venta</strong><p>Crea un punto de venta exclusivo para Web Services.</p></div><div class="timeline-item"><strong>2. Autoriza el certificado</strong><p>Asocialo al servicio Facturacion Electronica desde tu cuenta ARCA.</p></div><div class="timeline-item"><strong>3. Volve a Operando</strong><p>Subi el certificado emitido por ARCA. No subas claves ni compartas tu Clave Fiscal.</p></div></div><label class="arca-upload">Certificado de ARCA (.crt/.pem)<input type="file" accept=".crt,.cer,.pem" data-arca-certificate /><span>${arcaCertificateName || 'Seleccionar certificado'}</span></label><div class="settings-actions"><button type="button" class="primary-action" data-action="open-arca-guide">Abrir guia oficial de ARCA</button><button type="button" class="ghost-action" data-action="arca-next-step" ${arcaCertificateName ? '' : 'disabled'}>Continuar a verificacion</button><button type="button" class="ghost-action" data-action="arca-previous-step">Volver</button></div></div>` : ''}
+        ${arcaSetupStep === 4 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Verificar y activar</h3><p>Operando comprueba certificado, WSAA y el punto de venta en homologacion.</p></div></div><div class="arca-verification ${arcaVerificationState}"><strong>${arcaVerificationState === 'verified' ? 'Conexion lista para facturar' : arcaVerificationState === 'checking' ? 'Verificando configuracion…' : 'Listo para verificar'}</strong><span>${arcaVerificationState === 'verified' ? 'La facturacion ARCA de homologacion esta activa.' : 'La verificacion consulta ARCA; no emite ninguna factura.'}</span></div><div class="settings-actions"><button type="button" class="primary-action ${arcaVerificationState === 'verified' ? 'is-success' : ''}" data-action="arca-verify">${arcaVerificationState === 'verified' ? 'Conexion ARCA activa' : 'Verificar y activar'}</button><button type="button" class="ghost-action" data-action="arca-previous-step">Volver</button></div></div>` : ''}
+        <div class="panel-note"><strong>Activacion autoservicio</strong><span>Completa los cuatro pasos de esta pantalla. El soporte general de Operando queda disponible por separado en el menu Soporte.</span></div>
       </article>` : ''}
     </section>
   </section>
@@ -3181,10 +3181,10 @@ const renderApp = (ui) => {
     <div class="app-shell">
       <aside class="sidebar">
         <div class="sidebar-brand">
-          <img class="brand-logo" src="/pclaf-logo.png" alt="PCLAF" />
+          <img class="brand-logo" src="/operando-logo.png" alt="Operando" />
         </div>
         <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}</nav>
-        <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square ${supportMenuOpen ? 'is-active' : ''}" type="button" data-action="toggle-support-menu" title="Soporte" aria-label="Abrir opciones de soporte" aria-expanded="${supportMenuOpen}"><span class="nav-icon">${icon('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8.5 9h7"/><path d="M8.5 13h4"/>')}</span><span class="nav-label">Soporte</span></button>${supportMenuOpen ? `<div class="support-menu" role="menu"><button type="button" data-action="open-arca-setup" role="menuitem"><strong>Facturacion ARCA</strong><span>Configura la conexion fiscal</span></button><button type="button" data-action="open-support" role="menuitem"><strong>Soporte general</strong><span>Habla con PCLAF por WhatsApp</span></button></div>` : ''}</div></div>
+        <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square ${supportMenuOpen ? 'is-active' : ''}" type="button" data-action="toggle-support-menu" title="Soporte" aria-label="Abrir opciones de soporte" aria-expanded="${supportMenuOpen}"><span class="nav-icon">${icon('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8.5 9h7"/><path d="M8.5 13h4"/>')}</span><span class="nav-label">Soporte</span></button>${supportMenuOpen ? `<div class="support-menu" role="menu"><button type="button" data-action="open-arca-setup" role="menuitem"><strong>Facturacion ARCA</strong><span>Configura la conexion fiscal</span></button><button type="button" data-action="open-support" role="menuitem"><strong>Soporte general</strong><span>Habla con Operando por WhatsApp</span></button></div>` : ''}</div></div>
       </aside>
       <div class="workspace">
         <header class="topbar">
@@ -3202,14 +3202,14 @@ const renderApp = (ui) => {
             <div class="account-alerts-wrap">
               <button class="account-card compact-meta ${accountAlertsOpen ? 'is-open' : ''}" type="button" data-action="toggle-account-alerts" aria-label="Abrir menu de cuenta" aria-expanded="${accountAlertsOpen ? 'true' : 'false'}">
                 <span class="account-avatar">${userInitials}</span>
-                <span class="account-copy"><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador PCLAF' : (ui.role?.name || 'Usuario')}</span></span>
+                <span class="account-copy"><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador Operando' : (ui.role?.name || 'Usuario')}</span></span>
                 ${isPlatformConsole ? '' : `<span class="account-cash-state ${ui.openCashSession ? 'is-open' : 'is-closed'}"><span class="status-led" aria-hidden="true"></span><span>${statusTitle}</span></span>`}
                 ${notificationCount ? `<span class="account-alert-count" aria-label="${notificationCount} alertas">${notificationCount}</span>` : ''}
                 <span class="account-menu-chevron" aria-hidden="true">⌄</span>
               </button>
               ${accountAlertsOpen ? `<div class="account-alerts-popover">
                 <div class="account-alerts-head">
-                  <div><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador PCLAF' : (ui.role?.name || 'Usuario')}</span></div>
+                  <div><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador Operando' : (ui.role?.name || 'Usuario')}</span></div>
                   <button type="button" class="ghost-action account-alerts-link" data-action="open-account-panel">Mi cuenta</button>
                 </div>
                 ${isPlatformConsole ? '' : `<button type="button" class="account-cash-action ${ui.openCashSession ? 'is-open' : 'is-closed'}" data-section="caja" data-cash-operation>
@@ -3217,7 +3217,7 @@ const renderApp = (ui) => {
                   <span><strong>Caja ${statusTitle.toLowerCase()}</strong><small>${statusHint || (ui.openCashSession ? 'Lista para operar' : 'Abrir para cobrar en efectivo')}</small></span>
                   <span aria-hidden="true">›</span>
                 </button>`}
-                <div class="account-popover-label">${isPlatformConsole ? 'Consola PCLAF' : 'Alertas'}</div>
+                <div class="account-popover-label">${isPlatformConsole ? 'Consola Operando' : 'Alertas'}</div>
                 <div class="account-alerts-list">
                   ${alertItems.length ? alertItems.map((item) => `<div class="account-alert-item">
                     <button type="button" class="account-alert-open" data-alert-section="${item.section}" data-alert-target="${item.target}">
@@ -3470,7 +3470,7 @@ const getReceiptDocument = (saleId) => {
   .total{font-size:18px;font-weight:700;text-align:right;margin-top:14px}
   .meta strong{display:inline-block;width:72px}
   @media print { body{margin:0} .ticket{width:auto} }
-  </style></head><body><div class="ticket"><div class="brand"><h1>PCLAF</h1><p>${branch?.name || 'Sucursal'}<br />${branch?.address || ''}</p></div><div class="meta"><div><strong>Cliente:</strong> ${customer?.fullName || 'Mostrador'}</div><div><strong>Fecha:</strong> ${sale.soldAt.slice(0, 16).replace('T', ' ')}</div><div><strong>Canal:</strong> ${sale.channel}</div><div><strong>Pago:</strong> ${sale.paymentMethod}</div><div><strong>Caja:</strong> ${register?.name || 'Sin caja'}</div><div><strong>Venta:</strong> ${sale.id.slice(0, 8)}</div></div><table><thead><tr><th>Item</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${sale.items.map((item) => { const product = ui.snapshot.products.find((entry) => entry.id === item.productId); return `<tr><td>${product?.name || 'Articulo'}</td><td>${item.quantity}</td><td>${money(item.lineTotal)}</td></tr>` }).join('')}</tbody></table><p class="total">TOTAL ${money(sale.totalAmount)}</p><p class="footer">Comprobante interno generado por PCLAF Control.</p></div></body></html>`
+  </style></head><body><div class="ticket"><div class="brand"><h1>Operando</h1><p>${branch?.name || 'Sucursal'}<br />${branch?.address || ''}</p></div><div class="meta"><div><strong>Cliente:</strong> ${customer?.fullName || 'Mostrador'}</div><div><strong>Fecha:</strong> ${sale.soldAt.slice(0, 16).replace('T', ' ')}</div><div><strong>Canal:</strong> ${sale.channel}</div><div><strong>Pago:</strong> ${sale.paymentMethod}</div><div><strong>Caja:</strong> ${register?.name || 'Sin caja'}</div><div><strong>Venta:</strong> ${sale.id.slice(0, 8)}</div></div><table><thead><tr><th>Item</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${sale.items.map((item) => { const product = ui.snapshot.products.find((entry) => entry.id === item.productId); return `<tr><td>${product?.name || 'Articulo'}</td><td>${item.quantity}</td><td>${money(item.lineTotal)}</td></tr>` }).join('')}</tbody></table><p class="total">TOTAL ${money(sale.totalAmount)}</p><p class="footer">Comprobante interno generado por operando.app.</p></div></body></html>`
   return { html, filename: `comprobante-${sale.id}.pdf`, fallbackFilename: `comprobante-${sale.id}.html` }
 }
 
@@ -3486,7 +3486,7 @@ const getInvoiceDocument = (invoiceId) => {
   const issuedAt = String(invoice.issuedAt || invoice.dueDate || '').slice(0, 10) || today
   const amountPaid = Number(invoice.amountPaid || 0)
   const balanceDue = Math.max(0, Number(invoice.totalAmount || 0) - amountPaid)
-  const businessName = ui.commerceContext?.commerce_name || ui.snapshot.business.name || 'PCLAF Control'
+  const businessName = ui.commerceContext?.commerce_name || ui.snapshot.business.name || 'operando.app'
   const businessDetails = [ui.snapshot.business.organization, branch?.name, branch?.address].filter(Boolean).join(' · ')
   const items = sale?.items?.length
     ? sale.items.map((item) => {
@@ -3504,11 +3504,11 @@ const getInvoiceDocument = (invoiceId) => {
     .header{display:flex;justify-content:space-between;gap:24px;border-bottom:2px solid #172033;padding-bottom:24px}.brand h1{margin:0;font-size:28px}.brand p,.meta,.muted{color:#536071;font-size:13px;line-height:1.5}.doc-type{text-align:right}.doc-type strong{display:block;font-size:24px}.doc-type span{font-size:14px}
     .parties{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:30px 0}.party{border:1px solid #d7dce5;padding:16px}.party h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#536071;margin:0 0 10px}.party strong{display:block;font-size:16px;margin-bottom:5px}
     table{width:100%;border-collapse:collapse;margin-top:24px}th{background:#172033;color:#fff;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:11px}td{border-bottom:1px solid #d7dce5;padding:12px 11px;font-size:14px}th:nth-child(n+2),td:nth-child(n+2){text-align:right}.totals{margin-left:auto;width:310px;margin-top:26px;border-top:2px solid #172033;padding-top:10px}.totals div{display:flex;justify-content:space-between;padding:5px 0;font-size:15px}.totals .grand{font-size:22px;font-weight:800;border-top:1px solid #d7dce5;margin-top:5px;padding-top:10px}.totals .due{color:#9b2c2c;font-weight:700}.footer{border-top:1px solid #d7dce5;margin-top:48px;padding-top:16px;font-size:12px;color:#536071}@media print{body{background:#fff;padding:0}.invoice{border:0;max-width:none;min-height:0;padding:18mm 16mm}}
-  </style></head><body><main class="invoice"><header class="header"><div class="brand"><h1>PCLAF Control</h1><p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p></div><div class="doc-type"><strong>${escapeHtml(invoice.kind || 'Factura')}</strong><span>${escapeHtml(invoice.type || 'B')} · N° ${escapeHtml(invoice.number)}</span><div class="meta">Emision: ${escapeHtml(issuedAt)}</div></div></header><section class="parties"><div class="party"><h2>Cliente</h2><strong>${escapeHtml(customer?.fullName || 'Consumidor final')}</strong><span class="muted">Comprobante ${escapeHtml(invoice.status || 'Emitida')}</span></div><div class="party"><h2>Datos fiscales</h2><strong>${escapeHtml(invoice.fiscalStatus || 'Pendiente')}</strong><span class="muted">Vencimiento: ${escapeHtml(String(invoice.dueDate || issuedAt).slice(0, 10))}</span></div></section><table><thead><tr><th>Descripcion</th><th>Cant.</th><th>Precio unit.</th><th>Importe</th></tr></thead><tbody>${items}</tbody></table><div class="totals"><div><span>Total factura</span><strong>${money(invoice.totalAmount)}</strong></div><div><span>Cobrado</span><strong>${money(amountPaid)}</strong></div><div class="grand ${balanceDue ? 'due' : ''}"><span>${balanceDue ? 'Saldo pendiente' : 'Saldo'}</span><span>${money(balanceDue)}</span></div></div><footer class="footer">Comprobante generado por PCLAF Control · ${escapeHtml(invoice.number)}</footer></main></body></html>`
+  </style></head><body><main class="invoice"><header class="header"><div class="brand"><h1>operando.app</h1><p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p></div><div class="doc-type"><strong>${escapeHtml(invoice.kind || 'Factura')}</strong><span>${escapeHtml(invoice.type || 'B')} · N° ${escapeHtml(invoice.number)}</span><div class="meta">Emision: ${escapeHtml(issuedAt)}</div></div></header><section class="parties"><div class="party"><h2>Cliente</h2><strong>${escapeHtml(customer?.fullName || 'Consumidor final')}</strong><span class="muted">Comprobante ${escapeHtml(invoice.status || 'Emitida')}</span></div><div class="party"><h2>Datos fiscales</h2><strong>${escapeHtml(invoice.fiscalStatus || 'Pendiente')}</strong><span class="muted">Vencimiento: ${escapeHtml(String(invoice.dueDate || issuedAt).slice(0, 10))}</span></div></section><table><thead><tr><th>Descripcion</th><th>Cant.</th><th>Precio unit.</th><th>Importe</th></tr></thead><tbody>${items}</tbody></table><div class="totals"><div><span>Total factura</span><strong>${money(invoice.totalAmount)}</strong></div><div><span>Cobrado</span><strong>${money(amountPaid)}</strong></div><div class="grand ${balanceDue ? 'due' : ''}"><span>${balanceDue ? 'Saldo pendiente' : 'Saldo'}</span><span>${money(balanceDue)}</span></div></div><footer class="footer">Comprobante generado por operando.app · ${escapeHtml(invoice.number)}</footer></main></body></html>`
   const brandedHtml = html
-    .replace('<h1>PCLAF Control</h1>', `<h1>${escapeHtml(businessName)}</h1>`)
+    .replace('<h1>operando.app</h1>', `<h1>${escapeHtml(businessName)}</h1>`)
     .replace(`<p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p>`, `<p>${escapeHtml(businessDetails || 'Datos del comercio')}</p>`)
-  const printableHtml = brandedHtml.replace(/<footer class="footer">[\s\S]*?<\/footer>/, '<footer class="footer"><strong>Hecho con PCLAF Control</strong>Gestioná ventas, cobros y stock en un solo lugar · www.pclafcontrol.com.ar</footer>')
+  const printableHtml = brandedHtml.replace(/<footer class="footer">[\s\S]*?<\/footer>/, '<footer class="footer"><strong>Hecho con operando.app</strong>Gestioná ventas, cobros y stock en un solo lugar · www.operando.app</footer>')
   return { html: printableHtml, title: `${invoice.kind || 'Factura'} ${invoice.number}` }
 }
 
@@ -3593,7 +3593,7 @@ const buildThermalReceiptDocument = (saleId, paperWidth = '80') => {
     .footer{margin-top:10px;border-top:1px dashed #222;padding-top:8px}
     @page{size:${pageSize} auto;margin:4mm}
     @media print{body{margin:0}.ticket{width:auto;padding:0 0 8px}}
-  </style></head><body><div class="ticket"><div class="brand"><h1>PCLAF Control</h1><p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p></div><div class="meta"><div class="meta-row"><span>Cliente</span><span>${escapeHtml(customer?.fullName || 'Mostrador')}</span></div><div class="meta-row"><span>Fecha</span><span>${escapeHtml(sale.soldAt.slice(0, 16).replace('T', ' '))}</span></div><div class="meta-row"><span>Canal</span><span>${escapeHtml(sale.channel)}</span></div><div class="meta-row"><span>Pago</span><span>${escapeHtml(sale.paymentMethod)}</span></div><div class="meta-row"><span>Caja</span><span>${escapeHtml(register?.name || 'Sin caja')}</span></div><div class="meta-row"><span>Operacion</span><span>${escapeHtml(sale.id.slice(0, 8).toUpperCase())}</span></div></div><table class="items"><thead><tr><th>Item</th><th>Cant</th><th>Unit</th><th>Total</th></tr></thead><tbody>${lines}</tbody></table><div class="totals"><div class="totals-row"><span>Subtotal</span><span>${money(sale.subtotalAmount || sale.totalAmount)}</span></div>${sale.discountAmount ? `<div class="totals-row"><span>Descuento</span><span>- ${money(sale.discountAmount)}</span></div>` : ''}<div class="totals-row"><span>Cobrado</span><span>${money(sale.amountPaid || 0)}</span></div><div class="totals-row grand"><span>TOTAL</span><span>${money(sale.totalAmount)}</span></div></div><div class="footer"><p>Comprobante interno ${pageSize}<br />Generado por PCLAF Control</p></div></div></body></html>`
+  </style></head><body><div class="ticket"><div class="brand"><h1>operando.app</h1><p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p></div><div class="meta"><div class="meta-row"><span>Cliente</span><span>${escapeHtml(customer?.fullName || 'Mostrador')}</span></div><div class="meta-row"><span>Fecha</span><span>${escapeHtml(sale.soldAt.slice(0, 16).replace('T', ' '))}</span></div><div class="meta-row"><span>Canal</span><span>${escapeHtml(sale.channel)}</span></div><div class="meta-row"><span>Pago</span><span>${escapeHtml(sale.paymentMethod)}</span></div><div class="meta-row"><span>Caja</span><span>${escapeHtml(register?.name || 'Sin caja')}</span></div><div class="meta-row"><span>Operacion</span><span>${escapeHtml(sale.id.slice(0, 8).toUpperCase())}</span></div></div><table class="items"><thead><tr><th>Item</th><th>Cant</th><th>Unit</th><th>Total</th></tr></thead><tbody>${lines}</tbody></table><div class="totals"><div class="totals-row"><span>Subtotal</span><span>${money(sale.subtotalAmount || sale.totalAmount)}</span></div>${sale.discountAmount ? `<div class="totals-row"><span>Descuento</span><span>- ${money(sale.discountAmount)}</span></div>` : ''}<div class="totals-row"><span>Cobrado</span><span>${money(sale.amountPaid || 0)}</span></div><div class="totals-row grand"><span>TOTAL</span><span>${money(sale.totalAmount)}</span></div></div><div class="footer"><p>Comprobante interno ${pageSize}<br />Generado por operando.app</p></div></div></body></html>`
   return {
     html,
     filename: `ticket-${pageSize}-${sale.id}.pdf`,
@@ -4708,7 +4708,7 @@ const bindEvents = () => {
   for (const button of document.querySelectorAll('[data-action="refresh-platform-admin"]')) button.addEventListener('click', async () => {
     try {
       await store.refreshPlatformAdminData()
-      feedbackMessage = 'Panel PCLAF actualizado.'
+      feedbackMessage = 'Panel Operando actualizado.'
     } catch (error) {
       feedbackMessage = humanizeError(error)
     }

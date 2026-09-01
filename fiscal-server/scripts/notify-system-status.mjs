@@ -22,7 +22,7 @@ if (required.length) {
       headers: { apikey: serviceRoleKey, authorization: `Bearer ${serviceRoleKey}` },
     }),
     check('Google APIs', 'https://www.googleapis.com/oauth2/v3/certs'),
-    check('Dominio y hosting web', 'https://www.pclafcontrol.com.ar/'),
+    check('Dominio y hosting web', 'https://operando.app/'),
   ])
   const allHealthy = checks.every((item) => item.ok)
   const failedChecks = checks.filter((item) => !item.ok).length

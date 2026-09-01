@@ -1,4 +1,4 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=5764877b9fd9'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=313a4665e3ea'
 
 const dataStorageKey = 'pclaf-control-data'
 const cloudConfigStorageKey = 'pclaf-control-cloud-config'
@@ -2924,7 +2924,7 @@ export const createBrowserDataStore = (options = {}) => {
   }
 
   const updatePlatformCommerce = async (payload = {}) => {
-    if (!cloudCoreAdapter?.updatePlatformCommerce) return { ok: false, message: 'La consola PCLAF no esta disponible.' }
+    if (!cloudCoreAdapter?.updatePlatformCommerce) return { ok: false, message: 'La consola Operando no esta disponible.' }
     const result = await cloudCoreAdapter.updatePlatformCommerce(payload)
     await refreshPlatformAdminData()
     return { ok: true, message: result?.message || 'Comercio actualizado.' }

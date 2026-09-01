@@ -1,6 +1,6 @@
-# PCLAF Control
+# operando.app
 
-Base web real de PCLAF Control orientada a GitHub como origen unico y Supabase como backend.
+Base web real de operando.app orientada a GitHub como origen unico y Supabase como backend.
 
 ## Objetivo
 
@@ -14,7 +14,7 @@ Construir un sistema comercial web que despues se pueda vender por modulos:
 
 ## Alcance comercial actual
 
-La comunicación pública de PCLAF Control se apoya en funciones ya presentes en la operación: sucursales, cajas asociadas a puestos, transferencias y movimientos con historial, compras y proveedores, y usuarios con roles, módulos y permisos configurables.
+La comunicación pública de operando.app se apoya en funciones ya presentes en la operación: sucursales, cajas asociadas a puestos, transferencias y movimientos con historial, compras y proveedores, y usuarios con roles, módulos y permisos configurables.
 
 La configuración de ARCA se encuentra orientada a homologación. No debe comunicarse como emisión fiscal productiva hasta completar esa salida con cada comercio.
 
@@ -29,7 +29,7 @@ Para actualizar los cuatro indicadores comerciales desde Supabase, ejecutar `npm
 - frontend: Vite + JavaScript
 - backend: Supabase
 - deploy demo: GitHub Pages
-- dominio final: `www.pclafcontrol.com.ar`
+- dominio final: `www.operando.app`
 
 ## Ambientes
 

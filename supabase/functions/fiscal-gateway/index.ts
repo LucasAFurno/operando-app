@@ -54,10 +54,10 @@ const sessionContext = async (sessionToken: string) => {
     headers: { apikey: anonKey, authorization: `Bearer ${anonKey}`, 'content-type': 'application/json' },
     body: JSON.stringify({ p_session_token: sessionToken }),
   })
-  if (!response.ok) throw new Error('Invalid PCLAF session')
+  if (!response.ok) throw new Error('Invalid Operando session')
   const rows = await response.json()
   const context = Array.isArray(rows) ? rows[0] : rows
-  if (!context?.session_commerce_id) throw new Error('Invalid PCLAF session')
+  if (!context?.session_commerce_id) throw new Error('Invalid Operando session')
   return context
 }
 
