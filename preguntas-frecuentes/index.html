@@ -1782,20 +1782,20 @@
       body .marketing-compare-row { border-bottom-color: #30343a; }
 
       /* ============================================================
-         HOME REDESIGN — "Libro de operaciones" system
-         Scoped entirely to body[data-page="home"]: every selector below
-         is prefixed so none of the 30+ SEO pages sharing this stylesheet
-         are affected. Concept: the visual language of an actual point-of-
-         sale ticket/ledger — perforated dividers, tabular monospace
-         figures, dotted leaders — instead of a generic SaaS gradient hero.
+         HOME v2 — "Panel de turno" system (structure exclusive to home)
+         Every rule below targets home2-* classes that ONLY the home page
+         emits (see renderHomeHero / renderHomeExtras). None of the 30+
+         SEO pages reuse the .marketing-hero/story/live-metrics/support/
+         control-panel skeleton anymore on the home route, so this is an
+         independent layout, not a recolor of the shared template.
          Palette (5 colors total): ink background, ink-lift surface, paper
-         (used only for the receipt artifact + tags), brand red, warm text.
-         Type: Space Grotesk (display) + IBM Plex Mono (all figures/data)
-         over the existing Inter body copy.
+         accent, brand red, warm text. Type: Space Grotesk (display) +
+         IBM Plex Mono (all data/labels) over the existing Inter body copy.
          ============================================================ */
       body[data-page="home"] {
         --ink: #14100c;
         --ink-lift: #1d1712;
+        --ink-raise: #241d16;
         --paper: #f2ead9;
         --red: #ff3b30;
         --red-soft: #ffb2a6;
@@ -1842,304 +1842,6 @@
         font-weight: 600;
       }
       body[data-page="home"] .marketing-auth-links .is-primary:hover { background: #e5342a; transform: none; }
-
-      /* --- Hero: styled as a printed operating ticket --- */
-      body[data-page="home"] .marketing-hero {
-        position: relative;
-        display: grid;
-        grid-template-columns: 1.05fr 1fr;
-        align-items: start;
-        gap: 48px;
-        padding-top: 40px;
-        overflow: visible;
-      }
-      body[data-page="home"] .marketing-kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 9px;
-        padding: 5px 12px 5px 10px;
-        border: 1px dashed rgba(255,59,48,0.4);
-        border-radius: 3px;
-        background: transparent;
-        font-family: var(--font-mono);
-        font-size: 0.72rem;
-        font-weight: 500;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--red-soft);
-      }
-      body[data-page="home"] .marketing-kicker::before {
-        content: '';
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--red);
-        box-shadow: 0 0 0 3px rgba(255,59,48,0.22);
-        animation: op-pulse 2.4s ease-in-out infinite;
-      }
-      @keyframes op-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-      body[data-page="home"] .marketing-hero-copy h1 {
-        font-family: var(--font-display);
-        font-size: clamp(2.5rem, 4.4vw, 3.9rem);
-        line-height: 1.02;
-        letter-spacing: -0.02em;
-        margin: 16px 0 16px;
-        color: var(--text);
-      }
-      body[data-page="home"] .marketing-lead {
-        max-width: 48ch;
-        font-size: 1.05rem;
-        line-height: 1.6;
-        color: var(--text-dim);
-      }
-      body[data-page="home"] .marketing-cta-row .is-primary {
-        background: var(--red);
-        border-radius: 6px;
-        font-family: var(--font-mono);
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        box-shadow: 0 10px 26px rgba(255,59,48,0.28);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-      body[data-page="home"] .marketing-cta-row .is-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 14px 32px rgba(255,59,48,0.4);
-        background: var(--red);
-      }
-      body[data-page="home"] .marketing-cta-row a:not(.is-primary),
-      body[data-page="home"] .marketing-hero-helper a {
-        position: relative;
-        color: var(--text-dim);
-        font-family: var(--font-mono);
-        font-size: 0.88rem;
-        transition: color 0.2s ease;
-      }
-      body[data-page="home"] .marketing-cta-row a:not(.is-primary):hover,
-      body[data-page="home"] .marketing-hero-helper a:hover { color: var(--red-soft); }
-      body[data-page="home"] .marketing-hero-helper { color: var(--text-dim); font-size: 0.92rem; }
-
-      /* The hero media becomes a torn ticket: dashed perforation edge + notches */
-      body[data-page="home"] .marketing-hero-media {
-        position: relative;
-        border-radius: 4px;
-        border: 1px solid var(--line);
-        background: var(--ink-lift);
-        overflow: visible;
-        padding-bottom: 22px;
-      }
-      body[data-page="home"] .marketing-hero-media::before {
-        content: 'TICKET N.0091 — EN VIVO';
-        position: absolute;
-        top: -13px;
-        left: 20px;
-        right: auto;
-        bottom: auto;
-        width: auto;
-        height: auto;
-        padding: 3px 10px;
-        background: var(--ink);
-        border: 1px solid var(--line);
-        border-radius: 3px;
-        font-family: var(--font-mono);
-        font-size: 0.66rem;
-        letter-spacing: 0.08em;
-        color: var(--red-soft);
-        white-space: nowrap;
-        z-index: 2;
-      }
-      body[data-page="home"] .marketing-hero-media::after {
-        content: '';
-        position: absolute;
-        left: 14px; right: 14px; bottom: 10px;
-        border-bottom: 1px dashed var(--line);
-      }
-      body[data-page="home"] .marketing-hero-media img { display: block; width: 100%; border-radius: 3px 3px 0 0; }
-      body[data-page="home"] .marketing-image-caption {
-        padding: 0 20px;
-        font-family: var(--font-mono);
-        font-size: 0.78rem;
-        color: var(--text-dim);
-      }
-      body[data-page="home"] .marketing-hero-stats {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        margin-top: 6px;
-        padding: 0 22px 10px;
-      }
-      body[data-page="home"] .marketing-hero-stat {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 10px;
-        padding: 9px 0;
-        border-bottom: 1px dotted var(--line);
-        background: none;
-        border-radius: 0;
-        overflow: hidden;
-      }
-      body[data-page="home"] .marketing-hero-stat:last-child { border-bottom: 0; }
-      body[data-page="home"] .marketing-hero-stat strong {
-        flex: 1 1 auto;
-        min-width: 0;
-        font-family: var(--font-mono);
-        font-weight: 400;
-        font-size: 0.82rem;
-        color: var(--text-dim);
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      body[data-page="home"] .marketing-hero-stat span {
-        flex: 0 1 auto;
-        min-width: 0;
-        max-width: 58%;
-        font-family: var(--font-mono);
-        font-weight: 600;
-        font-size: 0.82rem;
-        color: var(--text);
-        text-align: right;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      /* --- Section intros --- */
-      body[data-page="home"] .marketing-section-intro h2,
-      body[data-page="home"] .marketing-live-metrics h2,
-      body[data-page="home"] .marketing-support h2,
-      body[data-page="home"] .marketing-control-panel h2,
-      body[data-page="home"] .marketing-home-cta h2 {
-        font-family: var(--font-display);
-        font-size: clamp(1.8rem, 3vw, 2.5rem);
-        letter-spacing: -0.01em;
-        color: var(--text);
-      }
-      body[data-page="home"] .marketing-section-intro p,
-      body[data-page="home"] .marketing-story-copy p,
-      body[data-page="home"] .marketing-support-copy p,
-      body[data-page="home"] .marketing-control-panel-intro p {
-        color: var(--text-dim);
-      }
-
-      /* --- Perforation divider between major sections: the one signature motif --- */
-      body[data-page="home"] .marketing-story,
-      body[data-page="home"] .marketing-live-metrics,
-      body[data-page="home"] .marketing-support,
-      body[data-page="home"] .marketing-control-panel,
-      body[data-page="home"] .marketing-home-cta {
-        position: relative;
-        transition: transform 0.25s ease;
-      }
-      body[data-page="home"] .marketing-live-metrics::before,
-      body[data-page="home"] .marketing-support::before,
-      body[data-page="home"] .marketing-control-panel::before,
-      body[data-page="home"] .marketing-home-cta::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 1px;
-        background-image: linear-gradient(to right, var(--line) 0 6px, transparent 6px 12px);
-        background-size: 12px 1px;
-      }
-      body[data-page="home"] .marketing-story-media img,
-      body[data-page="home"] .marketing-control-image-frame img {
-        border-radius: 6px;
-        border: 1px solid var(--line);
-        transition: transform 0.4s ease;
-      }
-      body[data-page="home"] .marketing-control-image-frame {
-        position: relative;
-        padding: 3px;
-        border: 1px dashed var(--line);
-        border-radius: 8px;
-      }
-      body[data-page="home"] .marketing-story:hover .marketing-story-media img,
-      body[data-page="home"] .marketing-control-story:hover .marketing-control-image-frame img {
-        transform: scale(1.015);
-      }
-
-      /* --- Live metrics: styled as a statement/ledger total, not a gradient counter --- */
-      body[data-page="home"] .marketing-live-metrics-grid article {
-        position: relative;
-        border-radius: 4px;
-        border: 1px solid var(--line);
-        background: var(--ink-lift);
-        padding: 18px 16px;
-        transition: transform 0.25s ease, border-color 0.25s ease;
-      }
-      body[data-page="home"] .marketing-live-metrics-grid article::before {
-        content: '';
-        position: absolute;
-        left: 16px; bottom: -1px;
-        width: 26px;
-        height: 3px;
-        background: var(--red);
-      }
-      body[data-page="home"] .marketing-live-metrics-grid article:hover {
-        transform: translateY(-3px);
-        border-color: rgba(255,59,48,0.35);
-      }
-      body[data-page="home"] .marketing-counter {
-        display: block;
-        font-family: var(--font-mono);
-        font-weight: 600;
-        color: var(--text);
-        background: none;
-        -webkit-text-fill-color: unset;
-      }
-      body[data-page="home"] .marketing-live-metrics-grid span {
-        font-family: var(--font-mono);
-        font-size: 0.76rem;
-        color: var(--text-dim);
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-      }
-      body[data-page="home"] .marketing-vertical-list li {
-        font-family: var(--font-mono);
-        font-size: 0.85rem;
-      }
-
-      /* --- Support phone mockup restyled to ink/paper --- */
-      body[data-page="home"] .marketing-support-phone {
-        border: 1px solid var(--line);
-        background: var(--ink-lift);
-        border-radius: 10px;
-      }
-      body[data-page="home"] .marketing-support-points span {
-        font-family: var(--font-mono);
-        color: var(--red-soft);
-        border-color: var(--line);
-      }
-      body[data-page="home"] .marketing-message.is-client {
-        background: var(--paper);
-        color: #211b12;
-      }
-      body[data-page="home"] .marketing-message.is-support {
-        background: var(--ink);
-        border: 1px solid var(--line);
-        color: var(--text);
-      }
-      body[data-page="home"] .marketing-message small { font-family: var(--font-mono); }
-
-      /* --- Control panel index numbers (legitimate 3-step sequence) --- */
-      body[data-page="home"] .marketing-control-index span,
-      body[data-page="home"] .marketing-control-progress span {
-        font-family: var(--font-mono);
-        color: var(--red-soft);
-      }
-      body[data-page="home"] .marketing-control-progress i { background: var(--line); }
-
-      /* --- Final CTA: closes the ticket, literally --- */
-      body[data-page="home"] .marketing-home-cta {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--ink-lift);
-      }
-      body[data-page="home"] .marketing-home-cta h2 { max-width: 22ch; }
-
       body[data-page="home"] .marketing-footer {
         border-top: 1px dashed var(--line);
         background: var(--ink);
@@ -2147,12 +1849,440 @@
       body[data-page="home"] .marketing-footer a { color: var(--text-dim); font-family: var(--font-mono); font-size: 0.85rem; }
       body[data-page="home"] .marketing-footer a:hover { color: var(--red-soft); }
 
+      @keyframes op-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+      /* --- Shared home2 kicker styles --- */
+      body[data-page="home"] .home2-kicker,
+      body[data-page="home"] .home2-kicker-plain {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--red-soft);
+      }
+      body[data-page="home"] .home2-kicker {
+        padding: 5px 12px 5px 10px;
+        border: 1px dashed rgba(255,59,48,0.4);
+        border-radius: 3px;
+      }
+      body[data-page="home"] .home2-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--red);
+        box-shadow: 0 0 0 3px rgba(255,59,48,0.22);
+        animation: op-pulse 2.4s ease-in-out infinite;
+        flex: none;
+      }
+      body[data-page="home"] .home2-section-head { max-width: 640px; margin: 0 auto 40px; text-align: center; }
+      body[data-page="home"] .home2-section-head h2 {
+        font-family: var(--font-display);
+        font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+        letter-spacing: -0.01em;
+        margin: 14px 0 10px;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-section-head p { color: var(--text-dim); }
+
+      /* --- 1. Hero: split panel with a tabbed terminal-style screenshot --- */
+      body[data-page="home"] .home2-hero {
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        align-items: start;
+        gap: 52px;
+        padding-top: 40px;
+      }
+      body[data-page="home"] .home2-hero-copy h1 {
+        font-family: var(--font-display);
+        font-size: clamp(2.5rem, 4.4vw, 3.9rem);
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+        margin: 16px 0 16px;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-lead {
+        max-width: 48ch;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        color: var(--text-dim);
+        margin: 0 0 26px;
+      }
+      body[data-page="home"] .home2-hero-actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+      body[data-page="home"] .home2-btn-primary,
+      body[data-page="home"] .home2-btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 22px;
+        border-radius: 6px;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 0.92rem;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+      body[data-page="home"] .home2-btn-primary {
+        background: var(--red);
+        color: var(--paper);
+        box-shadow: 0 10px 26px rgba(255,59,48,0.28);
+      }
+      body[data-page="home"] .home2-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(255,59,48,0.4); }
+      body[data-page="home"] .home2-btn-secondary {
+        border: 1px solid var(--line);
+        color: var(--text);
+        background: transparent;
+      }
+      body[data-page="home"] .home2-btn-secondary:hover { border-color: var(--red-soft); color: var(--red-soft); }
+      body[data-page="home"] .home2-btn-link {
+        font-family: var(--font-mono);
+        font-size: 0.88rem;
+        color: var(--text-dim);
+      }
+      body[data-page="home"] .home2-btn-link span { color: var(--text); text-decoration: underline; text-decoration-color: var(--line); }
+      body[data-page="home"] .home2-btn-link:hover span { color: var(--red-soft); text-decoration-color: var(--red-soft); }
+
+      body[data-page="home"] .home2-hero-panel { display: flex; flex-direction: column; gap: 14px; }
+      body[data-page="home"] .home2-frame {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--ink-lift);
+        overflow: hidden;
+      }
+      body[data-page="home"] .home2-tab-input { position: absolute; opacity: 0; pointer-events: none; }
+      body[data-page="home"] .home2-frame-bar {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--ink-raise);
+      }
+      body[data-page="home"] .home2-frame-dot {
+        width: 9px; height: 9px;
+        border-radius: 50%;
+        background: rgba(243,236,223,0.18);
+        margin-right: 8px;
+        flex: none;
+      }
+      body[data-page="home"] .home2-frame-tab {
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+      body[data-page="home"] .home2-frame-tab:hover { color: var(--text); }
+      body[data-page="home"] .home2-frame-body { position: relative; }
+      body[data-page="home"] .home2-pane { display: none; }
+      body[data-page="home"] .home2-pane img { display: block; width: 100%; }
+      body[data-page="home"] #home2-tab-ventas:checked ~ .home2-frame-bar label[for="home2-tab-ventas"],
+      body[data-page="home"] #home2-tab-stock:checked ~ .home2-frame-bar label[for="home2-tab-stock"],
+      body[data-page="home"] #home2-tab-caja:checked ~ .home2-frame-bar label[for="home2-tab-caja"] {
+        background: rgba(255,59,48,0.16);
+        color: var(--red-soft);
+      }
+      body[data-page="home"] #home2-tab-ventas:checked ~ .home2-frame-body [data-pane="ventas"],
+      body[data-page="home"] #home2-tab-stock:checked ~ .home2-frame-body [data-pane="stock"],
+      body[data-page="home"] #home2-tab-caja:checked ~ .home2-frame-body [data-pane="caja"] {
+        display: block;
+      }
+      body[data-page="home"] .home2-statusbar {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--ink-lift);
+        overflow: hidden;
+      }
+      body[data-page="home"] .home2-status-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 14px 16px;
+        border-left: 1px solid var(--line);
+      }
+      body[data-page="home"] .home2-status-item:first-child { border-left: 0; }
+      body[data-page="home"] .home2-status-item b {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--red-soft);
+      }
+      body[data-page="home"] .home2-status-item span { font-size: 0.82rem; color: var(--text-dim); line-height: 1.35; }
+
+      /* --- 2. Flow strip: horizontal connected steps --- */
+      body[data-page="home"] .home2-flow-track {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 28px;
+      }
+      body[data-page="home"] .home2-flow-track::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 4%;
+        right: 4%;
+        height: 1px;
+        background-image: linear-gradient(to right, var(--line) 0 6px, transparent 6px 12px);
+        background-size: 12px 1px;
+        z-index: 0;
+      }
+      body[data-page="home"] .home2-flow-step { position: relative; z-index: 1; }
+      body[data-page="home"] .home2-flow-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--ink);
+        border: 1px solid var(--line);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--red-soft);
+        margin-bottom: 16px;
+      }
+      body[data-page="home"] .home2-flow-thumb {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 16px;
+      }
+      body[data-page="home"] .home2-flow-thumb img { display: block; width: 100%; transition: transform 0.4s ease; }
+      body[data-page="home"] .home2-flow-step:hover .home2-flow-thumb img { transform: scale(1.03); }
+      body[data-page="home"] .home2-flow-eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--red-soft);
+        margin: 0 0 6px;
+      }
+      body[data-page="home"] .home2-flow-step h3 {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        margin: 0 0 8px;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-flow-step p { color: var(--text-dim); font-size: 0.92rem; }
+
+      /* --- 3. Metrics marquee + rubro pill wall --- */
+      body[data-page="home"] .home2-marquee {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: center;
+        gap: 14px;
+        padding: 30px 0;
+        border-top: 1px dashed var(--line);
+        border-bottom: 1px dashed var(--line);
+        margin-bottom: 46px;
+      }
+      body[data-page="home"] .home2-marquee-item { display: inline-flex; align-items: baseline; gap: 8px; }
+      body[data-page="home"] .home2-marquee .marketing-counter {
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 1.3rem;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-marquee-item span {
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+      body[data-page="home"] .home2-marquee-sep { color: var(--line); font-size: 1.1rem; }
+      body[data-page="home"] .home2-verticals { max-width: 720px; margin: 0 auto; text-align: center; }
+      body[data-page="home"] .home2-verticals h2 {
+        font-family: var(--font-display);
+        font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+        margin: 14px 0 22px;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-verticals em { color: var(--red-soft); font-style: normal; }
+      body[data-page="home"] .home2-pill-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        list-style: none;
+        margin: 0 0 20px;
+        padding: 0;
+      }
+      body[data-page="home"] .home2-pill-list li {
+        padding: 7px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-dim);
+      }
+      body[data-page="home"] .home2-fineprint { color: var(--text-dim); font-size: 0.88rem; max-width: 60ch; margin: 0 auto; }
+
+      /* --- 4. Support as a terminal log --- */
+      body[data-page="home"] .home2-support {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: start;
+      }
+      body[data-page="home"] .home2-support-copy h2 {
+        font-family: var(--font-display);
+        font-size: clamp(1.9rem, 3.2vw, 2.5rem);
+        margin: 14px 0 12px;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-support-copy p { color: var(--text-dim); }
+      body[data-page="home"] .home2-support-list { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+      body[data-page="home"] .home2-support-list li { padding-left: 16px; border-left: 2px solid var(--red); }
+      body[data-page="home"] .home2-support-list b { display: block; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text); margin-bottom: 3px; }
+      body[data-page="home"] .home2-support-list span { color: var(--text-dim); font-size: 0.9rem; }
+      body[data-page="home"] .home2-terminal {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0d0a07;
+        overflow: hidden;
+      }
+      body[data-page="home"] .home2-terminal-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 14px;
+        background: var(--ink-raise);
+        border-bottom: 1px solid var(--line);
+      }
+      body[data-page="home"] .home2-terminal-bar span { width: 9px; height: 9px; border-radius: 50%; background: rgba(243,236,223,0.18); }
+      body[data-page="home"] .home2-terminal-bar b { margin-left: 10px; font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-dim); font-weight: 500; }
+      body[data-page="home"] .home2-terminal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; }
+      body[data-page="home"] .home2-terminal-line {
+        display: flex;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.5;
+        color: var(--text-dim);
+        margin: 0;
+      }
+      body[data-page="home"] .home2-terminal-line time { color: rgba(243,236,223,0.4); flex: none; }
+      body[data-page="home"] .home2-terminal-line i { color: var(--text-dim); font-style: normal; flex: none; }
+      body[data-page="home"] .home2-terminal-line.is-support i,
+      body[data-page="home"] .home2-terminal-line.is-support span { color: var(--red-soft); }
+      body[data-page="home"] .home2-terminal-line span { color: var(--text); }
+      body[data-page="home"] .home2-terminal-line.is-support span { color: var(--red-soft); }
+
+      /* --- 5. Control accordion with numbered rail --- */
+      body[data-page="home"] .home2-accordion {
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid var(--line);
+      }
+      body[data-page="home"] .home2-accordion-item { border-bottom: 1px solid var(--line); }
+      body[data-page="home"] .home2-accordion-item summary {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 20px 4px;
+        cursor: pointer;
+        list-style: none;
+      }
+      body[data-page="home"] .home2-accordion-item summary::-webkit-details-marker { display: none; }
+      body[data-page="home"] .home2-accordion-num {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--red-soft);
+        flex: none;
+        width: 28px;
+      }
+      body[data-page="home"] .home2-accordion-title {
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        color: var(--text);
+        flex: 1;
+      }
+      body[data-page="home"] .home2-accordion-caret {
+        flex: none;
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        position: relative;
+      }
+      body[data-page="home"] .home2-accordion-caret::before,
+      body[data-page="home"] .home2-accordion-caret::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        background: var(--text-dim);
+        transform: translate(-50%, -50%);
+      }
+      body[data-page="home"] .home2-accordion-caret::before { width: 9px; height: 1px; }
+      body[data-page="home"] .home2-accordion-caret::after { width: 1px; height: 9px; transition: transform 0.2s ease, opacity 0.2s ease; }
+      body[data-page="home"] .home2-accordion-item[open] .home2-accordion-caret::after { opacity: 0; }
+      body[data-page="home"] .home2-accordion-content { padding: 0 4px 26px 46px; max-width: 68ch; }
+      body[data-page="home"] .home2-accordion-content h3 {
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        margin: 0 0 10px;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-accordion-content p { color: var(--text-dim); margin: 0 0 14px; }
+      body[data-page="home"] .home2-accordion-content ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+      body[data-page="home"] .home2-accordion-content li {
+        padding-left: 16px;
+        border-left: 2px solid var(--red);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-control-more { text-align: center; margin-top: 32px; }
+      body[data-page="home"] .home2-control-more a { font-family: var(--font-mono); font-size: 0.88rem; color: var(--red-soft); text-decoration: underline; text-decoration-color: var(--line); }
+      body[data-page="home"] .home2-control-more a:hover { text-decoration-color: var(--red-soft); }
+
+      /* --- 6. Close: "cerrar turno" centered card --- */
+      body[data-page="home"] .home2-close-card {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 44px 40px;
+        text-align: center;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--ink-lift);
+      }
+      body[data-page="home"] .home2-close-card h2 {
+        font-family: var(--font-display);
+        font-size: clamp(1.8rem, 3vw, 2.3rem);
+        margin: 14px 0 10px;
+        color: var(--text);
+      }
+      body[data-page="home"] .home2-close-card p { color: var(--text-dim); margin: 0 0 26px; }
+      body[data-page="home"] .home2-close-actions { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+
+      /* --- Reveal-on-scroll targets (JS toggles is-revealed) --- */
+      body[data-page="home"] .home2-flow,
+      body[data-page="home"] .home2-metrics,
+      body[data-page="home"] .home2-support,
+      body[data-page="home"] .home2-control,
+      body[data-page="home"] .home2-close {
+        position: relative;
+      }
       @media (prefers-reduced-motion: no-preference) {
-        body[data-page="home"] .marketing-story,
-        body[data-page="home"] .marketing-live-metrics,
-        body[data-page="home"] .marketing-support,
-        body[data-page="home"] .marketing-control-panel,
-        body[data-page="home"] .marketing-home-cta {
+        body[data-page="home"] .home2-flow,
+        body[data-page="home"] .home2-metrics,
+        body[data-page="home"] .home2-support,
+        body[data-page="home"] .home2-control,
+        body[data-page="home"] .home2-close {
           opacity: 0;
           transform: translateY(26px);
           transition: opacity 0.7s ease, transform 0.7s ease;
@@ -2163,7 +2293,11 @@
         }
       }
       @media (max-width: 860px) {
-        body[data-page="home"] .marketing-hero { grid-template-columns: 1fr; }
+        body[data-page="home"] .home2-hero { grid-template-columns: 1fr; }
+        body[data-page="home"] .home2-flow-track { grid-template-columns: 1fr; }
+        body[data-page="home"] .home2-flow-track::before { display: none; }
+        body[data-page="home"] .home2-support { grid-template-columns: 1fr; }
+        body[data-page="home"] .home2-close-card { padding: 32px 22px; }
       }
 </style>
 
@@ -2214,12 +2348,12 @@
   </header>
 
       <main>
+
         <section class="marketing-hero">
           <div class="marketing-hero-copy">
             <p class="marketing-kicker">FAQ</p>
             <h1>Preguntas frecuentes sobre operando.app</h1>
             <p class="marketing-lead">Resolvemos las dudas mas comunes de comercios que quieren probar una web para ventas, caja y stock sin perder tiempo.</p>
-
             <div class="marketing-cta-row">
               <a class="is-primary" data-analytics="hero_start_trial" href="/crear-cuenta/">Probar gratis</a>
               <a data-analytics="header_login" href="/ingresar/">Iniciar sesion</a>
@@ -2232,7 +2366,6 @@
           <aside class="marketing-hero-media">
             <img src="/operando-logo.png" alt="Preguntas frecuentes y acceso a operando.app" width="1200" height="630" loading="eager" fetchpriority="high" />
             <p class="marketing-image-caption">Vista real del sistema con ventas, stock, caja y control comercial desde una sola web.</p>
-
           </aside>
         </section>
 
@@ -2408,7 +2541,7 @@
         window.addEventListener('scroll', updateScrollProgress, { passive: true });
         window.addEventListener('resize', updateScrollProgress);
         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          const revealTargets = document.querySelectorAll('.marketing-story, .marketing-live-metrics, .marketing-support, .marketing-control-panel, .marketing-home-cta');
+          const revealTargets = document.querySelectorAll('.home2-flow, .home2-metrics, .home2-support, .home2-control, .home2-close');
           const revealObserver = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
               if (entry.isIntersecting) {
