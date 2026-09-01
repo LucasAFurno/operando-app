@@ -3,7 +3,7 @@
   "anonKey": "sb_publishable_GQGSD34YFt6cEnsZn5DHtw_35FpnYt3",
   "instanceKey": "pclaf-prod",
   "requireCloud": true,
-  "turnstileSiteKey": "0x4AAAAAAEjZcx1T0qkMudzxPVb4xcf_3dA",
+  "turnstileSiteKey": "0x4AAAAAAEjZc-foqRkRoFn1",
   "environment": "production",
   "environmentLabel": "Produccion"
 }
