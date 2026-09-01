@@ -164,6 +164,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     const token = readTurnstileToken()
     if (!token) throw new Error('turnstile_required')
     const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, { method: 'POST', headers: buildHeaders(publishableKey), body: JSON.stringify({ mode: 'recovery', email: normalizedEmail, redirectTo, turnstileToken: token }) })
+    const payload = await safeJson(response)
     if (!response.ok) {
       resetTurnstile()
       throw new Error(apiError(payload, 'access_denied'))
@@ -181,6 +182,11 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
     const { data } = await supabase.auth.getSession()
     const sessionData = data?.session || null
     if (!isRecoveryRoute || !sessionData?.access_token) return null
+    // Supabase entrega el token de recuperación en el fragmento de la URL.
+    // Tras importarlo, lo quitamos de la barra de direcciones y del historial.
+    if (url.hash) {
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`)
+    }
     const payload = {
       email: sessionData.user?.email || readRecovery()?.email || '',
       accessToken: sessionData.access_token,
