@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=51a095c3f273'
-import { createCloudAuthManager } from './cloud-auth.js?v=51a095c3f273'
+import { createBrowserDataStore } from './data-store.js?v=236265d3fb89'
+import { createCloudAuthManager } from './cloud-auth.js?v=236265d3fb89'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'Operando'
-const appVersion = 'v51a095c3f273'
+const appVersion = 'v236265d3fb89'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'
 const publicSiteUrl = 'https://operando.app'

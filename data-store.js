@@ -1,4 +1,4 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=bf3f72a6055b'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=236265d3fb89'
 
 const dataStorageKey = 'operando-control-data'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
