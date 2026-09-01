@@ -1002,7 +1002,7 @@ const renderTopbar = (page) => `
     <nav class="marketing-nav" aria-label="Navegacion principal">
       ${topLinks.map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
       <details class="marketing-nav-menu">
-        <summary>Explorá Operando</summary>
+        <summary aria-label="Ver más secciones">Más</summary>
         <div class="marketing-nav-menu-panel">
           <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">Soluciones por actividad</a>
           <a href="/comparar-sistemas-de-gestion/" data-analytics="nav_comparaciones_menu">Elegí tu sistema</a>
@@ -2843,6 +2843,74 @@ const marketingStyles = `
       @media (prefers-reduced-motion: reduce) {
         .marketing-brand img,
         .marketing-brand strong em { animation: none; }
+      }
+      /* Compact primary navigation: one clear control group instead of loose links. */
+      body .marketing-nav {
+        gap: 3px;
+        padding: 4px;
+        border: 1px solid #3b3936;
+        border-radius: 999px;
+        background: rgba(41, 38, 34, 0.92);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+      body .marketing-nav > a,
+      body .marketing-nav-menu summary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 999px;
+        color: #ddd8d0;
+        font-size: 0.84rem;
+        font-weight: 700;
+        line-height: 1;
+        text-decoration: none;
+        transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+      }
+      body .marketing-nav > a:hover,
+      body .marketing-nav > a:focus-visible,
+      body .marketing-nav-menu summary:hover,
+      body .marketing-nav-menu summary:focus-visible {
+        color: #ffffff;
+        background: #e52329;
+        outline: none;
+      }
+      body .marketing-nav-menu summary::after {
+        content: '+';
+        margin: 0 0 0 6px;
+        color: currentColor;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+      body .marketing-nav-menu[open] summary {
+        color: #ffffff;
+        background: #e52329;
+      }
+      body .marketing-nav-menu[open] summary::after { content: '−'; }
+      body .marketing-nav-menu-panel {
+        top: calc(100% + 10px);
+        left: auto;
+        right: 0;
+        min-width: 248px;
+        padding: 6px;
+        transform: none;
+        border-color: #4b4741;
+        border-radius: 16px;
+        background: #24221f;
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+      }
+      body .marketing-nav-menu-panel a {
+        padding: 11px 12px;
+        color: #e7e1d9;
+        font-size: 0.88rem;
+        font-weight: 650;
+      }
+      body .marketing-nav-menu-panel a:hover,
+      body .marketing-nav-menu-panel a:focus-visible {
+        color: #ffffff;
+        background: #3b3936;
+        outline: none;
       }
 `
 
