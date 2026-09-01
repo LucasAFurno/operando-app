@@ -3249,7 +3249,7 @@ const renderApp = (ui) => {
 
 const renderTurnstileWidget = (attempt = 0) => {
   const target = app.querySelector('.turnstile-container')
-  if (!target || target.dataset.rendered === 'true') return
+  if (!target || ['true', 'pending'].includes(target.dataset.rendered)) return
   const showUnavailableMessage = () => {
     target.replaceChildren()
     target.dataset.rendered = 'true'
@@ -3259,27 +3259,31 @@ const renderTurnstileWidget = (attempt = 0) => {
     message.textContent = 'La verificacion de seguridad no esta disponible en este momento. Actualiza la pagina o intenta nuevamente en unos minutos.'
     target.append(message)
   }
-  if (!globalThis.turnstile?.render) {
+  if (!globalThis.turnstile?.ready || !globalThis.turnstile?.render) {
     if (attempt < 40) window.setTimeout(() => renderTurnstileWidget(attempt + 1), 50)
     else showUnavailableMessage()
     return
   }
-  try {
-    target.dataset.rendered = 'true'
-    let widgetId = ''
-    widgetId = globalThis.turnstile.render(target, {
-      sitekey: String(target.dataset.sitekey || ''),
-      action: 'turnstile-spin-v2',
-      size: 'flexible',
-      theme: 'dark',
-      'error-callback': () => {
-        if (widgetId) globalThis.turnstile?.remove(widgetId)
-        showUnavailableMessage()
-      },
-    })
-  } catch {
-    showUnavailableMessage()
-  }
+  target.dataset.rendered = 'pending'
+  globalThis.turnstile.ready(() => {
+    if (!target.isConnected || target.dataset.rendered !== 'pending') return
+    try {
+      target.dataset.rendered = 'true'
+      let widgetId = ''
+      widgetId = globalThis.turnstile.render(target, {
+        sitekey: String(target.dataset.sitekey || ''),
+        action: 'turnstile-spin-v2',
+        size: 'flexible',
+        theme: 'dark',
+        'error-callback': () => {
+          if (widgetId) globalThis.turnstile?.remove(widgetId)
+          showUnavailableMessage()
+        },
+      })
+    } catch {
+      showUnavailableMessage()
+    }
+  })
 }
 
 const render = () => {

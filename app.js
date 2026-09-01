@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=bb0138195d18'
-import { createCloudAuthManager } from './cloud-auth.js?v=bb0138195d18'
+import { createBrowserDataStore } from './data-store.js?v=002d3930d52f'
+import { createCloudAuthManager } from './cloud-auth.js?v=002d3930d52f'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'Operando'
-const appVersion = 'vbb0138195d18'
+const appVersion = 'v002d3930d52f'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'
 const publicSiteUrl = 'https://operando.app'
@@ -3249,7 +3249,7 @@ const renderApp = (ui) => {
 
 const renderTurnstileWidget = (attempt = 0) => {
   const target = app.querySelector('.turnstile-container')
-  if (!target || target.dataset.rendered === 'true') return
+  if (!target || ['true', 'pending'].includes(target.dataset.rendered)) return
   const showUnavailableMessage = () => {
     target.replaceChildren()
     target.dataset.rendered = 'true'
@@ -3259,27 +3259,31 @@ const renderTurnstileWidget = (attempt = 0) => {
     message.textContent = 'La verificacion de seguridad no esta disponible en este momento. Actualiza la pagina o intenta nuevamente en unos minutos.'
     target.append(message)
   }
-  if (!globalThis.turnstile?.render) {
+  if (!globalThis.turnstile?.ready || !globalThis.turnstile?.render) {
     if (attempt < 40) window.setTimeout(() => renderTurnstileWidget(attempt + 1), 50)
     else showUnavailableMessage()
     return
   }
-  try {
-    target.dataset.rendered = 'true'
-    let widgetId = ''
-    widgetId = globalThis.turnstile.render(target, {
-      sitekey: String(target.dataset.sitekey || ''),
-      action: 'turnstile-spin-v2',
-      size: 'flexible',
-      theme: 'dark',
-      'error-callback': () => {
-        if (widgetId) globalThis.turnstile?.remove(widgetId)
-        showUnavailableMessage()
-      },
-    })
-  } catch {
-    showUnavailableMessage()
-  }
+  target.dataset.rendered = 'pending'
+  globalThis.turnstile.ready(() => {
+    if (!target.isConnected || target.dataset.rendered !== 'pending') return
+    try {
+      target.dataset.rendered = 'true'
+      let widgetId = ''
+      widgetId = globalThis.turnstile.render(target, {
+        sitekey: String(target.dataset.sitekey || ''),
+        action: 'turnstile-spin-v2',
+        size: 'flexible',
+        theme: 'dark',
+        'error-callback': () => {
+          if (widgetId) globalThis.turnstile?.remove(widgetId)
+          showUnavailableMessage()
+        },
+      })
+    } catch {
+      showUnavailableMessage()
+    }
+  })
 }
 
 const render = () => {
