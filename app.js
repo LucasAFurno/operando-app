@@ -1,11 +1,11 @@
-import { createBrowserDataStore } from './data-store.js?v=bb7ce337c340'
-import { createCloudAuthManager } from './cloud-auth.js?v=bb7ce337c340'
+import { createBrowserDataStore } from './data-store.js?v=3700b6afe7b6'
+import { createCloudAuthManager } from './cloud-auth.js?v=3700b6afe7b6'
 import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'Operando'
-const appVersion = 'vbb7ce337c340'
+const appVersion = 'v3700b6afe7b6'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'
 const publicSiteUrl = 'https://operando.app'
@@ -1216,7 +1216,7 @@ const standaloneAuthView = (ui) => `
       <a class="auth-back-link" href="/" aria-label="Volver a la portada">&larr; Volver al sitio</a>
       <section class="login-card auth-standalone-card">
         <div class="auth-brand">
-          <img src="/operando-logo.png" alt="operando.app" />
+          <img src="/operando-logo.png?v=operando-20260831" alt="operando.app" />
           <div>
             <strong>${productName}</strong>
             <span>Gestion comercial online</span>
@@ -1329,7 +1329,7 @@ const loginView = (ui) => {
     <div class="recovery-shell">
       <header class="public-topbar">
         <div class="public-topbar-brand">
-          <img class="public-topbar-logo" src="/operando-logo.png" alt="Operando" />
+          <img class="public-topbar-logo" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
           <div class="public-topbar-copy">
             <strong>${productName}</strong>
             <span>Recuperacion de acceso</span>
@@ -1365,7 +1365,7 @@ const loginView = (ui) => {
     <div class="public-home">
       <header class="public-topbar">
         <div class="public-topbar-brand">
-          <img class="public-topbar-logo" src="/operando-logo.png" alt="Operando" />
+          <img class="public-topbar-logo" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
           <div class="public-topbar-copy">
             <strong>${productName}</strong>
             <span>Control comercial online</span>
@@ -1484,7 +1484,7 @@ const loginViewV2 = (ui) => `
       <section class="login-overview">
         <div class="login-overview-card">
           <div class="login-brand-row">
-            <img class="login-logo login-logo-large" src="/operando-logo.png" alt="Operando" />
+            <img class="login-logo login-logo-large" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
             <div class="login-brand-copy">
               <p class="kicker">Sistema de gestion comercial</p>
               <h1>${productName}</h1>
@@ -1593,7 +1593,7 @@ const loginViewV2 = (ui) => `
 const setupView = (ui) => `
   <div class="login-shell">
     <div class="login-card login-card-wide">
-      <img class="login-logo" src="/operando-logo.png" alt="Operando" />
+      <img class="login-logo" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
       <p class="kicker">Alta inicial</p>
       <h1>${productName}</h1>
       <p class="login-copy">Completa tus datos y dejamos listo tu comercio con una cuenta administradora para empezar a trabajar sin configuraciones raras.</p>
@@ -1628,7 +1628,7 @@ const setupView = (ui) => `
 const cloudActivationView = (ui) => `
   <div class="login-shell">
     <div class="login-card login-card-wide">
-      <img class="login-logo" src="/operando-logo.png" alt="Operando" />
+      <img class="login-logo" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
       <p class="kicker">Activacion requerida</p>
       <h1>${productName}</h1>
       <p class="login-copy">Esta instalacion necesita la base cloud conectada antes de permitir ingresos o pruebas con clientes.</p>
@@ -3181,7 +3181,7 @@ const renderApp = (ui) => {
     <div class="app-shell">
       <aside class="sidebar">
         <div class="sidebar-brand">
-          <img class="brand-logo" src="/operando-logo.png" alt="Operando" />
+          <img class="brand-logo" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
         </div>
         <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}</nav>
         <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square ${supportMenuOpen ? 'is-active' : ''}" type="button" data-action="toggle-support-menu" title="Soporte" aria-label="Abrir opciones de soporte" aria-expanded="${supportMenuOpen}"><span class="nav-icon">${icon('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8.5 9h7"/><path d="M8.5 13h4"/>')}</span><span class="nav-label">Soporte</span></button>${supportMenuOpen ? `<div class="support-menu" role="menu"><button type="button" data-action="open-arca-setup" role="menuitem"><strong>Facturacion ARCA</strong><span>Configura la conexion fiscal</span></button><button type="button" data-action="open-support" role="menuitem"><strong>Soporte general</strong><span>Habla con Operando por WhatsApp</span></button></div>` : ''}</div></div>

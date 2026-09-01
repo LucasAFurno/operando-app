@@ -994,7 +994,7 @@ const buildFaqJsonLd = (page) => {
 const renderTopbar = (page) => `
   <header class="marketing-topbar">
     <a class="marketing-brand" href="/">
-      <img src="/operando-logo.png" alt="operando.app" width="48" height="46" />
+      <img src="/operando-logo.png?v=operando-20260831" alt="operando.app" width="48" height="46" />
       <div>
         <strong><span>Operando</span><em>.app</em></strong>
       </div>
@@ -1152,7 +1152,7 @@ const renderHomeExtras = (page) => {
       </ol>
     </div>
     <div class="marketing-support-phone" aria-label="Ejemplo ilustrativo de una conversación de soporte">
-      <div class="marketing-phone-head"><img class="marketing-phone-logo" src="/operando-logo.png" alt="" width="36" height="36" /><div><strong>Soporte Operando</strong><small>En línea</small></div><span class="marketing-phone-actions" aria-hidden="true">⌕　⋮</span></div>
+      <div class="marketing-phone-head"><img class="marketing-phone-logo" src="/operando-logo.png?v=operando-20260831" alt="" width="36" height="36" /><div><strong>Soporte Operando</strong><small>En línea</small></div><span class="marketing-phone-actions" aria-hidden="true">⌕　⋮</span></div>
       <div class="marketing-phone-chat">
         <p class="marketing-chat-day">HOY</p>
         <p class="marketing-message is-client">Hola, no me aparece una venta que hice recién. ¿Puede haberse perdido?<small>18:41</small></p>
@@ -2927,6 +2927,50 @@ const marketingStyles = `
         background: #30343a;
         outline: none;
       }
+      /* Home-page contrast pass: every dark surface carries light type. */
+      body .marketing-hero-media,
+      body .marketing-story-media {
+        background: #1c1f23;
+        box-shadow: 0 24px 54px rgba(0, 0, 0, 0.28);
+      }
+      body .marketing-live-metrics,
+      body .marketing-home-cta {
+        background: #17191d;
+        color: #f8fafc;
+        border-top: 1px solid #30343a;
+        border-bottom: 1px solid #30343a;
+      }
+      body .marketing-live-metrics-head,
+      body .marketing-live-metrics-grid span,
+      body .marketing-vertical-rotation > p:last-child,
+      body .marketing-home-cta p:not(.marketing-kicker) {
+        color: #d6dae0;
+      }
+      body .marketing-live-metrics-grid strong,
+      body .marketing-vertical-rotation h2,
+      body .marketing-home-cta.marketing-card h2 {
+        color: #f8fafc;
+      }
+      body .marketing-story-copy p:not(.marketing-kicker),
+      body .marketing-support-copy > p:not(.marketing-kicker),
+      body .marketing-support-points p,
+      body .marketing-card p,
+      body .marketing-faq p,
+      body .marketing-compare-row,
+      body .marketing-compare-copy p {
+        color: #d6dae0;
+      }
+      body .marketing-support-points strong,
+      body .marketing-footer nav a,
+      body .marketing-footer-actions a {
+        color: #f8fafc;
+      }
+      body .marketing-footer-title,
+      body .marketing-footer p,
+      body .marketing-compare-head {
+        color: #c0c6cf;
+      }
+      body .marketing-compare-row { border-bottom-color: #30343a; }
 `
 
 const renderMarketingPage = (page) => {
