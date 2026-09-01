@@ -2995,194 +2995,376 @@ const marketingStyles = `
       }
       body .marketing-compare-row { border-bottom-color: #30343a; }
 
-      /* --- Home redesign: scoped to body[data-page="home"] only, does not affect the 30+ SEO pages sharing this stylesheet --- */
-      body[data-page="home"] { position: relative; }
+      /* ============================================================
+         HOME REDESIGN — "Libro de operaciones" system
+         Scoped entirely to body[data-page="home"]: every selector below
+         is prefixed so none of the 30+ SEO pages sharing this stylesheet
+         are affected. Concept: the visual language of an actual point-of-
+         sale ticket/ledger — perforated dividers, tabular monospace
+         figures, dotted leaders — instead of a generic SaaS gradient hero.
+         Palette (5 colors total): ink background, ink-lift surface, paper
+         (used only for the receipt artifact + tags), brand red, warm text.
+         Type: Space Grotesk (display) + IBM Plex Mono (all figures/data)
+         over the existing Inter body copy.
+         ============================================================ */
+      body[data-page="home"] {
+        --ink: #14100c;
+        --ink-lift: #1d1712;
+        --paper: #f2ead9;
+        --red: #ff3b30;
+        --red-soft: #ffb2a6;
+        --text: #f3ecdf;
+        --text-dim: rgba(243,236,223,0.62);
+        --line: rgba(243,236,223,0.14);
+        --font-display: 'Space Grotesk', Oswald, Arial, sans-serif;
+        --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+        position: relative;
+        background: var(--ink);
+        color: var(--text);
+      }
       body[data-page="home"]::before {
         content: '';
         position: fixed;
         top: 0; left: 0;
         height: 3px;
         width: var(--op-scroll, 0%);
-        background: linear-gradient(90deg, #ff3340, #ff8a65);
+        background: var(--red);
         z-index: 9999;
         transition: width 0.12s linear;
       }
+      body[data-page="home"] .marketing-topbar {
+        background: rgba(20,16,12,0.92);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(14px);
+      }
+      body[data-page="home"] .marketing-brand strong { color: var(--text); font-family: var(--font-display); letter-spacing: -0.01em; }
+      body[data-page="home"] .marketing-nav a,
+      body[data-page="home"] .marketing-nav-menu summary,
+      body[data-page="home"] .marketing-auth-links a:not(.is-primary) {
+        color: var(--text-dim);
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        letter-spacing: 0.01em;
+      }
+      body[data-page="home"] .marketing-nav a:hover,
+      body[data-page="home"] .marketing-auth-links a:not(.is-primary):hover { color: var(--red-soft); }
+      body[data-page="home"] .marketing-auth-links .is-primary {
+        background: var(--red);
+        border-radius: 6px;
+        box-shadow: none;
+        font-family: var(--font-mono);
+        font-weight: 600;
+      }
+      body[data-page="home"] .marketing-auth-links .is-primary:hover { background: #e5342a; transform: none; }
+
+      /* --- Hero: styled as a printed operating ticket --- */
       body[data-page="home"] .marketing-hero {
         position: relative;
         display: grid;
         grid-template-columns: 1.05fr 1fr;
-        align-items: center;
+        align-items: start;
         gap: 48px;
-        padding-top: 28px;
+        padding-top: 40px;
         overflow: visible;
-      }
-      body[data-page="home"] .marketing-hero::before {
-        content: '';
-        position: absolute;
-        top: -140px;
-        right: -80px;
-        width: 460px;
-        height: 460px;
-        background: radial-gradient(circle, rgba(255,51,64,0.22), transparent 70%);
-        filter: blur(10px);
-        z-index: -1;
-        pointer-events: none;
       }
       body[data-page="home"] .marketing-kicker {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 6px 14px;
-        border: 1px solid rgba(255,51,64,0.35);
-        border-radius: 999px;
-        background: rgba(255,51,64,0.08);
+        gap: 9px;
+        padding: 5px 12px 5px 10px;
+        border: 1px dashed rgba(255,59,48,0.4);
+        border-radius: 3px;
+        background: transparent;
+        font-family: var(--font-mono);
         font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
+        font-weight: 500;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #ff8a80;
+        color: var(--red-soft);
       }
       body[data-page="home"] .marketing-kicker::before {
         content: '';
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: #ff3340;
-        box-shadow: 0 0 0 3px rgba(255,51,64,0.25);
+        background: var(--red);
+        box-shadow: 0 0 0 3px rgba(255,59,48,0.22);
+        animation: op-pulse 2.4s ease-in-out infinite;
       }
+      @keyframes op-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
       body[data-page="home"] .marketing-hero-copy h1 {
-        font-size: clamp(2.6rem, 4.6vw, 4.1rem);
-        line-height: 0.98;
+        font-family: var(--font-display);
+        font-size: clamp(2.5rem, 4.4vw, 3.9rem);
+        line-height: 1.02;
         letter-spacing: -0.02em;
-        margin: 18px 0 16px;
-        background: linear-gradient(135deg, #ffffff 45%, #ffb4ac 78%, #ff3340 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        color: #fff;
+        margin: 16px 0 16px;
+        color: var(--text);
       }
       body[data-page="home"] .marketing-lead {
-        max-width: 46ch;
-        font-size: 1.08rem;
+        max-width: 48ch;
+        font-size: 1.05rem;
         line-height: 1.6;
-        color: rgba(243,244,246,0.78);
+        color: var(--text-dim);
       }
       body[data-page="home"] .marketing-cta-row .is-primary {
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 14px 34px rgba(255,51,64,0.32);
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        background: var(--red);
+        border-radius: 6px;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        box-shadow: 0 10px 26px rgba(255,59,48,0.28);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
       }
       body[data-page="home"] .marketing-cta-row .is-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 18px 42px rgba(255,51,64,0.44);
+        box-shadow: 0 14px 32px rgba(255,59,48,0.4);
+        background: var(--red);
       }
-      body[data-page="home"] .marketing-cta-row a:not(.is-primary) {
+      body[data-page="home"] .marketing-cta-row a:not(.is-primary),
+      body[data-page="home"] .marketing-hero-helper a {
         position: relative;
+        color: var(--text-dim);
+        font-family: var(--font-mono);
+        font-size: 0.88rem;
         transition: color 0.2s ease;
       }
-      body[data-page="home"] .marketing-cta-row a:not(.is-primary)::after {
-        content: '';
-        position: absolute;
-        left: 0; bottom: -4px;
-        width: 0%;
-        height: 1px;
-        background: #ff8a80;
-        transition: width 0.25s ease;
-      }
-      body[data-page="home"] .marketing-cta-row a:not(.is-primary):hover::after { width: 100%; }
+      body[data-page="home"] .marketing-cta-row a:not(.is-primary):hover,
+      body[data-page="home"] .marketing-hero-helper a:hover { color: var(--red-soft); }
+      body[data-page="home"] .marketing-hero-helper { color: var(--text-dim); font-size: 0.92rem; }
+
+      /* The hero media becomes a torn ticket: dashed perforation edge + notches */
       body[data-page="home"] .marketing-hero-media {
         position: relative;
-        border-radius: 24px;
-        border: 1px solid rgba(255,255,255,0.08);
-        overflow: hidden;
-        transition: transform 0.4s ease;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: var(--ink-lift);
+        overflow: visible;
+        padding-bottom: 22px;
+      }
+      body[data-page="home"] .marketing-hero-media::before {
+        content: 'TICKET N.0091 — EN VIVO';
+        position: absolute;
+        top: -13px;
+        left: 20px;
+        right: auto;
+        bottom: auto;
+        width: auto;
+        height: auto;
+        padding: 3px 10px;
+        background: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.08em;
+        color: var(--red-soft);
+        white-space: nowrap;
+        z-index: 2;
       }
       body[data-page="home"] .marketing-hero-media::after {
         content: '';
         position: absolute;
-        inset: -1px;
-        border-radius: 24px;
-        background: radial-gradient(circle at 30% 10%, rgba(255,51,64,0.18), transparent 55%);
-        pointer-events: none;
-        z-index: 1;
+        left: 14px; right: 14px; bottom: 10px;
+        border-bottom: 1px dashed var(--line);
       }
-      body[data-page="home"] .marketing-hero-media img { transition: transform 0.5s ease; }
-      body[data-page="home"] .marketing-hero-media:hover img { transform: scale(1.015); }
-      body[data-page="home"] .marketing-hero-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+      body[data-page="home"] .marketing-hero-media img { display: block; width: 100%; border-radius: 3px 3px 0 0; }
+      body[data-page="home"] .marketing-image-caption {
+        padding: 0 20px;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-dim);
+      }
+      body[data-page="home"] .marketing-hero-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-top: 6px;
+        padding: 0 20px 8px;
+      }
       body[data-page="home"] .marketing-hero-stat {
-        flex: 1;
-        min-width: 130px;
-        padding: 12px 14px;
-        border-radius: 14px;
-        border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(255,255,255,0.03);
-        transition: transform 0.25s ease, border-color 0.25s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px dotted var(--line);
+        background: none;
+        border-radius: 0;
+        overflow: hidden;
       }
-      body[data-page="home"] .marketing-hero-stat:hover {
-        transform: translateY(-3px);
-        border-color: rgba(255,51,64,0.4);
+      body[data-page="home"] .marketing-hero-stat:last-child { border-bottom: 0; }
+      body[data-page="home"] .marketing-hero-stat strong {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-family: var(--font-mono);
+        font-weight: 400;
+        font-size: 0.82rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
-      body[data-page="home"] .marketing-section-intro h2 {
-        font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+      body[data-page="home"] .marketing-hero-stat span {
+        flex: 0 1 auto;
+        min-width: 0;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--text);
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* --- Section intros --- */
+      body[data-page="home"] .marketing-section-intro h2,
+      body[data-page="home"] .marketing-live-metrics h2,
+      body[data-page="home"] .marketing-support h2,
+      body[data-page="home"] .marketing-control-panel h2,
+      body[data-page="home"] .marketing-home-cta h2 {
+        font-family: var(--font-display);
+        font-size: clamp(1.8rem, 3vw, 2.5rem);
         letter-spacing: -0.01em;
+        color: var(--text);
       }
+      body[data-page="home"] .marketing-section-intro p,
+      body[data-page="home"] .marketing-story-copy p,
+      body[data-page="home"] .marketing-support-copy p,
+      body[data-page="home"] .marketing-control-panel-intro p {
+        color: var(--text-dim);
+      }
+
+      /* --- Perforation divider between major sections: the one signature motif --- */
       body[data-page="home"] .marketing-story,
       body[data-page="home"] .marketing-live-metrics,
       body[data-page="home"] .marketing-support,
-      body[data-page="home"] .marketing-control-story,
+      body[data-page="home"] .marketing-control-panel,
       body[data-page="home"] .marketing-home-cta {
+        position: relative;
         transition: transform 0.25s ease;
+      }
+      body[data-page="home"] .marketing-live-metrics::before,
+      body[data-page="home"] .marketing-support::before,
+      body[data-page="home"] .marketing-control-panel::before,
+      body[data-page="home"] .marketing-home-cta::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background-image: linear-gradient(to right, var(--line) 0 6px, transparent 6px 12px);
+        background-size: 12px 1px;
       }
       body[data-page="home"] .marketing-story-media img,
       body[data-page="home"] .marketing-control-image-frame img {
-        border-radius: 18px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
         transition: transform 0.4s ease;
+      }
+      body[data-page="home"] .marketing-control-image-frame {
+        position: relative;
+        padding: 3px;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
       }
       body[data-page="home"] .marketing-story:hover .marketing-story-media img,
       body[data-page="home"] .marketing-control-story:hover .marketing-control-image-frame img {
-        transform: scale(1.02);
+        transform: scale(1.015);
       }
+
+      /* --- Live metrics: styled as a statement/ledger total, not a gradient counter --- */
       body[data-page="home"] .marketing-live-metrics-grid article {
         position: relative;
-        border-radius: 16px;
-        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: var(--ink-lift);
+        padding: 18px 16px;
+        transition: transform 0.25s ease, border-color 0.25s ease;
       }
       body[data-page="home"] .marketing-live-metrics-grid article::before {
         content: '';
         position: absolute;
-        top: 0; left: 14px; right: 14px;
-        height: 2px;
-        background: linear-gradient(90deg, #ff3340, transparent);
-        border-radius: 2px;
+        left: 16px; bottom: -1px;
+        width: 26px;
+        height: 3px;
+        background: var(--red);
       }
       body[data-page="home"] .marketing-live-metrics-grid article:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+        transform: translateY(-3px);
+        border-color: rgba(255,59,48,0.35);
       }
       body[data-page="home"] .marketing-counter {
-        background: linear-gradient(135deg, #ffffff, #ff8a80);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
+        display: block;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        color: var(--text);
+        background: none;
+        -webkit-text-fill-color: unset;
       }
+      body[data-page="home"] .marketing-live-metrics-grid span {
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+      body[data-page="home"] .marketing-vertical-list li {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+      }
+
+      /* --- Support phone mockup restyled to ink/paper --- */
+      body[data-page="home"] .marketing-support-phone {
+        border: 1px solid var(--line);
+        background: var(--ink-lift);
+        border-radius: 10px;
+      }
+      body[data-page="home"] .marketing-support-points span {
+        font-family: var(--font-mono);
+        color: var(--red-soft);
+        border-color: var(--line);
+      }
+      body[data-page="home"] .marketing-message.is-client {
+        background: var(--paper);
+        color: #211b12;
+      }
+      body[data-page="home"] .marketing-message.is-support {
+        background: var(--ink);
+        border: 1px solid var(--line);
+        color: var(--text);
+      }
+      body[data-page="home"] .marketing-message small { font-family: var(--font-mono); }
+
+      /* --- Control panel index numbers (legitimate 3-step sequence) --- */
+      body[data-page="home"] .marketing-control-index span,
+      body[data-page="home"] .marketing-control-progress span {
+        font-family: var(--font-mono);
+        color: var(--red-soft);
+      }
+      body[data-page="home"] .marketing-control-progress i { background: var(--line); }
+
+      /* --- Final CTA: closes the ticket, literally --- */
       body[data-page="home"] .marketing-home-cta {
-        position: relative;
-        overflow: hidden;
-        border-radius: 28px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--ink-lift);
       }
-      body[data-page="home"] .marketing-home-cta::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 85% 20%, rgba(255,51,64,0.25), transparent 55%);
-        pointer-events: none;
+      body[data-page="home"] .marketing-home-cta h2 { max-width: 22ch; }
+
+      body[data-page="home"] .marketing-footer {
+        border-top: 1px dashed var(--line);
+        background: var(--ink);
       }
+      body[data-page="home"] .marketing-footer a { color: var(--text-dim); font-family: var(--font-mono); font-size: 0.85rem; }
+      body[data-page="home"] .marketing-footer a:hover { color: var(--red-soft); }
+
       @media (prefers-reduced-motion: no-preference) {
         body[data-page="home"] .marketing-story,
         body[data-page="home"] .marketing-live-metrics,
         body[data-page="home"] .marketing-support,
-        body[data-page="home"] .marketing-control-story,
+        body[data-page="home"] .marketing-control-panel,
         body[data-page="home"] .marketing-home-cta {
           opacity: 0;
           transform: translateY(26px);
@@ -3195,7 +3377,6 @@ const marketingStyles = `
       }
       @media (max-width: 860px) {
         body[data-page="home"] .marketing-hero { grid-template-columns: 1fr; }
-        body[data-page="home"] .marketing-hero-stats { flex-direction: column; }
       }
 `
 
@@ -3232,6 +3413,9 @@ const renderMarketingPage = (page) => {
     <meta name="twitter:image" content="${siteOrigin}/operando-logo.png" />
     <link rel="icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
+    ${!page.slug ? `<link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" />` : ''}
     <title>${escapeHtml(page.seoTitle)}</title>
     <style>${marketingStyles}</style>
     ${gtmHeadSnippet}
@@ -3377,7 +3561,7 @@ const renderMarketingPage = (page) => {
         window.addEventListener('scroll', updateScrollProgress, { passive: true });
         window.addEventListener('resize', updateScrollProgress);
         if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          const revealTargets = document.querySelectorAll('.marketing-story, .marketing-live-metrics, .marketing-support, .marketing-control-story, .marketing-home-cta');
+          const revealTargets = document.querySelectorAll('.marketing-story, .marketing-live-metrics, .marketing-support, .marketing-control-panel, .marketing-home-cta');
           const revealObserver = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
               if (entry.isIntersecting) {
