@@ -98,7 +98,7 @@ const buildArticleJsonLd = (page) => {
 
 const topLinks = [
   { href: '/funciones/', label: 'Funciones' },
-  { href: '/preguntas-frecuentes/', label: 'FAQ' },
+  { href: '/precios/', label: 'Precios' },
 ]
 
 const footerLinks = [
@@ -590,21 +590,21 @@ const marketingPages = [
   },
   {
     slug: 'precios',
-    seoTitle: 'Planes y modulos | Operando',
-    description: 'Descubre los planes de operando.app para comercios que necesitan ventas, caja, stock, clientes, compras y sucursales.',
-    kicker: 'Planes',
-    h1: 'Elige los modulos que necesita tu comercio, sin abrumarte con todo de entrada',
-    lead: 'Los planes se piensan por necesidad operativa. Puedes comenzar con un negocio simple y luego sumar cajas, sucursales, usuarios o herramientas mas avanzadas.',
+    seoTitle: 'Acceso gratis durante 2026 | Operando',
+    description: 'Operando es gratis durante 2026. Durante 2027 revisaremos planes y precios de forma transparente, con aviso previo.',
+    kicker: 'Acceso 2026',
+    h1: 'Operando es gratis durante todo 2026',
+    lead: 'Usá ventas, caja, stock y el resto de las herramientas sin cargo durante 2026. En 2027 vamos a revisar los planes y precios para acompañar el crecimiento del producto, siempre con comunicación previa y clara.',
     image: '/pclaf-control-panel-real.png',
     imageAlt: 'Resumen de caja y cierre operativo de operando.app',
-    whatsAppPrompt: 'Hola Operando, quiero conocer los planes y modulos de operando.app.',
+    whatsAppPrompt: 'Hola Operando, quiero conocer las condiciones de acceso gratis durante 2026.',
     sections: [
-      { title: 'Gestion Base', body: 'Clientes, productos, ventas simples y comprobantes para negocios que quieren dejar Excel y empezar ordenados.' },
-      { title: 'Mostrador', body: 'Caja diaria, cobros mixtos, apertura y cierre, ticket rapido y operadores para puestos de venta.' },
-      { title: 'Operacion', body: 'Compras, proveedores, stock por sucursal, facturas, reportes y mejores controles del negocio.' },
-      { title: 'Multi Sucursal', body: 'Varias sucursales, cajas, transferencias, usuarios por puesto y reportes separados por local.' },
+      { title: 'Qué incluye el acceso gratis', body: 'Accedé a ventas, caja, productos, stock, clientes, compras, proveedores, tickets, sucursales y reportes desde la web.' },
+      { title: 'Vigencia', body: 'El acceso sin cargo se mantiene hasta el 31 de diciembre de 2026 para que puedas conocer y usar Operando en tu comercio.' },
+      { title: 'Revisión desde 2027', body: 'Durante 2027 revisaremos la estructura de planes y precios según las funcionalidades y el soporte disponible en ese momento.' },
+      { title: 'Transparencia antes que nada', body: 'Antes de cualquier cambio de precio o modalidad, lo comunicaremos con anticipación dentro de la plataforma y por los canales de contacto disponibles.' },
     ],
-    featureList: ['Prueba gratis', 'Sin instalar', 'Escalable por modulos', 'Acceso web desde PC o celular'],
+    featureList: ['Gratis durante 2026', 'Sin tarjeta', 'Sin instalación', 'Revisión de planes en 2027'],
   },
   {
     slug: 'sistema-de-ventas',
@@ -996,14 +996,15 @@ const renderTopbar = (page) => `
     <a class="marketing-brand" href="/">
       <img src="/operando-logo.png" alt="operando.app" width="48" height="46" />
       <div>
-        <strong><span>operando</span><em>.app</em></strong>
+        <strong><span>Operando</span><em>.app</em></strong>
       </div>
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
       ${topLinks.map((link) => `<a href="${link.href}" data-analytics="nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
       <details class="marketing-nav-menu">
-        <summary aria-label="Ver más secciones">Más</summary>
+        <summary aria-label="Ver recursos y guías">Recursos</summary>
         <div class="marketing-nav-menu-panel">
+          <a href="/preguntas-frecuentes/" data-analytics="nav_faq">Preguntas frecuentes</a>
           <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">Soluciones por actividad</a>
           <a href="/comparar-sistemas-de-gestion/" data-analytics="nav_comparaciones_menu">Elegí tu sistema</a>
           <a href="/glosario-pos/" data-analytics="nav_glosario">Diccionario comercial</a>
@@ -1016,6 +1017,7 @@ const renderTopbar = (page) => `
       <summary>Menú</summary>
       <nav aria-label="Navegación móvil">
         ${topLinks.map((link) => `<a href="${link.href}" data-analytics="mobile_nav_${escapeHtml(link.label).toLowerCase().replaceAll(' ', '_')}">${escapeHtml(link.label)}</a>`).join('')}
+        <a href="/preguntas-frecuentes/" data-analytics="mobile_nav_faq">Preguntas frecuentes</a>
         <a href="/como-funciona/" data-analytics="mobile_nav_como_funciona">Cómo funciona</a>
         <a href="/blog/" data-analytics="mobile_nav_blog">Blog</a>
       </nav>
@@ -1044,6 +1046,7 @@ const renderFooter = () => `
       <p class="marketing-footer-title">Mas informacion</p>
       <nav>
         <a href="/funciones/" data-analytics="footer_funciones">Funciones</a>
+        <a href="/precios/" data-analytics="footer_precios">Precios y acceso 2026</a>
         <a href="/preguntas-frecuentes/" data-analytics="footer_faq">Preguntas frecuentes</a>
         <a href="/privacidad/" data-analytics="footer_privacidad">Privacidad</a>
         <a href="/terminos/" data-analytics="footer_terminos">Terminos</a>
@@ -1324,7 +1327,7 @@ const marketingStyles = `
       }
       .marketing-nav-menu summary {
         cursor: pointer;
-        color: #f7f4ee;
+        color: #f8fafc;
         font-size: 0.93rem;
         font-weight: 600;
         list-style: none;
@@ -1333,7 +1336,7 @@ const marketingStyles = `
       .marketing-nav-menu summary::after {
         content: '⌄';
         margin-left: 5px;
-        color: #bcb5ab;
+        color: #c0c6cf;
       }
       .marketing-nav-menu-panel {
         position: absolute;
@@ -1343,21 +1346,21 @@ const marketingStyles = `
         min-width: 218px;
         padding: 8px;
         transform: translateX(-50%);
-        border: 1px solid #5c5750;
+        border: 1px solid #464c55;
         border-radius: 14px;
-        background: #292622;
+        background: #1c1f23;
         box-shadow: 0 18px 44px rgba(0,0,0,0.4);
       }
       .marketing-nav-menu-panel a {
         display: block;
         padding: 10px 12px;
         border-radius: 9px;
-        color: #f7f4ee;
+        color: #f8fafc;
         text-decoration: none;
       }
       .marketing-nav-menu-panel a:hover {
         color: #ffffff;
-        background: #3b3936;
+        background: #30343a;
       }
       .marketing-footer nav a,
       .marketing-footer-actions a {
@@ -1810,10 +1813,10 @@ const marketingStyles = `
 
       /* Public website: a clear commercial identity, distinct from the dark app UI. */
       html, body {
-        background: #f5f2ec;
+        background: #111214;
       }
       body {
-        color: #181818;
+        color: #f8fafc;
         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       }
       .marketing-shell {
@@ -1826,7 +1829,7 @@ const marketingStyles = `
         z-index: 20;
         min-height: 82px;
         padding: 12px 0;
-        border-bottom: 1px solid #ded9d0;
+        border-bottom: 1px solid #30343a;
         background: rgba(245, 242, 236, 0.94);
         backdrop-filter: blur(16px);
       }
@@ -1847,12 +1850,12 @@ const marketingStyles = `
       }
       .marketing-brand p {
         margin-top: 2px;
-        color: #6f6a62;
+        color: #c0c6cf;
         font-size: 0.82rem;
       }
       .marketing-nav a,
       .marketing-auth-links a:not(.is-primary) {
-        color: #4f4b45;
+        color: #edf0f4;
         font-weight: 600;
       }
       .marketing-nav a:hover,
@@ -1866,7 +1869,7 @@ const marketingStyles = `
         padding-inline: 22px;
         border: 0;
         border-radius: 8px;
-        background: #e52329;
+        background: #ff3340;
         color: #fff;
         box-shadow: 0 10px 24px rgba(213, 29, 34, 0.2);
         font-weight: 700;
@@ -1913,7 +1916,7 @@ const marketingStyles = `
       .marketing-hero-copy h1 {
         max-width: 14ch;
         margin: 0 0 24px;
-        color: #171717;
+        color: #f8fafc;
         font-size: clamp(2.8rem, 4.5vw, 4.4rem);
         font-weight: 780;
         letter-spacing: -0.055em;
@@ -1921,7 +1924,7 @@ const marketingStyles = `
       }
       .marketing-lead {
         max-width: 54ch;
-        color: #5e5a54;
+        color: #d6dae0;
         font-size: clamp(1.05rem, 1.5vw, 1.25rem);
         line-height: 1.65;
       }
@@ -1930,13 +1933,13 @@ const marketingStyles = `
       }
       .marketing-hero-helper {
         margin-top: 16px;
-        color: #6f6a62;
+        color: #c0c6cf;
       }
       .marketing-hero-media {
         position: relative;
         padding: 22px;
         border-radius: 28px;
-        background: #181818;
+        background: #f8fafc;
         box-shadow: 0 30px 70px rgba(35, 30, 24, 0.2);
       }
       .marketing-hero-media::before {
@@ -1947,7 +1950,7 @@ const marketingStyles = `
         right: -24px;
         top: -28px;
         border-radius: 28px;
-        background: #e52329;
+        background: #ff3340;
         z-index: -1;
       }
       .marketing-hero-media img {
@@ -1958,7 +1961,7 @@ const marketingStyles = `
       }
       .marketing-image-caption {
         margin: 14px 4px 0;
-        color: #aaa39a;
+        color: #aeb5bf;
       }
       .marketing-hero-stats {
         gap: 8px;
@@ -1975,13 +1978,13 @@ const marketingStyles = `
         font-size: 0.9rem;
       }
       .marketing-hero-stat span {
-        color: #aaa39a;
+        color: #aeb5bf;
         font-size: 0.78rem;
       }
       .marketing-home-rows {
         gap: 0;
         margin-top: 0;
-        border-top: 1px solid #ded9d0;
+        border-top: 1px solid #30343a;
       }
       .marketing-story,
       .marketing-story.is-reverse {
@@ -1990,7 +1993,7 @@ const marketingStyles = `
         gap: clamp(42px, 8vw, 108px);
         padding: clamp(58px, 8vw, 100px) 0;
         border: 0;
-        border-bottom: 1px solid #ded9d0;
+        border-bottom: 1px solid #30343a;
         border-radius: 0;
         background: transparent;
         box-shadow: none;
@@ -2009,7 +2012,7 @@ const marketingStyles = `
       .marketing-story-copy h2 {
         max-width: 12ch;
         margin-bottom: 18px;
-        color: #181818;
+        color: #f8fafc;
         font-size: clamp(2.25rem, 4vw, 4rem);
         font-weight: 750;
         letter-spacing: -0.045em;
@@ -2021,13 +2024,13 @@ const marketingStyles = `
         line-height: 1.75;
       }
       .marketing-story .marketing-kicker {
-        color: #171717;
+        color: #f8fafc;
       }
       .marketing-live-metrics {
         margin-inline: calc((100vw - min(1320px, calc(100vw - 48px))) / -2);
         padding: clamp(72px, 10vw, 132px) max(24px, calc((100vw - min(1320px, calc(100vw - 48px))) / 2));
-        background: #181818;
-        color: #f7f4ee;
+        background: #f8fafc;
+        color: #f8fafc;
       }
       .marketing-live-metrics-head {
         display: flex;
@@ -2035,7 +2038,7 @@ const marketingStyles = `
         gap: 20px;
         padding-bottom: 24px;
         border-bottom: 1px solid rgba(255,255,255,0.12);
-        color: #bcb5ab;
+        color: #c0c6cf;
         font-size: 0.78rem;
       }
       .marketing-live-metrics-head p { margin: 0; }
@@ -2064,7 +2067,7 @@ const marketingStyles = `
       .marketing-live-metrics-grid span {
         display: block;
         margin-top: 10px;
-        color: #bcb5ab;
+        color: #c0c6cf;
         font-size: 0.86rem;
         line-height: 1.45;
       }
@@ -2104,7 +2107,7 @@ const marketingStyles = `
       .marketing-vertical-rotation > p:last-child {
         max-width: 64ch;
         margin: 0 auto;
-        color: #bcb5ab;
+        color: #c0c6cf;
         font-size: 1.03rem;
         line-height: 1.7;
       }
@@ -2119,12 +2122,12 @@ const marketingStyles = `
         align-items: center;
         gap: clamp(42px, 9vw, 132px);
         padding: clamp(70px, 10vw, 132px) 0;
-        border-bottom: 1px solid #ded9d0;
+        border-bottom: 1px solid #30343a;
       }
       .marketing-support-copy h2 {
         max-width: 11ch;
         margin: 0 0 20px;
-        color: #181818;
+        color: #f8fafc;
         font-size: clamp(2.5rem, 4.5vw, 4.5rem);
         font-weight: 760;
         letter-spacing: -0.055em;
@@ -2142,14 +2145,14 @@ const marketingStyles = `
         margin: 34px 0 0;
         padding: 0;
         list-style: none;
-        border-top: 1px solid #ded9d0;
+        border-top: 1px solid #30343a;
       }
       .marketing-support-points li {
         display: grid;
         grid-template-columns: 42px 1fr;
         gap: 14px;
         padding: 18px 0;
-        border-bottom: 1px solid #ded9d0;
+        border-bottom: 1px solid #30343a;
       }
       .marketing-support-points > li > span {
         color: #b91c1c;
@@ -2168,9 +2171,9 @@ const marketingStyles = `
         width: min(390px, 100%);
         justify-self: center;
         overflow: hidden;
-        border: 8px solid #181818;
+        border: 8px solid #f8fafc;
         border-radius: 34px;
-        background: #181818;
+        background: #f8fafc;
         box-shadow: 0 28px 60px rgba(34, 30, 24, 0.23);
       }
       .marketing-phone-head {
@@ -2240,19 +2243,19 @@ const marketingStyles = `
         height: 31px;
         place-items: center;
         border-radius: 50%;
-        background: #e52329;
+        background: #ff3340;
         color: #fff;
         font-size: 1rem;
       }
       .marketing-control-panel {
         position: relative;
         padding: clamp(58px, 8vw, 100px) 0;
-        border-bottom: 1px solid #ded9d0;
+        border-bottom: 1px solid #30343a;
       }
       .marketing-control-panel-intro h2 {
         max-width: 14ch;
         margin: 0 0 18px;
-        color: #181818;
+        color: #f8fafc;
         font-size: clamp(2.25rem, 4vw, 4rem);
         font-weight: 750;
         letter-spacing: -0.045em;
@@ -2280,7 +2283,7 @@ const marketingStyles = `
       .marketing-control-progress i {
         display: block;
         height: 1px;
-        background: linear-gradient(90deg, #e52329 0 38%, #ded9d0 38% 100%);
+        background: linear-gradient(90deg, #ff3340 0 38%, #30343a 38% 100%);
       }
       .marketing-control-stories {
         display: grid;
@@ -2320,14 +2323,14 @@ const marketingStyles = `
         height: 34px;
         place-items: center;
         border-radius: 50%;
-        background: #e52329;
+        background: #ff3340;
         color: #fff;
         font-size: 0.74rem;
       }
       .marketing-control-story h3 {
         max-width: 12ch;
         margin: 0 0 18px;
-        color: #181818;
+        color: #f8fafc;
         font-size: clamp(2.15rem, 3.7vw, 3.8rem);
         font-weight: 750;
         letter-spacing: -0.047em;
@@ -2355,7 +2358,7 @@ const marketingStyles = `
       }
       .marketing-control-story li::before {
         content: "↗";
-        color: #e52329;
+        color: #ff3340;
         font-weight: 800;
       }
       .marketing-control-story-media {
@@ -2408,7 +2411,7 @@ const marketingStyles = `
         margin-top: 0;
         padding: clamp(54px, 7vw, 86px);
         border-radius: 0;
-        background: #181818;
+        background: #f8fafc;
         color: #fff;
       }
       .marketing-home-cta.marketing-card h2 {
@@ -2418,17 +2421,17 @@ const marketingStyles = `
         letter-spacing: -0.04em;
       }
       .marketing-home-cta .marketing-kicker {
-        color: #ffaaa5;
+        color: #ff9ba1;
       }
       .marketing-home-cta p:not(.marketing-kicker) {
         max-width: 55ch;
-        color: #bcb5ab;
+        color: #c0c6cf;
         line-height: 1.65;
       }
       .marketing-footer {
         margin-top: 0;
         padding: 48px 0;
-        border-top: 1px solid #ded9d0;
+        border-top: 1px solid #30343a;
         border-radius: 0;
       }
       .marketing-footer-title,
@@ -2448,7 +2451,7 @@ const marketingStyles = `
       .marketing-faq summary,
       .marketing-compare-copy h2,
       .marketing-compare-table strong {
-        color: #181818;
+        color: #f8fafc;
       }
       .marketing-card p,
       .marketing-faq p,
@@ -2458,7 +2461,7 @@ const marketingStyles = `
       }
       .marketing-compare-head {
         color: #777169;
-        border-bottom-color: #ded9d0;
+        border-bottom-color: #30343a;
       }
       .marketing-compare-row {
         border-bottom-color: #e6e1d9;
@@ -2570,9 +2573,9 @@ const marketingStyles = `
           display: grid;
           min-width: 180px;
           padding: 8px;
-          border: 1px solid #ded9d0;
+          border: 1px solid #30343a;
           border-radius: 12px;
-          background: #f7f4ee;
+          background: #f8fafc;
           box-shadow: 0 18px 42px rgba(35, 30, 24, 0.16);
         }
         .marketing-mobile-menu nav a {
@@ -2584,7 +2587,7 @@ const marketingStyles = `
           text-decoration: none;
         }
         .marketing-mobile-menu nav a:hover,
-        .marketing-mobile-menu nav a:focus-visible { color: #b91c1c; background: #eee8df; }
+        .marketing-mobile-menu nav a:focus-visible { color: #b91c1c; background: #2b3036; }
         .marketing-nav {
           gap: 14px;
           overflow: visible;
@@ -2717,15 +2720,15 @@ const marketingStyles = `
         }
         .marketing-vertical-carousel span:not(:first-child) { display: none; }
       }
-      /* Public palette: warm charcoal supplied for Operando, with its red accent. */
+      /* Public palette: neutral carbon, white typography and red accents. */
       html,
       body {
-        background: #1a1a1a;
-        color: #f7f4ee;
+        background: #111214;
+        color: #f8fafc;
       }
       body .marketing-topbar {
-        border-bottom-color: #3b3936;
-        background: rgba(26, 26, 26, 0.94);
+        border-bottom-color: #30343a;
+        background: rgba(17, 18, 20, 0.94);
       }
       body .marketing-brand strong,
       body .marketing-nav a,
@@ -2740,7 +2743,7 @@ const marketingStyles = `
       body .marketing-support-copy h2,
       body .marketing-control-panel-intro h2,
       body .marketing-control-story h3 {
-        color: #f7f4ee;
+        color: #f8fafc;
       }
       body .marketing-brand p,
       body .marketing-lead,
@@ -2755,7 +2758,7 @@ const marketingStyles = `
       body .marketing-control-story li,
       body .marketing-footer p,
       body .marketing-footer-title {
-        color: #bcb5ab;
+        color: #d6dae0;
       }
       body .marketing-home-rows,
       body .marketing-story,
@@ -2764,11 +2767,11 @@ const marketingStyles = `
       body .marketing-footer,
       body .marketing-support-points,
       body .marketing-support-points li {
-        border-color: #3b3936;
+        border-color: #30343a;
       }
       body .marketing-story-media,
       body .marketing-control-image-frame {
-        background: #292622;
+        background: #1c1f23;
       }
       .marketing-vertical-list {
         display: flex;
@@ -2782,9 +2785,9 @@ const marketingStyles = `
       }
       .marketing-vertical-list li {
         padding: 7px 11px;
-        border: 1px solid #5c5750;
+        border: 1px solid #464c55;
         border-radius: 999px;
-        color: #f7f4ee;
+        color: #f8fafc;
         font-size: 0.88rem;
         line-height: 1.2;
       }
@@ -2792,33 +2795,32 @@ const marketingStyles = `
       body .marketing-faq,
       body .marketing-compare-copy,
       body .marketing-compare-table {
-        border: 1px solid #3b3936;
-        background: #292622;
+        border: 1px solid #30343a;
+        background: #1c1f23;
       }
       body .marketing-card > a {
-        border-color: #5c5750;
-        color: #f7f4ee;
+        border-color: #464c55;
+        color: #f8fafc;
       }
       body .marketing-card > a:hover {
-        border-color: #e52329;
+        border-color: #ff3340;
         color: #ffffff;
       }
-      body .marketing-story .marketing-kicker { color: #ffaaa5; }
-      body .marketing-support-points strong { color: #f7f4ee; }
+      body .marketing-story .marketing-kicker { color: #ff9ba1; }
+      body .marketing-support-points strong { color: #f8fafc; }
       body .marketing-support-points p,
-      body .marketing-control-story-media figcaption { color: #aaa39a; }
+      body .marketing-control-story-media figcaption { color: #aeb5bf; }
       body .marketing-control-progress i {
-        background: linear-gradient(90deg, #e52329 0 38%, #3b3936 38% 100%);
+        background: linear-gradient(90deg, #ff3340 0 38%, #30343a 38% 100%);
       }
       body .marketing-footer nav a,
-      body .marketing-footer-actions a { color: #f7f4ee; }
+      body .marketing-footer-actions a { color: #f8fafc; }
       .marketing-brand img {
-        filter: drop-shadow(0 0 9px rgba(255, 43, 49, 0.52));
         transform-origin: center;
         animation: operando-logo-float 3.8s ease-in-out infinite;
       }
       .marketing-brand strong {
-        color: #f7f4ee;
+        color: #f8fafc;
         display: inline-flex;
         align-items: baseline;
         gap: 0.02em;
@@ -2826,7 +2828,7 @@ const marketingStyles = `
       .marketing-brand strong em {
         color: transparent;
         font-style: normal;
-        background: linear-gradient(105deg, #ff8f88 0%, #ff252d 42%, #ffd3cf 67%, #ff252d 100%);
+        background: linear-gradient(105deg, #ff8f95 0%, #ff3340 42%, #ffffff 67%, #ff3340 100%);
         background-size: 220% 100%;
         -webkit-background-clip: text;
         background-clip: text;
@@ -2844,50 +2846,63 @@ const marketingStyles = `
         .marketing-brand img,
         .marketing-brand strong em { animation: none; }
       }
-      /* Compact primary navigation: one clear control group instead of loose links. */
+      /* Editorial navigation: a clear pricing action plus grouped resources. */
       body .marketing-nav {
-        gap: 3px;
-        padding: 4px;
-        border: 1px solid #3b3936;
-        border-radius: 999px;
-        background: rgba(41, 38, 34, 0.92);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        gap: 18px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
       }
       body .marketing-nav > a,
       body .marketing-nav-menu summary {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 34px;
-        padding: 0 12px;
-        border-radius: 999px;
-        color: #ddd8d0;
-        font-size: 0.84rem;
+        min-height: 36px;
+        padding: 0 1px;
+        border-radius: 0;
+        color: #edf0f4;
+        font-size: 0.86rem;
         font-weight: 700;
         line-height: 1;
         text-decoration: none;
-        transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+        transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
       }
       body .marketing-nav > a:hover,
       body .marketing-nav > a:focus-visible,
       body .marketing-nav-menu summary:hover,
       body .marketing-nav-menu summary:focus-visible {
-        color: #ffffff;
-        background: #e52329;
+        color: #ff6a72;
+        background: transparent;
         outline: none;
       }
+      body .marketing-nav > a[href="/precios/"] {
+        margin-left: 2px;
+        padding: 0 13px;
+        border-radius: 8px;
+        background: #f8fafc;
+        color: #111214;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+      }
+      body .marketing-nav > a[href="/precios/"]:hover,
+      body .marketing-nav > a[href="/precios/"]:focus-visible {
+        background: #ff3340;
+        color: #ffffff;
+      }
       body .marketing-nav-menu summary::after {
-        content: '+';
-        margin: 0 0 0 6px;
+        content: '⌄';
+        margin: 0 0 0 5px;
         color: currentColor;
-        font-size: 1rem;
+        font-size: 0.9rem;
         font-weight: 500;
       }
       body .marketing-nav-menu[open] summary {
-        color: #ffffff;
-        background: #e52329;
+        color: #ff6a72;
+        background: transparent;
       }
-      body .marketing-nav-menu[open] summary::after { content: '−'; }
+      body .marketing-nav-menu[open] summary::after { content: '⌃'; }
       body .marketing-nav-menu-panel {
         top: calc(100% + 10px);
         left: auto;
@@ -2895,21 +2910,21 @@ const marketingStyles = `
         min-width: 248px;
         padding: 6px;
         transform: none;
-        border-color: #4b4741;
+        border-color: #3d424a;
         border-radius: 16px;
-        background: #24221f;
+        background: #1b1e22;
         box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
       }
       body .marketing-nav-menu-panel a {
         padding: 11px 12px;
-        color: #e7e1d9;
+        color: #edf0f4;
         font-size: 0.88rem;
         font-weight: 650;
       }
       body .marketing-nav-menu-panel a:hover,
       body .marketing-nav-menu-panel a:focus-visible {
         color: #ffffff;
-        background: #3b3936;
+        background: #30343a;
         outline: none;
       }
 `

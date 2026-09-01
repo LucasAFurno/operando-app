@@ -111,7 +111,6 @@ input[type='search'] { color: var(--text); }
   width: 56px;
   height: auto;
   display: block;
-  filter: drop-shadow(0 0 10px rgba(255, 43, 49, 0.5));
   transform-origin: center;
   animation: operando-logo-float 3.8s ease-in-out infinite;
 }
@@ -246,7 +245,6 @@ input[type='search'] { color: var(--text); }
   object-fit: contain;
   flex-shrink: 0;
   display: block;
-  filter: drop-shadow(0 0 10px rgba(255, 43, 49, 0.5));
   transform-origin: center;
   animation: operando-logo-float 3.8s ease-in-out infinite;
 }
@@ -448,7 +446,6 @@ input[type='search'] { color: var(--text); }
   object-fit: contain;
   margin-bottom: 0;
   display: block;
-  filter: drop-shadow(0 0 12px rgba(255, 43, 49, 0.5));
   transform-origin: center;
   animation: operando-logo-float 3.8s ease-in-out infinite;
 }
@@ -773,8 +770,6 @@ input[type='search'] { color: var(--text); }
   height: auto;
   object-fit: contain;
   border-radius: 0;
-  box-shadow: 0 8px 18px rgba(214, 16, 16, 0.14);
-  filter: drop-shadow(0 0 10px rgba(255, 43, 49, 0.45));
   transform-origin: center;
   animation: operando-logo-float 3.8s ease-in-out infinite;
 }
