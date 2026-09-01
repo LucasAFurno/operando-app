@@ -1779,6 +1779,209 @@
         color: #c0c6cf;
       }
       body .marketing-compare-row { border-bottom-color: #30343a; }
+
+      /* --- Home redesign: scoped to body[data-page="home"] only, does not affect the 30+ SEO pages sharing this stylesheet --- */
+      body[data-page="home"] { position: relative; }
+      body[data-page="home"]::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0;
+        height: 3px;
+        width: var(--op-scroll, 0%);
+        background: linear-gradient(90deg, #ff3340, #ff8a65);
+        z-index: 9999;
+        transition: width 0.12s linear;
+      }
+      body[data-page="home"] .marketing-hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1.05fr 1fr;
+        align-items: center;
+        gap: 48px;
+        padding-top: 28px;
+        overflow: visible;
+      }
+      body[data-page="home"] .marketing-hero::before {
+        content: '';
+        position: absolute;
+        top: -140px;
+        right: -80px;
+        width: 460px;
+        height: 460px;
+        background: radial-gradient(circle, rgba(255,51,64,0.22), transparent 70%);
+        filter: blur(10px);
+        z-index: -1;
+        pointer-events: none;
+      }
+      body[data-page="home"] .marketing-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border: 1px solid rgba(255,51,64,0.35);
+        border-radius: 999px;
+        background: rgba(255,51,64,0.08);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #ff8a80;
+      }
+      body[data-page="home"] .marketing-kicker::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff3340;
+        box-shadow: 0 0 0 3px rgba(255,51,64,0.25);
+      }
+      body[data-page="home"] .marketing-hero-copy h1 {
+        font-size: clamp(2.6rem, 4.6vw, 4.1rem);
+        line-height: 0.98;
+        letter-spacing: -0.02em;
+        margin: 18px 0 16px;
+        background: linear-gradient(135deg, #ffffff 45%, #ffb4ac 78%, #ff3340 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: #fff;
+      }
+      body[data-page="home"] .marketing-lead {
+        max-width: 46ch;
+        font-size: 1.08rem;
+        line-height: 1.6;
+        color: rgba(243,244,246,0.78);
+      }
+      body[data-page="home"] .marketing-cta-row .is-primary {
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 14px 34px rgba(255,51,64,0.32);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }
+      body[data-page="home"] .marketing-cta-row .is-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 42px rgba(255,51,64,0.44);
+      }
+      body[data-page="home"] .marketing-cta-row a:not(.is-primary) {
+        position: relative;
+        transition: color 0.2s ease;
+      }
+      body[data-page="home"] .marketing-cta-row a:not(.is-primary)::after {
+        content: '';
+        position: absolute;
+        left: 0; bottom: -4px;
+        width: 0%;
+        height: 1px;
+        background: #ff8a80;
+        transition: width 0.25s ease;
+      }
+      body[data-page="home"] .marketing-cta-row a:not(.is-primary):hover::after { width: 100%; }
+      body[data-page="home"] .marketing-hero-media {
+        position: relative;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.08);
+        overflow: hidden;
+        transition: transform 0.4s ease;
+      }
+      body[data-page="home"] .marketing-hero-media::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: 24px;
+        background: radial-gradient(circle at 30% 10%, rgba(255,51,64,0.18), transparent 55%);
+        pointer-events: none;
+        z-index: 1;
+      }
+      body[data-page="home"] .marketing-hero-media img { transition: transform 0.5s ease; }
+      body[data-page="home"] .marketing-hero-media:hover img { transform: scale(1.015); }
+      body[data-page="home"] .marketing-hero-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+      body[data-page="home"] .marketing-hero-stat {
+        flex: 1;
+        min-width: 130px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        transition: transform 0.25s ease, border-color 0.25s ease;
+      }
+      body[data-page="home"] .marketing-hero-stat:hover {
+        transform: translateY(-3px);
+        border-color: rgba(255,51,64,0.4);
+      }
+      body[data-page="home"] .marketing-section-intro h2 {
+        font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+        letter-spacing: -0.01em;
+      }
+      body[data-page="home"] .marketing-story,
+      body[data-page="home"] .marketing-live-metrics,
+      body[data-page="home"] .marketing-support,
+      body[data-page="home"] .marketing-control-story,
+      body[data-page="home"] .marketing-home-cta {
+        transition: transform 0.25s ease;
+      }
+      body[data-page="home"] .marketing-story-media img,
+      body[data-page="home"] .marketing-control-image-frame img {
+        border-radius: 18px;
+        transition: transform 0.4s ease;
+      }
+      body[data-page="home"] .marketing-story:hover .marketing-story-media img,
+      body[data-page="home"] .marketing-control-story:hover .marketing-control-image-frame img {
+        transform: scale(1.02);
+      }
+      body[data-page="home"] .marketing-live-metrics-grid article {
+        position: relative;
+        border-radius: 16px;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }
+      body[data-page="home"] .marketing-live-metrics-grid article::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 14px; right: 14px;
+        height: 2px;
+        background: linear-gradient(90deg, #ff3340, transparent);
+        border-radius: 2px;
+      }
+      body[data-page="home"] .marketing-live-metrics-grid article:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+      }
+      body[data-page="home"] .marketing-counter {
+        background: linear-gradient(135deg, #ffffff, #ff8a80);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      body[data-page="home"] .marketing-home-cta {
+        position: relative;
+        overflow: hidden;
+        border-radius: 28px;
+      }
+      body[data-page="home"] .marketing-home-cta::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 85% 20%, rgba(255,51,64,0.25), transparent 55%);
+        pointer-events: none;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        body[data-page="home"] .marketing-story,
+        body[data-page="home"] .marketing-live-metrics,
+        body[data-page="home"] .marketing-support,
+        body[data-page="home"] .marketing-control-story,
+        body[data-page="home"] .marketing-home-cta {
+          opacity: 0;
+          transform: translateY(26px);
+          transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        body[data-page="home"] .is-revealed {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      }
+      @media (max-width: 860px) {
+        body[data-page="home"] .marketing-hero { grid-template-columns: 1fr; }
+        body[data-page="home"] .marketing-hero-stats { flex-direction: column; }
+      }
 </style>
 
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"operando.app","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://operando.app/precios/","image":"https://operando.app/operando-logo.png","screenshot":["https://operando.app/pantalla-ventas-operando.svg","https://operando.app/control-stock-por-sucursal.svg","https://operando.app/cierre-caja-comercio.svg"],"softwareVersion":"236265d3fb89","description":"Operando es gratis durante 2026. Durante 2027 revisaremos planes y precios de forma transparente, con aviso previo.","featureList":["Gratis durante 2026","Sin tarjeta","Sin instalación","Revisión de planes en 2027"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","description":"Prueba gratis y planes comerciales para comercios.","url":"https://operando.app/precios/"}}</script>
@@ -1999,6 +2202,29 @@
           requestAnimationFrame(tick);
         }, { threshold: 0.45, rootMargin: '0px 0px -35% 0px' });
         observer.observe(metricsGrid);
+      }
+      if (document.body.dataset.page === 'home') {
+        const updateScrollProgress = function () {
+          const doc = document.documentElement;
+          const max = doc.scrollHeight - doc.clientHeight;
+          const ratio = max > 0 ? Math.min(1, Math.max(0, doc.scrollTop / max)) : 0;
+          doc.style.setProperty('--op-scroll', (ratio * 100) + '%');
+        };
+        updateScrollProgress();
+        window.addEventListener('scroll', updateScrollProgress, { passive: true });
+        window.addEventListener('resize', updateScrollProgress);
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          const revealTargets = document.querySelectorAll('.marketing-story, .marketing-live-metrics, .marketing-support, .marketing-control-story, .marketing-home-cta');
+          const revealObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+                revealObserver.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+          revealTargets.forEach(function (el) { revealObserver.observe(el); });
+        }
       }
       const vertical = document.querySelector('[data-vertical-rotation]');
       if (vertical && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
