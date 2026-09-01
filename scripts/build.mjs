@@ -1202,19 +1202,32 @@ const renderHomeExtras = (page) => {
         <li><b>Con contexto</b><span>Stock, caja, productos y configuración, con el día a día del comercio.</span></li>
       </ul>
     </div>
-    <div class="home2-terminal" aria-label="Ejemplo ilustrativo de una conversación de soporte">
-      <div class="home2-terminal-bar"><span></span><span></span><span></span><b>soporte@operando:~</b></div>
-      <div class="home2-terminal-body">
-        <p class="home2-terminal-line"><time>18:41</time><i>&gt;</i><span>Hola, no me aparece una venta que hice recién. ¿Puede haberse perdido?</span></p>
-        <p class="home2-terminal-line is-support"><time>18:42</time><i>#</i><span>Hola. La revisamos. ¿La venta llegó a mostrarte el comprobante al finalizar?</span></p>
-        <p class="home2-terminal-line"><time>18:42</time><i>&gt;</i><span>Sí, pero después fui al historial y no la encontraba.</span></p>
-        <p class="home2-terminal-line is-support"><time>18:44</time><i>#</i><span>Ya la veo registrada. Tenés aplicado un filtro que muestra solamente las ventas del turno anterior.</span></p>
-        <p class="home2-terminal-line"><time>18:44</time><i>&gt;</i><span>Ahh, era eso.</span></p>
-        <p class="home2-terminal-line is-support"><time>18:45</time><i>#</i><span>Probá seleccionando “Hoy” y debería aparecerte arriba de todo.</span></p>
-        <p class="home2-terminal-line"><time>18:45</time><i>&gt;</i><span>Apareció. Perfecto.</span></p>
-        <p class="home2-terminal-line is-support"><time>18:46</time><i>#</i><span>La venta estaba correctamente guardada, así que no hace falta cargarla otra vez.</span></p>
-        <p class="home2-terminal-line"><time>18:46</time><i>&gt;</i><span>Gracias por la ayuda.</span></p>
-        <p class="home2-terminal-line is-support"><time>18:46</time><i>#</i><span>Cuando necesites, escribinos por acá.</span></p>
+    <div class="home2-phone" aria-label="Ejemplo ilustrativo de una conversación de soporte por WhatsApp">
+      <div class="home2-phone-screen">
+        <div class="home2-phone-header">
+          <span class="home2-phone-avatar">O</span>
+          <div class="home2-phone-id"><strong>Soporte Operando</strong><small><span class="home2-phone-online" aria-hidden="true"></span>en línea</small></div>
+        </div>
+        <div class="home2-phone-body">
+          ${[
+            { side: 'client', time: '18:41', text: 'Hola, no me aparece una venta que hice recién. ¿Puede haberse perdido?' },
+            { side: 'support', time: '18:42', text: 'Hola. La revisamos. ¿La venta llegó a mostrarte el comprobante al finalizar?' },
+            { side: 'client', time: '18:42', text: 'Sí, pero después fui al historial y no la encontraba.' },
+            { side: 'support', time: '18:44', text: 'Ya la veo registrada. Tenés aplicado un filtro que muestra solamente las ventas del turno anterior.' },
+            { side: 'client', time: '18:44', text: 'Ahh, era eso.' },
+            { side: 'support', time: '18:45', text: 'Probá seleccionando “Hoy” y debería aparecerte arriba de todo.' },
+            { side: 'client', time: '18:45', text: 'Apareció. Perfecto.' },
+            { side: 'support', time: '18:46', text: 'La venta estaba correctamente guardada, así que no hace falta cargarla otra vez.' },
+            { side: 'client', time: '18:46', text: 'Gracias por la ayuda.' },
+            { side: 'support', time: '18:46', text: 'Cuando necesites, escribinos por acá.' },
+          ].map((message, index) => `
+            <div class="home2-bubble is-${message.side}" style="--i:${index}">
+              <span class="home2-bubble-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="home2-bubble-text">${escapeHtml(message.text)}<time>${escapeHtml(message.time)}</time></span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="home2-phone-input"><span>Escribí un mensaje…</span><b aria-hidden="true">↑</b></div>
       </div>
     </div>
   </section>
@@ -3024,20 +3037,19 @@ const marketingStyles = `
          SEO pages reuse the .marketing-hero/story/live-metrics/support/
          control-panel skeleton anymore on the home route, so this is an
          independent layout, not a recolor of the shared template.
-         Palette (5 colors total): ink background, ink-lift surface, paper
-         accent, brand red, warm text. Type: Space Grotesk (display) +
-         IBM Plex Mono (all data/labels) over the existing Inter body copy.
+         Palette (4 colors total): carbon-black background, carbon-lift
+         surface, brand red, near-white text. Type: Space Grotesk (display)
+         + IBM Plex Mono (all data/labels) over the existing Inter body copy.
          ============================================================ */
       body[data-page="home"] {
-        --ink: #14100c;
-        --ink-lift: #1d1712;
-        --ink-raise: #241d16;
-        --paper: #f2ead9;
-        --red: #ff3b30;
-        --red-soft: #ffb2a6;
-        --text: #f3ecdf;
-        --text-dim: rgba(243,236,223,0.62);
-        --line: rgba(243,236,223,0.14);
+        --ink: #0a0a0a;
+        --ink-lift: #151515;
+        --ink-raise: #1e1e1e;
+        --red: #ff2f2f;
+        --red-soft: #ff8f8f;
+        --text: #f5f5f5;
+        --text-dim: rgba(245,245,245,0.58);
+        --line: rgba(245,245,245,0.1);
         --font-display: 'Space Grotesk', Oswald, Arial, sans-serif;
         --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
         position: relative;
@@ -3102,15 +3114,15 @@ const marketingStyles = `
       }
       body[data-page="home"] .home2-kicker {
         padding: 5px 12px 5px 10px;
-        border: 1px dashed rgba(255,59,48,0.4);
-        border-radius: 3px;
+        border: 1px dashed rgba(255,47,47,0.4);
+        border-radius: 4px;
       }
       body[data-page="home"] .home2-dot {
         width: 6px;
         height: 6px;
         border-radius: 50%;
         background: var(--red);
-        box-shadow: 0 0 0 3px rgba(255,59,48,0.22);
+        box-shadow: 0 0 0 3px rgba(255,47,47,0.22);
         animation: op-pulse 2.4s ease-in-out infinite;
         flex: none;
       }
@@ -3153,8 +3165,8 @@ const marketingStyles = `
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 13px 22px;
-        border-radius: 6px;
+        padding: 13px 24px;
+        border-radius: 8px;
         font-family: var(--font-mono);
         font-weight: 600;
         font-size: 0.92rem;
@@ -3164,10 +3176,10 @@ const marketingStyles = `
       }
       body[data-page="home"] .home2-btn-primary {
         background: var(--red);
-        color: var(--paper);
-        box-shadow: 0 10px 26px rgba(255,59,48,0.28);
+        color: #0a0a0a;
+        box-shadow: 0 10px 26px rgba(255,47,47,0.3);
       }
-      body[data-page="home"] .home2-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(255,59,48,0.4); }
+      body[data-page="home"] .home2-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(255,47,47,0.42); }
       body[data-page="home"] .home2-btn-secondary {
         border: 1px solid var(--line);
         color: var(--text);
@@ -3186,7 +3198,7 @@ const marketingStyles = `
       body[data-page="home"] .home2-frame {
         position: relative;
         border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: 16px;
         background: var(--ink-lift);
         overflow: hidden;
       }
@@ -3222,7 +3234,7 @@ const marketingStyles = `
       body[data-page="home"] #home2-tab-ventas:checked ~ .home2-frame-bar label[for="home2-tab-ventas"],
       body[data-page="home"] #home2-tab-stock:checked ~ .home2-frame-bar label[for="home2-tab-stock"],
       body[data-page="home"] #home2-tab-caja:checked ~ .home2-frame-bar label[for="home2-tab-caja"] {
-        background: rgba(255,59,48,0.16);
+        background: rgba(255,47,47,0.16);
         color: var(--red-soft);
       }
       body[data-page="home"] #home2-tab-ventas:checked ~ .home2-frame-body [data-pane="ventas"],
@@ -3234,7 +3246,7 @@ const marketingStyles = `
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: 14px;
         background: var(--ink-lift);
         overflow: hidden;
       }
@@ -3385,38 +3397,142 @@ const marketingStyles = `
       body[data-page="home"] .home2-support-list li { padding-left: 16px; border-left: 2px solid var(--red); }
       body[data-page="home"] .home2-support-list b { display: block; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text); margin-bottom: 3px; }
       body[data-page="home"] .home2-support-list span { color: var(--text-dim); font-size: 0.9rem; }
-      body[data-page="home"] .home2-terminal {
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: #0d0a07;
-        overflow: hidden;
+      body[data-page="home"] .home2-phone {
+        display: flex;
+        justify-content: center;
       }
-      body[data-page="home"] .home2-terminal-bar {
+      body[data-page="home"] .home2-phone-screen {
+        width: 100%;
+        max-width: 340px;
+        height: 560px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background: #050505;
+        overflow: hidden;
+        box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      }
+      body[data-page="home"] .home2-phone-header {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 10px 14px;
+        gap: 12px;
+        padding: 16px 18px;
         background: var(--ink-raise);
         border-bottom: 1px solid var(--line);
+        flex: none;
       }
-      body[data-page="home"] .home2-terminal-bar span { width: 9px; height: 9px; border-radius: 50%; background: rgba(243,236,223,0.18); }
-      body[data-page="home"] .home2-terminal-bar b { margin-left: 10px; font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-dim); font-weight: 500; }
-      body[data-page="home"] .home2-terminal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; }
-      body[data-page="home"] .home2-terminal-line {
+      body[data-page="home"] .home2-phone-avatar {
         display: flex;
-        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--red);
+        color: #0a0a0a;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 1rem;
+        flex: none;
+      }
+      body[data-page="home"] .home2-phone-id { display: flex; flex-direction: column; gap: 2px; }
+      body[data-page="home"] .home2-phone-id strong { font-size: 0.92rem; color: var(--text); font-weight: 600; }
+      body[data-page="home"] .home2-phone-id small { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
+      body[data-page="home"] .home2-phone-online { width: 6px; height: 6px; border-radius: 50%; background: #34d17c; flex: none; }
+      body[data-page="home"] .home2-phone-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 18px 16px;
+        overflow-y: auto;
+      }
+      body[data-page="home"] .home2-bubble {
+        position: relative;
+        max-width: 82%;
+        padding: 9px 12px;
+        border-radius: 15px;
         font-family: var(--font-mono);
         font-size: 0.82rem;
-        line-height: 1.5;
-        color: var(--text-dim);
-        margin: 0;
+        line-height: 1.45;
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
       }
-      body[data-page="home"] .home2-terminal-line time { color: rgba(243,236,223,0.4); flex: none; }
-      body[data-page="home"] .home2-terminal-line i { color: var(--text-dim); font-style: normal; flex: none; }
-      body[data-page="home"] .home2-terminal-line.is-support i,
-      body[data-page="home"] .home2-terminal-line.is-support span { color: var(--red-soft); }
-      body[data-page="home"] .home2-terminal-line span { color: var(--text); }
-      body[data-page="home"] .home2-terminal-line.is-support span { color: var(--red-soft); }
+      body[data-page="home"] .home2-bubble.is-client { align-self: flex-end; background: var(--red); color: #0a0a0a; border-bottom-right-radius: 4px; }
+      body[data-page="home"] .home2-bubble.is-support { align-self: flex-start; background: var(--ink-lift); border: 1px solid var(--line); color: var(--text); border-bottom-left-radius: 4px; }
+      body[data-page="home"] .home2-bubble-dots {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        padding: 9px 12px;
+        opacity: 1;
+      }
+      body[data-page="home"] .home2-bubble-dots i {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        opacity: 0.5;
+        animation: bubble-dot-bounce 1s ease-in-out infinite;
+      }
+      body[data-page="home"] .home2-bubble-dots i:nth-child(2) { animation-delay: 0.15s; }
+      body[data-page="home"] .home2-bubble-dots i:nth-child(3) { animation-delay: 0.3s; }
+      @keyframes bubble-dot-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-3px); opacity: 1; } }
+      body[data-page="home"] .home2-bubble-text {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        opacity: 0;
+      }
+      body[data-page="home"] .home2-bubble-text time { font-size: 0.66rem; opacity: 0.6; flex: none; white-space: nowrap; }
+      body[data-page="home"] .home2-phone-input {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--line);
+        background: var(--ink-raise);
+        flex: none;
+      }
+      body[data-page="home"] .home2-phone-input span { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-dim); }
+      body[data-page="home"] .home2-phone-input b {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--red);
+        color: #0a0a0a;
+        font-size: 0.8rem;
+        flex: none;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        body[data-page="home"] .home2-support.is-revealed .home2-bubble {
+          animation: bubble-pop 0.35s ease forwards;
+          animation-delay: calc(var(--i) * 0.65s + 0.4s);
+        }
+        body[data-page="home"] .home2-support.is-revealed .home2-bubble-dots {
+          animation: bubble-dots-fade 0.25s ease forwards;
+          animation-delay: calc(var(--i) * 0.65s + 0.72s);
+        }
+        body[data-page="home"] .home2-support.is-revealed .home2-bubble-text {
+          animation: bubble-text-fade 0.25s ease forwards;
+          animation-delay: calc(var(--i) * 0.65s + 0.78s);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        body[data-page="home"] .home2-bubble { opacity: 1; transform: none; }
+        body[data-page="home"] .home2-bubble-dots { opacity: 0; }
+        body[data-page="home"] .home2-bubble-text { opacity: 1; }
+      }
+      @keyframes bubble-pop { to { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes bubble-dots-fade { to { opacity: 0; } }
+      @keyframes bubble-text-fade { to { opacity: 1; } }
 
       /* --- 5. Control accordion with numbered rail --- */
       body[data-page="home"] .home2-accordion {
