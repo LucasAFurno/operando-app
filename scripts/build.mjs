@@ -3179,7 +3179,7 @@ const marketingStyles = `
         flex-direction: column;
         gap: 0;
         margin-top: 6px;
-        padding: 0 20px 8px;
+        padding: 0 22px 10px;
       }
       body[data-page="home"] .marketing-hero-stat {
         display: flex;
@@ -3209,9 +3209,10 @@ const marketingStyles = `
       body[data-page="home"] .marketing-hero-stat span {
         flex: 0 1 auto;
         min-width: 0;
+        max-width: 58%;
         font-family: var(--font-mono);
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.82rem;
         color: var(--text);
         text-align: right;
         white-space: nowrap;
