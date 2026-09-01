@@ -55,18 +55,18 @@ const icon = (path) => `
 `
 
 const navItems = [
-  { id: 'dashboard', moduleKey: 'dashboard', label: 'Inicio', permission: 'dashboard:view', icon: icon('<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/>') },
+  { id: 'dashboard', moduleKey: 'dashboard', label: 'Resumen', permission: 'dashboard:view', icon: icon('<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/>') },
   { id: 'clientes', moduleKey: 'customers', label: 'Clientes', permission: 'customers:view', icon: icon('<path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3"/><path d="M20 8v6"/><path d="M17 11h6"/>') },
   { id: 'ventas', moduleKey: 'sales', label: 'Ventas', permission: 'sales:view', icon: icon('<path d="M4 17h16"/><path d="M7 17V9"/><path d="M12 17V5"/><path d="M17 17v-6"/>') },
   { id: 'caja', moduleKey: 'cash', label: 'Caja', permission: 'cash:view', icon: icon('<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16"/><path d="M16 14h2"/>') },
-  { id: 'productos', moduleKey: 'products', label: 'Productos', permission: 'products:view', icon: icon('<path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 7.5V16.5L12 21l9-4.5V7.5"/>') },
+  { id: 'productos', moduleKey: 'products', label: 'Catálogo', permission: 'products:view', icon: icon('<path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="M3 7.5V16.5L12 21l9-4.5V7.5"/>') },
   { id: 'compras', moduleKey: 'purchases', label: 'Compras', permission: 'purchases:view', icon: icon('<circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/><path d="M3 4h2l2.4 10.5h10.8L21 8H8"/>') },
-  { id: 'facturacion', moduleKey: 'invoices', label: 'Facturas', permission: 'invoices:view', icon: icon('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6"/><path d="M10 16h6"/>') },
-  { id: 'tickets', moduleKey: 'tickets', label: 'Tickets', permission: 'tickets:view', icon: icon('<rect x="4" y="5" width="16" height="10" rx="2"/><path d="M8 19h8"/><path d="M10 15v4"/><path d="M14 15v4"/>') },
-  { id: 'reportes', moduleKey: 'reports', label: 'Reportes', permission: 'reports:view', icon: icon('<path d="M5 19V9"/><path d="M12 19V5"/><path d="M19 19v-8"/><path d="M3 19h18"/>') },
-  { id: 'auditoria', moduleKey: 'audit', label: 'Auditoría', permission: 'audit:view', icon: icon('<path d="M12 3v9l5 3"/><circle cx="12" cy="12" r="9"/><path d="M3 12h2M19 12h2"/>') },
-  { id: 'mi-admin', moduleKey: 'settings', label: 'Mi admin', permission: 'settings:view', platformOnly: true, icon: icon('<path d="M4 19.5v-9l8-5 8 5v9"/><path d="M9 19.5v-4h6v4"/><path d="M8 9h8"/><path d="M12 3v3"/>') },
-  { id: 'ajustes', moduleKey: 'settings', label: 'Ajustes', permission: 'settings:view', icon: icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-.33-1A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.33H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1-.33A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 .33 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 8a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .33H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1 .33 1.65 1.65 0 0 0-.51 1.34Z"/>') },
+  { id: 'facturacion', moduleKey: 'invoices', label: 'Facturación', permission: 'invoices:view', icon: icon('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M10 12h6"/><path d="M10 16h6"/>') },
+  { id: 'tickets', moduleKey: 'tickets', label: 'Servicios', permission: 'tickets:view', icon: icon('<rect x="4" y="5" width="16" height="10" rx="2"/><path d="M8 19h8"/><path d="M10 15v4"/><path d="M14 15v4"/>') },
+  { id: 'reportes', moduleKey: 'reports', label: 'Informes', permission: 'reports:view', icon: icon('<path d="M5 19V9"/><path d="M12 19V5"/><path d="M19 19v-8"/><path d="M3 19h18"/>') },
+  { id: 'auditoria', moduleKey: 'audit', label: 'Actividad', permission: 'audit:view', icon: icon('<path d="M12 3v9l5 3"/><circle cx="12" cy="12" r="9"/><path d="M3 12h2M19 12h2"/>') },
+  { id: 'mi-admin', moduleKey: 'settings', label: 'Consola Operando', permission: 'settings:view', platformOnly: true, icon: icon('<path d="M4 19.5v-9l8-5 8 5v9"/><path d="M9 19.5v-4h6v4"/><path d="M8 9h8"/><path d="M12 3v3"/>') },
+  { id: 'ajustes', moduleKey: 'settings', label: 'Configuración', permission: 'settings:view', icon: icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-.33-1A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1-.33H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1-.33A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 .33 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 8a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .33H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1 .33 1.65 1.65 0 0 0-.51 1.34Z"/>') },
 ]
 
 const app = document.querySelector('#app')
@@ -483,16 +483,27 @@ const getRequestedPublicView = () => {
   }
 }
 
-const isStandaloneAppRoute = () => /^\/app(?:\/|$)/i.test(window.location.pathname || '')
-const appSectionPaths = { dashboard: '', clientes: 'clientes', ventas: 'ventas', caja: 'caja-diaria', productos: 'productos', compras: 'compras', facturacion: 'facturacion', tickets: 'tickets', reportes: 'reportes', auditoria: 'auditoria', ajustes: 'ajustes', 'mi-admin': 'mi-admin', sucursales: 'sucursales', cajeros: 'cajeros' }
+const operandoEntry = String(window.__operandoEntry || '').trim().toLowerCase()
+const isPanelRoute = () => /^\/(?:panel|app)(?:\/|$)/i.test(window.location.pathname || '')
+const isStandaloneAppRoute = isPanelRoute
+const isAuthRoute = () => /^\/(?:ingresar|crear-cuenta|recuperar-clave|restablecer-clave)(?:\/|$)/i.test(window.location.pathname || '')
+const appSectionPaths = { dashboard: '', clientes: 'clientes', ventas: 'ventas', caja: 'caja', productos: 'catalogo', compras: 'compras', facturacion: 'facturacion', tickets: 'servicios', reportes: 'informes', auditoria: 'actividad', ajustes: 'configuracion', 'mi-admin': 'consola', sucursales: 'sucursales', cajeros: 'cajeros' }
+const legacySectionPaths = { 'caja-diaria': 'caja', productos: 'productos', tickets: 'tickets', reportes: 'reportes', auditoria: 'auditoria', ajustes: 'ajustes', 'mi-admin': 'mi-admin' }
 const sectionFromPath = () => {
-  const segment = String(window.location.pathname || '').replace(/^\/app\/?/i, '').split('/')[0].toLowerCase()
-  return Object.entries(appSectionPaths).find(([, path]) => path === segment)?.[0] || 'dashboard'
+  const segment = String(window.location.pathname || '').replace(/^\/(?:panel|app)\/?/i, '').split('/')[0].toLowerCase()
+  return Object.entries(appSectionPaths).find(([, path]) => path === segment)?.[0] || legacySectionPaths[segment] || 'dashboard'
 }
 const syncSectionPath = () => {
-  if (!isStandaloneAppRoute()) return
-  const target = appSectionPaths[activeSection] ? `/app/${appSectionPaths[activeSection]}/` : '/app/'
+  if (!isPanelRoute()) return
+  const target = appSectionPaths[activeSection] ? `/panel/${appSectionPaths[activeSection]}/` : '/panel/'
   if (window.location.pathname !== target) window.history.pushState({ section: activeSection }, '', target)
+}
+const canonicalizeLegacyPanelRoute = () => {
+  if (operandoEntry !== 'legacy') return
+  const legacySection = String(window.location.pathname || '').replace(/^\/app\/?/i, '').split('/')[0].toLowerCase()
+  const section = legacySectionPaths[legacySection] || Object.entries(appSectionPaths).find(([, path]) => path === legacySection)?.[0] || 'dashboard'
+  const target = appSectionPaths[section] ? `/panel/${appSectionPaths[section]}/` : '/panel/'
+  window.history.replaceState({}, '', `${target}${window.location.search}${window.location.hash}`)
 }
 const mapPublicAuthError = (message, context = 'login') => {
   const normalized = String(message || '').trim().toLowerCase()
@@ -1215,67 +1226,34 @@ const getUiState = () => {
   }
 }
 
-const standaloneAuthView = (ui) => `
-  <div class="login-shell auth-standalone-shell">
-    <main class="auth-standalone" aria-labelledby="auth-title">
-      <a class="auth-back-link" href="/" aria-label="Volver a la portada">&larr; Volver al sitio</a>
-      <section class="login-card auth-standalone-card">
-        <div class="auth-brand">
-          <img src="/operando-logo.png?v=operando-20260831" alt="operando.app" />
-          <div>
-            <strong>${productName}</strong>
-            <span>Gestion comercial online</span>
-          </div>
-        </div>
-        ${authViewMode === 'login' ? `
-          <div class="auth-heading">
-            <p class="kicker">Ingreso al sistema</p>
-            <h1 id="auth-title">Iniciar sesion</h1>
-            <p>Ingresa con tu correo y tu clave para abrir tu comercio.</p>
-          </div>
-          <form class="login-form" data-form="login" autocomplete="on">
-            <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
-            <label>Clave<input type="password" name="pin" value="" placeholder="Tu clave" autocomplete="current-password" required /></label>
-            ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
-            ${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}
-            ${loginMessage?.includes('15 minutos') ? '<button type="button" class="auth-text-action" data-action="recover-password">Recuperar mi clave ahora</button>' : ''}
-            <button type="submit">Ingresar</button>
-          </form>
-          <div class="auth-secondary-actions">
-            <button type="button" class="auth-text-action" data-action="recover-password">No recuerdo mi clave</button>
-            <span>No tienes cuenta? <button type="button" class="auth-text-action" data-action="show-signup">Crear cuenta</button></span>
-          </div>
-        ` : `
-          <div class="auth-heading">
-            <p class="kicker">Empieza ahora</p>
-            <h1 id="auth-title">Crear cuenta</h1>
-            <p>Carga tus datos y empieza a usar operando.app en minutos.</p>
-          </div>
-          <form class="login-form compact-signup-form" data-form="instance-setup" autocomplete="on">
-            <div class="login-form-grid-1">
-              <label>Nombre comercial<input type="text" name="commerceName" value="" placeholder="Mi comercio" autocomplete="organization" required /></label>
-              <label>Tu nombre<input type="text" name="ownerName" value="" placeholder="Nombre del responsable" autocomplete="name" required /></label>
-              <label>Email<input type="email" name="ownerEmail" value="" placeholder="tu@email.com" autocomplete="email" autocapitalize="off" spellcheck="false" required /></label>
-              <label>Clave<input type="password" name="ownerPin" value="" placeholder="Minimo 6 caracteres" autocomplete="new-password" required /></label>
-            </div>
-            <input type="hidden" name="instanceKey" value="" />
-            <input type="hidden" name="ownerLogin" value="" />
-            <input type="hidden" name="branchName" value="Casa central" />
-            <input type="hidden" name="branchCode" value="CASA" />
-            <input type="hidden" name="registerName" value="Caja 1" />
-            <input type="hidden" name="registerCode" value="CAJA-01" />
-            ${signupMessage ? `<p class="login-error" role="alert">${signupMessage}</p>` : ''}
-            <button type="submit">Crear cuenta y empezar</button>
-          </form>
-          <div class="auth-secondary-actions auth-secondary-centered">
-            <span>Ya tienes cuenta? <button type="button" class="auth-text-action" data-action="show-login">Iniciar sesion</button></span>
-          </div>
-        `}
-      </section>
-      <p class="auth-support">Necesitas ayuda? <button type="button" class="auth-text-action" data-action="open-support">Hablar con soporte</button></p>
-    </main>
-  </div>
-`
+const standaloneAuthView = (ui) => {
+  const mode = recoveryState ? 'reset' : authViewMode
+  const content = mode === 'login' ? `
+    <div class="auth-heading"><p class="kicker">Acceso seguro</p><h1 id="auth-title">Entrá a tu operación</h1><p>Ingresá con tus datos para abrir el panel de tu comercio.</p></div>
+    <form class="login-form" data-form="login" autocomplete="on">
+      <label>Correo o usuario<input type="text" name="identifier" placeholder="nombre@comercio.com" autocomplete="username" autocapitalize="off" spellcheck="false" required /></label>
+      <div class="auth-field-row"><label>Clave<input type="password" name="pin" placeholder="Tu clave" autocomplete="current-password" required /></label><a class="auth-inline-link" href="/recuperar-clave/">¿Olvidaste tu clave?</a></div>
+      ${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}
+      ${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}
+      <button type="submit">Ingresar al panel</button>
+    </form>
+    <p class="auth-route-note">¿Todavía no usás Operando? <a href="/crear-cuenta/">Crear cuenta</a></p>`
+    : mode === 'signup' ? `
+      <div class="auth-heading"><p class="kicker">Empezá ahora</p><h1 id="auth-title">Creá tu cuenta</h1><p>Configurá tu comercio y empezá a trabajar desde el panel.</p></div>
+      <form class="login-form compact-signup-form" data-form="instance-setup" autocomplete="on">
+        <div class="login-form-grid-1"><label>Nombre comercial<input type="text" name="commerceName" placeholder="Mi comercio" autocomplete="organization" required /></label><label>Tu nombre<input type="text" name="ownerName" placeholder="Nombre del responsable" autocomplete="name" required /></label><label>Email<input type="email" name="ownerEmail" placeholder="tu@email.com" autocomplete="email" autocapitalize="off" spellcheck="false" required /></label><label>Clave<input type="password" name="ownerPin" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required /></label></div>
+        <input type="hidden" name="instanceKey" value="" /><input type="hidden" name="ownerLogin" value="" /><input type="hidden" name="branchName" value="Casa central" /><input type="hidden" name="branchCode" value="CASA" /><input type="hidden" name="registerName" value="Caja 1" /><input type="hidden" name="registerCode" value="CAJA-01" />
+        ${signupMessage ? `<p class="login-error" role="alert">${signupMessage}</p>` : ''}<button type="submit">Crear cuenta y abrir el panel</button>
+      </form><p class="auth-route-note">¿Ya tenés cuenta? <a href="/ingresar/">Ingresar</a></p>`
+    : mode === 'recovery' ? `
+      <div class="auth-heading"><p class="kicker">Recuperar acceso</p><h1 id="auth-title">Volvé a entrar</h1><p>Escribí tu correo y te enviaremos un enlace seguro para crear una clave nueva.</p></div>
+      <form class="login-form" data-form="access-recovery" autocomplete="on"><label>Correo electrónico<input type="email" name="email" placeholder="nombre@comercio.com" autocomplete="email" autocapitalize="off" spellcheck="false" required /></label>${window.__pclafTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__pclafTurnstileSiteKey}"></div>` : ''}${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}<button type="submit">Enviar enlace de recuperación</button></form><p class="auth-route-note"><a href="/ingresar/">Volver a ingresar</a></p>`
+    : mode === 'reset' && recoveryState ? `
+      <div class="auth-heading"><p class="kicker">Restablecer clave</p><h1 id="auth-title">Creá una clave nueva</h1><p>Vas a recuperar el acceso de ${maskEmail(recoveryState.email) || 'tu cuenta'}.</p></div>
+      <form class="login-form" data-form="password-recovery" autocomplete="off"><label>Nueva clave<input type="password" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required /></label><label>Repetir nueva clave<input type="password" name="passwordConfirm" placeholder="Repetí la nueva clave" autocomplete="new-password" required /></label>${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}<button type="submit">Guardar nueva clave</button></form>`
+    : `<div class="auth-heading"><p class="kicker">Enlace de recuperación</p><h1 id="auth-title">Este enlace ya no está disponible</h1><p>Por seguridad, los enlaces de recuperación vencen rápido y solo se pueden usar una vez.</p></div><a class="auth-primary-link" href="/recuperar-clave/">Pedir un enlace nuevo</a><p class="auth-route-note"><a href="/ingresar/">Volver a ingresar</a></p>`
+  return `<div class="login-shell auth-standalone-shell"><main class="auth-standalone" aria-labelledby="auth-title"><a class="auth-back-link" href="/">← Volver al sitio</a><section class="login-card auth-standalone-card"><div class="auth-brand"><img src="/operando-logo.png?v=operando-20260831" alt="Operando" /><div><strong>Operando</strong><span>Gestión comercial online</span></div></div>${content}</section><p class="auth-support">¿Necesitás ayuda? <button type="button" class="auth-text-action" data-action="open-support">Hablar con soporte</button></p></main></div>`
+}
 
 const paginateList = (items, listKey) => {
   const pagination = listPagination[listKey]
@@ -1329,41 +1307,11 @@ const paginatedCardList = (items, listKey, rowTemplate) => {
 const loginView = (ui) => {
   if ((window.__pclafAppEntry || isStandaloneAppRoute()) && authViewMode === 'landing') authViewMode = 'login'
   if (recoveryState) {
-    return `
-  <div class="login-shell login-shell-home">
-    <div class="recovery-shell">
-      <header class="public-topbar">
-        <div class="public-topbar-brand">
-          <img class="public-topbar-logo" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
-          <div class="public-topbar-copy">
-            <strong>${productName}</strong>
-            <span>Recuperacion de acceso</span>
-          </div>
-        </div>
-      </header>
-      <section class="recovery-panel">
-        <div class="login-card recovery-card" id="acceso-recovery">
-          <p class="kicker">Recuperar acceso</p>
-          <h2>Nueva clave</h2>
-          <p class="login-copy">Define una clave nueva para ${maskEmail(recoveryState.email) || 'tu cuenta'} y vuelve a entrar normalmente.</p>
-          <form class="login-form" data-form="password-recovery" autocomplete="off">
-            <label>Nueva clave<input type="password" name="password" value="" placeholder="Minimo 6 caracteres" autocomplete="new-password" required /></label>
-            <label>Repetir clave<input type="password" name="passwordConfirm" value="" placeholder="Repite la clave" autocomplete="new-password" required /></label>
-            ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
-            <button type="submit">Guardar nueva clave</button>
-          </form>
-          <div class="login-actions">
-            <button type="button" class="ghost-action" data-action="cancel-recovery">Cancelar</button>
-            <button type="button" class="ghost-action" data-action="open-support">Necesito ayuda</button>
-          </div>
-        </div>
-      </section>
-    </div>
-  </div>
-`
+    authViewMode = 'reset'
+    return standaloneAuthView(ui)
   }
 
-  if (authViewMode === 'login' || authViewMode === 'signup') return standaloneAuthView(ui)
+  if (authViewMode === 'login' || authViewMode === 'signup' || authViewMode === 'recovery' || authViewMode === 'reset' || isAuthRoute()) return standaloneAuthView(ui)
 
   return `
   <div class="login-shell login-shell-home">
@@ -3404,9 +3352,11 @@ const readSiteCloudConfig = async () => {
 }
 
 const bootstrap = async () => {
+  canonicalizeLegacyPanelRoute()
   const initialCloudConfig = await readSiteCloudConfig()
   window.__pclafTurnstileSiteKey = String(initialCloudConfig?.turnstileSiteKey || '')
-  authViewMode = getRequestedPublicView() || (window.__pclafAppEntry ? 'login' : authViewMode)
+  const entryAuthMode = ({ login: 'login', signup: 'signup', recovery: 'recovery', reset: 'reset' })[operandoEntry] || ''
+  authViewMode = entryAuthMode || getRequestedPublicView() || (window.__pclafAppEntry ? 'login' : authViewMode)
   activeSection = sectionFromPath()
   if (!window.pclafDesktop) {
     safeStorage.removeItem(dataStorageKey)
@@ -3432,7 +3382,7 @@ const bootstrap = async () => {
     if (authManager) {
       recoveryState = await authManager.consumeRecoverySession()
       if (recoveryState) {
-        authViewMode = 'login'
+        authViewMode = 'reset'
         loginMessage = ''
         signupMessage = ''
       }
@@ -3730,6 +3680,7 @@ const handleSubmit = async (event) => {
       await loadCloudAccess(sessionPayload)
       activeSection = sectionFromPath()
       saveSection()
+      syncSectionPath()
       feedbackMessage = 'Sesion iniciada correctamente.'
       requestScrollTop()
     } catch (error) {
@@ -3750,9 +3701,27 @@ const handleSubmit = async (event) => {
       await authManager.clearRecoveryState()
       recoveryState = null
       authViewMode = 'login'
+      window.history.replaceState({}, '', '/ingresar/')
       feedbackMessage = result.message || 'Clave actualizada correctamente.'
       loginMessage = ''
       requestScrollTop()
+    } catch (error) {
+      loginMessage = mapPublicAuthError(error.message, 'login')
+    }
+    render()
+    return
+  }
+  if (kind === 'access-recovery') {
+    loginMessage = ''
+    feedbackMessage = ''
+    try {
+      const email = String(formData.get('email') || '').trim().toLowerCase()
+      if (!authManager) throw new Error('La conexión cloud no está lista.')
+      const result = await authManager.sendRecoveryMagicLink({
+        email,
+        redirectTo: `${publicSiteUrl}/restablecer-clave/?auth_action=recover`,
+      })
+      loginMessage = result?.message || 'Te enviamos un enlace para recuperar el acceso.'
     } catch (error) {
       loginMessage = mapPublicAuthError(error.message, 'login')
     }
@@ -3785,6 +3754,7 @@ const handleSubmit = async (event) => {
       await loadCloudAccess(sessionPayload)
       activeSection = sectionFromPath()
       saveSection()
+      syncSectionPath()
       feedbackMessage = 'Cuenta creada y lista para operar.'
       requestScrollTop()
     } catch (error) {
@@ -5240,6 +5210,7 @@ const bindEvents = () => {
     store.clearCloudAuthSession()
     commerceContext = null
     authViewMode = (window.__pclafAppEntry || isStandaloneAppRoute()) ? 'login' : 'landing'
+    if (isPanelRoute()) window.history.replaceState({}, '', '/ingresar/')
     loginMessage = ''
     signupMessage = ''
     feedbackMessage = ''
@@ -5260,7 +5231,7 @@ const bindEvents = () => {
         if (!authManager) throw new Error('La conexion cloud no esta lista.')
         const result = await authManager.sendRecoveryMagicLink({
           email,
-          redirectTo: `${getPublicAppBaseUrl()}${window.location.pathname}?auth_action=recover`,
+          redirectTo: `${publicSiteUrl}/restablecer-clave/?auth_action=recover`,
         })
         loginMessage = result?.message || 'Te enviamos un enlace para recuperar el acceso.'
       } catch (error) {

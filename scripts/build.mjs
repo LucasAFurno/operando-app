@@ -11,7 +11,12 @@ const buildTarget = (process.argv[2] || process.env.PCLAF_ENV || 'prod').toLower
 const isDevBuild = buildTarget === 'dev'
 const selectedCloudConfigFile = isDevBuild ? 'cloud-config.dev.json' : 'cloud-config.prod.json'
 const siteOrigin = 'https://operando.app'
-const appPath = '/app/'
+const panelPath = '/panel/'
+const legacyAppPath = '/app/'
+const loginPath = '/ingresar/'
+const signupPath = '/crear-cuenta/'
+const recoveryPath = '/recuperar-clave/'
+const resetPasswordPath = '/restablecer-clave/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20quiero%20informacion%20de%20operando.app.'
 const gaMeasurementId = String(process.env.PCLAF_GA4_ID || '').trim()
 
@@ -541,7 +546,7 @@ const marketingPages = [
     kicker: 'Sistema comercial web',
     h1: 'Vendé rápido. Controlá caja, stock y equipo.',
     lead: 'Caja, stock, compras, sucursales y permisos en una sola plataforma para operar con claridad.',
-    primaryCta: { href: `${appPath}?view=signup`, label: 'Probar gratis' },
+    primaryCta: { href: signupPath, label: 'Probar gratis' },
     secondaryCta: { href: supportUrl, label: 'Hablar por WhatsApp' },
     whatsAppPrompt: 'Hola Operando, quiero probar operando.app en mi comercio.',
     image: '/pclaf-control-punto-venta-real.png',
@@ -734,7 +739,7 @@ const marketingPages = [
     imageAlt: 'operando.app funcionando en computadora, tablet y celular',
     whatsAppPrompt: 'Hola Operando, quiero que me expliquen como empezar a usar operando.app.',
     sections: [
-      { title: '1. Crea tu cuenta', body: 'Registra tu comercio y entra desde el navegador, sin una instalacion tecnica para empezar. Creamos Casa central y Caja 1 para que no arranques con una pantalla vacía.', href: '/app/?view=signup', linkLabel: 'Crear cuenta' },
+      { title: '1. Crea tu cuenta', body: 'Registra tu comercio y entra desde el navegador, sin una instalacion tecnica para empezar. Creamos Casa central y Caja 1 para que no arranques con una pantalla vacía.', href: signupPath, linkLabel: 'Crear cuenta' },
       { title: '2. Carga tu catalogo', body: 'Agrega productos de forma manual o pedí una carga asistida si ya trabajas con una planilla. El equipo de soporte puede acompañarte 24/7.', href: '/control-de-stock/', linkLabel: 'Ver control de stock' },
       { title: '3. Registra ventas y cobros', body: 'Opera desde el mostrador y relaciona ventas, medios de pago, clientes y comprobantes. La guía inicial te muestra cada paso dentro del sistema.', href: '/sistema-de-ventas/', linkLabel: 'Ver sistema de ventas' },
       { title: '4. Controla caja y seguimiento', body: 'Consulta movimientos, cierres, existencias y reportes desde una misma base comercial; después suma sucursales, cajas y usuarios cuando tu operación lo necesite.', href: '/sistema-de-caja/', linkLabel: 'Ver sistema de caja' },
@@ -1023,8 +1028,8 @@ const renderTopbar = (page) => `
       </nav>
     </details>
     <div class="marketing-auth-links">
-      <a href="${appPath}?view=login" data-analytics="header_login">Iniciar sesion</a>
-      <a class="is-primary" href="${appPath}?view=signup" data-analytics="header_signup">Probar gratis</a>
+      <a href="${loginPath}" data-analytics="header_login">Iniciar sesion</a>
+      <a class="is-primary" href="${signupPath}" data-analytics="header_signup">Probar gratis</a>
     </div>
   </header>
 `
@@ -1038,8 +1043,8 @@ const renderFooter = () => `
     <div class="marketing-footer-links">
       <p class="marketing-footer-title">Accesos</p>
       <nav>
-        <a href="${appPath}?view=login" data-analytics="footer_login">Iniciar sesion</a>
-        <a href="${appPath}?view=signup" data-analytics="footer_signup_primary">Crear cuenta</a>
+        <a href="${loginPath}" data-analytics="footer_login">Iniciar sesion</a>
+        <a href="${signupPath}" data-analytics="footer_signup_primary">Crear cuenta</a>
       </nav>
     </div>
     <div class="marketing-footer-links">
@@ -1199,8 +1204,8 @@ const renderHomeExtras = (page) => {
       <p>Crea tu cuenta en minutos y conoce la herramienta trabajando con tus productos y tus ventas.</p>
     </div>
     <div class="marketing-cta-row">
-      <a class="is-primary" href="${appPath}?view=signup" data-analytics="home_cta_signup">Crear cuenta</a>
-      <a href="${appPath}?view=login" data-analytics="home_cta_login">Iniciar sesion</a>
+      <a class="is-primary" href="${signupPath}" data-analytics="home_cta_signup">Crear cuenta</a>
+      <a href="${loginPath}" data-analytics="home_cta_login">Iniciar sesion</a>
     </div>
   </section>
 `
@@ -3036,17 +3041,17 @@ const renderMarketingPage = (page) => {
             <p class="marketing-lead">${escapeHtml(page.lead)}</p>
             ${page.slug ? `
             <div class="marketing-cta-row">
-              <a class="is-primary" data-analytics="hero_start_trial" href="${page.primaryCta?.href || `${appPath}?view=signup`}">${escapeHtml(page.primaryCta?.label || 'Probar gratis')}</a>
-              <a data-analytics="header_login" href="${page.secondaryCta?.href || `${appPath}?view=login`}">${escapeHtml(page.secondaryCta?.label || 'Iniciar sesion')}</a>
+              <a class="is-primary" data-analytics="hero_start_trial" href="${page.primaryCta?.href || signupPath}">${escapeHtml(page.primaryCta?.label || 'Probar gratis')}</a>
+              <a data-analytics="header_login" href="${page.secondaryCta?.href || loginPath}">${escapeHtml(page.secondaryCta?.label || 'Iniciar sesion')}</a>
               ${page.tertiaryCta ? `<a data-analytics="hero_demo" href="${page.tertiaryCta.href}" target="_blank" rel="noreferrer">${escapeHtml(page.tertiaryCta.label)}</a>` : ''}
             </div>
             <ul class="marketing-badges">
               ${(page.featureList || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
             </ul>` : `
             <div class="marketing-cta-row">
-              <a class="is-primary" data-analytics="hero_start_trial" href="${page.primaryCta?.href || `${appPath}?view=signup`}">${escapeHtml(page.primaryCta?.label || 'Probar gratis')}</a>
+              <a class="is-primary" data-analytics="hero_start_trial" href="${page.primaryCta?.href || signupPath}">${escapeHtml(page.primaryCta?.label || 'Probar gratis')}</a>
             </div>
-            <p class="marketing-hero-helper">Si ya tienes cuenta, <a data-analytics="hero_login_inline" href="${page.secondaryCta?.href || `${appPath}?view=login`}">entra aquí</a>.</p>`}
+            <p class="marketing-hero-helper">Si ya tienes cuenta, <a data-analytics="hero_login_inline" href="${page.secondaryCta?.href || loginPath}">entra aquí</a>.</p>`}
           </div>
           <aside class="marketing-hero-media">
             <img src="${page.image}" alt="${escapeHtml(page.imageAlt || page.h1)}" width="1200" height="630" loading="eager" fetchpriority="high" />
@@ -3168,7 +3173,7 @@ const renderMarketingPage = (page) => {
 `.replace(/[ \t]+$/gm, '')
 }
 
-const appHtml = `<!doctype html>
+const appHtml = (entry = 'panel') => `<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -3178,11 +3183,11 @@ const appHtml = `<!doctype html>
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co; frame-src https://challenges.cloudflare.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';" />
-    <link rel="canonical" href="${siteOrigin}${appPath}" />
+    <link rel="canonical" href="${siteOrigin}${entry === 'login' ? loginPath : entry === 'signup' ? signupPath : entry === 'recovery' ? recoveryPath : entry === 'reset' ? resetPasswordPath : panelPath}" />
     <link rel="icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="stylesheet" href="/app.css?v=${assetVersion}" />
-    <title>Acceso al sistema | Operando</title>
+    <title>${entry === 'panel' || entry === 'legacy' ? 'Panel | Operando' : entry === 'reset' ? 'Restablecer clave | Operando' : entry === 'recovery' ? 'Recuperar clave | Operando' : entry === 'signup' ? 'Crear cuenta | Operando' : 'Ingresar | Operando'}</title>
     <style>
       html, body {
         margin: 0;
@@ -3242,7 +3247,8 @@ const appHtml = `<!doctype html>
       </div>
     </div>
     <script>
-      window.__pclafAppEntry = true;
+      window.__operandoEntry = ${JSON.stringify(entry)};
+      window.__pclafAppEntry = ${entry === 'panel' || entry === 'legacy'};
       window.__pclafBooted = false;
       window.__pclafBootError = null;
       try {
@@ -3284,16 +3290,30 @@ const pageEntries = marketingPages.map((page) => ({
   cacheControl: 'public, max-age=300',
 }))
 
-pageEntries.push({
-  pathname: appPath,
-  html: appHtml,
-  filePath: 'app/index.html',
-  cacheControl: 'no-store',
-})
+const panelSections = ['', 'clientes', 'ventas', 'caja', 'catalogo', 'compras', 'facturacion', 'servicios', 'informes', 'actividad', 'configuracion', 'consola', 'sucursales', 'cajeros']
+for (const section of panelSections) {
+  pageEntries.push({
+    pathname: `${panelPath}${section ? `${section}/` : ''}`,
+    html: appHtml('panel'),
+    filePath: `panel/${section ? `${section}/` : ''}index.html`,
+    cacheControl: 'no-store',
+  })
+}
+for (const section of ['', 'clientes', 'ventas', 'caja-diaria', 'productos', 'compras', 'facturacion', 'tickets', 'reportes', 'auditoria', 'ajustes', 'mi-admin', 'sucursales', 'cajeros']) {
+  pageEntries.push({
+    pathname: `${legacyAppPath}${section ? `${section}/` : ''}`,
+    html: appHtml('legacy'),
+    filePath: `app/${section ? `${section}/` : ''}index.html`,
+    cacheControl: 'no-store',
+  })
+}
+for (const [pathname, entry] of [[loginPath, 'login'], [signupPath, 'signup'], [recoveryPath, 'recovery'], [resetPasswordPath, 'reset']]) {
+  pageEntries.push({ pathname, html: appHtml(entry), filePath: `${pathname.slice(1)}index.html`, cacheControl: 'no-store' })
+}
 
 const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pageEntries.filter((entry) => entry.pathname !== appPath).map((entry) => `  <url>
+${pageEntries.filter((entry) => !entry.pathname.startsWith(panelPath) && !entry.pathname.startsWith(legacyAppPath) && ![loginPath, signupPath, recoveryPath, resetPasswordPath].includes(entry.pathname)).map((entry) => `  <url>
     <loc>${siteOrigin}${entry.pathname}</loc>
     <changefreq>${entry.pathname === '/' ? 'weekly' : 'monthly'}</changefreq>
     <priority>${entry.pathname === '/' ? '1.0' : '0.8'}</priority>
@@ -3304,6 +3324,11 @@ ${pageEntries.filter((entry) => entry.pathname !== appPath).map((entry) => `  <u
 const robotsTxt = `User-agent: *
 Allow: /
 Disallow: /app/
+Disallow: /panel/
+Disallow: /ingresar/
+Disallow: /crear-cuenta/
+Disallow: /recuperar-clave/
+Disallow: /restablecer-clave/
 Disallow: /admin/
 
 Sitemap: ${siteOrigin}/sitemap.xml
