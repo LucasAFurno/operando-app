@@ -24,7 +24,7 @@ const allowedTurnstileHostnames = () => configuredOrigins().map((origin) => {
 const allowedRedirect = (value: unknown) => {
   try {
     const redirect = new URL(String(value || ''))
-    return configuredOrigins().includes(redirect.origin) && redirect.pathname.startsWith('/app/') ? redirect.toString() : ''
+    return configuredOrigins().includes(redirect.origin) && /^\/restablecer-clave\/?$/i.test(redirect.pathname) ? redirect.toString() : ''
   } catch {
     return ''
   }

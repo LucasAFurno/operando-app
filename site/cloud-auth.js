@@ -178,10 +178,11 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'pclaf-dev'
 
   const consumeRecoverySession = async () => {
     const url = new URL(window.location.href)
-    const isRecoveryRoute = url.searchParams.get('auth_action') === 'recover'
+    const isRecoveryRoute = /^\/restablecer-clave\/?$/i.test(url.pathname) && url.searchParams.get('auth_action') === 'recover'
+    if (!isRecoveryRoute) return null
     const { data } = await supabase.auth.getSession()
     const sessionData = data?.session || null
-    if (!isRecoveryRoute || !sessionData?.access_token) return null
+    if (!sessionData?.access_token) return null
     // Supabase entrega el token de recuperación en el fragmento de la URL.
     // Tras importarlo, lo quitamos de la barra de direcciones y del historial.
     if (url.hash) {

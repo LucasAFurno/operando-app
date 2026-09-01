@@ -3683,6 +3683,10 @@ const handleSubmit = async (event) => {
     signupMessage = ''
     feedbackMessage = ''
     try {
+      // El ingreso normal no reutiliza nunca una sesión de recuperación, aun si
+      // el navegador conserva un fragmento o una URL antigua.
+      recoveryState = null
+      authViewMode = 'login'
       const requestedInstanceKey = String(formData.get('instanceKey') || '').trim()
       const identifier = String(formData.get('identifier') || '').trim()
       const pin = String(formData.get('pin') || '')
@@ -3691,9 +3695,9 @@ const handleSubmit = async (event) => {
       persistInstanceKey(sessionPayload?.commerceContext?.instance_key || requestedInstanceKey || authInstanceKey)
       setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
       await loadCloudAccess(sessionPayload)
-      activeSection = sectionFromPath()
+      activeSection = 'dashboard'
       saveSection()
-      syncSectionPath()
+      window.history.replaceState({ section: activeSection }, '', '/panel/')
       feedbackMessage = 'Sesion iniciada correctamente.'
       requestScrollTop()
     } catch (error) {
