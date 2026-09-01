@@ -996,8 +996,7 @@ const renderTopbar = (page) => `
     <a class="marketing-brand" href="/">
       <img src="/operando-logo.png" alt="operando.app" width="48" height="46" />
       <div>
-        <strong>Operando</strong>
-        <p>Ventas ágiles, control operativo</p>
+        <strong><span>operando</span><em>.app</em></strong>
       </div>
     </a>
     <nav class="marketing-nav" aria-label="Navegacion principal">
@@ -2819,8 +2818,15 @@ const marketingStyles = `
         animation: operando-logo-float 3.8s ease-in-out infinite;
       }
       .marketing-brand strong {
+        color: #f7f4ee;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.02em;
+      }
+      .marketing-brand strong em {
         color: transparent;
-        background: linear-gradient(105deg, #ff7b72 0%, #ff252d 42%, #ffd0ca 67%, #ff252d 100%);
+        font-style: normal;
+        background: linear-gradient(105deg, #ff8f88 0%, #ff252d 42%, #ffd3cf 67%, #ff252d 100%);
         background-size: 220% 100%;
         -webkit-background-clip: text;
         background-clip: text;
@@ -2836,7 +2842,7 @@ const marketingStyles = `
       }
       @media (prefers-reduced-motion: reduce) {
         .marketing-brand img,
-        .marketing-brand strong { animation: none; }
+        .marketing-brand strong em { animation: none; }
       }
 `
 
