@@ -3929,10 +3929,11 @@ const handleSubmit = async (event) => {
     }
     try {
       const result = await store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
-      if (!result?.ok) throw new Error(result?.message || 'No se pudo ajustar el stock.')
-      feedbackMessage = result.message || ''
+      if (result && result.ok === false) feedbackMessage = result.message || 'No se pudo aplicar el ajuste de stock.'
+      else if (result?.ok) feedbackMessage = result.message || ''
+      else feedbackMessage = result?.message || 'No se pudo aplicar el ajuste de stock.'
     } catch (error) {
-      feedbackMessage = error?.message || 'No se pudo ajustar el stock.'
+      feedbackMessage = error?.message || 'No se pudo aplicar el ajuste de stock.'
     }
   }
   if (kind === 'stock-transfer') {
@@ -3951,10 +3952,11 @@ const handleSubmit = async (event) => {
     }
     try {
       const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
-      if (!result?.ok) throw new Error(result?.message || 'No se pudo transferir el stock.')
-      feedbackMessage = result.message || ''
+      if (result && result.ok === false) feedbackMessage = result.message || 'No se pudo registrar la transferencia de stock.'
+      else if (result?.ok) feedbackMessage = result.message || ''
+      else feedbackMessage = result?.message || 'No se pudo registrar la transferencia de stock.'
     } catch (error) {
-      feedbackMessage = error?.message || 'No se pudo transferir el stock.'
+      feedbackMessage = error?.message || 'No se pudo registrar la transferencia de stock.'
     }
   }
   if (kind === 'supplier') {
@@ -4150,16 +4152,25 @@ const handleSubmit = async (event) => {
       }
     }
     const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items, operationId: formData.get('saleId') ? null : saleOperationId }
+    let result
     try {
-      const result = formData.get('saleId')
+      result = formData.get('saleId')
         ? await store.updateSale(formData.get('saleId'), payload)
         : await store.createSale(payload)
-      if (!result?.ok) throw new Error(result?.message || 'No se pudo guardar la venta.')
-      feedbackMessage = result.message || ''
-      if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
     } catch (error) {
       feedbackMessage = error?.message || 'No se pudo guardar la venta.'
+      saleSubmissionInFlight = false
+      render()
+      return
     }
+    if (result && result.ok === false) {
+      feedbackMessage = result.message || 'No se pudo guardar la venta.'
+      saleSubmissionInFlight = false
+      render()
+      return
+    }
+    feedbackMessage = result?.message || ''
+    if (result?.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
@@ -4976,10 +4987,12 @@ const bindEvents = () => {
   })
   for (const button of document.querySelectorAll('[data-delete]')) button.addEventListener('click', async () => {
     try {
-      const result = await store.removeEntity(button.dataset.delete, button.dataset.id)
-      feedbackMessage = result?.message || 'Registro eliminado y movimientos revertidos cuando correspondia.'
-    } catch (error) {
-      feedbackMessage = error?.message || 'No se pudo eliminar el registro.'
+      const r = await store.removeEntity(button.dataset.delete, button.dataset.id)
+      if (r && r.ok === false) feedbackMessage = r.message || 'No se pudo eliminar el registro.'
+      else if (r?.ok) feedbackMessage = r.message || 'Registro eliminado y movimientos revertidos cuando correspondia.'
+      else feedbackMessage = r?.message || 'No se pudo eliminar el registro.'
+    } catch (e) {
+      feedbackMessage = e.message || 'No se pudo eliminar el registro.'
     }
     render()
   })
@@ -5093,11 +5106,13 @@ const bindEvents = () => {
             : button.dataset.saleAction === 'cancel'
               ? await store.cancelSale(button.dataset.id)
               : await store.createReturnFromSale(button.dataset.id)
-        if (!result?.ok) throw new Error(result?.message || 'No se pudo completar la accion de venta.')
-        feedbackMessage = result.message || ''
-        if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
+        if (result && result.ok === false) feedbackMessage = result.message || 'No se pudo completar la accion sobre la venta.'
+        else if (result?.ok) {
+          feedbackMessage = result.message || ''
+          if (button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
+        } else feedbackMessage = result?.message || 'No se pudo completar la accion sobre la venta.'
       } catch (error) {
-        feedbackMessage = error?.message || 'No se pudo completar la accion de venta.'
+        feedbackMessage = error?.message || 'No se pudo completar la accion sobre la venta.'
       }
       render()
     })
@@ -5167,8 +5182,14 @@ const bindEvents = () => {
         const branch = store.getSnapshot().branches.find((entry) => entry.id === button.dataset.id)
         if (!branch) return
         if (!window.confirm(`¿Eliminar la sucursal "${branch.name}"? También se quitarán sus cajas de la operación.`)) return
-        const result = await store.removeEntity('branch', button.dataset.id)
-        feedbackMessage = result.message || ''
+        try {
+          const result = await store.removeEntity('branch', button.dataset.id)
+          if (result && result.ok === false) feedbackMessage = result.message || 'No se pudo eliminar la sucursal.'
+          else if (result?.ok) feedbackMessage = result.message || ''
+          else feedbackMessage = result?.message || 'No se pudo eliminar la sucursal.'
+        } catch (error) {
+          feedbackMessage = error?.message || 'No se pudo eliminar la sucursal.'
+        }
         branchEditingId = ''
         render()
         return
