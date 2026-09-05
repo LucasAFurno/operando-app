@@ -1,0 +1,31 @@
+name: Assemble P0 client files
+on:
+  push:
+    branches: ['fix/p0-cloud-mutation-rpcs']
+    paths:
+      - 'data-store.parts/**'
+      - 'scripts/apply-p0-app-patch.py'
+      - '.github/workflows/assemble-p0-client.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Assemble data-store.js
+        run: |
+          cat data-store.parts/*.txt > data-store.js
+          wc -c data-store.js
+          test -s data-store.js
+          head -n 2 data-store.js
+      - name: Patch app.js awaits
+        run: python3 scripts/apply-p0-app-patch.py
+      - name: Commit assembled client files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'fix(p0): assemble data-store.js and patch app.js awaits'
+          file_pattern: data-store.js app.js

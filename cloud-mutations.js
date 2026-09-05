@@ -86,3 +86,115 @@ export const cloudMutationModules = {
   app_public_transfer_stock: ['products', 'stock'],
   app_public_remove_entity: ['dashboard', 'sales', 'products', 'customers', 'purchases', 'invoices', 'tickets', 'cash', 'stock', 'settings'],
 }
+
+export const wireDataStoreCloudMutations = (api, deps) => {
+  const {
+    getCloudCoreAdapter,
+    syncFromCloud,
+    getState,
+    getProduct,
+    getBranch,
+    getCurrentBranch,
+    getCurrentRegister,
+    makeOperationId,
+  } = deps
+
+  const original = { ...api }
+
+  api.updateSale = async (saleId, payload) => {
+    const adapter = getCloudCoreAdapter?.()
+    if (!adapter) return original.updateSale(saleId, payload)
+    const state = getState()
+    const currentBranch = getCurrentBranch()
+    const currentRegister = getCurrentRegister()
+    await adapter.updateSale({
+      ...payload,
+      saleId,
+      operationId: payload.operationId || makeOperationId(),
+      branchId: payload.branchId || currentBranch?.id || null,
+      registerId: payload.registerId || currentRegister?.id || null,
+    })
+    await syncFromCloud()
+    return { ok: true, message: 'Venta actualizada.' }
+  }
+
+  api.cancelSale = async (saleId, reason = 'Anulacion manual') => {
+    const adapter = getCloudCoreAdapter?.()
+    if (!adapter) return original.cancelSale(saleId, reason)
+    const state = getState()
+    const sale = state.sales.find((entry) => entry.id === saleId)
+    if (!sale) return { ok: false, message: 'Venta no encontrada.' }
+    if (sale.status === 'cancelled') return { ok: false, message: 'La venta ya esta anulada.' }
+    await adapter.cancelSale({ saleId, reason, operationId: makeOperationId() })
+    await syncFromCloud()
+    return { ok: true, message: 'Venta anulada y movimientos revertidos.' }
+  }
+
+  api.createReturnFromSale = async (saleId, reason = 'Devolucion total') => {
+    const adapter = getCloudCoreAdapter?.()
+    if (!adapter) return original.createReturnFromSale(saleId, reason)
+    const state = getState()
+    const sale = state.sales.find((entry) => entry.id === saleId)
+    if (!sale) return { ok: false, message: 'Venta no encontrada.' }
+    if (sale.status === 'returned') return { ok: false, message: 'La venta ya fue devuelta.' }
+    await adapter.returnSale({ saleId, reason, operationId: makeOperationId() })
+    await syncFromCloud()
+    return { ok: true, message: 'Devolucion registrada y nota de credito generada.' }
+  }
+
+  api.createStockAdjustment = async (payload) => {
+    const adapter = getCloudCoreAdapter?.()
+    if (!adapter) return original.createStockAdjustment(payload)
+    const state = getState()
+    const product = getProduct(payload.productId)
+    if (!product) return { ok: false, message: 'Producto no encontrado.' }
+    const quantity = Number(payload.quantity || 0)
+    if (!quantity) return { ok: false, message: 'La cantidad debe ser distinta de cero.' }
+    await adapter.createStockAdjustment({
+      productId: payload.productId,
+      quantity,
+      note: payload.note || '',
+      branchId: getCurrentBranch()?.id || state.branches[0]?.id || null,
+      operationId: makeOperationId(),
+    })
+    await syncFromCloud()
+    return { ok: true, message: 'Ajuste de stock aplicado.' }
+  }
+
+  api.transferStock = async (payload) => {
+    const adapter = getCloudCoreAdapter?.()
+    if (!adapter) return original.transferStock(payload)
+    const state = getState()
+    const product = getProduct(payload.productId)
+    if (!product) return { ok: false, message: 'Producto no encontrado.' }
+    const quantity = Number(payload.quantity || 0)
+    if (quantity <= 0) return { ok: false, message: 'La cantidad debe ser mayor a cero.' }
+    if (payload.fromBranchId === payload.toBranchId) {
+      return { ok: false, message: 'La sucursal origen y destino no pueden ser la misma.' }
+    }
+    const fromBranch = getBranch(payload.fromBranchId)
+    const toBranch = getBranch(payload.toBranchId)
+    if (!fromBranch || !toBranch) return { ok: false, message: 'Sucursal invalida.' }
+    await adapter.transferStock({
+      productId: payload.productId,
+      quantity,
+      fromBranchId: payload.fromBranchId,
+      toBranchId: payload.toBranchId,
+      note: payload.note || '',
+      operationId: makeOperationId(),
+    })
+    await syncFromCloud()
+    return { ok: true, message: 'Transferencia registrada entre sucursales.' }
+  }
+
+  api.removeEntity = async (entity, id) => {
+    const adapter = getCloudCoreAdapter?.()
+    if (!adapter) return original.removeEntity(entity, id)
+    if (entity === 'register') return original.removeEntity(entity, id)
+    await adapter.removeEntity({ entity, id })
+    await syncFromCloud()
+    return { ok: true, message: 'Registro eliminado y movimientos revertidos cuando correspondia.' }
+  }
+
+  return api
+}
