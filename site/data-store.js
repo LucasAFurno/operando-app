@@ -1,4 +1,5 @@
 import { createSupabaseCoreAdapter } from './cloud-core.js?v=__OPERANDO_ASSET_VERSION__'
+import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=__OPERANDO_ASSET_VERSION__'
 
 const dataStorageKey = 'operando-control-data'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
@@ -2930,7 +2931,7 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: result?.message || 'Comercio actualizado.' }
   }
 
-  return {
+  const api = {
     permissionCatalog,
     moduleCatalog,
     modulePresets,
@@ -3009,6 +3010,16 @@ export const createBrowserDataStore = (options = {}) => {
     importData,
     resetData,
   }
+  return wireDataStoreCloudMutations(api, {
+    getCloudCoreAdapter: () => cloudCoreAdapter,
+    syncFromCloud,
+    getState: () => state,
+    getProduct: (productId) => getProduct(state, productId),
+    getBranch: (branchId) => getBranch(state, branchId),
+    getCurrentBranch: () => getCurrentBranch(state),
+    getCurrentRegister: () => getCurrentRegister(state),
+    makeOperationId,
+  })
 }
 
 
