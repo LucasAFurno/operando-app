@@ -193,14 +193,15 @@ export const wireDataStoreCloudMutations = (api, deps) => {
     if (entity === 'register') return original.removeEntity(entity, id)
 
     const user = typeof deps.getCurrentUser === 'function' ? deps.getCurrentUser() : null
-    const roleKey = String(user?.roleKey || user?.role_key || '').toLowerCase()
-    const isOwnerAdmin = Boolean(
-      user?.isOwner || user?.isPlatformAdmin || roleKey === 'owner' || roleKey === 'admin',
-    )
-
-    // Cashiers (and non-admin roles) must cancel sales instead of hard-delete.
-    if (entity === 'sale' && !isOwnerAdmin) {
-      return api.cancelSale(id, 'Anulacion (eliminacion permanente solo owner/admin)')
+    if (user) {
+      const roleKey = String(user?.roleKey || user?.role_key || '').toLowerCase()
+      const isOwnerAdmin = Boolean(
+        user?.isOwner || user?.isPlatformAdmin || roleKey === 'owner' || roleKey === 'admin',
+      )
+      // Cashiers (and non-admin roles) must cancel sales instead of hard-delete.
+      if (entity === 'sale' && !isOwnerAdmin) {
+        return api.cancelSale(id, 'Anulacion (eliminacion permanente solo owner/admin)')
+      }
     }
 
     try {
