@@ -1,0 +1,41 @@
+name: Assemble P0 client files
+on:
+  push:
+    branches: ['fix/p0-cloud-mutation-rpcs']
+    paths:
+      - 'data-store.parts.b64/**'
+      - 'scripts/apply-p0-app-patch.py'
+      - 'scripts/repair-p0-parts.py'
+      - '.github/workflows/assemble-p0-client.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Repair corrupted compressed parts
+        run: python3 scripts/repair-p0-parts.py
+      - name: Assemble data-store.js from compressed parts
+        run: |
+          python3 - <<'PY'
+          import base64, zlib
+          from pathlib import Path
+          parts = []
+          for p in sorted(Path('data-store.parts.b64').glob('*.zlib.b64')):
+              parts.append(zlib.decompress(base64.b64decode(p.read_text().strip())))
+          Path('data-store.js').write_bytes(b''.join(parts))
+          print('assembled', Path('data-store.js').stat().st_size)
+          PY
+          head -n 2 data-store.js
+          test -s data-store.js
+      - name: Patch app.js awaits
+        run: python3 scripts/apply-p0-app-patch.py
+      - name: Commit repaired parts and assembled client files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'fix(p0): assemble data-store.js and patch app.js awaits'
+          file_pattern: data-store.js app.js data-store.parts.b64/*.zlib.b64
