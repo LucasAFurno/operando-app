@@ -65,6 +65,7 @@ export const cloudMutationMethods = (rpc, getSessionToken) => ({
       p_session_token: getSessionToken(),
       p_entity_type: payload?.entity || '',
       p_entity_id: payload?.id || null,
+      p_operation_id: payload?.operationId || null,
     })
   },
 })
@@ -191,7 +192,7 @@ export const wireDataStoreCloudMutations = (api, deps) => {
     const adapter = getCloudCoreAdapter?.()
     if (!adapter) return original.removeEntity(entity, id)
     if (entity === 'register') return original.removeEntity(entity, id)
-    await adapter.removeEntity({ entity, id })
+    await adapter.removeEntity({ entity, id, operationId: makeOperationId() })
     await syncFromCloud()
     return { ok: true, message: 'Registro eliminado y movimientos revertidos cuando correspondia.' }
   }
