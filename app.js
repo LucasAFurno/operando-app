@@ -3927,7 +3927,7 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
+    const result = await store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
     feedbackMessage = result.message || ''
   }
   if (kind === 'stock-transfer') {
@@ -3944,7 +3944,7 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
+    const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
     feedbackMessage = result.message || ''
   }
   if (kind === 'supplier') {
@@ -5070,15 +5070,19 @@ const bindEvents = () => {
         exportThermalReceipt(button.dataset.id, '80')
         return
       }
-      const result = button.dataset.saleAction === 'invoice'
-        ? await store.createInvoiceFromSale(button.dataset.id)
-        : button.dataset.saleAction === 'ticket'
-          ? await store.createTicketFromSale(button.dataset.id)
-          : button.dataset.saleAction === 'cancel'
-            ? store.cancelSale(button.dataset.id)
-            : store.createReturnFromSale(button.dataset.id)
-      feedbackMessage = result.message || ''
-      if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
+      try {
+        const result = button.dataset.saleAction === 'invoice'
+          ? await store.createInvoiceFromSale(button.dataset.id)
+          : button.dataset.saleAction === 'ticket'
+            ? await store.createTicketFromSale(button.dataset.id)
+            : button.dataset.saleAction === 'cancel'
+              ? await store.cancelSale(button.dataset.id)
+              : await store.createReturnFromSale(button.dataset.id)
+        feedbackMessage = result.message || ''
+        if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
+      } catch (error) {
+        feedbackMessage = error?.message || 'No se pudo completar la accion sobre la venta.'
+      }
       render()
     })
   }
