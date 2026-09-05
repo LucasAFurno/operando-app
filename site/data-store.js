@@ -3019,6 +3019,7 @@ export const createBrowserDataStore = (options = {}) => {
     getCurrentBranch: () => getCurrentBranch(state),
     getCurrentRegister: () => getCurrentRegister(state),
     makeOperationId,
+    getCurrentUser: currentUser,
   })
 }
 
