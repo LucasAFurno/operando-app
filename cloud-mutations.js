@@ -65,7 +65,6 @@ export const cloudMutationMethods = (rpc, getSessionToken) => ({
       p_session_token: getSessionToken(),
       p_entity_type: payload?.entity || '',
       p_entity_id: payload?.id || null,
-      p_operation_id: payload?.operationId || null,
     })
   },
 })
@@ -192,9 +191,39 @@ export const wireDataStoreCloudMutations = (api, deps) => {
     const adapter = getCloudCoreAdapter?.()
     if (!adapter) return original.removeEntity(entity, id)
     if (entity === 'register') return original.removeEntity(entity, id)
-    await adapter.removeEntity({ entity, id, operationId: makeOperationId() })
-    await syncFromCloud()
-    return { ok: true, message: 'Registro eliminado y movimientos revertidos cuando correspondia.' }
+
+    const user = typeof deps.getCurrentUser === 'function' ? deps.getCurrentUser() : null
+    const roleKey = String(user?.roleKey || user?.role_key || '').toLowerCase()
+    const isOwnerAdmin = Boolean(
+      user?.isOwner || user?.isPlatformAdmin || roleKey === 'owner' || roleKey === 'admin',
+    )
+
+    // Cashiers (and non-admin roles) must cancel sales instead of hard-delete.
+    if (entity === 'sale' && !isOwnerAdmin) {
+      return api.cancelSale(id, 'Anulacion (eliminacion permanente solo owner/admin)')
+    }
+
+    try {
+      await adapter.removeEntity({ entity, id })
+      await syncFromCloud()
+      return { ok: true, message: 'Registro eliminado y movimientos revertidos cuando correspondia.' }
+    } catch (error) {
+      const msg = String(error?.message || '')
+      if (entity === 'sale' && /use_cancel_sale|permission_denied/i.test(msg)) {
+        return api.cancelSale(id, 'Anulacion (eliminacion permanente no permitida)')
+      }
+      const hints = {
+        sale: 'Solo owner/admin pueden eliminar ventas permanentemente. Usa Anular venta.',
+        invoice: 'Solo owner/admin pueden eliminar facturas/comprobantes permanentemente.',
+        ticket: 'Solo owner/admin pueden eliminar tickets permanentemente.',
+        cash_movement: 'Solo owner/admin pueden eliminar movimientos de caja.',
+        purchase_receipt: 'Solo owner/admin pueden eliminar comprobantes de compra.',
+      }
+      if (/permission_denied|use_cancel_sale/i.test(msg)) {
+        return { ok: false, message: hints[entity] || 'No tienes permiso para eliminar este registro.' }
+      }
+      throw error
+    }
   }
 
   return api
