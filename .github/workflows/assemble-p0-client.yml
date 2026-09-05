@@ -5,6 +5,7 @@ on:
     paths:
       - 'data-store.parts.b64/**'
       - 'scripts/apply-p0-app-patch.py'
+      - 'scripts/apply-p0-remove-entity-lockdown.py'
       - 'scripts/repair-p0-parts.py'
       - '.github/workflows/assemble-p0-client.yml'
   workflow_dispatch:
@@ -34,6 +35,8 @@ jobs:
           test -s data-store.js
       - name: Patch app.js awaits
         run: python3 scripts/apply-p0-app-patch.py
+      - name: Patch data-store remove_entity lockdown
+        run: python3 scripts/apply-p0-remove-entity-lockdown.py
       - name: Commit repaired parts and assembled client files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
