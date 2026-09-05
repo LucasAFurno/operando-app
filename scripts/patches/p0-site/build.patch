@@ -1,0 +1,61 @@
+--- a/scripts/build.mjs
++++ b/scripts/build.mjs
+@@ -27,16 +27,19 @@
+ const cloudSyncJs = await readFile(path.join(root, 'site', 'cloud-sync.js'), 'utf8')
+ const cloudAuthJs = await readFile(path.join(root, 'site', 'cloud-auth.js'), 'utf8')
+ const cloudCoreJs = await readFile(path.join(root, 'site', 'cloud-core.js'), 'utf8')
++const cloudMutationsJs = await readFile(path.join(root, 'site', 'cloud-mutations.js'), 'utf8')
+ const stylesCss = await readFile(path.join(root, 'site', 'styles.css'), 'utf8')
+ const cloudConfigJson = await readFile(path.join(root, 'site', selectedCloudConfigFile), 'utf8')
+ const marketingMetrics = JSON.parse(await readFile(path.join(root, 'site', 'marketing-metrics.json'), 'utf8'))
+-const assetVersion = createHash('sha256').update(`${clientJs}${dataStoreJs}${cloudSyncJs}${cloudAuthJs}${cloudCoreJs}${stylesCss}${cloudConfigJson}`).digest('hex').slice(0, 12)
++const assetVersion = createHash('sha256').update(`${clientJs}${dataStoreJs}${cloudSyncJs}${cloudAuthJs}${cloudCoreJs}${cloudMutationsJs}${stylesCss}${cloudConfigJson}`).digest('hex').slice(0, 12)
+ const releaseRevision = String(process.env.GITHUB_SHA || process.env.OPERANDO_RELEASE_VERSION || assetVersion).trim().slice(0, 12)
+ const releaseVersion = `v${releaseRevision}`
+ const builtClientJs = clientJs
+   .replaceAll('__OPERANDO_RELEASE_VERSION__', releaseVersion)
+   .replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
+ const builtDataStoreJs = dataStoreJs.replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
++const builtCloudCoreJs = cloudCoreJs.replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
++const builtCloudMutationsJs = cloudMutationsJs.replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
+ const faviconSvg = await readFile(path.join(root, 'public', 'favicon.svg'), 'utf8')
+ const cnameFile = await readFile(path.join(root, 'public', 'CNAME'), 'utf8')
+ 
+@@ -3341,7 +3344,8 @@
+ const dataStore = ${JSON.stringify(builtDataStoreJs)};
+ const cloudSync = ${JSON.stringify(cloudSyncJs)};
+ const cloudAuth = ${JSON.stringify(cloudAuthJs)};
+-const cloudCore = ${JSON.stringify(cloudCoreJs)};
++const cloudCore = ${JSON.stringify(builtCloudCoreJs)};
++const cloudMutations = ${JSON.stringify(builtCloudMutationsJs)};
+ const cloudConfig = ${JSON.stringify(cloudConfigJson)};
+ const favicon = ${JSON.stringify(faviconSvg)};
+ const robots = ${JSON.stringify(robotsTxt)};
+@@ -3375,6 +3379,7 @@
+     if (url.pathname === '/cloud-sync.js') return asset(cloudSync, 'application/javascript; charset=utf-8');
+     if (url.pathname === '/cloud-auth.js') return asset(cloudAuth, 'application/javascript; charset=utf-8');
+     if (url.pathname === '/cloud-core.js') return asset(cloudCore, 'application/javascript; charset=utf-8');
++    if (url.pathname === '/cloud-mutations.js') return asset(cloudMutations, 'application/javascript; charset=utf-8');
+     if (url.pathname === '/cloud-config.json') return asset(cloudConfig, 'application/json; charset=utf-8');
+     if (url.pathname === '/favicon.svg') return asset(favicon, 'image/svg+xml; charset=utf-8');
+     if (url.pathname === '/robots.txt') return asset(robots, 'text/plain; charset=utf-8');
+@@ -3419,7 +3424,8 @@
+ await writeFile(path.join(dist, 'data-store.js'), builtDataStoreJs)
+ await writeFile(path.join(dist, 'cloud-sync.js'), cloudSyncJs)
+ await writeFile(path.join(dist, 'cloud-auth.js'), cloudAuthJs)
+-await writeFile(path.join(dist, 'cloud-core.js'), cloudCoreJs)
++await writeFile(path.join(dist, 'cloud-core.js'), builtCloudCoreJs)
++await writeFile(path.join(dist, 'cloud-mutations.js'), builtCloudMutationsJs)
+ await writeFile(path.join(dist, 'cloud-config.json'), cloudConfigJson)
+ await writeFile(path.join(dist, 'robots.txt'), robotsTxt)
+ await writeFile(path.join(dist, 'sitemap.xml'), sitemapXml)
+@@ -3434,7 +3440,8 @@
+   await writeFile(path.join(root, 'data-store.js'), builtDataStoreJs)
+   await writeFile(path.join(root, 'cloud-sync.js'), cloudSyncJs)
+   await writeFile(path.join(root, 'cloud-auth.js'), cloudAuthJs)
+-  await writeFile(path.join(root, 'cloud-core.js'), cloudCoreJs)
++  await writeFile(path.join(root, 'cloud-core.js'), builtCloudCoreJs)
++  await writeFile(path.join(root, 'cloud-mutations.js'), builtCloudMutationsJs)
+   await writeFile(path.join(root, 'cloud-config.json'), cloudConfigJson)
+   await writeFile(path.join(root, 'robots.txt'), robotsTxt)
+   await writeFile(path.join(root, 'sitemap.xml'), sitemapXml)

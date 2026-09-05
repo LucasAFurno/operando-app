@@ -1,3 +1,5 @@
+import { cloudMutationMethods, cloudMutationRpcNames, cloudMutationModules } from './cloud-mutations.js?v=__OPERANDO_ASSET_VERSION__'
+
 const buildHeaders = (anonKey) => ({
   apikey: anonKey,
   Authorization: `Bearer ${anonKey}`,
@@ -35,6 +37,7 @@ export const createSupabaseCoreAdapter = (config) => {
     'app_public_close_cash_session',
     'app_public_create_cash_movement',
     'app_public_create_sale',
+    ...cloudMutationRpcNames,
     'app_public_register_invoice_payment',
     'app_public_upsert_purchase_receipt',
     'app_public_upsert_document',
@@ -46,7 +49,7 @@ export const createSupabaseCoreAdapter = (config) => {
   const mutationModules = {
     app_public_upsert_customer: ['customers'], app_public_upsert_supplier: ['purchases'], app_public_upsert_product: ['products', 'stock'],
     app_public_open_cash_session: ['cash'], app_public_close_cash_session: ['cash'], app_public_create_cash_movement: ['cash'],
-    app_public_create_sale: ['sales', 'cash', 'products', 'customers', 'invoices'], app_public_register_invoice_payment: ['invoices', 'sales', 'cash', 'customers'],
+    app_public_create_sale: ['sales', 'cash', 'products', 'customers', 'invoices'], ...cloudMutationModules, app_public_register_invoice_payment: ['invoices', 'sales', 'cash', 'customers'],
     app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock'], app_public_upsert_document: ['invoices', 'tickets', 'sales', 'audit'],
     app_public_upsert_branch: ['settings', 'cash'], app_public_upsert_register: ['settings', 'cash'], app_public_upsert_user: ['settings'], app_public_toggle_user_active: ['settings'],
     app_public_update_progressive_profile: ['settings'],
@@ -208,8 +211,8 @@ export const createSupabaseCoreAdapter = (config) => {
     },
     async toggleUserActive(payload) {
       return rpc('app_public_toggle_user_active', {
-        p_session_token: getSessionToken(),
         p_user_id: payload?.id || null,
+        p_session_token: getSessionToken(),
         p_is_active: payload?.isActive !== false,
       })
     },
@@ -319,5 +322,6 @@ export const createSupabaseCoreAdapter = (config) => {
         p_payload_json: payload?.payloadJson || {},
       })
     },
+    ...cloudMutationMethods(rpc, getSessionToken),
   }
 }

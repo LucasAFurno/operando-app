@@ -3927,8 +3927,13 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
-    feedbackMessage = result.message || ''
+    try {
+      const result = await store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
+      if (!result?.ok) throw new Error(result?.message || 'No se pudo ajustar el stock.')
+      feedbackMessage = result.message || ''
+    } catch (error) {
+      feedbackMessage = error?.message || 'No se pudo ajustar el stock.'
+    }
   }
   if (kind === 'stock-transfer') {
     const search = String(formData.get('productSearch') || '').trim()
@@ -3944,8 +3949,13 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
-    feedbackMessage = result.message || ''
+    try {
+      const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
+      if (!result?.ok) throw new Error(result?.message || 'No se pudo transferir el stock.')
+      feedbackMessage = result.message || ''
+    } catch (error) {
+      feedbackMessage = error?.message || 'No se pudo transferir el stock.'
+    }
   }
   if (kind === 'supplier') {
     const payload = { name: formData.get('name'), contact: formData.get('contact'), phone: formData.get('phone'), email: formData.get('email'), cuit: formData.get('cuit'), address: formData.get('address'), balance: formData.get('balance'), lastDelivery: formData.get('lastDelivery'), category: formData.get('category') }
@@ -4140,11 +4150,16 @@ const handleSubmit = async (event) => {
       }
     }
     const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items, operationId: formData.get('saleId') ? null : saleOperationId }
-    const result = formData.get('saleId')
-      ? await store.updateSale(formData.get('saleId'), payload)
-      : await store.createSale(payload)
-    feedbackMessage = result.message || ''
-    if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
+    try {
+      const result = formData.get('saleId')
+        ? await store.updateSale(formData.get('saleId'), payload)
+        : await store.createSale(payload)
+      if (!result?.ok) throw new Error(result?.message || 'No se pudo guardar la venta.')
+      feedbackMessage = result.message || ''
+      if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
+    } catch (error) {
+      feedbackMessage = error?.message || 'No se pudo guardar la venta.'
+    }
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
@@ -5070,15 +5085,20 @@ const bindEvents = () => {
         exportThermalReceipt(button.dataset.id, '80')
         return
       }
-      const result = button.dataset.saleAction === 'invoice'
-        ? await store.createInvoiceFromSale(button.dataset.id)
-        : button.dataset.saleAction === 'ticket'
-          ? await store.createTicketFromSale(button.dataset.id)
-          : button.dataset.saleAction === 'cancel'
-            ? store.cancelSale(button.dataset.id)
-            : store.createReturnFromSale(button.dataset.id)
-      feedbackMessage = result.message || ''
-      if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
+      try {
+        const result = button.dataset.saleAction === 'invoice'
+          ? await store.createInvoiceFromSale(button.dataset.id)
+          : button.dataset.saleAction === 'ticket'
+            ? await store.createTicketFromSale(button.dataset.id)
+            : button.dataset.saleAction === 'cancel'
+              ? await store.cancelSale(button.dataset.id)
+              : await store.createReturnFromSale(button.dataset.id)
+        if (!result?.ok) throw new Error(result?.message || 'No se pudo completar la accion de venta.')
+        feedbackMessage = result.message || ''
+        if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
+      } catch (error) {
+        feedbackMessage = error?.message || 'No se pudo completar la accion de venta.'
+      }
       render()
     })
   }
