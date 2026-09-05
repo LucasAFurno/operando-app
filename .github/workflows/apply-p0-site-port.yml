@@ -16,21 +16,23 @@ jobs:
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0
-      - name: Restore build.mjs and apply Camino P0 patches
+      - name: Restore baselines and apply Camino P0 patches
         run: |
           set -euo pipefail
           git show ac68791ae08b7879bf157f69f273a2cbc2f55a16:scripts/build.mjs > scripts/build.mjs
+          git show ac68791ae08b7879bf157f69f273a2cbc2f55a16:site/data-store.js > site/data-store.js
+          git show ac68791ae08b7879bf157f69f273a2cbc2f55a16:site/client.js > site/client.js
           patch -p1 < scripts/patches/p0-site/build.patch
           patch -p1 < scripts/patches/p0-site/data-store.patch
           patch -p1 < scripts/patches/p0-site/client.patch
-          # sanity
           grep -n "cloudMutationsJs" scripts/build.mjs | head
           grep -n "wireDataStoreCloudMutations" site/data-store.js | head
-          grep -n "r.ok === false" site/client.js | head
+          grep -n "await store.createStockAdjustment" site/client.js | head
+          grep -n "await store.cancelSale" site/client.js | head
           test -s scripts/build.mjs
-          ! grep -q '^PLACEHOLDER$' scripts/build.mjs
+          ! grep -qx 'PLACEHOLDER' scripts/build.mjs
       - name: Commit restored site port files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'fix(ui): wire site data-store + Camino form awaits + build emit cloud-mutations'
+          commit_message: 'fix(ui): wire site data-store + form awaits + build emit cloud-mutations'
           file_pattern: scripts/build.mjs site/data-store.js site/client.js

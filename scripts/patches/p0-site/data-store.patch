@@ -19,6 +19,9 @@
      importData,
      resetData,
    }
+-}
+-
+-
 +  return wireDataStoreCloudMutations(api, {
 +    getCloudCoreAdapter: () => cloudCoreAdapter,
 +    syncFromCloud,
@@ -30,6 +33,6 @@
 +    makeOperationId,
 +    getCurrentUser: currentUser,
 +  })
- }
- 
- 
++}
++
++
