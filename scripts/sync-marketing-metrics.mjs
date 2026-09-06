@@ -7,8 +7,12 @@ const metricsPath = path.join(root, 'site', 'marketing-metrics.json')
 const supabaseUrl = String(process.env.SUPABASE_URL || '').trim().replace(/\/$/, '')
 const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
 
+// Never required by GitHub Pages CI. If env is missing, keep committed metrics and exit cleanly.
 if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error('Definí SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY para sincronizar métricas de marketing.')
+  process.stdout.write(
+    'Skip sync:marketing-metrics: faltan SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY; se usa site/marketing-metrics.json commiteado.\n'
+  )
+  process.exit(0)
 }
 
 const headers = {
