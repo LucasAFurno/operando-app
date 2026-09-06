@@ -1,0 +1,51 @@
+{
+  "description": "Transform Rules / Response Headers for operando.app once proxied through Cloudflare (orange cloud). GitHub Pages cannot set these.",
+  "zone": "operando.app",
+  "hosts": ["operando.app", "www.operando.app"],
+  "rules": [
+    {
+      "name": "Operando security headers",
+      "expression": "(http.host eq \"operando.app\") or (http.host eq \"www.operando.app\")",
+      "action": "rewrite",
+      "headers": {
+        "Strict-Transport-Security": {
+          "operation": "set",
+          "value": "max-age=31536000; includeSubDomains; preload"
+        },
+        "Content-Security-Policy": {
+          "operation": "set",
+          "value": "default-src 'self'; script-src 'self' https://esm.sh https://challenges.cloudflare.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://rfwsnqmjkclxhbmidbkm.supabase.co https://challenges.cloudflare.com https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com; frame-src https://challenges.cloudflare.com https://www.google.com https://www.googletagmanager.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests"
+        },
+        "X-Content-Type-Options": {
+          "operation": "set",
+          "value": "nosniff"
+        },
+        "X-Frame-Options": {
+          "operation": "set",
+          "value": "DENY"
+        },
+        "Referrer-Policy": {
+          "operation": "set",
+          "value": "strict-origin-when-cross-origin"
+        },
+        "Permissions-Policy": {
+          "operation": "set",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+        },
+        "Cross-Origin-Opener-Policy": {
+          "operation": "set",
+          "value": "same-origin-allow-popups"
+        },
+        "Access-Control-Allow-Origin": {
+          "operation": "remove"
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Remove Access-Control-Allow-Origin: * injected by GitHub Pages — SPA does not need public ACAO on HTML.",
+    "Do not apply ACAO remove to supabase.co; only to Pages responses via Cloudflare in front of operando.app.",
+    "Turnstile needs challenges.cloudflare.com in script-src, frame-src, and connect-src.",
+    "GTM-WFW5KTHS remains allowed; tightening GTM further is a separate XSS task."
+  ]
+}
