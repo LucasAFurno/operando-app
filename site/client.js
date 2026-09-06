@@ -226,6 +226,87 @@ const guideCard = () => {
 }
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
+const arcaFiscalStorageKey = (commerceId = commerceContext?.commerce_id) => `operando-arca-fiscal:${String(commerceId || '').toLowerCase()}`
+const loadArcaFiscalBasics = (commerceId = commerceContext?.commerce_id) => {
+  try {
+    const raw = globalThis.localStorage?.getItem(arcaFiscalStorageKey(commerceId))
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    return {
+      cuit: String(parsed.cuit || '').replace(/\D/g, ''),
+      legalName: String(parsed.legalName || '').trim(),
+      pointOfSale: String(parsed.pointOfSale || '').trim(),
+      connected: Boolean(parsed.connected),
+    }
+  } catch {
+    return null
+  }
+}
+const persistArcaFiscalBasics = (extra = {}) => {
+  const commerceId = commerceContext?.commerce_id
+  if (!commerceId) return
+  try {
+    const payload = {
+      cuit: String(extra.cuit ?? arcaFiscal.cuit ?? '').replace(/\D/g, ''),
+      legalName: String(extra.legalName ?? arcaFiscal.legalName ?? '').trim(),
+      pointOfSale: String(extra.pointOfSale ?? arcaFiscal.pointOfSale ?? '').trim(),
+      connected: Boolean(extra.connected ?? (arcaConnectionStatus === 'connected')),
+    }
+    globalThis.localStorage?.setItem(arcaFiscalStorageKey(commerceId), JSON.stringify(payload))
+  } catch {
+    // Persistencia local es best-effort.
+  }
+}
+const restoreArcaFiscalBasics = () => {
+  const saved = loadArcaFiscalBasics()
+  if (!saved) return
+  if (saved.cuit) arcaFiscal.cuit = saved.cuit
+  if (saved.legalName) arcaFiscal.legalName = saved.legalName
+  if (saved.pointOfSale) arcaFiscal.pointOfSale = saved.pointOfSale
+  if (saved.connected) {
+    arcaConnectionStatus = 'connected'
+    arcaVerificationState = 'verified'
+  }
+}
+const isArcaReadyForEmit = () => arcaConnectionStatus === 'connected' || Boolean(loadArcaFiscalBasics()?.connected)
+const receiptTypeFromLetter = (type) => {
+  const letter = String(type || 'B').trim().toUpperCase()
+  if (letter === 'A') return 1
+  if (letter === 'C') return 11
+  return 6
+}
+const roundMoney2 = (value) => (Math.round((Number(value) + Number.EPSILON) * 100) / 100).toFixed(2)
+const buildFeCaeReqXml = ({ pointOfSale, receiptType, receiptNumber, cbteFch, docTipo, docNro, impTotal, fiscalType }) => {
+  const total = Number(impTotal || 0)
+  const tipo = Number(receiptType) || receiptTypeFromLetter(fiscalType)
+  const isTypeC = tipo === 11 || String(fiscalType || '').toUpperCase() === 'C'
+  let impNeto
+  let impIva
+  let ivaBlock = ''
+  if (isTypeC) {
+    impNeto = roundMoney2(total)
+    impIva = '0.00'
+  } else {
+    const neto = Math.round((total / 1.21) * 100) / 100
+    const iva = Math.round((total - neto) * 100) / 100
+    impNeto = roundMoney2(neto)
+    impIva = roundMoney2(iva)
+    ivaBlock = `<Iva><AlicIva><Id>5</Id><BaseImp>${impNeto}</BaseImp><Importe>${impIva}</Importe></AlicIva></Iva>`
+  }
+  const fecha = String(cbteFch || '').replace(/\D/g, '').slice(0, 8)
+  return `<FeCAEReq><FeCabReq><CantReg>1</CantReg><PtoVta>${Number(pointOfSale)}</PtoVta><CbteTipo>${tipo}</CbteTipo></FeCabReq><FeDetReq><FECAEDetRequest><Concepto>1</Concepto><DocTipo>${Number(docTipo)}</DocTipo><DocNro>${Number(docNro)}</DocNro><CbteDesde>${Number(receiptNumber)}</CbteDesde><CbteHasta>${Number(receiptNumber)}</CbteHasta><CbteFch>${fecha}</CbteFch><ImpTotal>${roundMoney2(total)}</ImpTotal><ImpTotConc>0.00</ImpTotConc><ImpNeto>${impNeto}</ImpNeto><ImpOpEx>0.00</ImpOpEx><ImpTrib>0.00</ImpTrib><ImpIVA>${impIva}</ImpIVA><MonId>PES</MonId><MonCotiz>1</MonCotiz>${ivaBlock}</FECAEDetRequest></FeDetReq></FeCAEReq>`
+}
+const readXmlTag = (xml, tag) => {
+  const match = String(xml || '').match(new RegExp(`<(?:[\\w-]+:)?${tag}[^>]*>([^<]*)<\\/(?:[\\w-]+:)?${tag}>`, 'i'))
+  return match ? String(match[1] || '').trim() : ''
+}
+const parseArcaCae = (responseXml) => ({
+  cae: readXmlTag(responseXml, 'CAE'),
+  caeVto: readXmlTag(responseXml, 'CAEFchVto'),
+  resultado: readXmlTag(responseXml, 'Resultado'),
+})
+const formatArcaNumber = (pv, n) => `${String(Number(pv)).padStart(4, '0')}-${String(Number(n)).padStart(8, '0')}`
 const callArca = async (action, payload = {}) => {
   const session = authManager?.getSession()
   const cloud = store?.getCloudConnection()
@@ -236,7 +317,13 @@ const callArca = async (action, payload = {}) => {
     body: JSON.stringify({ action, tenantId: arcaTenantId(), ...payload }),
   })
   const result = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(result?.message || result?.error || `ARCA no respondio (${response.status})`)
+  if (!response.ok) {
+    const err = new Error(result?.message || result?.error || `ARCA no respondio (${response.status})`)
+    err.status = response.status
+    err.code = result?.error || ''
+    err.result = result
+    throw err
+  }
   return result
 }
 const listPagination = {
@@ -304,6 +391,7 @@ const loadCloudAccess = async (sessionPayload = null) => {
   const currentSession = sessionPayload || authManager.getSession()
   if (!currentSession?.sessionToken) throw new Error('No hay sesion valida para sincronizar.')
   commerceContext = currentSession.commerceContext || null
+  restoreArcaFiscalBasics()
   store.setCloudAccessToken(currentSession.sessionToken)
   const activeProfile = store.setCloudAuthSession(currentSession.profile, [])
   if (!activeProfile) {
@@ -823,8 +911,16 @@ const purchaseActionButtons = (receipt) => rowActionsMenu('Acciones de recepció
     <button type="button" class="inline-action" data-purchase-action="edit" data-id="${receipt.id}">Editar</button>
     <button type="button" class="inline-action danger" data-delete="purchase_receipt" data-id="${receipt.id}">Eliminar</button>
   `)
+const canShowEmitArca = (invoice) => {
+  if (!invoice?.saleId) return false
+  const status = String(invoice.fiscalStatus || 'Interno')
+  if (status === 'Aprobado' || status === 'Anulado') return false
+  const arcaish = ['Pendiente', 'Listo para enviar', 'Listo', 'Rechazado'].includes(status)
+  return arcaish || isArcaReadyForEmit()
+}
 const invoiceActionButtons = (invoice) => rowActionsMenu('Acciones de comprobante', `
     <button type="button" class="inline-action is-strong" data-invoice-action="pay" data-id="${invoice.id}" ${invoiceBalance(invoice) <= 0 ? 'disabled' : ''}>Abonar</button>
+    ${canShowEmitArca(invoice) ? `<button type="button" class="inline-action is-strong" data-invoice-action="emit-arca" data-id="${invoice.id}">Emitir con ARCA</button>` : ''}
     <button type="button" class="inline-action" data-invoice-action="view" data-id="${invoice.id}">Ver</button>
     <button type="button" class="inline-action" data-invoice-action="print" data-id="${invoice.id}">Imprimir</button>
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
@@ -2350,7 +2446,7 @@ const invoicesView = (ui) => `
           <label>Vencimiento<input type="date" name="dueDate" value="${editingInvoice?.dueDate || today}" required /></label>
           <label>Estado<select name="status"><option ${editingInvoice?.status === 'Emitida' || !editingInvoice ? 'selected' : ''}>Emitida</option><option ${editingInvoice?.status === 'En revision' ? 'selected' : ''}>En revision</option><option ${editingInvoice?.status === 'Cobrada' ? 'selected' : ''}>Cobrada</option></select></label>
           <label>Emision<select name="fiscalStatus"><option value="Interno" ${editingInvoice?.fiscalStatus === 'Interno' || !editingInvoice ? 'selected' : ''}>Interno</option><option value="Pendiente" ${editingInvoice?.fiscalStatus === 'Pendiente' ? 'selected' : ''}>ARCA · Pendiente</option><option value="Listo para enviar" ${editingInvoice?.fiscalStatus === 'Listo para enviar' ? 'selected' : ''}>ARCA · Listo para enviar</option><option value="Aprobado" ${editingInvoice?.fiscalStatus === 'Aprobado' ? 'selected' : ''}>ARCA · Aprobado</option><option value="Rechazado" ${editingInvoice?.fiscalStatus === 'Rechazado' ? 'selected' : ''}>ARCA · Rechazado</option><option value="Anulado" ${editingInvoice?.fiscalStatus === 'Anulado' ? 'selected' : ''}>ARCA · Anulado</option></select></label>
-          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero informado por ARCA; no se genera uno interno.</p>
+          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero de comprobante del PV y usa <strong>Emitir con ARCA</strong> en la fila para solicitar el CAE; no se genera uno interno.</p>
           <button type="submit">${editingInvoice ? 'Guardar cambios' : 'Guardar factura'}</button>
           ${editingInvoice ? '<button type="button" class="danger-action" data-action="cancel-invoice-edit">Cancelar edicion</button>' : ''}
         </form>
@@ -2386,7 +2482,7 @@ const invoicesViewV2 = (ui) => `
           <label>Vencimiento<input type="date" name="dueDate" value="${today}" required /></label>
           <label>Estado<select name="status"><option selected>Emitida</option><option>En revision</option><option>Cobrada</option></select></label>
           <label>Emision<select name="fiscalStatus"><option value="Interno" selected>Interno</option><option value="Pendiente">ARCA · Pendiente</option><option value="Listo para enviar">ARCA · Listo para enviar</option><option value="Aprobado">ARCA · Aprobado</option><option value="Rechazado">ARCA · Rechazado</option><option value="Anulado">ARCA · Anulado</option></select></label>
-          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero informado por ARCA; no se genera uno interno.</p>
+          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero de comprobante del PV y usa <strong>Emitir con ARCA</strong> en la fila para solicitar el CAE; no se genera uno interno.</p>
           <button type="submit">Guardar factura</button>
           <button type="button" class="ghost-action" data-action="close-invoice-form">Cancelar</button>
         </form>
@@ -5097,7 +5193,7 @@ const bindEvents = () => {
       }
       try {
         const result = button.dataset.saleAction === 'invoice'
-          ? await store.createInvoiceFromSale(button.dataset.id)
+          ? await store.createInvoiceFromSale(button.dataset.id, { forArca: isArcaReadyForEmit() })
           : button.dataset.saleAction === 'ticket'
             ? await store.createTicketFromSale(button.dataset.id)
             : button.dataset.saleAction === 'cancel'
@@ -5144,6 +5240,111 @@ const bindEvents = () => {
         invoicePaymentId = button.dataset.id
         invoiceFormOpen = false
         queueScrollToSelector('form[data-form="invoice-payment"]')
+        render()
+        return
+      }
+      if (action === 'emit-arca') {
+        const snapshot = store.getSnapshot()
+        const invoice = snapshot.invoices.find((entry) => entry.id === button.dataset.id)
+        if (!invoice) { feedbackMessage = 'No se encontro el comprobante.'; render(); return }
+        if (!invoice.saleId) { feedbackMessage = 'Solo se puede emitir CAE desde un comprobante vinculado a una venta.'; render(); return }
+        restoreArcaFiscalBasics()
+        const pointOfSale = String(arcaFiscal.pointOfSale || '').replace(/\D/g, '')
+        if (!pointOfSale) { feedbackMessage = 'Completa el punto de venta en la configuracion ARCA antes de emitir.'; render(); return }
+        const numberDigits = String(invoice.number || '').replace(/\D/g, '')
+        const receiptNumber = Number(numberDigits.slice(-8) || numberDigits)
+        if (!Number.isInteger(receiptNumber) || receiptNumber < 1) {
+          feedbackMessage = 'Carga primero el numero de comprobante ARCA en la factura (solo digitos del PV) y guardala.'
+          render()
+          return
+        }
+        const customer = snapshot.customers.find((entry) => entry.id === invoice.customerId)
+        const cuitDigits = String(customer?.cuit || '').replace(/\D/g, '')
+        const docTipo = cuitDigits.length === 11 ? 80 : 99
+        const docNro = cuitDigits.length === 11 ? cuitDigits : '0'
+        const receiptType = receiptTypeFromLetter(invoice.type || 'B')
+        const cbteFch = String(today || new Date().toISOString().slice(0, 10)).replace(/\D/g, '').slice(0, 8)
+        const requestXml = buildFeCaeReqXml({
+          pointOfSale,
+          receiptType,
+          receiptNumber,
+          cbteFch: cbteFch.length === 8 ? cbteFch : new Date().toISOString().slice(0, 10).replace(/\D/g, ''),
+          docTipo,
+          docNro,
+          impTotal: invoice.totalAmount,
+          fiscalType: invoice.type || 'B',
+        })
+        const idempotencyKey = String(`cae-${invoice.id}-${receiptNumber}`).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 128)
+        feedbackMessage = 'Solicitando CAE a ARCA (homologacion)…'
+        render()
+        try {
+          const result = await callArca('invoices', {
+            saleId: invoice.saleId,
+            receiptType,
+            pointOfSale: Number(pointOfSale),
+            receiptNumber: Number(receiptNumber),
+            idempotencyKey,
+            requestXml,
+          })
+          const parsed = parseArcaCae(result?.responseXml || '')
+          if (!parsed.cae || String(parsed.resultado || '').toUpperCase() !== 'A') {
+            feedbackMessage = 'ARCA no devolvio un CAE aprobado. Revisa el comprobante e intenta otra vez.'
+            render()
+            return
+          }
+          const formattedNumber = formatArcaNumber(pointOfSale, receiptNumber)
+          const updateResult = await store.updateInvoice(invoice.id, {
+            number: formattedNumber,
+            customerId: invoice.customerId,
+            totalAmount: invoice.totalAmount,
+            kind: invoice.kind || 'Factura',
+            type: invoice.type || 'B',
+            dueDate: invoice.dueDate,
+            status: 'Emitida',
+            fiscalStatus: 'Aprobado',
+            branchId: invoice.branchId,
+            saleId: invoice.saleId,
+            relatedDocumentId: invoice.relatedDocumentId || null,
+            payloadJson: {
+              cae: parsed.cae,
+              caeVto: parsed.caeVto,
+              pointOfSale: Number(pointOfSale),
+              receiptType,
+              receiptNumber: Number(receiptNumber),
+              emittedAt: new Date().toISOString(),
+              dueDate: invoice.dueDate || '',
+            },
+          })
+          feedbackMessage = updateResult?.ok === false
+            ? (updateResult.message || 'CAE recibido pero no se pudo guardar el comprobante.')
+            : `CAE ${parsed.cae} aprobado. Vto ${parsed.caeVto || 's/d'}.`
+        } catch (error) {
+          const code = String(error?.code || error?.message || '')
+          const status = Number(error?.status || 0)
+          if (code === 'arca_rejected' || status === 422) {
+            try {
+              await store.updateInvoice(invoice.id, {
+                number: invoice.number,
+                customerId: invoice.customerId,
+                totalAmount: invoice.totalAmount,
+                kind: invoice.kind || 'Factura',
+                type: invoice.type || 'B',
+                dueDate: invoice.dueDate,
+                status: invoice.status || 'Emitida',
+                fiscalStatus: 'Rechazado',
+                branchId: invoice.branchId,
+                saleId: invoice.saleId,
+                relatedDocumentId: invoice.relatedDocumentId || null,
+                payloadJson: { dueDate: invoice.dueDate || '', lastArcaError: code || 'arca_rejected' },
+              })
+            } catch { /* best-effort status update */ }
+            feedbackMessage = 'ARCA rechazo el comprobante. Revisa los datos fiscales y el numero, e intenta otra vez.'
+          } else if (status === 409 || code.includes('uncertain') || code.includes('pending')) {
+            feedbackMessage = 'La autorizacion quedo incierta. Espera un momento y reintenta Emitir con ARCA; no marques el CAE a mano.'
+          } else {
+            feedbackMessage = error?.message || 'No se pudo emitir el CAE.'
+          }
+        }
         render()
         return
       }
@@ -5360,6 +5561,7 @@ const bindEvents = () => {
     arcaFiscal.legalName = String(document.querySelector('[name="arca-legal-name"]')?.value || '').trim()
     arcaFiscal.pointOfSale = String(document.querySelector('[name="arca-point-sale"]')?.value || '').trim()
     if (!/^\d{11}$/.test(arcaFiscal.cuit) || !arcaFiscal.legalName || !/^\d{1,5}$/.test(arcaFiscal.pointOfSale)) { feedbackMessage = 'Completa CUIT, razon social y punto de venta validos.'; render(); return }
+    persistArcaFiscalBasics({ connected: arcaConnectionStatus === 'connected' })
     arcaSetupStep = 2; render()
   })
   for (const button of document.querySelectorAll('[data-action="arca-generate-csr"]')) button.addEventListener('click', async () => {
@@ -5380,7 +5582,7 @@ const bindEvents = () => {
     if (arcaVerificationState === 'verified') return
     arcaVerificationState = 'checking'
     render()
-    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
+    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; persistArcaFiscalBasics({ connected: true }); feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
   })
   for (const importSupportButton of document.querySelectorAll('[data-action="request-bulk-import"]')) {
     importSupportButton.addEventListener('click', () => {
