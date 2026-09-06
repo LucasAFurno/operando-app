@@ -104,22 +104,48 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
     return normalized || ''
   }
 
-  const getSetupStatus = async ({ instanceKey: requestedInstanceKey } = {}) => rpc('app_get_setup_status', {
-    p_instance_key: normalizeInstanceKey(requestedInstanceKey),
-  })
+  const callAuthGateway = async (body) => {
+    const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, {
+      method: 'POST',
+      headers: buildHeaders(publishableKey),
+      body: JSON.stringify(body),
+    })
+    const payload = await safeJson(response)
+    if (!response.ok || payload?.error) {
+      resetTurnstile()
+      throw new Error(apiError(payload, payload?.error || 'access_denied'))
+    }
+    return payload
+  }
+
+  const getSetupStatus = async ({ instanceKey: requestedInstanceKey } = {}) => {
+    if (!turnstileEnabled) throw new Error('security_not_configured')
+    const turnstileToken = readTurnstileToken()
+    if (!turnstileToken) throw new Error('turnstile_required')
+    return callAuthGateway({
+      mode: 'setup_status',
+      instanceKey: normalizeInstanceKey(requestedInstanceKey),
+      turnstileToken,
+    })
+  }
 
   const setupInstance = async ({ instanceKey: requestedInstanceKey, commerceName, ownerName, ownerLogin, ownerEmail, ownerPin, branchName, branchCode, registerName, registerCode }) => {
-    const payload = await rpc('app_setup_instance', {
-      p_instance_key: normalizeInstanceKey(requestedInstanceKey),
-      p_commerce_name: commerceName,
-      p_owner_name: ownerName,
-      p_owner_login: ownerLogin,
-      p_owner_email: ownerEmail,
-      p_owner_pin: ownerPin,
-      p_branch_name: branchName,
-      p_branch_code: branchCode,
-      p_register_name: registerName,
-      p_register_code: registerCode,
+    if (!turnstileEnabled) throw new Error('security_not_configured')
+    const turnstileToken = readTurnstileToken()
+    if (!turnstileToken) throw new Error('turnstile_required')
+    const payload = await callAuthGateway({
+      mode: 'setup_instance',
+      instanceKey: normalizeInstanceKey(requestedInstanceKey),
+      commerceName,
+      ownerName,
+      ownerLogin,
+      ownerEmail,
+      ownerPin,
+      branchName,
+      branchCode,
+      registerName,
+      registerCode,
+      turnstileToken,
     })
     return setSession(payload)
   }
