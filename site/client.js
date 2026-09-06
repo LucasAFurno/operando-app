@@ -3402,7 +3402,12 @@ const bootstrap = async () => {
       }
     }
     if (store.getCloudConnection().enabled && authManager) {
-      setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+      try {
+        setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+      } catch (error) {
+        // Turnstile may not be ready on first paint; signup/login forms retry with a token.
+        setupStatus = null
+      }
     }
     if (store.getCloudConnection().enabled && authManager && setupStatus?.initialized) {
       const restoredSession = await authManager.restoreSession()
@@ -3694,7 +3699,11 @@ const handleSubmit = async (event) => {
       if (!authManager) throw new Error('La conexion cloud no esta lista.')
       const sessionPayload = await authManager.signIn({ instanceKey: requestedInstanceKey || null, identifier, pin })
       persistInstanceKey(sessionPayload?.commerceContext?.instance_key || requestedInstanceKey || authInstanceKey)
-      setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+      try {
+        setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+      } catch {
+        setupStatus = { initialized: true }
+      }
       await loadCloudAccess(sessionPayload)
       activeSection = 'dashboard'
       saveSection()
@@ -3768,7 +3777,8 @@ const handleSubmit = async (event) => {
         registerName: String(formData.get('registerName') || '').trim(),
         registerCode: String(formData.get('registerCode') || '').trim(),
       })
-      setupStatus = await authManager.getSetupStatus({ instanceKey })
+      // Turnstile token already consumed by setup_instance; mark initialized locally.
+      setupStatus = { initialized: true }
       await loadCloudAccess(sessionPayload)
       activeSection = sectionFromPath()
       saveSection()

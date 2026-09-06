@@ -190,24 +190,46 @@ export const createSupabaseCoreAdapter = (config) => {
       })
     },
     async loadPlatformOverview() {
-      return rpc('app_public_platform_overview', {
-        p_session_token: getSessionToken(),
+      const sessionToken = getSessionToken()
+      if (!sessionToken) throw new Error('session_required')
+      const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, {
+        method: 'POST',
+        headers: buildHeaders(anonKey),
+        body: JSON.stringify({ mode: 'platform_overview', sessionToken }),
       })
+      const payload = await safeJson(response)
+      if (!response.ok || payload?.error) {
+        throw new Error(payload?.error || payload?.message || `platform_overview_failed (${response.status})`)
+      }
+      return payload
     },
     async updatePlatformCommerce(payload) {
-      return rpc('app_public_platform_update_commerce', {
-        p_session_token: getSessionToken(),
-        p_commerce_id: payload?.commerceId || null,
-        p_active_plan: payload?.activePlan || null,
-        p_status: payload?.status || null,
-        p_billing_status: payload?.billingStatus || null,
-        p_allow_public_signup: typeof payload?.allowPublicSignup === 'boolean' ? payload.allowPublicSignup : null,
-        p_support_owner: payload?.supportOwner || null,
-        p_support_status: payload?.supportStatus || null,
-        p_internal_tag: payload?.internalTag || null,
-        p_commercial_note: payload?.commercialNote || null,
-        p_billing_note: payload?.billingNote || null,
+      const sessionToken = getSessionToken()
+      if (!sessionToken) throw new Error('session_required')
+      const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, {
+        method: 'POST',
+        headers: buildHeaders(anonKey),
+        body: JSON.stringify({
+          mode: 'platform_update_commerce',
+          sessionToken,
+          commerceId: payload?.commerceId || null,
+          activePlan: payload?.activePlan || null,
+          status: payload?.status || null,
+          billingStatus: payload?.billingStatus || null,
+          allowPublicSignup: typeof payload?.allowPublicSignup === 'boolean' ? payload.allowPublicSignup : null,
+          supportOwner: payload?.supportOwner || null,
+          supportStatus: payload?.supportStatus || null,
+          internalTag: payload?.internalTag || null,
+          commercialNote: payload?.commercialNote || null,
+          billingNote: payload?.billingNote || null,
+        }),
       })
+      const result = await safeJson(response)
+      if (!response.ok || result?.error) {
+        throw new Error(result?.error || result?.message || `platform_update_failed (${response.status})`)
+      }
+      notifyMutation('app_public_platform_update_commerce')
+      return result
     },
     async toggleUserActive(payload) {
       return rpc('app_public_toggle_user_active', {

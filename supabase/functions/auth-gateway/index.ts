@@ -31,6 +31,10 @@ const allowedRedirect = (value: unknown) => {
 }
 const digest = async (value: string) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))).map((byte) => byte.toString(16).padStart(2, '0')).join('')
 
+const TURNSTILE_MODES = new Set(['login', 'recovery', 'setup_status', 'setup_instance'])
+const PLATFORM_MODES = new Set(['platform_overview', 'platform_update_commerce'])
+const ALL_MODES = new Set([...TURNSTILE_MODES, ...PLATFORM_MODES])
+
 Deno.serve(async (request) => {
   const headers = cors(request)
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers })
@@ -44,25 +48,104 @@ Deno.serve(async (request) => {
     // name as a temporary fallback so an in-flight deployment is not disabled.
     const secret = Deno.env.get('TURNSTILE_SECRET_KEY') || Deno.env.get('TURNSTILE_SECRET') || ''
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-    if (!supabaseUrl || !serviceKey || !secret) return json({ error: 'security_not_configured' }, 503, headers)
-    const turnstileToken = String(body.turnstileToken || '').trim()
-    if (!turnstileToken) return json({ error: 'access_denied' }, 403, headers)
-    const verificationResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    if (!supabaseUrl || !serviceKey) return json({ error: 'security_not_configured' }, 503, headers)
+
+    const modeRaw = String(body.mode || 'login').trim()
+    const mode = ALL_MODES.has(modeRaw) ? modeRaw : ''
+    if (!mode) return json({ error: 'invalid_mode' }, 422, headers)
+
+    const rpc = async (name: string, payload: object) => fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, {
       method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret, response: turnstileToken, remoteip: ip }),
+      headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
     })
-    if (!verificationResponse.ok) return json({ error: 'turnstile_unavailable' }, 503, headers)
-    const verify = await verificationResponse.json()
-    if (!verify.success || verify.action !== 'turnstile-spin-v2' || !allowedTurnstileHostnames().includes(String(verify.hostname || '').toLowerCase())) return json({ error: 'turnstile_failed' }, 403, headers)
-    const key = await digest(`${Deno.env.get('AUTH_RATE_LIMIT_PEPPER') || ''}:${ip}`)
-    const rpc = async (name: string, payload: object) => fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, { method: 'POST', headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}`, 'content-type': 'application/json' }, body: JSON.stringify(payload) })
-    const mode = body.mode === 'recovery' ? 'recovery' : 'login'
-    const limited = await rpc('app_auth_rate_limit', { p_key: key, p_action: mode }).then((response) => response.json())
-    if (!limited?.allowed) {
-      const retryAfterSeconds = Math.max(1, Number(limited?.retry_after_seconds || 60))
-      return json({ error: 'login_rate_limited', retry_after_seconds: retryAfterSeconds }, 429, { ...headers, 'retry-after': String(retryAfterSeconds) })
+
+    const enforceRateLimit = async (action: string) => {
+      const key = await digest(`${Deno.env.get('AUTH_RATE_LIMIT_PEPPER') || ''}:${ip}:${action}`)
+      const limited = await rpc('app_auth_rate_limit', { p_key: key, p_action: action }).then((response) => response.json())
+      if (!limited?.allowed) {
+        const retryAfterSeconds = Math.max(1, Number(limited?.retry_after_seconds || 60))
+        return json({ error: 'login_rate_limited', retry_after_seconds: retryAfterSeconds }, 429, { ...headers, 'retry-after': String(retryAfterSeconds) })
+      }
+      return null
     }
+
+    if (TURNSTILE_MODES.has(mode)) {
+      if (!secret) return json({ error: 'security_not_configured' }, 503, headers)
+      const turnstileToken = String(body.turnstileToken || '').trim()
+      if (!turnstileToken) return json({ error: 'access_denied' }, 403, headers)
+      const verificationResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ secret, response: turnstileToken, remoteip: ip }),
+      })
+      if (!verificationResponse.ok) return json({ error: 'turnstile_unavailable' }, 503, headers)
+      const verify = await verificationResponse.json()
+      if (!verify.success || verify.action !== 'turnstile-spin-v2' || !allowedTurnstileHostnames().includes(String(verify.hostname || '').toLowerCase())) {
+        return json({ error: 'turnstile_failed' }, 403, headers)
+      }
+      const rateLimited = await enforceRateLimit(mode === 'login' ? 'login' : mode)
+      if (rateLimited) return rateLimited
+    }
+
+    if (mode === 'setup_status') {
+      const status = await rpc('app_get_setup_status', {
+        p_instance_key: body.instanceKey || '',
+      }).then((response) => response.json())
+      return json(status, 200, headers)
+    }
+
+    if (mode === 'setup_instance') {
+      const setup = await rpc('app_setup_instance', {
+        p_instance_key: body.instanceKey || '',
+        p_commerce_name: body.commerceName || '',
+        p_owner_name: body.ownerName || '',
+        p_owner_login: body.ownerLogin || '',
+        p_owner_email: body.ownerEmail || '',
+        p_owner_pin: body.ownerPin || '',
+        p_branch_name: body.branchName || '',
+        p_branch_code: body.branchCode || '',
+        p_register_name: body.registerName || '',
+        p_register_code: body.registerCode || '',
+      })
+      const payload = await setup.json()
+      if (!setup.ok) return json({ error: payload?.message || payload?.hint || 'setup_failed' }, setup.status || 400, headers)
+      return json(payload, 200, headers)
+    }
+
+    if (PLATFORM_MODES.has(mode)) {
+      const sessionToken = String(body.sessionToken || body.p_session_token || '').trim()
+      if (!sessionToken) return json({ error: 'session_required' }, 401, headers)
+      const rateLimited = await enforceRateLimit(mode)
+      if (rateLimited) return rateLimited
+
+      if (mode === 'platform_overview') {
+        const overview = await rpc('app_public_platform_overview', { p_session_token: sessionToken })
+        const payload = await overview.json()
+        if (!overview.ok) return json({ error: payload?.message || payload?.hint || 'platform_denied' }, overview.status || 403, headers)
+        return json(payload, 200, headers)
+      }
+
+      const update = await rpc('app_public_platform_update_commerce', {
+        p_session_token: sessionToken,
+        p_commerce_id: body.commerceId || body.p_commerce_id || null,
+        p_active_plan: body.activePlan ?? body.p_active_plan ?? null,
+        p_status: body.status ?? body.p_status ?? null,
+        p_billing_status: body.billingStatus ?? body.p_billing_status ?? null,
+        p_allow_public_signup: typeof (body.allowPublicSignup ?? body.p_allow_public_signup) === 'boolean'
+          ? (body.allowPublicSignup ?? body.p_allow_public_signup)
+          : null,
+        p_support_owner: body.supportOwner ?? body.p_support_owner ?? null,
+        p_support_status: body.supportStatus ?? body.p_support_status ?? null,
+        p_internal_tag: body.internalTag ?? body.p_internal_tag ?? null,
+        p_commercial_note: body.commercialNote ?? body.p_commercial_note ?? null,
+        p_billing_note: body.billingNote ?? body.p_billing_note ?? null,
+      })
+      const payload = await update.json()
+      if (!update.ok) return json({ error: payload?.message || payload?.hint || 'platform_update_failed' }, update.status || 403, headers)
+      return json(payload, 200, headers)
+    }
+
     if (mode === 'recovery') {
       const email = String(body.email || '').trim().toLowerCase()
       const redirectTo = allowedRedirect(body.redirectTo)
@@ -82,6 +165,8 @@ Deno.serve(async (request) => {
       }
       return json({ ok: true, message: 'Si existe una cuenta con ese correo, te enviamos un enlace para recuperar el acceso.' }, 200, headers)
     }
+
+    // login
     const deviceHash = await digest(String(body.deviceId || 'unknown-device'))
     const login = await rpc('app_public_sign_in', { p_instance_key: body.instanceKey || '', p_identifier: body.identifier || '', p_pin: body.pin || '', p_device_hash: deviceHash }).then((response) => response.json())
     if (!login?.session_token) return json({ error: 'invalid_credentials' }, 401, headers)
