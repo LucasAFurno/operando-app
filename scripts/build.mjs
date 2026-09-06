@@ -19,8 +19,35 @@ const recoveryPath = '/recuperar-clave/'
 const resetPasswordPath = '/restablecer-clave/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20quiero%20informacion%20de%20operando.app.'
 const gtmContainerId = String(process.env.OPERANDO_GTM_ID || '').trim()
-const gtmHeadSnippet = gtmContainerId ? `<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',${JSON.stringify(gtmContainerId)});</script>` : ''
-const gtmBodySnippet = gtmContainerId ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${encodeURIComponent(gtmContainerId)}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>` : ''
+const gtmHeadSnippet = gtmContainerId ? [
+  '<script>',
+  'window.dataLayer=window.dataLayer||[];',
+  'function gtag(){dataLayer.push(arguments);}',
+  "gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});",
+  `window.__operandoGtmId=${JSON.stringify(gtmContainerId)};`,
+  'window.__operandoLoadGtm=function(){',
+  '  if(window.__operandoGtmLoaded)return;window.__operandoGtmLoaded=true;',
+  "  try{localStorage.setItem('operando_analytics_consent','1');}catch(e){}",
+  "  gtag('consent','update',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});",
+  "  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',window.__operandoGtmId);",
+  '};',
+  "window.__operandoDenyGtm=function(){try{localStorage.setItem('operando_analytics_consent','0');}catch(e){}var b=document.getElementById('operando-consent');if(b)b.remove();};",
+  '(function(){',
+  "  try{var c=localStorage.getItem('operando_analytics_consent');if(c==='1'){window.__operandoLoadGtm();return;}if(c==='0')return;}catch(e){}",
+  "  document.addEventListener('DOMContentLoaded',function(){",
+  '    if(window.__operandoGtmLoaded)return;',
+  "    var bar=document.createElement('div');bar.id='operando-consent';bar.setAttribute('role','dialog');bar.setAttribute('aria-label','Consentimiento de analitica');",
+  "    bar.style.cssText='position:fixed;z-index:99999;left:12px;right:12px;bottom:12px;max-width:560px;margin:auto;padding:14px 16px;border-radius:12px;background:#111;color:#fff;font:14px/1.4 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.35);display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between';",
+  "    bar.innerHTML='<p style=\"margin:0;flex:1 1 220px\">Usamos analitica (Google Tag Manager) para mejorar operando.app. Podes aceptar o seguir sin medicion.</p><span style=\"display:flex;gap:8px\"><button type=\"button\" id=\"operando-consent-deny\" style=\"border:1px solid #666;background:transparent;color:#fff;border-radius:8px;padding:8px 12px;cursor:pointer\">Rechazar</button><button type=\"button\" id=\"operando-consent-ok\" style=\"border:0;background:#6ee7a8;color:#062;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:600\">Aceptar</button></span>';",
+  '    document.body.appendChild(bar);',
+  "    document.getElementById('operando-consent-ok').onclick=function(){window.__operandoLoadGtm();bar.remove();};",
+  "    document.getElementById('operando-consent-deny').onclick=function(){window.__operandoDenyGtm();};",
+  '  });',
+  '})();',
+  '</script>',
+].join('') : ''
+const gtmBodySnippet = '' // no noscript GTM without consent
+
 
 const clientJs = await readFile(path.join(root, 'site', 'client.js'), 'utf8')
 const dataStoreJs = await readFile(path.join(root, 'site', 'data-store.js'), 'utf8')
@@ -3277,7 +3304,8 @@ const appHtml = (entry = 'panel') => `<!doctype html>
         var shell = document.getElementById('boot-status');
         if (!shell) return;
         var message = window.__operandoBootError || 'La aplicacion no termino de cargar. Proba recargar con Ctrl + F5.';
-        shell.innerHTML = '<div class="boot-card is-error"><strong>No se pudo iniciar</strong><p>' + message + '</p><p>Si sigue igual, avisame y reviso el error puntual.</p></div>';
+        var esc = function (value) { return String(value || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+        shell.innerHTML = '<div class="boot-card is-error"><strong>No se pudo iniciar</strong><p>' + esc(message) + '</p><p>Si sigue igual, avisame y reviso el error puntual.</p></div>';
       }, 4000);
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>

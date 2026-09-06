@@ -1394,7 +1394,7 @@ const loginView = (ui) => {
           <p class="kicker">Sistema de ventas, caja y stock</p>
           <h1>${productName}</h1>
           <p class="login-copy login-copy-hero">Software de gestion comercial para kioscos, tiendas, locales y negocios que necesitan vender, cobrar, controlar stock, clientes, compras y comprobantes desde una sola web.</p>
-          ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+          ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
           <div class="login-badges">
             <span class="login-badge ${ui.cloudConnection.enabled ? 'is-ok' : 'is-warn'}">${ui.cloudConnection.enabled ? 'Base online activa' : 'Activacion pendiente'}</span>
             <span class="login-badge">Ventas y caja</span>
@@ -1606,7 +1606,7 @@ const cloudActivationView = (ui) => `
         </div>
         <button type="submit">Activar base</button>
       </form>
-      ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+      ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
       <div class="login-actions">
         <button type="button" class="ghost-action" data-action="open-support">Necesito asistencia</button>
       </div>
@@ -1629,7 +1629,7 @@ const dashboardView = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.openCashSession ? money(ui.expectedCash) : 'Cerrada'}</strong><span>Caja</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.pendingInvoices)}</strong><span>Facturas</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     ${ui.user?.isOwner && ui.progressiveProfile.status === 'complete' ? `<div class="info-strip progressive-suggestion"><strong>${ui.progressiveProfile.industry ? `Sugerencia para ${escapeHtml(ui.progressiveProfile.industry)}` : 'Sugerencia para tu operación'}</strong><span>${progressiveSuggestion(ui.progressiveProfile)}</span></div>` : ''}
     <section class="dashboard-grid dashboard-operation-grid">
       <article class="panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Con multiples articulos</p></div></div><div class="list">
@@ -1670,7 +1670,7 @@ const dashboardViewV2 = (ui) => {
       <button type="button" class="ghost-action" data-dashboard-section="facturacion">Cobro</button>
       <button type="button" class="ghost-action" data-dashboard-section="caja">Ingreso de caja</button>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="dashboard-kpi-grid" aria-label="Resumen de operación">
       <button type="button" class="dashboard-kpi-card" data-dashboard-section="ventas"><span>Ventas</span><strong>${money(ui.totalSales)}</strong><small>Hoy</small></button>
       <button type="button" class="dashboard-kpi-card" data-dashboard-section="caja"><span>Caja</span><strong>${ui.openCashSession ? money(ui.expectedCash) : 'Cerrada'}</strong><small>${ui.openCashSession ? 'Sesión actual' : 'Abrir caja para operar'}</small></button>
@@ -1734,7 +1734,7 @@ const customersViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${money(ui.snapshot.customers.reduce((sum, customer) => sum + Number(customer.balance || 0), 0))}</strong><span>Saldo</span></span>
       <span class="panel-inline-stat"><strong>${ui.snapshot.customers.filter((customer) => String(customer.tag || '').toLowerCase().includes('mostrador')).length}</strong><span>Rapidos</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="module-board customers-board">
       <div class="module-main">
         ${customerFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>${editingCustomer ? 'Editar cliente' : 'Nuevo cliente'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-customer-form">Cerrar</button></div></div>
@@ -1771,7 +1771,7 @@ const salesView = (ui) => `
     const quantities = new Map(Object.entries(Object.keys(saleDraftQuantities).length ? saleDraftQuantities : Object.fromEntries((editingSale?.items || []).map((item) => [item.productId, item.quantity]))))
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Ventas</p><h2>Venta multi-item</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="content-grid single-focus">
       <article class="panel">
         <div class="panel-head"><div><h3>${editingSale ? 'Editar venta' : 'Nueva venta'}</h3><p>${editingSale ? 'Actualiza stock, cobro y comprobantes' : 'Carga rapida para mostrador o venta asistida'}</p></div></div>
@@ -1886,7 +1886,7 @@ const salesViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${money(ui.totalSales)}</strong><span>Total</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.unpaidSales)}</strong><span>Por cobrar</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="stacked-section">
       ${showSaleForm ? `<article class="panel pos-sale-panel">
         <div class="panel-head pos-sale-head"><div><h3>${editingSale ? 'Editar venta' : 'Punto de venta'}</h3><p>${editingSale ? 'Actualiza los articulos y el cobro' : 'Busca un articulo o escanea su codigo para comenzar'}</p></div><button type="button" class="pos-cash-badge ${ui.openCashSession ? 'is-open' : 'is-closed'}" data-section="caja" aria-label="Ir a Caja">Caja ${ui.openCashSession ? 'abierta' : 'cerrada'}</button></div>
@@ -2092,7 +2092,7 @@ const productsView = (ui) => {
       <span class="panel-inline-stat"><strong>${ui.lowStock.length}</strong><span>Stock bajo</span></span>
       <span class="panel-inline-stat"><strong>${ui.scopedStockMovements.length}</strong><span>Movimientos</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="module-board products-board">
       <div class="module-main">
         ${productFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Nuevo producto</h3><p>Carga simple para empezar rapido</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-product-form">Cerrar</button></div></div>
@@ -2155,7 +2155,7 @@ const purchasesView = (ui) => `
     const editingReceipt = ui.snapshot.purchaseReceipts.find((receipt) => receipt.id === purchaseEditingId)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Compras</p><h2>Proveedores y recepcion</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="dashboard-grid reports-layout">
       <article class="panel"><div class="panel-head"><div><h3>Alta de proveedor</h3><p>Base de compras</p></div></div>
         <form class="form-grid" data-form="supplier">
@@ -2201,7 +2201,7 @@ const purchasesViewLegacy = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.enrichedReceipts.length}</strong><span>Compras</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.snapshot.suppliers.reduce((sum, supplier) => sum + Number(supplier.balance || 0), 0))}</strong><span>Saldo</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="module-board purchases-board ${showPurchaseForm ? '' : 'board-expanded'}">
       <div class="module-main">
         <article class="panel"><div class="panel-head"><div><h3>${editingReceipt ? 'Editar recepcion' : 'Recepcion de compra'}</h3><p>${editingReceipt ? 'Recalcula stock y saldo del proveedor' : 'Ingresa stock y costo'}</p></div></div>
@@ -2274,7 +2274,7 @@ const purchasesViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.enrichedReceipts.length}</strong><span>Recepciones</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.snapshot.suppliers.reduce((sum, supplier) => sum + Number(supplier.balance || 0), 0))}</strong><span>Saldo proveedor</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="stacked-section">
       ${showPurchaseForm ? `<article class="panel">
         <div class="panel-head"><div><h3>${editingReceipt ? 'Editar compra' : 'Nueva compra'}</h3><p>Ingresa stock y costo del proveedor</p></div><div class="settings-actions">${editingReceipt ? '' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cerrar</button>'}</div></div>
@@ -2374,7 +2374,7 @@ const invoicesViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').length}</strong><span>Abiertas</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.enrichedInvoices.reduce((sum, invoice) => sum + Number(invoice.totalAmount || 0), 0))}</strong><span>Monto total</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="stacked-section">
       ${showInvoiceForm ? `<article class="panel"><div class="panel-head"><div><h3>Nueva factura</h3><p>Numeracion real por sucursal</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-invoice-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="invoice">
@@ -2451,7 +2451,7 @@ const ticketsViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.enrichedTickets.filter((ticket) => ticket.status === 'En curso').length}</strong><span>En curso</span></span>
       <span class="panel-inline-stat"><strong>${ui.enrichedTickets.filter((ticket) => ticket.status === 'Listo para entregar').length}</strong><span>Listos</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="stacked-section">
       ${showTicketForm ? `<article class="panel"><div class="panel-head"><div><h3>${editingTicket ? 'Editar ticket' : 'Nuevo ticket'}</h3><p>Numeracion y seguimiento por sucursal</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-ticket-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="ticket">
@@ -2480,7 +2480,7 @@ const branchesView = (ui) => `
     const editingBranch = ui.snapshot.branches.find((branch) => branch.id === branchEditingId)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Sucursales</p><h2>Locales y numeracion</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="content-grid single-focus">
       <article class="panel"><div class="panel-head"><div><h3>${editingBranch ? 'Editar sucursal' : 'Nueva sucursal'}</h3><p>La sucursal actual define la numeracion</p></div></div>
         <form class="form-grid" data-form="branch">
@@ -2509,7 +2509,7 @@ const branchesViewLegacy = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || 'Sin caja'}</strong><span>Caja actual</span></span>
       <span class="panel-inline-stat"><strong>${ui.currentBranch?.name || '-'}</strong><span>Activa</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="module-board branches-board ${showBranchForm ? '' : 'board-expanded'}">
       <article class="panel module-side"><div class="panel-head"><div><h3>${editingBranch ? 'Editar sucursal' : 'Nueva sucursal'}</h3><p>La sucursal actual define la numeracion</p></div></div>
         <form class="form-grid" data-form="branch">
@@ -2551,7 +2551,7 @@ const branchesViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || 'Sin caja'}</strong><span>Caja actual</span></span>
       <span class="panel-inline-stat"><strong>${ui.currentBranch?.name || '-'}</strong><span>Sucursal activa</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="stacked-section">
       ${showBranchForm ? `<article class="panel">
         <div class="panel-head"><div><h3>${editingBranch ? 'Editar sucursal' : 'Nueva sucursal'}</h3><p>La sucursal actual define la numeracion</p></div></div>
@@ -2579,7 +2579,7 @@ const registersView = (ui) => `
     const editingRegister = ui.snapshot.registers.find((register) => register.id === registerEditingId)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Cajas</p><h2>Cajeros y puestos de cobro</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="content-grid single-focus">
       <article class="panel"><div class="panel-head"><div><h3>${editingRegister ? 'Editar caja' : 'Nueva caja'}</h3><p>Asignacion por sucursal y cajero</p></div></div>
         <form class="form-grid" data-form="register">
@@ -2609,7 +2609,7 @@ const registersViewLegacy = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || '-'}</strong><span>Activa</span></span>
       <span class="panel-inline-stat"><strong>${new Set(ui.enrichedRegisters.map((register) => register.cashierName)).size}</strong><span>Cajeros</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="module-board registers-board ${showRegisterForm ? '' : 'board-expanded'}">
       <article class="panel module-side"><div class="panel-head"><div><h3>${editingRegister ? 'Editar caja' : 'Nueva caja'}</h3><p>Asignacion por sucursal y cajero</p></div></div>
         <form class="form-grid" data-form="register">
@@ -2650,7 +2650,7 @@ const registersViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || '-'}</strong><span>Caja activa</span></span>
       <span class="panel-inline-stat"><strong>${new Set(ui.enrichedRegisters.map((register) => register.cashierName)).size}</strong><span>Cajeros</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="stacked-section">
       ${showRegisterForm ? `<article class="panel">
         <div class="panel-head"><div><h3>${editingRegister ? 'Editar caja' : 'Nueva caja'}</h3><p>Asignacion por sucursal y cajero</p></div></div>
@@ -2822,7 +2822,7 @@ const auditView = (ui) => {
   const total = Math.max(1, counts.reduce((sum, item) => sum + item.count, 0)); let offset = 0
   const donut = counts.map((item) => { const start = Math.round((offset / total) * 100); offset += item.count; return `${moduleColors[item.key]} ${start}% ${Math.round((offset / total) * 100)}%` }).join(', ') || '#334155 0 100%'
   const sensitiveCount = entries.filter((entry) => ['deleted', 'cancelled', 'returned', 'reset', 'deactivated'].includes(entry.action)).length
-  return `<section class="view-section audit-view"><div class="section-header"><div><p class="kicker">Control y trazabilidad</p><h2>Auditoría</h2><p class="section-description">Seguí cada cambio entre módulos, desde la operación que lo originó.</p></div><div class="panel-inline-stats section-inline-stats"><span class="panel-inline-stat"><strong>${entries.length}</strong><span>Eventos</span></span><span class="panel-inline-stat"><strong>${sensitiveCount}</strong><span>Para revisar</span></span></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel audit-controls"><div class="audit-periods" aria-label="Período de auditoría">${[['today', 'Hoy'], ['week', '7 días'], ['month', 'Este mes'], ['custom', 'Personalizado']].map(([key, label]) => `<button type="button" class="audit-filter-button ${auditPeriodFilter === key ? 'is-active' : ''}" data-audit-period="${key}">${label}</button>`).join('')}</div><div class="audit-filter-fields"><label class="audit-search"><span>Buscar</span><input type="search" data-audit-search value="${escapeHtml(auditSearchQuery)}" placeholder="Usuario, operación o módulo" /></label>${auditPeriodFilter === 'custom' ? `<label>Desde<input type="date" data-audit-date="from" value="${auditDateFrom}" /></label><label>Hasta<input type="date" data-audit-date="to" value="${auditDateTo}" /></label>` : ''}</div></section><section class="audit-overview"><article class="panel audit-module-panel"><div class="panel-head"><div><h3>Ramas por módulo</h3><p>Elegí un módulo para seguir su recorrido.</p></div></div><div class="audit-module-filters"><button type="button" class="audit-module-chip ${auditModuleFilter === 'all' ? 'is-active' : ''}" data-audit-module="all">Todos <b>${entries.length}</b></button>${counts.map((item) => `<button type="button" class="audit-module-chip module-${item.key} ${auditModuleFilter === item.key ? 'is-active' : ''}" data-audit-module="${item.key}"><i></i>${item.label} <b>${item.count}</b></button>`).join('')}</div></article><article class="panel audit-distribution"><div class="panel-head"><div><h3>Distribución</h3><p>Eventos del período seleccionado</p></div></div><div class="audit-donut-row"><div class="audit-donut" style="--audit-donut: conic-gradient(${donut})"><strong>${entries.length}</strong><span>eventos</span></div><div class="audit-legend">${counts.slice(0, 5).map((item) => `<span class="module-${item.key}"><i></i>${item.label}<b>${item.count}</b></span>`).join('') || '<span>Sin actividad en este período.</span>'}</div></div></article></section><section class="panel audit-trace-panel"><div class="panel-head"><div><h3>Línea de trazabilidad</h3><p>Los puntos de color muestran los módulos relacionados con cada acción.</p></div></div><div class="audit-trace">${entries.length ? entries.map((entry) => `<article class="audit-trace-event module-${entry.modules[0]}"><div class="audit-trace-node"><i></i></div><div class="audit-trace-content"><div class="audit-event-topline"><span class="audit-module-tag module-${entry.modules[0]}">${entry.moduleLabel}</span><time>${String(entry.createdAt || '').slice(0, 16).replace('T', ' · ')}</time></div><strong>${actionLabels[entry.action] || 'Registró'} ${entry.entityLabel}</strong><p>Por ${escapeHtml(entry.actorName)}${entry.entityId ? ` · Ref. ${escapeHtml(String(entry.entityId).slice(0, 8))}` : ''}</p><div class="audit-related-modules">${entry.modules.map((module) => `<span class="module-${module}" title="${ui.auditModuleLabels[module]}"><i></i>${ui.auditModuleLabels[module]}</span>`).join('')}</div></div></article>`).join('') : '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'}</div></section></section>`
+  return `<section class="view-section audit-view"><div class="section-header"><div><p class="kicker">Control y trazabilidad</p><h2>Auditoría</h2><p class="section-description">Seguí cada cambio entre módulos, desde la operación que lo originó.</p></div><div class="panel-inline-stats section-inline-stats"><span class="panel-inline-stat"><strong>${entries.length}</strong><span>Eventos</span></span><span class="panel-inline-stat"><strong>${sensitiveCount}</strong><span>Para revisar</span></span></div></div>${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}<section class="panel audit-controls"><div class="audit-periods" aria-label="Período de auditoría">${[['today', 'Hoy'], ['week', '7 días'], ['month', 'Este mes'], ['custom', 'Personalizado']].map(([key, label]) => `<button type="button" class="audit-filter-button ${auditPeriodFilter === key ? 'is-active' : ''}" data-audit-period="${key}">${label}</button>`).join('')}</div><div class="audit-filter-fields"><label class="audit-search"><span>Buscar</span><input type="search" data-audit-search value="${escapeHtml(auditSearchQuery)}" placeholder="Usuario, operación o módulo" /></label>${auditPeriodFilter === 'custom' ? `<label>Desde<input type="date" data-audit-date="from" value="${auditDateFrom}" /></label><label>Hasta<input type="date" data-audit-date="to" value="${auditDateTo}" /></label>` : ''}</div></section><section class="audit-overview"><article class="panel audit-module-panel"><div class="panel-head"><div><h3>Ramas por módulo</h3><p>Elegí un módulo para seguir su recorrido.</p></div></div><div class="audit-module-filters"><button type="button" class="audit-module-chip ${auditModuleFilter === 'all' ? 'is-active' : ''}" data-audit-module="all">Todos <b>${entries.length}</b></button>${counts.map((item) => `<button type="button" class="audit-module-chip module-${item.key} ${auditModuleFilter === item.key ? 'is-active' : ''}" data-audit-module="${item.key}"><i></i>${item.label} <b>${item.count}</b></button>`).join('')}</div></article><article class="panel audit-distribution"><div class="panel-head"><div><h3>Distribución</h3><p>Eventos del período seleccionado</p></div></div><div class="audit-donut-row"><div class="audit-donut" style="--audit-donut: conic-gradient(${donut})"><strong>${entries.length}</strong><span>eventos</span></div><div class="audit-legend">${counts.slice(0, 5).map((item) => `<span class="module-${item.key}"><i></i>${item.label}<b>${item.count}</b></span>`).join('') || '<span>Sin actividad en este período.</span>'}</div></div></article></section><section class="panel audit-trace-panel"><div class="panel-head"><div><h3>Línea de trazabilidad</h3><p>Los puntos de color muestran los módulos relacionados con cada acción.</p></div></div><div class="audit-trace">${entries.length ? entries.map((entry) => `<article class="audit-trace-event module-${entry.modules[0]}"><div class="audit-trace-node"><i></i></div><div class="audit-trace-content"><div class="audit-event-topline"><span class="audit-module-tag module-${entry.modules[0]}">${entry.moduleLabel}</span><time>${String(entry.createdAt || '').slice(0, 16).replace('T', ' · ')}</time></div><strong>${actionLabels[entry.action] || 'Registró'} ${entry.entityLabel}</strong><p>Por ${escapeHtml(entry.actorName)}${entry.entityId ? ` · Ref. ${escapeHtml(String(entry.entityId).slice(0, 8))}` : ''}</p><div class="audit-related-modules">${entry.modules.map((module) => `<span class="module-${module}" title="${ui.auditModuleLabels[module]}"><i></i>${ui.auditModuleLabels[module]}</span>`).join('')}</div></div></article>`).join('') : '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'}</div></section></section>`
 }
 
 const reportsView = (ui) => `
@@ -2831,7 +2831,7 @@ const reportsView = (ui) => `
       <span class="panel-inline-stat"><strong>${money(ui.reportScopedInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0))}</strong><span>Facturas filtradas</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.reportScopedCashMovements.reduce((sum, movement) => sum + movement.signedAmount, 0))}</strong><span>Mov. caja</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="content-grid single-focus report-filter-shell">
       <article class="panel"><div class="panel-head"><div><h3>Filtro operativo</h3><p>Separado por sucursal y caja</p></div></div>
         <form class="form-grid compact-form report-filter-form" data-form="report-filter">
@@ -2904,7 +2904,7 @@ const ownerAdminViewV2 = (ui) => {
   const usersWithActivity = allUsers.filter((entry) => entry.activity?.length).length
   const trace = selectedUser?.activity || []
   return `<section class="view-section platform-trace-view"><div class="section-header platform-console-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2><p class="section-description">Elegí una persona para seguir su actividad real en todos sus comercios.</p></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="platform-trace-stats"><span><strong>${allUsers.length}</strong> usuarios</span><span><strong>${activeUsers}</strong> activos</span><span><strong>${usersWithActivity}</strong> con actividad registrada</span></section>
     <section class="platform-trace-workspace"><aside class="panel platform-user-directory"><div class="panel-head"><div><p class="kicker">Directorio</p><h3>Usuarios</h3></div><span class="panel-count">${users.length}</span></div><div class="platform-user-filters"><input type="search" value="${escapeHtml(platformUserSearchQuery)}" data-platform-user-search placeholder="Buscar persona o comercio" /><select data-platform-user-filter><option value="all" ${platformUserFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformUserFilter === 'active' ? 'selected' : ''}>Activos</option><option value="inactive" ${platformUserFilter === 'inactive' ? 'selected' : ''}>Inactivos</option></select></div><div class="platform-user-list">${users.length ? users.map((entry) => `<button type="button" class="platform-user-row ${entry.id === selectedUser?.id ? 'is-selected' : ''}" data-platform-user-select="${entry.id}"><span class="platform-user-avatar">${escapeHtml((entry.fullName || '?').slice(0, 1).toUpperCase())}</span><span><strong>${escapeHtml(entry.fullName)}</strong><small>${escapeHtml(entry.email || 'Sin email')}</small><em>${entry.memberships?.[0]?.commerceName || 'Sin comercio'}</em></span><time>${entry.lastLoginAt ? formatDate(entry.lastLoginAt) : 'Sin acceso'}</time></button>`).join('') : '<p class="empty-state">No hay usuarios para este filtro.</p>'}</div></aside>
       ${selectedUser ? `<section class="platform-user-detail"><header class="platform-user-header"><span class="platform-user-avatar large">${escapeHtml((selectedUser.fullName || '?').slice(0, 1).toUpperCase())}</span><div><p class="kicker">Perfil seleccionado</p><h3>${escapeHtml(selectedUser.fullName)}</h3><p>${escapeHtml(selectedUser.email || 'Sin email')} · ${selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}</p></div><div class="platform-user-meta"><span>Alta<strong>${formatDate(selectedUser.createdAt)}</strong></span><span>Último acceso<strong>${formatDate(selectedUser.lastLoginAt)}</strong></span></div></header>
@@ -2941,7 +2941,7 @@ const settingsViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${syncLabel}</strong><span>Base</span></span>
       <span class="panel-inline-stat"><strong>${ui.snapshot.business.enabledModules.length}</strong><span>Modulos</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="stacked-section settings-stack">
       <article class="panel"><div class="panel-head"><div><h3>Cuenta activa</h3><p>Sesion, rol y acceso del negocio</p></div></div>
         <div class="priority-list">
@@ -3036,7 +3036,7 @@ const settingsViewV2 = (ui) => `
 
 const basicSettingsView = (ui) => `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Ajustes</p><h2>Mi sesion</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
     <section class="module-summary-grid">
       <article class="metric-card compact"><span>Sesion</span><strong>${ui.user.fullName}</strong><p>${ui.role.name}</p></article>
       <article class="metric-card compact"><span>Base</span><strong>${ui.snapshot.meta.syncStatus === 'online' ? 'Operativa' : (ui.snapshot.meta.syncStatus || 'Sin conexion')}</strong><p>Datos del negocio</p></article>
