@@ -31,11 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Sync authorized marketing metrics
-        run: npm run sync:marketing-metrics
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # Marketing metrics come from committed site/marketing-metrics.json.
+      # Do NOT sync from Supabase here — SUPABASE_SERVICE_ROLE_KEY must not be in Pages CI.
+      # Optional local/ops sync: npm run sync:marketing-metrics (with env outside CI Pages).
 
       - name: Build site
         run: npm run build
