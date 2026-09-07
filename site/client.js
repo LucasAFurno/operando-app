@@ -386,7 +386,7 @@ const flushPendingScrollTarget = () => {
   })
 }
 
-const loadCloudAccess = async (sessionPayload = null) => {
+const loadCloudAccess = async (sessionPayload = null, { awaitSync = true } = {}) => {
   if (!authManager) throw new Error('La conexion cloud no esta lista.')
   const currentSession = sessionPayload || authManager.getSession()
   if (!currentSession?.sessionToken) throw new Error('No hay sesion valida para sincronizar.')
@@ -399,9 +399,24 @@ const loadCloudAccess = async (sessionPayload = null) => {
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
-  await store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
-  store.setCloudAuthSession(currentSession.profile, [])
-  startOperationalRealtime()
+  const runSync = async () => {
+    await store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
+    store.setCloudAuthSession(currentSession.profile, [])
+    startOperationalRealtime()
+  }
+  if (awaitSync) {
+    await runSync()
+    return activeProfile
+  }
+  cloudSyncBusy = true
+  runSync()
+    .catch((error) => {
+      feedbackMessage = error?.message || 'No se pudo sincronizar la base.'
+    })
+    .finally(() => {
+      cloudSyncBusy = false
+      render()
+    })
   return activeProfile
 }
 
@@ -3490,6 +3505,8 @@ const bootstrap = async () => {
   authManager = initialCloudConfig?.url && initialCloudConfig?.anonKey
     ? createCloudAuthManager({ url: initialCloudConfig.url, anonKey: initialCloudConfig.anonKey, instanceKey: initialCloudConfig.instanceKey, turnstileSiteKey: initialCloudConfig.turnstileSiteKey })
     : null
+  // First paint ASAP so "Cargando sistema..." does not wait on restore/sync.
+  try { render() } catch { /* final render still runs in finally */ }
   try {
     if (authManager) {
       recoveryState = await authManager.consumeRecoverySession()
@@ -3519,11 +3536,10 @@ const bootstrap = async () => {
       }
     }
     if (store.getCloudConnection().enabled && authManager?.getSession()?.sessionToken) {
-      cloudSyncBusy = true
       try {
-        await loadCloudAccess()
+        await loadCloudAccess(null, { awaitSync: false })
       } catch (syncError) {
-        // Keep the restored session visible even if the first cloud sync fails.
+        // Keep the restored session visible even if activating the session profile fails.
         const current = authManager.getSession()
         if (current?.sessionToken && current?.profile) {
           commerceContext = current.commerceContext || null
@@ -3544,7 +3560,7 @@ const bootstrap = async () => {
       store.clearCloudAuthSession()
     }
   } finally {
-    cloudSyncBusy = false
+    // cloudSyncBusy stays true while a deferred syncFromCloud runs.
     try {
       render()
     } catch (error) {
@@ -3816,12 +3832,8 @@ const handleSubmit = async (event) => {
       if (!authManager) throw new Error('La conexion cloud no esta lista.')
       const sessionPayload = await authManager.signIn({ instanceKey: requestedInstanceKey || null, identifier, pin })
       persistInstanceKey(sessionPayload?.commerceContext?.instance_key || requestedInstanceKey || authInstanceKey)
-      try {
-        setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
-      } catch {
-        setupStatus = { initialized: true }
-      }
-      await loadCloudAccess(sessionPayload)
+      setupStatus = { initialized: true }
+      await loadCloudAccess(sessionPayload, { awaitSync: false })
       activeSection = 'dashboard'
       saveSection()
       window.history.replaceState({ section: activeSection }, '', '/panel/')
@@ -3896,7 +3908,7 @@ const handleSubmit = async (event) => {
       })
       // Turnstile token already consumed by setup_instance; mark initialized locally.
       setupStatus = { initialized: true }
-      await loadCloudAccess(sessionPayload)
+      await loadCloudAccess(sessionPayload, { awaitSync: false })
       activeSection = sectionFromPath()
       saveSection()
       syncSectionPath()
