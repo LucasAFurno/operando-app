@@ -3473,11 +3473,9 @@ const bootstrap = async () => {
   authViewMode = authModeFromPath() || entryAuthMode || getRequestedPublicView() || (window.__operandoAppEntry ? 'login' : authViewMode)
   activeSection = sectionFromPath()
   if (!window.operandoDesktop) {
+    // Clear legacy offline snapshot only. Keep instance/theme/section so F5 feels stable.
     safeStorage.removeItem(dataStorageKey)
     safeStorage.removeItem(cloudConfigStorageKey)
-    safeStorage.removeItem(instanceStorageKey)
-    safeStorage.removeItem(themeStorageKey)
-    safeStorage.removeItem(sectionStorageKey)
   }
   authInstanceKey = normalizeInstanceKey(
     safeStorage.getItem(instanceStorageKey, '')
@@ -3522,13 +3520,29 @@ const bootstrap = async () => {
     }
     if (store.getCloudConnection().enabled && authManager?.getSession()?.sessionToken) {
       cloudSyncBusy = true
-      await loadCloudAccess()
+      try {
+        await loadCloudAccess()
+      } catch (syncError) {
+        // Keep the restored session visible even if the first cloud sync fails.
+        const current = authManager.getSession()
+        if (current?.sessionToken && current?.profile) {
+          commerceContext = current.commerceContext || null
+          store.setCloudAccessToken(current.sessionToken)
+          store.setCloudAuthSession(current.profile, [])
+          feedbackMessage = mapPublicAuthError(syncError?.message, 'login') || 'Sesion restaurada; algunos datos se estan sincronizando.'
+        } else {
+          throw syncError
+        }
+      }
     }
   } catch (error) {
     loginMessage = mapPublicAuthError(error?.message, 'login')
     feedbackMessage = ''
-    commerceContext = null
-    store.clearCloudAuthSession()
+    // Only wipe UI auth when there is no restorable session token.
+    if (!authManager?.getSession()?.sessionToken) {
+      commerceContext = null
+      store.clearCloudAuthSession()
+    }
   } finally {
     cloudSyncBusy = false
     try {
