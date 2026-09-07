@@ -1351,6 +1351,7 @@ const standaloneAuthView = (ui) => {
       <form class="login-form compact-signup-form" data-form="instance-setup" autocomplete="on">
         <div class="login-form-grid-1"><label>Nombre comercial<input type="text" name="commerceName" placeholder="Mi comercio" autocomplete="organization" required /></label><label>Tu nombre<input type="text" name="ownerName" placeholder="Nombre del responsable" autocomplete="name" required /></label><label>Email<input type="email" name="ownerEmail" placeholder="tu@email.com" autocomplete="email" autocapitalize="off" spellcheck="false" required /></label><label>Clave<input type="password" name="ownerPin" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required /></label></div>
         <input type="hidden" name="instanceKey" value="" /><input type="hidden" name="ownerLogin" value="" /><input type="hidden" name="branchName" value="Casa central" /><input type="hidden" name="branchCode" value="CASA" /><input type="hidden" name="registerName" value="Caja 1" /><input type="hidden" name="registerCode" value="CAJA-01" />
+        ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
         ${signupMessage ? `<p class="login-error" role="alert">${signupMessage}</p>` : ''}<button type="submit">Crear cuenta y abrir el panel</button>
       </form><p class="auth-route-note">¿Ya tenés cuenta? <a href="/ingresar/">Ingresar</a></p>`
     : mode === 'recovery' ? `
@@ -1474,6 +1475,7 @@ const loginView = (ui) => {
               <input type="hidden" name="branchCode" value="CASA" />
               <input type="hidden" name="registerName" value="Caja 1" />
               <input type="hidden" name="registerCode" value="CAJA-01" />
+              ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
               ${signupMessage ? `<p class="login-error">${signupMessage}</p>` : ''}
               <button type="submit">Crear cuenta y empezar</button>
             </form>
@@ -1637,6 +1639,7 @@ const loginViewV2 = (ui) => `
               <strong>Alta automatica</strong>
               <span>Se crea tu comercio, tu usuario administrador y la primera caja para arrancar sin pasos tecnicos.</span>
             </div>
+            ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
             ${signupMessage ? `<p class="login-error">${signupMessage}</p>` : ''}
             <button type="submit">Crear cuenta y empezar</button>
           </form>
@@ -1675,6 +1678,7 @@ const setupView = (ui) => `
           <strong>Alta automatica</strong>
           <span>Se crea tu cuenta principal y una caja inicial lista para arrancar.</span>
         </div>
+        ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
         ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
         <button type="submit">Crear cuenta y empezar</button>
       </form>
