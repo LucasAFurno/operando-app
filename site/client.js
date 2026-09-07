@@ -3813,9 +3813,16 @@ const handleSubmit = async (event) => {
   const form = event.currentTarget
   if (form.dataset.submitting === 'true') return
   form.dataset.submitting = 'true'
-  for (const button of form.querySelectorAll('button[type="submit"]')) button.disabled = true
   const formData = new FormData(form, event.submitter)
   const kind = form.dataset.form
+  const busyLabel = kind === 'login'
+    ? 'Ingresando…'
+    : (kind === 'instance-setup' ? 'Creando cuenta…' : '')
+  for (const button of form.querySelectorAll('button[type="submit"]')) {
+    button.disabled = true
+    button.setAttribute('aria-busy', 'true')
+    if (busyLabel) button.textContent = busyLabel
+  }
 
   if (kind === 'login') {
     loginMessage = ''
