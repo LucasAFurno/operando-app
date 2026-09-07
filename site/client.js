@@ -3501,20 +3501,23 @@ const bootstrap = async () => {
         signupMessage = ''
       }
     }
+    // Restore session before setup_status: panel reload has no Turnstile widget,
+    // and getSetupStatus requires one — that used to skip restore and log users out on F5.
     if (store.getCloudConnection().enabled && authManager) {
-      try {
-        setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
-      } catch (error) {
-        // Turnstile may not be ready on first paint; signup/login forms retry with a token.
-        setupStatus = null
-      }
-    }
-    if (store.getCloudConnection().enabled && authManager && setupStatus?.initialized) {
       const restoredSession = await authManager.restoreSession()
       if (restoredSession?.sessionToken) {
         authInstanceKey = normalizeInstanceKey(restoredSession.commerceContext?.instance_key || authInstanceKey)
         safeStorage.setItem(instanceStorageKey, authInstanceKey)
         store.setCloudAccessToken(restoredSession.sessionToken)
+        setupStatus = { initialized: true }
+      }
+    }
+    if (store.getCloudConnection().enabled && authManager && !authManager.getSession()?.sessionToken) {
+      try {
+        setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+      } catch (error) {
+        // Turnstile may not be ready on first paint; signup/login forms retry with a token.
+        setupStatus = null
       }
     }
     if (store.getCloudConnection().enabled && authManager?.getSession()?.sessionToken) {
