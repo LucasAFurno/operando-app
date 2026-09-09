@@ -3339,6 +3339,12 @@ const renderTurnstileWidget = (attempt = 0) => {
         action: 'turnstile-spin-v2',
         size: 'flexible',
         theme: 'dark',
+        'expired-callback': () => {
+          try { globalThis.turnstile?.reset(widgetId) } catch { /* widget will retry below */ }
+        },
+        'timeout-callback': () => {
+          try { globalThis.turnstile?.reset(widgetId) } catch { /* widget will retry below */ }
+        },
         'error-callback': () => {
           if (widgetId) globalThis.turnstile?.remove(widgetId)
           showUnavailableMessage()
