@@ -7,7 +7,7 @@ globalThis.crypto ??= webcrypto
 const { createBrowserDataStore } = await import('../data-store.js')
 
 const createAuthenticatedStore = async () => {
-  const store = createBrowserDataStore()
+  const store = createBrowserDataStore({ seedDemoData: true })
   assert.deepEqual(await store.authenticateUser('admin@demo.local', 'demo1234'), { ok: true })
   return store
 }

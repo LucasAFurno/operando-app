@@ -11,8 +11,8 @@
     <link rel="canonical" href="https://operando.app/panel/" />
     <link rel="icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
-    <link rel="stylesheet" href="/app.css?v=bf3f72a6055b" />
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',"GTM-WFW5KTHS");</script>
+    <link rel="stylesheet" href="/app.css?v=1462db19a1a0" />
+    
     <title>Panel | Operando</title>
     <style>
       html, body {
@@ -33,44 +33,47 @@
         display: grid;
         place-items: center;
         padding: 24px;
-        background: linear-gradient(180deg, #050505 0%, #0b0b0b 100%);
+        overflow: hidden;
+        background: repeating-linear-gradient(0deg, #080808 0 53px, #151515 54px 55px);
         color: #f3f4f6;
-        font-family: Arial, sans-serif;
+        font-family: Inter, Arial, sans-serif;
         z-index: 9999;
       }
       .boot-card {
-        width: min(560px, 100%);
-        padding: 28px;
-        border-radius: 24px;
-        border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(17, 17, 17, 0.96);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        display: grid;
+        justify-items: center;
+        gap: 13px;
+        text-align: center;
       }
       .boot-card strong {
-        display: block;
-        margin-bottom: 10px;
-        font-size: 28px;
-      }
-      .boot-card p {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
         margin: 0;
-        color: #9ca3af;
-        line-height: 1.5;
+        font-size: 21px;
+        letter-spacing: -0.06em;
       }
-      .boot-card p + p {
-        margin-top: 10px;
+      .boot-card strong img { width: 32px; height: 32px; object-fit: contain; }
+      .boot-card strong b { color: #ed211b; }
+      .boot-card::after {
+        width: 112px;
+        height: 2px;
+        background: linear-gradient(90deg, #ed211b 0 35%, #f4f4ef 35% 55%, #ed211b 55% 100%);
+        content: '';
+        animation: boot-flow 1.2s ease-in-out infinite;
       }
+      @keyframes boot-flow { 50% { transform: scaleX(.42); opacity: .55; } }
       .boot-card.is-error strong {
         color: #ff5a4f;
       }
     </style>
   </head>
   <body data-booting="true">
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WFW5KTHS" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    
     <div id="app"></div>
-    <div id="boot-status">
+    <div id="boot-status" aria-label="Preparando acceso">
       <div class="boot-card">
-        <strong>Operando</strong>
-        <p>Cargando sistema...</p>
+        <strong><img src="/operando-logo.png" alt="" />operando<b>.app</b></strong>
       </div>
     </div>
     <script>
@@ -105,6 +108,6 @@
       }, 4000);
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"></script>
-    <script type="module" src="/app.js?v=bf3f72a6055b"></script>
+    <script type="module" src="/app.js?v=1462db19a1a0"></script>
   </body>
 </html>

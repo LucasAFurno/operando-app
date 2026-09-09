@@ -1,10 +1,11 @@
 import { createSupabaseCoreAdapter } from './cloud-core.js?v=__OPERANDO_ASSET_VERSION__'
 import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=__OPERANDO_ASSET_VERSION__'
 
-const dataStorageKey = 'operando-control-data'
+const dataStorageKey = 'operando-control-data-v2'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
 const defaultCloudUrl = 'https://rfwsnqmjkclxhbmidbkm.supabase.co'
-const canPersistInBrowser = Boolean(globalThis.window?.operandoDesktop?.isDesktop)
+const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(globalThis.location?.hostname || '')
+const canPersistInBrowser = Boolean(globalThis.window?.operandoDesktop?.isDesktop) || isLocalDevelopment
 
 const fallbackId = () => `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 const makeId = () => {
@@ -262,7 +263,7 @@ const seedData = {
   },
   business: {
     name: 'Panel comercial',
-    organization: 'Demo local',
+    organization: 'Operando.app',
     currentBranchId: '',
     currentRegisterId: '',
     enabledModules: modulePresets.full,
@@ -282,15 +283,15 @@ const seedData = {
     },
   },
   branches: [
-    { id: makeId(), name: 'Sucursal demo', code: 'SUC', address: 'Configuracion local', isActive: true },
-    { id: makeId(), name: 'Deposito demo', code: 'DEP', address: 'Configuracion local', isActive: true },
+    { id: makeId(), name: 'Sucursal Centro', code: 'SUC', address: 'Configuración local', isActive: true },
+    { id: makeId(), name: 'Depósito central', code: 'DEP', address: 'Configuración local', isActive: true },
   ],
   registers: [],
   roles,
   users: [
-    { id: makeId(), fullName: 'Administrador demo', roleId: roleIds.admin, email: 'admin@demo.local', pin: 'demo1234', isActive: true, isOwner: true, allowedModules: [], blockedPermissions: [] },
-    { id: makeId(), fullName: 'Caja demo', roleId: roleIds.cashier, email: 'caja@demo.local', pin: 'demo1111', isActive: true, allowedModules: [], blockedPermissions: [] },
-    { id: makeId(), fullName: 'Deposito demo', roleId: roleIds.warehouse, email: 'deposito@demo.local', pin: 'demo2222', isActive: true, allowedModules: [], blockedPermissions: [] },
+    { id: makeId(), fullName: 'Administrador', roleId: roleIds.admin, email: 'admin@demo.local', pin: 'demo1234', isActive: true, isOwner: true, allowedModules: [], blockedPermissions: [] },
+    { id: makeId(), fullName: 'Cajero', roleId: roleIds.cashier, email: 'caja@demo.local', pin: 'demo1111', isActive: true, allowedModules: [], blockedPermissions: [] },
+    { id: makeId(), fullName: 'Encargado de depósito', roleId: roleIds.warehouse, email: 'deposito@demo.local', pin: 'demo2222', isActive: true, allowedModules: [], blockedPermissions: [] },
   ],
   session: {
     userId: '',
@@ -331,16 +332,16 @@ seedData.business.currentRegisterId = seedData.registers[0].id
 // A new local demo starts with enough master data to exercise filters and pagination.
 for (let index = seedData.customers.length; index < 100; index += 1) {
   const number = index + 1
-  seedData.customers.push({ id: makeId(), fullName: `Cliente simulacro ${String(number).padStart(3, '0')}`, phone: `11 6000 ${String(number).padStart(4, '0')}`, email: `cliente.${number}@demo.local`, balance: 0, tag: ['Mostrador', 'Frecuente', 'Mayorista', 'Cuenta corriente'][index % 4] })
+  seedData.customers.push({ id: makeId(), fullName: `Cliente ${String(number).padStart(3, '0')}`, phone: `11 6000 ${String(number).padStart(4, '0')}`, email: `cliente.${number}@demo.local`, balance: 0, tag: ['Mostrador', 'Frecuente', 'Mayorista', 'Cuenta corriente'][index % 4] })
 }
 for (let index = seedData.suppliers.length; index < 100; index += 1) {
   const number = index + 1
-  seedData.suppliers.push({ id: makeId(), name: `Proveedor simulacro ${String(number).padStart(3, '0')}`, contact: `Contacto demo ${number}`, phone: `11 7000 ${String(number).padStart(4, '0')}`, email: `proveedor.${number}@demo.local`, balance: 0, lastDelivery: '2026-07-12', category: ['Hardware', 'Insumos', 'Perifericos', 'Servicios'][index % 4] })
+  seedData.suppliers.push({ id: makeId(), name: `Proveedor ${String(number).padStart(3, '0')}`, contact: `Contacto ${number}`, phone: `11 7000 ${String(number).padStart(4, '0')}`, email: `proveedor.${number}@demo.local`, balance: 0, lastDelivery: '2026-07-12', category: ['Hardware', 'Insumos', 'Perifericos', 'Servicios'][index % 4] })
 }
 for (let index = seedData.products.length; index < 100; index += 1) {
   const number = index + 1
   const isService = index % 5 === 0
-  seedData.products.push({ id: makeId(), name: isService ? `Servicio tecnico simulacro ${String(number).padStart(3, '0')}` : `Producto simulacro ${String(number).padStart(3, '0')}`, sku: `DEMO-${String(number).padStart(4, '0')}`, barcode: `779900${String(number).padStart(7, '0')}`, stock: isService ? 0 : 150, salePrice: 8000 + (index % 12) * 3500, costPrice: isService ? 0 : 4500 + (index % 12) * 1800, minStock: isService ? 0 : 8, category: isService ? 'Servicio' : ['Hardware', 'Perifericos', 'Insumos', 'Accesorios'][index % 4], trackStock: !isService })
+  seedData.products.push({ id: makeId(), name: isService ? `Servicio técnico ${String(number).padStart(3, '0')}` : `Producto ${String(number).padStart(3, '0')}`, sku: `OP-${String(number).padStart(4, '0')}`, barcode: `779900${String(number).padStart(7, '0')}`, stock: isService ? 0 : 150, salePrice: 8000 + (index % 12) * 3500, costPrice: isService ? 0 : 4500 + (index % 12) * 1800, minStock: isService ? 0 : 8, category: isService ? 'Servicio' : ['Hardware', 'Perifericos', 'Insumos', 'Accesorios'][index % 4], trackStock: !isService })
 }
 
 const pushAudit = (state, actorUserId, entityType, entityId, action, afterData, beforeData = null) => {
@@ -652,11 +653,12 @@ const revertPurchaseEffects = (state, receipt) => {
     id: cashSessionId,
     openedBy: adminId,
     openingAmount: 50000,
-    status: 'open',
+    // La demo arranca con la caja cerrada: el usuario decide cuándo abrirla.
+    status: 'closed',
     openedAt: '2026-07-12T09:00:00.000Z',
-    closedAt: null,
-    countedAmount: null,
-    differenceAmount: null,
+    closedAt: '2026-07-12T18:00:00.000Z',
+    countedAmount: 50000,
+    differenceAmount: 0,
     branchId: state.branches[0].id,
     registerId: state.registers[0].id,
   })
@@ -770,7 +772,7 @@ const revertPurchaseEffects = (state, receipt) => {
 
   const demoCustomers = state.customers.filter((customer) => customer.email?.endsWith('@demo.local'))
   const demoSuppliers = state.suppliers.filter((supplier) => supplier.email?.endsWith('@demo.local'))
-  const demoProducts = state.products.filter((product) => product.sku?.startsWith('DEMO-'))
+  const demoProducts = state.products.filter((product) => product.sku?.startsWith('OP-') || product.sku?.startsWith('DEMO-'))
   const demoServices = demoProducts.filter((product) => !product.trackStock)
   const demoBaseDate = Date.UTC(2026, 6, 1, 12, 0, 0)
   const demoDate = (index, hour = 12) => new Date(demoBaseDate + index * 86400000 + hour * 3600000).toISOString()
@@ -792,16 +794,16 @@ const revertPurchaseEffects = (state, receipt) => {
     const branchId = state.branches[index % state.branches.length].id
     const registerId = state.registers[index % state.registers.length].id
 
-    state.sales.unshift({ id: saleId, items: [{ id: makeId(), productId: service.id, quantity, unitPrice, lineTotal: totalAmount }], customerId: customer.id, sellerUserId: adminId, totalQuantity: quantity, subtotalAmount: totalAmount, discountAmount: 0, totalAmount, amountPaid, paymentBreakdown: getPaymentBreakdown({ paymentMethod, isPaid: amountPaid === totalAmount }, totalAmount), channel: ['Mostrador', 'WhatsApp', 'Instagram', 'Web'][index % 4], paymentMethod, status: amountPaid ? 'completed' : 'pending', note: `SIMULACRO-2026 venta ${String(index + 1).padStart(3, '0')}`, soldAt, cashSessionId: paymentMethod === 'cash' ? cashSessionId : null, branchId, registerId })
+    state.sales.unshift({ id: saleId, items: [{ id: makeId(), productId: service.id, quantity, unitPrice, lineTotal: totalAmount }], customerId: customer.id, sellerUserId: adminId, totalQuantity: quantity, subtotalAmount: totalAmount, discountAmount: 0, totalAmount, amountPaid, paymentBreakdown: getPaymentBreakdown({ paymentMethod, isPaid: amountPaid === totalAmount }, totalAmount), channel: ['Mostrador', 'WhatsApp', 'Instagram', 'Web'][index % 4], paymentMethod, status: amountPaid ? 'completed' : 'pending', note: `Venta ${String(index + 1).padStart(3, '0')}`, soldAt, cashSessionId: paymentMethod === 'cash' ? cashSessionId : null, branchId, registerId })
     state.invoices.unshift({ id: makeId(), number: `B-SIM-0001-${String(index + 1).padStart(6, '0')}`, customerId: customer.id, totalAmount, status: amountPaid ? 'Cobrada' : 'Emitida', dueDate: soldAt.slice(0, 10), type: index % 5 === 0 ? 'A' : 'B', kind: 'Factura', fiscalStatus: index % 10 === 0 ? 'Pendiente' : 'Autorizado', saleId, branchId })
-    state.tickets.unshift({ id: makeId(), number: `TEC-SIM-${String(index + 1).padStart(6, '0')}`, customerId: customer.id, device: ['Notebook', 'PC escritorio', 'Impresora', 'Monitor'][index % 4], issue: `SIMULACRO-2026 diagnostico ${String(index + 1).padStart(3, '0')}`, status: ['Recibido', 'En curso', 'Esperando aprobacion', 'Listo para retirar'][index % 4], updatedAt: soldAt.slice(0, 10), branchId })
+    state.tickets.unshift({ id: makeId(), number: `TEC-${String(index + 1).padStart(6, '0')}`, customerId: customer.id, device: ['Notebook', 'PC escritorio', 'Impresora', 'Monitor'][index % 4], issue: `Diagnóstico ${String(index + 1).padStart(3, '0')}`, status: ['Recibido', 'En curso', 'Esperando aprobacion', 'Listo para retirar'][index % 4], updatedAt: soldAt.slice(0, 10), branchId })
 
     const purchaseId = makeId()
     const purchaseQuantity = 10 + (index % 15)
     const unitCost = Number(product.costPrice || 0)
-    state.purchaseReceipts.unshift({ id: purchaseId, supplierId: supplier.id, productId: product.id, quantity: purchaseQuantity, unitCost, totalCost: purchaseQuantity * unitCost, documentNumber: `OC-SIM-${String(index + 1).padStart(6, '0')}`, note: `SIMULACRO-2026 compra ${String(index + 1).padStart(3, '0')}`, receivedAt: soldAt, receivedBy: adminId, branchId })
-    state.stockMovements.unshift({ id: makeId(), productId: product.id, type: 'purchase', quantity: purchaseQuantity, referenceId: purchaseId, notes: 'SIMULACRO-2026 recepcion de compra', createdAt: soldAt, createdBy: adminId, branchId, registerId: null })
-    state.cashMovements.unshift({ id: makeId(), cashSessionId, branchId: state.branches[0].id, registerId: state.registers[0].id, createdBy: adminId, kind: index % 2 === 0 ? 'income' : 'expense', signedAmount: (index % 2 === 0 ? 1 : -1) * (1000 + index * 125), note: `SIMULACRO-2026 movimiento de caja ${String(index + 1).padStart(3, '0')}`, createdAt: soldAt })
+    state.purchaseReceipts.unshift({ id: purchaseId, supplierId: supplier.id, productId: product.id, quantity: purchaseQuantity, unitCost, totalCost: purchaseQuantity * unitCost, documentNumber: `OC-${String(index + 1).padStart(6, '0')}`, note: `Recepción de compra ${String(index + 1).padStart(3, '0')}`, receivedAt: soldAt, receivedBy: adminId, branchId })
+    state.stockMovements.unshift({ id: makeId(), productId: product.id, type: 'purchase', quantity: purchaseQuantity, referenceId: purchaseId, notes: 'Recepción de compra', createdAt: soldAt, createdBy: adminId, branchId, registerId: null })
+    state.cashMovements.unshift({ id: makeId(), cashSessionId, branchId: state.branches[0].id, registerId: state.registers[0].id, createdBy: adminId, kind: index % 2 === 0 ? 'income' : 'expense', signedAmount: (index % 2 === 0 ? 1 : -1) * (1000 + index * 125), note: `Movimiento de caja ${String(index + 1).padStart(3, '0')}`, createdAt: soldAt })
   }
 
   for (let index = 0; index < 100; index += 1) {
@@ -816,8 +818,41 @@ const revertPurchaseEffects = (state, receipt) => {
 
 const defaultState = buildSeedTransactions()
 
-const migrateState = (source) => {
-  const migrated = clone(defaultState)
+// Production/local onboarding starts empty. The rich fixture remains available
+// only when an explicit test/dev caller opts into it; it is never the default
+// state shipped to a real operation.
+const buildEmptyState = () => {
+  const state = clone(seedData)
+  state.business = {
+    ...state.business,
+    name: '',
+    organization: '',
+    currentBranchId: '',
+    currentRegisterId: '',
+    progressiveProfile: { country: '', industry: '', phone: '', email: '', needsArca: null, operationalGoals: [], status: 'pending' },
+  }
+  state.branches = []
+  state.registers = []
+  state.users = []
+  state.customers = []
+  state.products = []
+  state.suppliers = []
+  state.cashSessions = []
+  state.purchaseReceipts = []
+  state.sales = []
+  state.invoices = []
+  state.tickets = []
+  state.cashMovements = []
+  state.stockMovements = []
+  state.auditLogs = []
+  state.session = { userId: '', authenticated: false }
+  return state
+}
+
+const emptyState = buildEmptyState()
+
+const migrateState = (source, fallbackState = defaultState) => {
+  const migrated = clone(fallbackState)
   if (!source || typeof source !== 'object') return migrated
 
   // Upgrade the built-in local demo once. Real businesses and cloud data are
@@ -902,6 +937,8 @@ const migrateState = (source) => {
     ...receipt,
     documentNumber: receipt.documentNumber || '',
     note: receipt.note || '',
+    paymentCondition: receipt.paymentCondition || 'cash',
+    dueDate: receipt.dueDate || '',
     branchId: receipt.branchId || migrated.business.currentBranchId || migrated.branches[0]?.id || null,
   }))
 
@@ -984,6 +1021,8 @@ export const createBrowserDataStore = (options = {}) => {
   const desktopBridge = globalThis.window?.operandoDesktop
   const isDesktop = Boolean(desktopBridge?.isDesktop)
   const requireCloud = Boolean(options.requireCloud) && !isDesktop
+  const seedDemoData = options.seedDemoData === true
+  const initialState = seedDemoData ? defaultState : emptyState
   const useBrowserBusinessCache = !requireCloud && !isDesktop
   const initialCloudConfig = options.initialCloudConfig && options.initialCloudConfig.url && options.initialCloudConfig.anonKey
     ? {
@@ -1141,15 +1180,15 @@ export const createBrowserDataStore = (options = {}) => {
   }
 
   const readState = () => {
-    if (isDesktop) return migrateState(desktopBridge.initialize(defaultState))
-    if (requireCloud && !cloudCoreAdapter) return clone(defaultState)
-    if (!useBrowserBusinessCache) return clone(defaultState)
+    if (isDesktop) return migrateState(desktopBridge.initialize(initialState), initialState)
+    if (requireCloud && !cloudCoreAdapter) return clone(initialState)
+    if (!useBrowserBusinessCache) return clone(initialState)
     const saved = safeStorage.getItem(dataStorageKey)
-    if (!saved) return clone(defaultState)
+    if (!saved) return clone(initialState)
     try {
-      return migrateState(JSON.parse(saved))
+      return migrateState(JSON.parse(saved), initialState)
     } catch {
-      return clone(defaultState)
+      return clone(initialState)
     }
   }
 
@@ -1197,7 +1236,7 @@ export const createBrowserDataStore = (options = {}) => {
   const save = ({ skipCloud = false } = {}) => {
     if (isDesktop) {
       applyCloudMeta()
-      state = migrateState(desktopBridge.saveSnapshot(state))
+      state = migrateState(desktopBridge.saveSnapshot(state), initialState)
       return
     }
     if (requireCloud && !cloudCoreAdapter) {
@@ -1223,7 +1262,7 @@ export const createBrowserDataStore = (options = {}) => {
       if (value && typeof value === 'object' && !Array.isArray(value) && state[key] && typeof state[key] === 'object' && !Array.isArray(state[key])) next[key] = { ...state[key], ...value }
     }
     cloudStateLoaded = true
-    return migrateState(next)
+    return migrateState(next, initialState)
   }
   const syncFromCloud = async (modules = null) => {
     if (!cloudCoreAdapter) return { ok: false, message: 'Sin conexion cloud configurada.' }
@@ -1608,8 +1647,8 @@ export const createBrowserDataStore = (options = {}) => {
     const allowedGoals = new Set(['vender', 'stock', 'caja', 'clientes', 'facturacion', 'sucursales'])
     if (goals.length > 5 || goals.some((goal) => !allowedGoals.has(goal))) return { ok: false, message: 'Revisa los objetivos seleccionados.' }
     const normalizedPayload = { country: String(payload.country || '').trim().slice(0, 80), industry: String(payload.industry || '').trim().slice(0, 100), phone: String(payload.phone || '').trim().slice(0, 30), email: String(payload.email || '').trim().toLowerCase().slice(0, 254), needsArca: typeof payload.needsArca === 'boolean' ? payload.needsArca : null, operationalGoals: goals, status: payload.status === 'complete' ? 'complete' : 'pending' }
-    if (!/^[+()0-9\s-]{6,30}$/.test(normalizedPayload.phone)) return { ok: false, message: 'Ingresa un teléfono de contacto válido.' }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPayload.email)) return { ok: false, message: 'Ingresa un email de contacto válido.' }
+    if (normalizedPayload.phone && !/^[+()0-9\s-]{6,30}$/.test(normalizedPayload.phone)) return { ok: false, message: 'Ingresa un teléfono de contacto válido.' }
+    if (normalizedPayload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPayload.email)) return { ok: false, message: 'Ingresa un email de contacto válido.' }
     const before = clone(state.business.progressiveProfile)
     const remoteProfile = cloudCoreAdapter ? await cloudCoreAdapter.updateProgressiveProfile(normalizedPayload) : normalizedPayload
     state.business.progressiveProfile = { country: remoteProfile?.onboarding_country ?? normalizedPayload.country, industry: remoteProfile?.onboarding_industry ?? normalizedPayload.industry, phone: remoteProfile?.onboarding_phone ?? normalizedPayload.phone, email: remoteProfile?.onboarding_email ?? normalizedPayload.email, needsArca: remoteProfile?.onboarding_needs_arca ?? normalizedPayload.needsArca, operationalGoals: remoteProfile?.onboarding_goals ?? normalizedPayload.operationalGoals, status: remoteProfile?.onboarding_status ?? normalizedPayload.status }
@@ -2467,6 +2506,8 @@ export const createBrowserDataStore = (options = {}) => {
         quantity: Number(payload.quantity || 0),
         unitCost: Number(payload.unitCost || 0),
         note: payload.note || '',
+        paymentCondition: payload.paymentCondition || 'cash',
+        dueDate: payload.dueDate || '',
         branchId: getCurrentBranch(state)?.id || null,
       })
       await syncFromCloud()
@@ -2486,6 +2527,8 @@ export const createBrowserDataStore = (options = {}) => {
       unitCost,
       totalCost: quantity * unitCost,
       note: payload.note || '',
+      paymentCondition: payload.paymentCondition || 'cash',
+      dueDate: payload.dueDate || '',
       receivedAt: todayIso(),
       receivedBy: currentUser().id,
       branchId: getCurrentBranch(state)?.id || null,
@@ -2583,6 +2626,8 @@ export const createBrowserDataStore = (options = {}) => {
         quantity: Number(payload.quantity || 0),
         unitCost: Number(payload.unitCost || 0),
         note: payload.note || '',
+        paymentCondition: payload.paymentCondition || 'cash',
+        dueDate: payload.dueDate || '',
         branchId: payload.branchId || getCurrentBranch(state)?.id || null,
       })
       await syncFromCloud()
@@ -2599,6 +2644,8 @@ export const createBrowserDataStore = (options = {}) => {
     receipt.unitCost = Number(payload.unitCost)
     receipt.totalCost = receipt.quantity * receipt.unitCost
     receipt.note = payload.note || ''
+    receipt.paymentCondition = payload.paymentCondition || receipt.paymentCondition || 'cash'
+    receipt.dueDate = payload.dueDate || receipt.dueDate || ''
     receipt.branchId = payload.branchId || receipt.branchId || getCurrentBranch(state)?.id || null
     applyPurchaseEffects(state, receipt)
     pushAudit(state, currentUser().id, 'purchase_receipt', receipt.id, 'updated', receipt, before)
@@ -2897,18 +2944,18 @@ export const createBrowserDataStore = (options = {}) => {
   const exportData = () => clone(state)
   const importData = (payload) => {
     if (!isDesktop) return { ok: false, message: 'La web publica no admite importar datos locales.' }
-    state = migrateState(payload)
+    state = migrateState(payload, initialState)
     pushAudit(state, currentUser().id, 'system', null, 'imported', { importedAt: todayIso() })
     save()
     return { ok: true, message: 'Backup importado.' }
   }
   const resetData = () => {
-    if (!isDesktop) return { ok: false, message: 'La web publica no admite restaurar demos locales.' }
-    state = clone(defaultState)
+    if (!isDesktop && !useBrowserBusinessCache) return { ok: false, message: 'La web publica no permite reiniciar datos locales.' }
+    state = clone(initialState)
     applyCloudMeta(cloudCoreAdapter ? 'pending' : 'offline')
     pushAudit(state, currentUser().id, 'system', null, 'reset', { resetAt: todayIso() })
     save()
-    return { ok: true, message: 'Demo restaurada.' }
+    return { ok: true, message: 'Datos locales reiniciados.' }
   }
 
   const getCloudConnection = () => ({

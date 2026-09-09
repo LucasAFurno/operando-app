@@ -1,6 +1,5 @@
 import { createBrowserDataStore } from './data-store.js?v=__OPERANDO_ASSET_VERSION__'
 import { createCloudAuthManager } from './cloud-auth.js?v=__OPERANDO_ASSET_VERSION__'
-import { createClient as createSupabaseRealtimeClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
@@ -16,7 +15,8 @@ const dataStorageKey = 'operando-control-data'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
 const onboardingStorageKey = 'operando-control-onboarding-v1'
 const defaultSupabaseUrl = 'https://rfwsnqmjkclxhbmidbkm.supabase.co'
-const canPersistInBrowser = Boolean(globalThis.window?.operandoDesktop?.isDesktop)
+const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(globalThis.location?.hostname || '')
+const canPersistInBrowser = Boolean(globalThis.window?.operandoDesktop?.isDesktop) || isLocalDevelopment
 
 let store = null
 let authManager = null
@@ -90,6 +90,8 @@ let reportDateFrom = ''
 let reportDateTo = ''
 let saleDraftQuantities = {}
 let saleQuickAddCode = ''
+let saleQuickAddLastKey = ''
+let saleQuickAddLastAt = 0
 let saleCustomerSearchQuery = ''
 let saleOperationId = ''
 let saleSubmissionInFlight = false
@@ -108,17 +110,26 @@ let liveSyncBusy = false
 let liveSyncDebounceTimer = null
 let operationalRealtimeClient = null
 let operationalRealtimeChannel = null
+let createSupabaseRealtimeClient = null
 let unsubscribeOperationalChanges = null
 const pendingOperationalDomains = new Set()
 let customerFormOpen = false
 let customerEditingId = ''
 let customerSearchQuery = ''
 let customerMapPreviewId = ''
+let customerListFilter = 'all'
+let customerListExpanded = false
 let saleFormOpen = false
+let saleReturnAfterCash = false
+let salesHistoryQuery = ''
+let salesHistoryStatus = 'all'
+let salesHistoryPayment = 'all'
+let salesHistoryPeriod = 'all'
 let cashFormOpen = false
 let productFormOpen = false
 let productEditingId = ''
 let productSearchQuery = ''
+let productListExpanded = false
 let stockAdjustmentFormOpen = false
 let stockTransferFormOpen = false
 let supplierFormOpen = false
@@ -132,9 +143,13 @@ let supplierPaymentDraft = null
 let supplierPaymentPanelOpen = false
 let purchaseReceiptsExpanded = false
 let purchaseSuppliersExpanded = false
+let purchaseHistoryQuery = ''
+let purchaseHistorySupplier = 'all'
+let purchaseHistoryPeriod = 'all'
 let dashboardStockExpanded = false
 let dashboardAuditExpanded = false
 let auditModuleFilter = 'all'
+let auditActionFilter = 'all'
 let auditPeriodFilter = 'all'
 let auditSearchQuery = ''
 let auditDateFrom = ''
@@ -142,11 +157,18 @@ let auditDateTo = ''
 let supplierMapPreviewId = ''
 let invoiceFormOpen = false
 let invoicePaymentId = ''
+let invoiceHistoryQuery = ''
+let invoiceHistoryStatus = 'all'
+let invoiceHistoryFiscal = 'all'
+let invoiceHistoryKind = 'all'
 let ticketFormOpen = false
+let ticketHistoryQuery = ''
+let ticketHistoryStatus = 'all'
 let branchFormOpen = false
 let registerFormOpen = false
 let commerceContext = null
 let setupStatus = null
+let setupCelebrationDismissed = false
 let authInstanceKey = ''
 let authViewMode = 'landing'
 let recoveryState = null
@@ -157,18 +179,21 @@ let onboardingKeyListenerBound = false
 let feedbackTimer = null
 let pendingScrollTop = false
 let accountAlertsOpen = false
+let accountMenuOpen = false
 let dismissedAccountAlertIds = new Set()
 let supportMenuOpen = false
 let settingsPanelOpen = ''
 let progressiveProfilePromptOpen = true
 let progressiveProfileStep = 1
 let progressiveProfileGoalsDraft = null
+let progressiveProfileDraft = null
 let progressiveProfileError = ''
 let arcaSetupStep = 1
 let arcaCsrGenerated = false
 let arcaCertificateName = ''
 let arcaVerificationState = 'idle'
 let arcaConnectionStatus = 'attention'
+let arcaCelebrationVisible = false
 let arcaFiscal = { cuit: '', legalName: '', pointOfSale: '', csrPem: '', certificatePem: '' }
 let platformUserSelectedId = ''
 let platformUserFilter = 'all'
@@ -181,6 +206,8 @@ let onboardingSeenReportedFor = ''
 let onboardingPausedFor = ''
 let pendingOnboardingFocus = false
 const pageSizeOptions = [10, 20, 50, 100, 1000]
+const progressiveIndustryOptions = ['Kiosco', 'Almacén', 'Farmacia', 'Ferretería', 'Indumentaria', 'Panadería', 'Carnicería', 'Verdulería', 'Electrónica', 'Pet shop', 'Zapatería', 'Librería', 'Gimnasio', 'Veterinaria', 'Peluquería', 'Bar y cervecería', 'Heladería', 'Dietética']
+const progressiveCountryOptions = ['Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia', 'Costa Rica', 'Cuba', 'Ecuador', 'El Salvador', 'España', 'Estados Unidos', 'Guatemala', 'Honduras', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú', 'República Dominicana', 'Uruguay', 'Venezuela']
 
 const onboardingSteps = [
   { id: 'product', section: 'productos', selector: '[data-action="open-product-form"]', title: 'Cargá un producto', text: 'Usá “Agregar producto” para dar de alta el primer artículo.' },
@@ -193,7 +220,8 @@ const onboardingSteps = [
 const getOnboardingStorageKey = () => `${onboardingStorageKey}:${commerceContext?.commerce_id || authInstanceKey || 'local'}:${store?.getSnapshot?.().meta?.currentUserId || 'user'}`
 const saveOnboarding = () => safeStorage.setItem(getOnboardingStorageKey(), JSON.stringify(onboarding))
 const loadOnboarding = (guideSeenAt = '') => {
-  onboarding = { visible: !guideSeenAt, step: 0, completed: [] }
+  // La guía contextual se abre desde el tablero: no compite con la puesta a punto.
+  onboarding = { visible: false, step: 0, completed: [] }
   if (guideSeenAt) return
   try {
     const saved = JSON.parse(safeStorage.getItem(getOnboardingStorageKey(), ''))
@@ -226,87 +254,6 @@ const guideCard = () => {
 }
 
 const arcaTenantId = () => `arca-${String(commerceContext?.commerce_id || '').toLowerCase()}`
-const arcaFiscalStorageKey = (commerceId = commerceContext?.commerce_id) => `operando-arca-fiscal:${String(commerceId || '').toLowerCase()}`
-const loadArcaFiscalBasics = (commerceId = commerceContext?.commerce_id) => {
-  try {
-    const raw = globalThis.localStorage?.getItem(arcaFiscalStorageKey(commerceId))
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object') return null
-    return {
-      cuit: String(parsed.cuit || '').replace(/\D/g, ''),
-      legalName: String(parsed.legalName || '').trim(),
-      pointOfSale: String(parsed.pointOfSale || '').trim(),
-      connected: Boolean(parsed.connected),
-    }
-  } catch {
-    return null
-  }
-}
-const persistArcaFiscalBasics = (extra = {}) => {
-  const commerceId = commerceContext?.commerce_id
-  if (!commerceId) return
-  try {
-    const payload = {
-      cuit: String(extra.cuit ?? arcaFiscal.cuit ?? '').replace(/\D/g, ''),
-      legalName: String(extra.legalName ?? arcaFiscal.legalName ?? '').trim(),
-      pointOfSale: String(extra.pointOfSale ?? arcaFiscal.pointOfSale ?? '').trim(),
-      connected: Boolean(extra.connected ?? (arcaConnectionStatus === 'connected')),
-    }
-    globalThis.localStorage?.setItem(arcaFiscalStorageKey(commerceId), JSON.stringify(payload))
-  } catch {
-    // Persistencia local es best-effort.
-  }
-}
-const restoreArcaFiscalBasics = () => {
-  const saved = loadArcaFiscalBasics()
-  if (!saved) return
-  if (saved.cuit) arcaFiscal.cuit = saved.cuit
-  if (saved.legalName) arcaFiscal.legalName = saved.legalName
-  if (saved.pointOfSale) arcaFiscal.pointOfSale = saved.pointOfSale
-  if (saved.connected) {
-    arcaConnectionStatus = 'connected'
-    arcaVerificationState = 'verified'
-  }
-}
-const isArcaReadyForEmit = () => arcaConnectionStatus === 'connected' || Boolean(loadArcaFiscalBasics()?.connected)
-const receiptTypeFromLetter = (type) => {
-  const letter = String(type || 'B').trim().toUpperCase()
-  if (letter === 'A') return 1
-  if (letter === 'C') return 11
-  return 6
-}
-const roundMoney2 = (value) => (Math.round((Number(value) + Number.EPSILON) * 100) / 100).toFixed(2)
-const buildFeCaeReqXml = ({ pointOfSale, receiptType, receiptNumber, cbteFch, docTipo, docNro, impTotal, fiscalType }) => {
-  const total = Number(impTotal || 0)
-  const tipo = Number(receiptType) || receiptTypeFromLetter(fiscalType)
-  const isTypeC = tipo === 11 || String(fiscalType || '').toUpperCase() === 'C'
-  let impNeto
-  let impIva
-  let ivaBlock = ''
-  if (isTypeC) {
-    impNeto = roundMoney2(total)
-    impIva = '0.00'
-  } else {
-    const neto = Math.round((total / 1.21) * 100) / 100
-    const iva = Math.round((total - neto) * 100) / 100
-    impNeto = roundMoney2(neto)
-    impIva = roundMoney2(iva)
-    ivaBlock = `<Iva><AlicIva><Id>5</Id><BaseImp>${impNeto}</BaseImp><Importe>${impIva}</Importe></AlicIva></Iva>`
-  }
-  const fecha = String(cbteFch || '').replace(/\D/g, '').slice(0, 8)
-  return `<FeCAEReq><FeCabReq><CantReg>1</CantReg><PtoVta>${Number(pointOfSale)}</PtoVta><CbteTipo>${tipo}</CbteTipo></FeCabReq><FeDetReq><FECAEDetRequest><Concepto>1</Concepto><DocTipo>${Number(docTipo)}</DocTipo><DocNro>${Number(docNro)}</DocNro><CbteDesde>${Number(receiptNumber)}</CbteDesde><CbteHasta>${Number(receiptNumber)}</CbteHasta><CbteFch>${fecha}</CbteFch><ImpTotal>${roundMoney2(total)}</ImpTotal><ImpTotConc>0.00</ImpTotConc><ImpNeto>${impNeto}</ImpNeto><ImpOpEx>0.00</ImpOpEx><ImpTrib>0.00</ImpTrib><ImpIVA>${impIva}</ImpIVA><MonId>PES</MonId><MonCotiz>1</MonCotiz>${ivaBlock}</FECAEDetRequest></FeDetReq></FeCAEReq>`
-}
-const readXmlTag = (xml, tag) => {
-  const match = String(xml || '').match(new RegExp(`<(?:[\\w-]+:)?${tag}[^>]*>([^<]*)<\\/(?:[\\w-]+:)?${tag}>`, 'i'))
-  return match ? String(match[1] || '').trim() : ''
-}
-const parseArcaCae = (responseXml) => ({
-  cae: readXmlTag(responseXml, 'CAE'),
-  caeVto: readXmlTag(responseXml, 'CAEFchVto'),
-  resultado: readXmlTag(responseXml, 'Resultado'),
-})
-const formatArcaNumber = (pv, n) => `${String(Number(pv)).padStart(4, '0')}-${String(Number(n)).padStart(8, '0')}`
 const callArca = async (action, payload = {}) => {
   const session = authManager?.getSession()
   const cloud = store?.getCloudConnection()
@@ -317,13 +264,7 @@ const callArca = async (action, payload = {}) => {
     body: JSON.stringify({ action, tenantId: arcaTenantId(), ...payload }),
   })
   const result = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    const err = new Error(result?.message || result?.error || `ARCA no respondio (${response.status})`)
-    err.status = response.status
-    err.code = result?.error || ''
-    err.result = result
-    throw err
-  }
+  if (!response.ok) throw new Error(result?.message || result?.error || `ARCA no respondio (${response.status})`)
   return result
 }
 const listPagination = {
@@ -386,12 +327,11 @@ const flushPendingScrollTarget = () => {
   })
 }
 
-const loadCloudAccess = async (sessionPayload = null, { awaitSync = true } = {}) => {
+const loadCloudAccess = async (sessionPayload = null) => {
   if (!authManager) throw new Error('La conexion cloud no esta lista.')
   const currentSession = sessionPayload || authManager.getSession()
   if (!currentSession?.sessionToken) throw new Error('No hay sesion valida para sincronizar.')
   commerceContext = currentSession.commerceContext || null
-  restoreArcaFiscalBasics()
   store.setCloudAccessToken(currentSession.sessionToken)
   const activeProfile = store.setCloudAuthSession(currentSession.profile, [])
   if (!activeProfile) {
@@ -399,24 +339,9 @@ const loadCloudAccess = async (sessionPayload = null, { awaitSync = true } = {})
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
-  const runSync = async () => {
-    await store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
-    store.setCloudAuthSession(currentSession.profile, [])
-    startOperationalRealtime()
-  }
-  if (awaitSync) {
-    await runSync()
-    return activeProfile
-  }
-  cloudSyncBusy = true
-  runSync()
-    .catch((error) => {
-      feedbackMessage = error?.message || 'No se pudo sincronizar la base.'
-    })
-    .finally(() => {
-      cloudSyncBusy = false
-      render()
-    })
+  await store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
+  store.setCloudAuthSession(currentSession.profile, [])
+  startOperationalRealtime()
   return activeProfile
 }
 
@@ -507,11 +432,21 @@ const stopOperationalRealtime = () => {
   operationalRealtimeClient = null
 }
 
-const startOperationalRealtime = () => {
+const startOperationalRealtime = async () => {
   if (operationalRealtimeChannel || !store?.subscribeToOperationalChanges) return
   const cloud = store.getCloudConnection()
   const commerceId = String(commerceContext?.commerce_id || '').trim()
   if (!cloud?.url || !cloud?.anonKey || !commerceId) return
+
+  try {
+    if (!createSupabaseRealtimeClient) {
+      const module = await import('https://esm.sh/@supabase/supabase-js@2.110.8')
+      createSupabaseRealtimeClient = module.createClient
+    }
+  } catch {
+    // El POS sigue funcionando aunque la conexión opcional en tiempo real no esté disponible.
+    return
+  }
 
   operationalRealtimeClient = createSupabaseRealtimeClient(cloud.url, cloud.anonKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -926,16 +861,9 @@ const purchaseActionButtons = (receipt) => rowActionsMenu('Acciones de recepció
     <button type="button" class="inline-action" data-purchase-action="edit" data-id="${receipt.id}">Editar</button>
     <button type="button" class="inline-action danger" data-delete="purchase_receipt" data-id="${receipt.id}">Eliminar</button>
   `)
-const canShowEmitArca = (invoice) => {
-  if (!invoice?.saleId) return false
-  const status = String(invoice.fiscalStatus || 'Interno')
-  if (status === 'Aprobado' || status === 'Anulado') return false
-  const arcaish = ['Pendiente', 'Listo para enviar', 'Listo', 'Rechazado'].includes(status)
-  return arcaish || isArcaReadyForEmit()
-}
 const invoiceActionButtons = (invoice) => rowActionsMenu('Acciones de comprobante', `
     <button type="button" class="inline-action is-strong" data-invoice-action="pay" data-id="${invoice.id}" ${invoiceBalance(invoice) <= 0 ? 'disabled' : ''}>Abonar</button>
-    ${canShowEmitArca(invoice) ? `<button type="button" class="inline-action is-strong" data-invoice-action="emit-arca" data-id="${invoice.id}">Emitir con ARCA</button>` : ''}
+    <button type="button" class="inline-action" data-invoice-action="edit" data-id="${invoice.id}">Editar</button>
     <button type="button" class="inline-action" data-invoice-action="view" data-id="${invoice.id}">Ver</button>
     <button type="button" class="inline-action" data-invoice-action="print" data-id="${invoice.id}">Imprimir</button>
     <button type="button" class="inline-action danger" data-delete="invoice" data-id="${invoice.id}">Eliminar</button>
@@ -1297,6 +1225,8 @@ const getUiState = () => {
     openCashSession,
     cashSalesTotal,
     sessionCashMovementTotal,
+    sessionCashIncome: openCashSession ? snapshot.cashMovements.filter((movement) => movement.cashSessionId === openCashSession.id && Number(movement.signedAmount || 0) > 0).reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0) : 0,
+    sessionCashExpenses: openCashSession ? Math.abs(snapshot.cashMovements.filter((movement) => movement.cashSessionId === openCashSession.id && Number(movement.signedAmount || 0) < 0).reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0)) : 0,
     expectedCash: openCashSession ? Number(openCashSession.openingAmount) + cashSalesTotal + sessionCashMovementTotal : 0,
     unpaidSales: scopedSales.reduce((sum, sale) => sum + Math.max(0, Number(sale.totalAmount || 0) - Number(sale.amountPaid || 0)), 0),
     totalSales: scopedSales.reduce((sum, sale) => sum + sale.totalAmount, 0),
@@ -1366,7 +1296,6 @@ const standaloneAuthView = (ui) => {
       <form class="login-form compact-signup-form" data-form="instance-setup" autocomplete="on">
         <div class="login-form-grid-1"><label>Nombre comercial<input type="text" name="commerceName" placeholder="Mi comercio" autocomplete="organization" required /></label><label>Tu nombre<input type="text" name="ownerName" placeholder="Nombre del responsable" autocomplete="name" required /></label><label>Email<input type="email" name="ownerEmail" placeholder="tu@email.com" autocomplete="email" autocapitalize="off" spellcheck="false" required /></label><label>Clave<input type="password" name="ownerPin" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required /></label></div>
         <input type="hidden" name="instanceKey" value="" /><input type="hidden" name="ownerLogin" value="" /><input type="hidden" name="branchName" value="Casa central" /><input type="hidden" name="branchCode" value="CASA" /><input type="hidden" name="registerName" value="Caja 1" /><input type="hidden" name="registerCode" value="CAJA-01" />
-        ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
         ${signupMessage ? `<p class="login-error" role="alert">${signupMessage}</p>` : ''}<button type="submit">Crear cuenta y abrir el panel</button>
       </form><p class="auth-route-note">¿Ya tenés cuenta? <a href="/ingresar/">Ingresar</a></p>`
     : mode === 'recovery' ? `
@@ -1376,7 +1305,7 @@ const standaloneAuthView = (ui) => {
       <div class="auth-heading"><p class="kicker">Restablecer clave</p><h1 id="auth-title">Creá una clave nueva</h1><p>Vas a recuperar el acceso de ${maskEmail(recoveryState.email) || 'tu cuenta'}.</p></div>
       <form class="login-form" data-form="password-recovery" autocomplete="off"><label>Nueva clave<input type="password" name="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required /></label><label>Repetir nueva clave<input type="password" name="passwordConfirm" placeholder="Repetí la nueva clave" autocomplete="new-password" required /></label>${loginMessage ? `<p class="login-error" role="alert">${loginMessage}</p>` : ''}<button type="submit">Guardar nueva clave</button></form>`
     : `<div class="auth-heading"><p class="kicker">Enlace de recuperación</p><h1 id="auth-title">Este enlace ya no está disponible</h1><p>Por seguridad, los enlaces de recuperación vencen rápido y solo se pueden usar una vez.</p></div><a class="auth-primary-link" href="/recuperar-clave/">Pedir un enlace nuevo</a><p class="auth-route-note"><a href="/ingresar/">Volver a ingresar</a></p>`
-  return `<div class="login-shell auth-standalone-shell"><main class="auth-standalone" aria-labelledby="auth-title"><a class="auth-back-link" href="/">← Volver al sitio</a><section class="login-card auth-standalone-card"><div class="auth-brand"><img src="/operando-logo.png?v=operando-20260831" alt="Operando" /><div><strong>Operando</strong><span>Gestión comercial online</span></div></div>${content}</section><p class="auth-support">¿Necesitás ayuda? <button type="button" class="auth-text-action" data-action="open-support">Hablar con soporte</button></p></main></div>`
+  return `<div class="login-shell auth-standalone-shell"><a class="auth-back-link" href="/">← Volver al sitio</a><main class="auth-standalone" aria-labelledby="auth-title"><aside class="auth-operation-intro"><div class="auth-intro-brand"><img src="/operando-logo.png?v=operando-20260831" alt="" /><span>operando<b>.app</b></span></div><p>ACCESO A TU OPERACIÓN</p><h2>Volvé al ritmo.<br><em>Todo sigue conectado.</em></h2><div class="auth-operation-flow" aria-hidden="true"><span>VENTAS</span><i></i><span>CAJA</span><i></i><span>STOCK</span></div><small>Tu comercio, desde donde lo necesitás.</small></aside><section class="login-card auth-standalone-card">${content}<p class="auth-support">¿Necesitás ayuda? <button type="button" class="auth-text-action" data-action="open-support">Hablar con soporte</button></p></section></main></div>`
 }
 
 const paginateList = (items, listKey) => {
@@ -1490,7 +1419,6 @@ const loginView = (ui) => {
               <input type="hidden" name="branchCode" value="CASA" />
               <input type="hidden" name="registerName" value="Caja 1" />
               <input type="hidden" name="registerCode" value="CAJA-01" />
-              ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
               ${signupMessage ? `<p class="login-error">${signupMessage}</p>` : ''}
               <button type="submit">Crear cuenta y empezar</button>
             </form>
@@ -1507,7 +1435,7 @@ const loginView = (ui) => {
           <p class="kicker">Sistema de ventas, caja y stock</p>
           <h1>${productName}</h1>
           <p class="login-copy login-copy-hero">Software de gestion comercial para kioscos, tiendas, locales y negocios que necesitan vender, cobrar, controlar stock, clientes, compras y comprobantes desde una sola web.</p>
-          ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+          ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
           <div class="login-badges">
             <span class="login-badge ${ui.cloudConnection.enabled ? 'is-ok' : 'is-warn'}">${ui.cloudConnection.enabled ? 'Base online activa' : 'Activacion pendiente'}</span>
             <span class="login-badge">Ventas y caja</span>
@@ -1654,7 +1582,6 @@ const loginViewV2 = (ui) => `
               <strong>Alta automatica</strong>
               <span>Se crea tu comercio, tu usuario administrador y la primera caja para arrancar sin pasos tecnicos.</span>
             </div>
-            ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
             ${signupMessage ? `<p class="login-error">${signupMessage}</p>` : ''}
             <button type="submit">Crear cuenta y empezar</button>
           </form>
@@ -1693,7 +1620,6 @@ const setupView = (ui) => `
           <strong>Alta automatica</strong>
           <span>Se crea tu cuenta principal y una caja inicial lista para arrancar.</span>
         </div>
-        ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
         ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
         <button type="submit">Crear cuenta y empezar</button>
       </form>
@@ -1721,7 +1647,7 @@ const cloudActivationView = (ui) => `
         </div>
         <button type="submit">Activar base</button>
       </form>
-      ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+      ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
       <div class="login-actions">
         <button type="button" class="ghost-action" data-action="open-support">Necesito asistencia</button>
       </div>
@@ -1744,7 +1670,7 @@ const dashboardView = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.openCashSession ? money(ui.expectedCash) : 'Cerrada'}</strong><span>Caja</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.pendingInvoices)}</strong><span>Facturas</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     ${ui.user?.isOwner && ui.progressiveProfile.status === 'complete' ? `<div class="info-strip progressive-suggestion"><strong>${ui.progressiveProfile.industry ? `Sugerencia para ${escapeHtml(ui.progressiveProfile.industry)}` : 'Sugerencia para tu operación'}</strong><span>${progressiveSuggestion(ui.progressiveProfile)}</span></div>` : ''}
     <section class="dashboard-grid dashboard-operation-grid">
       <article class="panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Con multiples articulos</p></div></div><div class="list">
@@ -1778,25 +1704,38 @@ const dashboardViewV2 = (ui) => {
   const visibleActivity = ui.recentCommerceActivity.slice(0, 4)
   const activityTime = (createdAt) => String(createdAt || '').slice(11, 16) || '--:--'
   const topProductMax = Math.max(1, ...ui.topProducts.slice(0, 5).map(([, qty]) => Number(qty) || 0))
+  const setupTasks = [
+    { label: 'Definí tu operación', detail: ui.progressiveProfile.status === 'complete' ? 'Perfil listo' : 'Rubro y prioridades', section: 'dashboard', done: ui.progressiveProfile.status === 'complete', action: 'open-progressive-profile' },
+    { label: 'Cargá tu catálogo', detail: `${ui.snapshot.products.length} producto${ui.snapshot.products.length === 1 ? '' : 's'} disponible${ui.snapshot.products.length === 1 ? '' : 's'}`, section: 'productos', done: ui.snapshot.products.length > 0 },
+    { label: 'Prepará la caja', detail: ui.openCashSession ? 'Caja abierta' : 'Elegí cómo cobrar', section: 'caja', done: Boolean(ui.openCashSession) },
+    { label: 'Hacé tu primera venta', detail: ui.enrichedSales.length ? `${ui.enrichedSales.length} venta${ui.enrichedSales.length === 1 ? '' : 's'} registrada${ui.enrichedSales.length === 1 ? '' : 's'}` : 'Probá el flujo completo', section: 'ventas', done: ui.enrichedSales.length > 0 },
+  ]
+  const setupComplete = setupTasks.filter((task) => task.done).length
+  const setupFinished = setupComplete === setupTasks.length
   return `
   <section class="view-section dashboard-view">
-    <div class="section-header dashboard-header"><div><p class="kicker">Resumen diario</p><h2>Operación del local</h2></div><div class="dashboard-quick-actions">
+    <div class="section-header dashboard-header"><div><p class="kicker">Resumen de operación</p><h2>Operación del local</h2><p class="section-description">Todo el historial de tu sucursal y lo que requiere atención ahora.</p></div><div class="dashboard-quick-actions">
       <button type="button" class="primary-action" data-dashboard-section="ventas">Nueva venta</button>
       <button type="button" class="ghost-action" data-dashboard-section="facturacion">Cobro</button>
       <button type="button" class="ghost-action" data-dashboard-section="caja">Ingreso de caja</button>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${setupFinished ? (!setupCelebrationDismissed ? `<section class="opening-celebration" aria-live="polite"><button type="button" class="opening-celebration-close" data-action="dismiss-setup-celebration" aria-label="Cerrar felicitación">×</button><div class="celebration-fireworks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="opening-celebration-copy"><span class="kicker">04 / OPERACIÓN LISTA</span><h3>¡Felicitaciones!</h3><p>Ya completaste tu puesta a punto. Ahora disfrutá de Operando.app y hacé que el negocio siga tu ritmo.</p></div><span class="opening-celebration-mark" aria-hidden="true">✓</span></section>` : '') : `<section class="opening-checklist" aria-label="Puesta a punto del comercio">
+      <div class="opening-checklist-title"><span>01 / PUESTA A PUNTO</span><div><strong>${setupComplete}/4</strong><small>listo para operar</small></div></div>
+      <div class="opening-checklist-copy"><h3>Abrí tu operación.</h3><p>Completá lo esencial ahora. El resto lo ajustás mientras trabajás.</p></div>
+      <div class="opening-checklist-tasks">${setupTasks.map((task, index) => `<button type="button" class="opening-task ${task.done ? 'is-complete' : ''}" ${task.action ? `data-action="${task.action}"` : `data-dashboard-section="${task.section}"`}><span>${task.done ? '✓' : `0${index + 1}`}</span><div><strong>${task.label}</strong><small>${task.detail}</small></div><b aria-hidden="true">→</b></button>`).join('')}</div>
+    </section>`}
     <section class="dashboard-kpi-grid" aria-label="Resumen de operación">
-      <button type="button" class="dashboard-kpi-card" data-dashboard-section="ventas"><span>Ventas</span><strong>${money(ui.totalSales)}</strong><small>Hoy</small></button>
+      <button type="button" class="dashboard-kpi-card" data-dashboard-section="ventas"><span>Ventas</span><strong>${money(ui.totalSales)}</strong><small>Acumulado</small></button>
       <button type="button" class="dashboard-kpi-card" data-dashboard-section="caja"><span>Caja</span><strong>${ui.openCashSession ? money(ui.expectedCash) : 'Cerrada'}</strong><small>${ui.openCashSession ? 'Sesión actual' : 'Abrir caja para operar'}</small></button>
       <button type="button" class="dashboard-kpi-card" data-dashboard-section="facturacion"><span>Por cobrar</span><strong>${money(ui.unpaidSales)}</strong><small>Ventas pendientes</small></button>
-      <button type="button" class="dashboard-kpi-card" data-dashboard-section="facturacion"><span>Facturas pendientes</span><strong>${money(ui.pendingInvoices)}</strong><small>${pendingInvoiceCount} comprobante${pendingInvoiceCount === 1 ? '' : 's'}</small></button>
+      <button type="button" class="dashboard-kpi-card" data-dashboard-section="productos"><span>Stock crítico</span><strong>${ui.lowStock.length}</strong><small>${ui.lowStock.length === 1 ? 'Producto para revisar' : 'Productos para revisar'}</small></button>
     </section>
     <section class="dashboard-attention" aria-label="Atención hoy">
       <p>Atención hoy</p>
-      <button type="button" data-dashboard-section="caja"><span class="attention-status ${ui.openCashSession ? 'is-ok' : 'is-alert'}"></span><strong>Caja ${ui.openCashSession ? 'abierta' : 'cerrada'}</strong><small>${ui.openCashSession ? 'Lista para operar' : 'Requiere apertura'}</small></button>
-      <button type="button" data-dashboard-section="productos"><span class="attention-status ${ui.lowStock.length ? 'is-alert' : 'is-ok'}"></span><strong>${ui.lowStock.length} producto${ui.lowStock.length === 1 ? '' : 's'} crítico${ui.lowStock.length === 1 ? '' : 's'}</strong><small>${ui.lowStock.length ? 'Requieren reposición' : 'Inventario estable'}</small></button>
-      <button type="button" data-dashboard-section="facturacion"><span class="attention-status ${pendingInvoiceCount ? 'is-alert' : 'is-ok'}"></span><strong>${pendingInvoiceCount} factura${pendingInvoiceCount === 1 ? '' : 's'} pendiente${pendingInvoiceCount === 1 ? '' : 's'}</strong><small>${pendingInvoiceCount ? `Por ${money(ui.pendingInvoices)}` : 'Sin comprobantes pendientes'}</small></button>
+      ${!ui.openCashSession ? '<button type="button" data-dashboard-section="caja"><span class="attention-status is-alert"></span><strong>Abrir caja</strong><small>Necesaria para cobrar en efectivo</small></button>' : ''}
+      ${pendingInvoiceCount ? `<button type="button" data-dashboard-section="facturacion"><span class="attention-status is-alert"></span><strong>Revisar facturas</strong><small>${pendingInvoiceCount} comprobante${pendingInvoiceCount === 1 ? '' : 's'} pendiente${pendingInvoiceCount === 1 ? '' : 's'}</small></button>` : ''}
+      ${!ui.openCashSession && !pendingInvoiceCount ? '<span class="dashboard-all-clear"><span class="attention-status is-ok"></span><strong>Todo en orden</strong><small>No hay acciones urgentes.</small></span>' : ''}
     </section>
     <section class="dashboard-primary-grid">
       <article class="panel dashboard-sales-panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Últimas operaciones registradas</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="ventas">Ver todas</button></div><div class="dashboard-sales-list">
@@ -1842,14 +1781,20 @@ const customersViewV2 = (ui) => `
   ${(() => {
     const editingCustomer = ui.snapshot.customers.find((customer) => customer.id === customerEditingId)
     const query = customerSearchQuery.trim().toLowerCase()
-    const customers = (query ? ui.snapshot.customers.filter((customer) => [customer.fullName, customer.phone, customer.email, customer.cuit].some((value) => String(value || '').toLowerCase().includes(query))) : ui.snapshot.customers.slice(0, 10))
+    const filteredCustomers = ui.snapshot.customers.filter((customer) => {
+      const matchesQuery = !query || [customer.fullName, customer.phone, customer.email, customer.cuit, customer.tag].some((value) => String(value || '').toLowerCase().includes(query))
+      const balance = Number(customer.balance || 0)
+      const matchesFilter = customerListFilter === 'debt' ? balance > 0 : customerListFilter === 'clear' ? balance <= 0 : customerListFilter === 'counter' ? String(customer.tag || '').toLowerCase().includes('mostrador') : true
+      return matchesQuery && matchesFilter
+    })
+    const customers = customerListExpanded || query || customerListFilter !== 'all' ? filteredCustomers : filteredCustomers.slice(0, 10)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Clientes</p><h2>Base comercial</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.snapshot.customers.length}</strong><span>Activos</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.snapshot.customers.reduce((sum, customer) => sum + Number(customer.balance || 0), 0))}</strong><span>Saldo</span></span>
-      <span class="panel-inline-stat"><strong>${ui.snapshot.customers.filter((customer) => String(customer.tag || '').toLowerCase().includes('mostrador')).length}</strong><span>Rapidos</span></span>
+      <span class="panel-inline-stat"><strong>${ui.snapshot.customers.filter((customer) => Number(customer.balance || 0) > 0).length}</strong><span>Con deuda</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="module-board customers-board">
       <div class="module-main">
         ${customerFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>${editingCustomer ? 'Editar cliente' : 'Nuevo cliente'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-customer-form">Cerrar</button></div></div>
@@ -1868,8 +1813,9 @@ const customersViewV2 = (ui) => `
           </form>
         </article>` : ''}
         <article class="panel"><div class="panel-head"><div><h3>${query ? 'Resultados' : 'Ultimos 10 clientes'}</h3><p>Tocá un cliente para ver su información; editá sólo cuando haga falta.</p></div><div class="settings-actions">${createToggleButton('customer', customerFormOpen, 'Agregar cliente')}</div></div>
-          <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-customer-search value="${escapeHtml(customerSearchQuery)}" placeholder="Buscar cliente" aria-label="Buscar cliente" /></div>
-          <div class="timeline-list">${customers.map((customer) => `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-customer-map" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(customer.phone || customer.email || customer.cuit || 'Sin datos de contacto')}</p><span>${escapeHtml(customer.address || 'Sin dirección')} · ${balanceText(customer.balance)} ${money(customer.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-customer" data-id="${customer.id}">Editar</button>${actionButton('customer', customer.id)}</span>${customerMapPreviewId === customer.id ? `<div class="customer-map-preview">${customer.address ? `<iframe title="Ubicación de ${escapeHtml(customer.fullName)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(customer.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}">Abrir en Maps</a>` : '<p>Este cliente todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>`).join('') || '<p class="empty-state">No hay clientes para esta búsqueda.</p>'}</div>
+          <div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-customer-search value="${escapeHtml(customerSearchQuery)}" placeholder="Buscar por nombre, teléfono, email o CUIT" aria-label="Buscar cliente" /></div>
+          <div class="customer-filter-row" role="toolbar" aria-label="Filtros de clientes">${[['all', 'Todos'], ['debt', 'Con deuda'], ['clear', 'Al día'], ['counter', 'Mostrador']].map(([value, label]) => `<button type="button" class="customer-filter ${customerListFilter === value ? 'is-active' : ''}" data-customer-filter="${value}">${label}</button>`).join('')}</div>
+          <div class="timeline-list">${customers.map((customer) => { const customerSales = ui.enrichedSales.filter((sale) => sale.customerId === customer.id); const contact = [customer.phone, customer.email, customer.cuit].filter(Boolean).join(' · ') || 'Sin datos de contacto'; return `<div class="timeline-item contact-result"><button type="button" class="contact-result-main" data-action="view-customer-map" data-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><p>${escapeHtml(contact)}</p><span>${escapeHtml(customer.address || 'Sin dirección')} · ${balanceText(customer.balance)} ${money(customer.balance)}</span></button><span class="contact-result-actions"><button type="button" class="inline-action" data-action="edit-customer" data-id="${customer.id}">Editar</button>${actionButton('customer', customer.id)}</span>${customerMapPreviewId === customer.id ? `<div class="customer-map-preview customer-detail-preview"><div class="customer-detail-stats"><span><b>${customerSales.length}</b> ventas</span><span><b>${money(customerSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0))}</b> comprado</span><span><b>${balanceText(customer.balance)}</b> saldo</span></div>${customer.address ? `<iframe title="Ubicación de ${escapeHtml(customer.fullName)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(customer.address)}&output=embed"></iframe><a class="inline-action" target="_blank" rel="noreferrer" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}">Abrir en Maps</a>` : '<p>Este cliente todavía no tiene una dirección cargada.</p>'}</div>` : ''}</div>` }).join('') || '<p class="empty-state">No hay clientes para este filtro.</p>'}</div>${filteredCustomers.length > 10 && !query && customerListFilter === 'all' ? `<button type="button" class="ghost-action customer-show-more" data-action="toggle-customer-list">${customerListExpanded ? 'Ver menos' : `Ver los ${filteredCustomers.length - 10} restantes`}</button>` : ''}
         </article>
       </div>
     </section>
@@ -1886,7 +1832,7 @@ const salesView = (ui) => `
     const quantities = new Map(Object.entries(Object.keys(saleDraftQuantities).length ? saleDraftQuantities : Object.fromEntries((editingSale?.items || []).map((item) => [item.productId, item.quantity]))))
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Ventas</p><h2>Venta multi-item</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="content-grid single-focus">
       <article class="panel">
         <div class="panel-head"><div><h3>${editingSale ? 'Editar venta' : 'Nueva venta'}</h3><p>${editingSale ? 'Actualiza stock, cobro y comprobantes' : 'Carga rapida para mostrador o venta asistida'}</p></div></div>
@@ -1973,10 +1919,10 @@ const cashView = (ui) => `
           <button type="submit">Registrar movimiento</button>
         </form>` : '<p class="empty-state">Abri una caja para registrar movimientos manuales.</p>'}
       </article>
-      <article class="panel"><div class="panel-head"><div><h3>Ultimos cierres</h3><p>Diferencias y arqueo</p></div></div><div class="timeline-list">
+      <article class="panel"><div class="panel-head"><div><h3>Últimos cierres</h3><p>Los 5 cierres más recientes y su diferencia.</p></div></div><div class="timeline-list">
         ${byRecentDate(ui.scopedCashSessions.filter((session) => session.status === 'closed'), 'closedAt').slice(0, 5).map((session) => `<div class="timeline-item"><strong>Cierre ${session.closedAt?.slice(0, 10) || '-'}</strong><p>Contado ${money(session.countedAmount || 0)} / diferencia ${money(session.differenceAmount || 0)}</p><span>${ui.enrichedRegisters.find((register) => register.id === session.registerId)?.name || 'Caja'} / fondo ${money(session.openingAmount || 0)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay cierres para este filtro.</p>'}
       </div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Bitacora de caja</h3><p>Impacta en el arqueo esperado</p></div></div><div class="timeline-list">
+      <article class="panel"><div class="panel-head"><div><h3>Bitácora de caja</h3><p>Últimos movimientos que impactan en el arqueo.</p></div></div><div class="timeline-list">
         ${ui.enrichedCashMovements.slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note}</p><span>${movement.registerName} / ${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
       </div></article>
     </section>
@@ -1987,6 +1933,7 @@ const salesViewV2 = (ui) => `
   ${(() => {
     const editingSale = ui.snapshot.sales.find((sale) => sale.id === saleEditingId)
     const selectedSaleCustomer = ui.snapshot.customers.find((customer) => customer.id === editingSale?.customerId)
+      || ui.snapshot.customers.find((customer) => String(customer.fullName || '').trim().toLowerCase() === String(saleCustomerSearchQuery || '').trim().toLowerCase())
     const showSaleForm = true
     if (editingSale && !Object.keys(saleDraftQuantities).length) {
       saleDraftQuantities = Object.fromEntries((editingSale.items || []).map((item) => [item.productId, item.quantity]))
@@ -1995,42 +1942,56 @@ const salesViewV2 = (ui) => `
     const selectedProducts = ui.scopedProducts.filter((product) => Number(quantities.get(product.id) || 0) > 0)
     const cartUnits = selectedProducts.reduce((sum, product) => sum + Number(quantities.get(product.id) || 0), 0)
     const cartSubtotal = selectedProducts.reduce((sum, product) => sum + (Number(quantities.get(product.id) || 0) * Number(product.salePrice || 0)), 0)
+    const historyQuery = salesHistoryQuery.trim().toLowerCase()
+    const periodStart = salesHistoryPeriod === 'today' ? new Date(new Date().setHours(0, 0, 0, 0)) : salesHistoryPeriod === 'week' ? new Date(Date.now() - 7 * 86400000) : salesHistoryPeriod === 'month' ? new Date(new Date().getFullYear(), new Date().getMonth(), 1) : null
+    const filteredHistorySales = ui.enrichedSales.filter((sale) => {
+      const matchesQuery = !historyQuery || [sale.customerName, sale.itemSummary, sale.number, sale.branchName, sale.registerName].some((value) => String(value || '').toLowerCase().includes(historyQuery))
+      const matchesStatus = salesHistoryStatus === 'all' || sale.status === salesHistoryStatus
+      const matchesPayment = salesHistoryPayment === 'all' || sale.paymentMethod === salesHistoryPayment
+      const matchesPeriod = !periodStart || new Date(sale.soldAt) >= periodStart
+      return matchesQuery && matchesStatus && matchesPayment && matchesPeriod
+    })
+    const filteredHistoryTotal = filteredHistorySales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0)
+    const filteredHistoryPaid = filteredHistorySales.reduce((sum, sale) => sum + Number(sale.amountPaid || 0), 0)
     return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Ventas</p><h2>Venta multi-item</h2></div><div class="panel-inline-stats section-inline-stats">
+  <section class="view-section sales-view-v2"><div class="section-header"><div><p class="kicker">Punto de venta</p><h2>Nueva venta</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.enrichedSales.length}</strong><span>Ventas</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.totalSales)}</strong><span>Total</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.unpaidSales)}</strong><span>Por cobrar</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="stacked-section">
       ${showSaleForm ? `<article class="panel pos-sale-panel">
-        <div class="panel-head pos-sale-head"><div><h3>${editingSale ? 'Editar venta' : 'Punto de venta'}</h3><p>${editingSale ? 'Actualiza los articulos y el cobro' : 'Busca un articulo o escanea su codigo para comenzar'}</p></div><button type="button" class="pos-cash-badge ${ui.openCashSession ? 'is-open' : 'is-closed'}" data-section="caja" aria-label="Ir a Caja">Caja ${ui.openCashSession ? 'abierta' : 'cerrada'}</button></div>
+        <div class="panel-head pos-sale-head"><div><p class="kicker">Paso 1 · Productos</p><h3>${editingSale ? 'Editar venta' : 'Agregá artículos'}</h3><p>${editingSale ? 'Actualizá los artículos y el cobro' : 'Buscá un artículo o escaneá su código de barras para comenzar'}</p></div><button type="button" class="pos-cash-badge ${ui.openCashSession ? 'is-open' : 'is-closed'}" data-section="caja" aria-label="${ui.openCashSession ? 'Ver caja abierta' : 'Abrir caja'}">${ui.openCashSession ? 'Caja abierta' : 'Abrir caja'}</button></div>
         <form class="form-grid sales-form pos-sale-form" data-form="sale">
           <input type="hidden" name="saleId" value="${editingSale?.id || ''}" />
           <div class="full-span pos-product-search">
             <span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span>
-            <input type="text" class="scanner-input" name="quickAddCode" value="${saleQuickAddCode}" list="sale-product-options" autocomplete="off" placeholder="Buscar articulo, SKU o escanear codigo de barras" aria-label="Buscar articulo" />
-            <datalist id="sale-product-options">${ui.scopedProducts.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist>
+            <input type="text" class="scanner-input" name="quickAddCode" value="${saleQuickAddCode}" autocomplete="off" placeholder="Buscar articulo, SKU o escanear codigo de barras" aria-label="Buscar articulo" />
+            <div class="sale-product-suggestions" data-sale-product-suggestions hidden></div>
           </div>
           <div class="full-span pos-checkout-layout">
             <section class="pos-cart">
-              <div class="pos-cart-head"><div><strong>Articulos</strong><span>${cartUnits} unidades</span></div><div class="pos-total"><span>Total</span><output data-sale-total>${money(Math.max(0, cartSubtotal - Number(editingSale?.discountAmount || 0)))}</output></div></div>
+              <div class="pos-cart-head"><div><strong>Tu carrito</strong><span>${cartUnits} artículo${cartUnits === 1 ? '' : 's'}</span></div><div class="pos-cart-actions"><div class="pos-total"><span>Total</span><output data-sale-total>${money(Math.max(0, cartSubtotal - Number(editingSale?.discountAmount || 0)))}</output></div><button type="button" class="pos-charge-button pos-charge-inline" data-action="open-sale-payment" ${selectedProducts.length ? '' : 'disabled'}>Cobrar ahora</button></div></div>
               <div class="cart-builder">
                 ${selectedProducts.length ? selectedProducts.map((product) => `
                   <div class="cart-line sale-cart-line ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}">
                     <div><strong>${product.name}</strong><p>${money(product.salePrice)} c/u · stock ${product.scopedStock}</p></div>
                     <label class="cart-quantity"><span>Cantidad</span><input type="number" min="0" max="${product.trackStock ? product.scopedStock : 999999}" value="${quantities.get(product.id) || 0}" name="qty_${product.id}" data-sale-price="${Number(product.salePrice || 0)}" /></label>
-                    <strong class="cart-line-total">${money(Number(quantities.get(product.id) || 0) * Number(product.salePrice || 0))}</strong>
+                    <div class="cart-line-price"><strong class="cart-line-total">${money(Number(quantities.get(product.id) || 0) * Number(product.salePrice || 0))}</strong><button type="button" class="cart-remove-button" data-sale-remove-product="${product.id}" aria-label="Quitar ${escapeHtml(product.name)}" title="Quitar artículo">${icon('<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13M9 7V4h6v3"/>')}</button></div>
                   </div>`).join('') : '<div class="pos-cart-empty"><strong>Venta vacia</strong><span>Busca o escanea el primer articulo.</span></div>'}
               </div>
             </section>
-            <aside class="pos-payment-panel">
-              <label class="pos-customer-field">Cliente<div class="pos-customer-search"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente o dejar Mostrador" autocomplete="off" list="sale-customer-options" aria-label="Buscar cliente" /><datalist id="sale-customer-options">${ui.snapshot.customers.map((customer) => `<option value="${escapeHtml(customer.fullName)}">${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><button type="button" class="pos-customer-counter" data-action="set-counter-customer">Mostrador</button></div></label>
-              <label class="pos-payment-field">Medio de pago<select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
+            <div class="sale-payment-modal" data-sale-payment-modal hidden>
+              <div class="sale-payment-dialog" role="dialog" aria-modal="true" aria-labelledby="sale-payment-title">
+                <button type="button" class="sale-payment-close" data-action="close-sale-payment" aria-label="Cerrar cobro">×</button>
+                <p class="kicker">Paso 2 · Cliente</p><h3 id="sale-payment-title">Revisá y cobrá</h3><p class="sale-payment-intro">Confirmá el cliente y el medio de pago antes de finalizar.</p>
+                <div class="sale-modal-customer ${selectedSaleCustomer ? 'has-selected-customer' : 'is-counter-default'}"><span class="pos-field-step">Cliente</span><div class="pos-customer-search"><div class="stock-adjustment-search customer-search-shell"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-sale-customer-search value="${escapeHtml(selectedSaleCustomer?.fullName || saleCustomerSearchQuery)}" placeholder="Buscar cliente (opcional)" autocomplete="off" aria-label="Buscar cliente" /><div class="sale-customer-suggestions" data-sale-customer-suggestions hidden></div></div><input type="hidden" name="customerId" value="${editingSale?.customerId || ''}" /><div class="sale-customer-actions"><button type="button" class="pos-customer-counter" data-action="set-counter-customer">${selectedSaleCustomer ? 'Cambiar' : 'Mostrador'}</button><button type="button" class="sale-customer-clear" data-action="clear-sale-customer" aria-label="Quitar cliente" title="Quitar cliente" ${selectedSaleCustomer ? '' : 'hidden'}>×</button></div></div><small class="sale-selected-customer ${selectedSaleCustomer ? '' : 'is-default'}">${selectedSaleCustomer ? `✓ ${escapeHtml(selectedSaleCustomer.fullName)} seleccionado` : '✓ Mostrador seleccionado · venta rápida'}</small></div>
+                <label class="pos-payment-field"><span class="pos-field-step">Medio de pago</span><select name="paymentMethod"><option value="cash" ${editingSale?.paymentMethod === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${editingSale?.paymentMethod === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${editingSale?.paymentMethod === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="echeq" ${editingSale?.paymentMethod === 'echeq' ? 'selected' : ''}>E-cheq</option><option value="account" ${editingSale?.paymentMethod === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${editingSale?.paymentMethod === 'mixed' ? 'selected' : ''}>Pago mixto</option></select></label>
               <label class="pos-echeq-field" data-echeq-field hidden>Número de e-cheq<input type="text" name="echeqNumber" placeholder="Ej.: 00123456" autocomplete="off" /></label>
-              <details class="sales-payment-detail"><summary>Mas opciones</summary>
+              <details class="sales-payment-detail"><summary>Opcionales <small>Comprobante · descuento</small></summary>
                 <div class="pos-payment-advanced">
-                  <label class="pos-invoice-toggle" title="Generar comprobante interno al cobrar"><input type="checkbox" name="autoInvoice" /><span>Facturar</span></label>
+                  <label class="pos-invoice-toggle" title="Generar comprobante interno al cobrar"><input type="checkbox" name="autoInvoice" /><span>Emitir comprobante</span></label>
                   <label class="pos-discount-field"><span>Descuento</span><div class="pos-discount-control"><select name="discountMode" aria-label="Tipo de descuento"><option value="amount">$</option><option value="percent">%</option></select><input type="number" min="0" name="discountValue" value="${editingSale?.discountAmount || 0}" aria-label="Valor del descuento" /><input type="hidden" name="discountAmount" value="${editingSale?.discountAmount || 0}" /></div><small data-discount-help>Importe en pesos</small></label>
                 </div>
                 <details class="pos-payment-breakdown"><summary>Desglosar cobro</summary><div class="payment-split-grid">
@@ -2040,19 +2001,23 @@ const salesViewV2 = (ui) => `
                 <label>Transferencia<input type="number" min="0" name="transferAmount" value="${editingSale?.paymentBreakdown?.transfer || 0}" /></label>
                 <label>Mercado Pago<input type="number" min="0" name="mercadoPagoAmount" value="${editingSale?.paymentBreakdown?.mercadoPago || 0}" /></label>
                 <label>E-cheq<input type="number" min="0" name="echeqAmount" value="${editingSale?.paymentBreakdown?.echeq || 0}" /></label>
-                <label>N° e-cheq<input type="text" name="echeqNumber" /></label>
                 <label>Cuenta corriente<input type="number" min="0" name="accountAmount" value="${editingSale?.paymentBreakdown?.account || 0}" /></label>
                 <label class="full-span">Observaciones<input type="text" name="note" value="${editingSale?.note || ''}" placeholder="Opcional" /></label>
                 </div></details>
               </details>
-              <button type="submit" class="pos-charge-button" ${selectedProducts.length ? '' : 'disabled'}>${editingSale ? 'Guardar cambios' : 'Cobrar'}</button>
-              ${editingSale ? '<button type="button" class="danger-action" data-action="cancel-sale-edit">Cancelar edicion</button>' : ''}
-            </aside>
+                <button type="submit" class="pos-charge-button sale-payment-confirm" ${selectedProducts.length ? '' : 'disabled'}>${editingSale ? 'Guardar cambios' : 'Confirmar cobro'}</button>
+                ${selectedProducts.length ? '' : '<small class="pos-charge-help">Agregá al menos un artículo para continuar.</small>'}
+                ${editingSale ? '<button type="button" class="danger-action" data-action="cancel-sale-edit">Cancelar edicion</button>' : ''}
+              </div>
+            </div>
           </div>
         </form>
       </article>` : ''}
-      <article class="panel"><div class="panel-head"><div><h3>Historial</h3><p>Ventas recientes y acciones rapidas</p></div></div>
-        <div class="sales-table">${dataTable(['Cliente', 'Detalle', 'Cobro', 'Acciones'], ui.enrichedSales.map((sale) => `<div class="data-row sales-history-row"><span>${sale.customerName}<br /><small>${sale.status === 'completed' ? 'Cobrada' : sale.status === 'partial' ? 'Pago parcial' : sale.status === 'cancelled' ? 'Anulada' : sale.status === 'returned' ? 'Devuelta' : 'Pendiente'}</small></span><span>${sale.itemSummary}${sale.note ? `<br /><small>${sale.note}</small>` : ''}<br /><small>${sale.branchName} / ${sale.registerName} / ${sale.paymentSummary}</small></span><span>${money(sale.amountPaid)} / ${money(sale.totalAmount)}${sale.discountAmount ? `<br /><small>Desc. ${money(sale.discountAmount)}</small>` : ''}</span><span>${saleActionButtons(sale)}</span></div>`))}</div>
+      <article class="panel sales-history-panel"><div class="panel-head"><div><p class="kicker">Historial</p><h3>Operaciones</h3><p>Filtrá, consultá y gestioná ventas anteriores.</p></div></div>
+        <div class="sales-history-summary"><span><b>${filteredHistorySales.length}</b> operaciones</span><span><b>${money(filteredHistoryTotal)}</b> vendido</span><span><b>${money(Math.max(0, filteredHistoryTotal - filteredHistoryPaid))}</b> pendiente</span></div>
+        <div class="sales-history-filters"><input type="search" data-sales-history-search value="${escapeHtml(salesHistoryQuery)}" placeholder="Buscar cliente, artículo o número" aria-label="Buscar en ventas" /><select data-sales-history-period aria-label="Período"><option value="all" ${salesHistoryPeriod === 'all' ? 'selected' : ''}>Todo el período</option><option value="today" ${salesHistoryPeriod === 'today' ? 'selected' : ''}>Hoy</option><option value="week" ${salesHistoryPeriod === 'week' ? 'selected' : ''}>Últimos 7 días</option><option value="month" ${salesHistoryPeriod === 'month' ? 'selected' : ''}>Este mes</option></select><select data-sales-history-payment aria-label="Medio de pago"><option value="all">Todos los medios</option><option value="cash" ${salesHistoryPayment === 'cash' ? 'selected' : ''}>Efectivo</option><option value="transfer" ${salesHistoryPayment === 'transfer' ? 'selected' : ''}>Transferencia</option><option value="mercado_pago" ${salesHistoryPayment === 'mercado_pago' ? 'selected' : ''}>Mercado Pago</option><option value="account" ${salesHistoryPayment === 'account' ? 'selected' : ''}>Cuenta corriente</option><option value="mixed" ${salesHistoryPayment === 'mixed' ? 'selected' : ''}>Mixto</option></select></div>
+        <div class="sales-status-filters">${[['all','Todas'],['completed','Cobradas'],['partial','Parciales'],['pending','Pendientes'],['cancelled','Anuladas']].map(([value,label]) => `<button type="button" class="sales-status-filter ${salesHistoryStatus === value ? 'is-active' : ''}" data-sales-history-status="${value}">${label}</button>`).join('')}</div>
+        <div class="sales-table">${paginatedDataTable(['Cliente', 'Detalle', 'Cobro', 'Acciones'], filteredHistorySales, 'ventas', (sale) => `<div class="data-row sales-history-row"><span>${sale.customerName}<br /><small>${sale.status === 'completed' ? 'Cobrada' : sale.status === 'partial' ? 'Pago parcial' : sale.status === 'cancelled' ? 'Anulada' : sale.status === 'returned' ? 'Devuelta' : 'Pendiente'}</small></span><span>${sale.itemSummary}${sale.note ? `<br /><small>${sale.note}</small>` : ''}<br /><small>${sale.branchName} / ${sale.registerName} / ${sale.paymentSummary}</small></span><span>${money(sale.amountPaid)} / ${money(sale.totalAmount)}${sale.discountAmount ? `<br /><small>Desc. ${money(sale.discountAmount)}</small>` : ''}</span><span>${saleActionButtons(sale)}</span></div>`)}</div>
       </article>
     </section>
   </section>
@@ -2112,21 +2077,21 @@ const cashViewV2 = (ui) => `
     const showCashForm = cashFormOpen
     const lastClosedSession = byRecentDate(ui.scopedCashSessions.filter((session) => session.status === 'closed'), 'closedAt')[0]
     return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Caja</p><h2>Apertura y cierre</h2></div><div class="panel-inline-stats section-inline-stats">
+  <section class="view-section cash-view-v2"><div class="section-header"><div><p class="kicker">Caja</p><h2>Apertura y cierre</h2><p class="section-description">Controlá efectivo, ingresos, egresos y arqueos de esta sucursal.</p></div><div class="panel-inline-stats section-inline-stats">
+      <span class="panel-inline-stat"><strong>${ui.currentBranch?.name || '-'}</strong><span>Sucursal</span></span>
+      <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || '-'}</strong><span>Caja</span></span>
       <span class="panel-inline-stat"><strong>${ui.openCashSession ? 'Abierta' : 'Cerrada'}</strong><span>Estado</span></span>
-      <span class="panel-inline-stat"><strong>${money(ui.expectedCash)}</strong><span>Efectivo esperado</span></span>
-      <span class="panel-inline-stat"><strong>${ui.enrichedCashMovements.length}</strong><span>Movimientos</span></span>
     </div></div>
     <section class="stacked-section">
       <article class="panel">
         <div class="panel-head" data-cash-operation><div><h3>Operacion de caja</h3><p>Primero ves el estado y operas solo si hace falta</p></div><div class="settings-actions">${createToggleButton('cash', showCashForm, ui.openCashSession ? 'Operar caja' : 'Abrir caja')}</div></div>
-        <div class="summary-mini-row">
-          <div class="summary-mini-card"><strong>Estado</strong><span>${ui.openCashSession ? 'Abierta' : 'Cerrada'}</span></div>
-          <div class="summary-mini-card"><strong>Sucursal</strong><span>${ui.currentBranch?.name || '-'}</span></div>
-          <div class="summary-mini-card"><strong>Caja</strong><span>${ui.openCashSession?.registerId ? (ui.enrichedRegisters.find((register) => register.id === ui.openCashSession.registerId)?.name || 'Caja') : (ui.currentRegister?.name || 'Elegi una caja')}</span></div>
+        <div class="summary-mini-row cash-metrics-grid">
+          <div class="summary-mini-card"><strong>Fondo inicial</strong><span>${money(ui.openCashSession?.openingAmount || 0)}</span></div>
+          <div class="summary-mini-card"><strong>Ventas en efectivo</strong><span>${money(ui.cashSalesTotal)}</span></div>
+          <div class="summary-mini-card"><strong>Ingresos manuales</strong><span>${money(ui.sessionCashIncome)}</span></div>
+          <div class="summary-mini-card"><strong>Egresos manuales</strong><span>${money(ui.sessionCashExpenses)}</span></div>
           <div class="summary-mini-card"><strong>Efectivo esperado</strong><span>${money(ui.expectedCash)}</span></div>
-          <div class="summary-mini-card"><strong>Ajustes manuales</strong><span>${money(ui.sessionCashMovementTotal)}</span></div>
-          <div class="summary-mini-card"><strong>Ultima diferencia</strong><span>${money(lastClosedSession?.differenceAmount || 0)}</span></div>
+          <div class="summary-mini-card"><strong>Última diferencia</strong><span class="${Number(lastClosedSession?.differenceAmount || 0) === 0 ? 'cash-difference-ok' : 'cash-difference-alert'}">${money(lastClosedSession?.differenceAmount || 0)}</span></div>
         </div>
         ${showCashForm ? `<div class="compact-form-grid">
             <article class="panel section-panel-nested">
@@ -2149,10 +2114,10 @@ const cashViewV2 = (ui) => `
           </div>` : ''}
       </article>
       <section class="cash-history-grid">
-      <article class="panel"><div class="panel-head"><div><h3>Ultimos cierres</h3><p>Diferencias y arqueo</p></div></div><div class="timeline-list">
+      <article class="panel"><div class="panel-head"><div><h3>Últimos cierres</h3><p>Los 5 cierres más recientes y su diferencia.</p></div></div><div class="timeline-list">
           ${byRecentDate(ui.scopedCashSessions.filter((session) => session.status === 'closed'), 'closedAt').slice(0, 5).map((session) => `<div class="timeline-item"><strong>Cierre · ${formatCashHistoryDate(session.closedAt)}</strong><p>Contado ${money(session.countedAmount || 0)} · Diferencia ${money(session.differenceAmount || 0)}</p><span>${ui.enrichedRegisters.find((register) => register.id === session.registerId)?.name || 'Caja'} · Fondo ${money(session.openingAmount || 0)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay cierres para este filtro.</p>'}
         </div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Bitacora de caja</h3><p>Impacta en el arqueo esperado</p></div></div><div class="timeline-list">
+      <article class="panel"><div class="panel-head"><div><h3>Bitácora de caja</h3><p>Últimos movimientos que impactan en el arqueo.</p></div></div><div class="timeline-list">
           ${ui.enrichedCashMovements.slice(0, 5).map((movement) => { const label = cashMovementKindLabel(movement.kind); const note = String(movement.note || '').trim(); const hasDistinctNote = note && note.toLocaleLowerCase('es-AR') !== label.toLocaleLowerCase('es-AR'); return `<div class="timeline-item"><strong>${label}</strong><p>${escapeHtml(movement.registerName || 'Caja')} · ${money(movement.signedAmount)} · ${formatCashHistoryDate(movement.createdAt, true)}</p>${hasDistinctNote ? `<span>${escapeHtml(note)}</span>` : ''}</div>` }).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
         </div></article>
       </section>
@@ -2170,9 +2135,8 @@ const productsView = (ui) => {
     }
   }
   const matchingProducts = ui.scopedProducts.filter((product) => [product.name, product.sku, product.barcode, product.category].some((value) => String(value || '').toLowerCase().includes(search)))
-  const visibleProducts = search
-    ? matchingProducts
-    : [...ui.scopedProducts].sort((left, right) => String(lastSoldAtByProduct.get(right.id) || '').localeCompare(String(lastSoldAtByProduct.get(left.id) || ''))).slice(0, 10)
+  const sortedProducts = [...ui.scopedProducts].sort((left, right) => String(lastSoldAtByProduct.get(right.id) || '').localeCompare(String(lastSoldAtByProduct.get(left.id) || '')))
+  const visibleProducts = search || productListExpanded ? matchingProducts : sortedProducts.slice(0, 10)
   const productRow = (product) => {
     const margin = Number(product.salePrice || 0) > 0 ? ((Number(product.salePrice || 0) - Number(product.costPrice || 0)) / Number(product.salePrice || 0)) * 100 : 0
     if (productEditingId !== product.id) return `<article class="product-summary-row ${product.trackStock && product.scopedStock <= product.minStock ? 'is-low' : ''}">
@@ -2202,15 +2166,20 @@ const productsView = (ui) => {
     </form>`
   }
   return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Productos</p><h2>Catalogo y stock</h2></div><div class="panel-inline-stats section-inline-stats">
+  <section class="view-section products-view"><div class="section-header"><div><p class="kicker">Productos</p><h2>Catálogo y stock</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.scopedProducts.length}</strong><span>Productos</span></span>
       <span class="panel-inline-stat"><strong>${ui.lowStock.length}</strong><span>Stock bajo</span></span>
       <span class="panel-inline-stat"><strong>${ui.scopedStockMovements.length}</strong><span>Movimientos</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    <div class="products-command-strip">
+      <div class="products-command-copy"><span class="kicker">LECTURA RÁPIDA</span><strong>${ui.lowStock.length ? `${ui.lowStock.length} producto${ui.lowStock.length === 1 ? '' : 's'} pide${ui.lowStock.length === 1 ? '' : 'n'} reposición` : 'Inventario en orden'}</strong><small>${ui.lowStock.length ? 'Revisá los mínimos antes del próximo turno.' : 'Todo el catálogo está por encima del mínimo configurado.'}</small></div>
+      <div class="products-stock-meter" aria-label="Estado del stock"><span style="--stock-progress:${ui.scopedProducts.length ? Math.max(4, Math.round(((ui.scopedProducts.length - ui.lowStock.length) / ui.scopedProducts.length) * 100)) : 0}%"></span></div>
+      <span class="products-stock-percent">${ui.scopedProducts.length ? Math.max(0, Math.round(((ui.scopedProducts.length - ui.lowStock.length) / ui.scopedProducts.length) * 100)) : 0}% estable</span>
+    </div>
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="module-board products-board">
       <div class="module-main">
-        ${productFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Nuevo producto</h3><p>Carga simple para empezar rapido</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-product-form">Cerrar</button></div></div>
+        ${productFormOpen ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel"><div class="panel-head"><div><h3>Nuevo producto</h3><p>Carga simple para empezar rapido</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-product-form">Cerrar</button></div></div>
           <form class="form-grid" data-form="product">
             <label>Nombre<input type="text" name="name" required /></label>
             <label>SKU<input type="text" name="sku" required /></label>
@@ -2227,16 +2196,16 @@ const productsView = (ui) => {
             </div>
             <button type="submit">Guardar producto</button>
           </form>
-        </article>` : ''}
-        ${stockAdjustmentFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Ajuste de stock</h3><p>Ingreso o salida manual por diferencia</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-stock-adjustment-form">Cerrar</button></div></div>
+        </article></div>` : ''}
+        ${stockAdjustmentFormOpen ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel"><div class="panel-head"><div><h3>Ajuste de stock</h3><p>Ingreso o salida manual por diferencia</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-stock-adjustment-form">Cerrar</button></div></div>
           <form class="form-grid compact-form" data-form="stock-adjustment">
             <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" list="stock-adjustment-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="stock-adjustment-product-options">${ui.scopedProducts.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')} · stock ${product.scopedStock}</option>`).join('')}</datalist></div></label>
             <label>Cantidad (+/-)<input type="number" name="quantity" required /></label>
             <label class="full-span">Motivo<input type="text" name="note" placeholder="Conteo, rotura, merma o correccion" required /></label>
             <button type="submit">Aplicar ajuste</button>
           </form>
-        </article>` : ''}
-        ${stockTransferFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>Transferencia</h3><p>Movimiento entre sucursales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-stock-transfer-form">Cerrar</button></div></div>
+        </article></div>` : ''}
+        ${stockTransferFormOpen ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel"><div class="panel-head"><div><h3>Transferencia</h3><p>Movimiento entre sucursales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-stock-transfer-form">Cerrar</button></div></div>
           <form class="form-grid compact-form" data-form="stock-transfer">
             <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" list="stock-transfer-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="stock-transfer-product-options">${ui.scopedProducts.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')} · stock ${product.scopedStock}</option>`).join('')}</datalist></div></label>
             <label>Cantidad<input type="number" min="1" name="quantity" required /></label>
@@ -2245,7 +2214,7 @@ const productsView = (ui) => {
             <label class="full-span">Detalle<input type="text" name="note" placeholder="Reposicion entre locales" /></label>
             <button type="submit">Registrar transferencia</button>
           </form>
-        </article>` : ''}
+        </article></div>` : ''}
         <article class="panel inventory-panel">
           <div class="panel-head inventory-headline">
             <div><h3>Inventario</h3><p>${search ? `${visibleProducts.length} resultado${visibleProducts.length === 1 ? '' : 's'}` : 'Ultimos 10 productos vendidos'}</p></div>
@@ -2257,7 +2226,7 @@ const productsView = (ui) => {
           </div>
           <div class="bulk-import-card"><div class="bulk-import-copy"><strong>Carga masiva de productos</strong><span>Descarga la plantilla, completala en Excel y subila. Las columnas ya estan ordenadas para importar sin duplicar productos.</span><small>Campos obligatorios: Nombre, SKU y Precio de venta.</small></div><div class="bulk-import-actions"><button type="button" class="inline-action" data-action="download-product-template">Descargar plantilla Excel</button><label class="primary-action bulk-upload-action">Subir planilla<input type="file" data-input="bulk-product-import" accept=".csv,text/csv,.txt,text/plain" hidden /></label><button type="button" class="text-action" data-action="request-bulk-import">Prefiero que lo hagan por mi</button></div></div>
           <div class="product-search-row"><label class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-product-search value="${escapeHtml(productSearchQuery)}" placeholder="Buscar producto, SKU, codigo o categoria" aria-label="Buscar productos" /></label>${search ? '<button type="button" class="ghost-action" data-action="clear-product-search">Limpiar</button>' : ''}</div>
-          <div class="product-list" aria-label="Articulos del inventario">${visibleProducts.length ? visibleProducts.map(productRow).join('') : '<p class="empty-state">No encontramos productos con esa busqueda.</p>'}</div>
+          <div class="product-list" aria-label="Articulos del inventario">${visibleProducts.length ? visibleProducts.map(productRow).join('') : '<p class="empty-state">No encontramos productos con esa busqueda.</p>'}</div>${!search && sortedProducts.length > 10 ? `<button type="button" class="ghost-action product-show-more" data-action="toggle-product-list">${productListExpanded ? 'Ver menos' : `Ver los ${sortedProducts.length - 10} restantes`}</button>` : ''}
         </article>
       </div>
     </section>
@@ -2270,7 +2239,7 @@ const purchasesView = (ui) => `
     const editingReceipt = ui.snapshot.purchaseReceipts.find((receipt) => receipt.id === purchaseEditingId)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Compras</p><h2>Proveedores y recepcion</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="dashboard-grid reports-layout">
       <article class="panel"><div class="panel-head"><div><h3>Alta de proveedor</h3><p>Base de compras</p></div></div>
         <form class="form-grid" data-form="supplier">
@@ -2316,7 +2285,7 @@ const purchasesViewLegacy = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.enrichedReceipts.length}</strong><span>Compras</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.snapshot.suppliers.reduce((sum, supplier) => sum + Number(supplier.balance || 0), 0))}</strong><span>Saldo</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="module-board purchases-board ${showPurchaseForm ? '' : 'board-expanded'}">
       <div class="module-main">
         <article class="panel"><div class="panel-head"><div><h3>${editingReceipt ? 'Editar recepcion' : 'Recepcion de compra'}</h3><p>${editingReceipt ? 'Recalcula stock y saldo del proveedor' : 'Ingresa stock y costo'}</p></div></div>
@@ -2370,7 +2339,19 @@ const purchasesViewV2 = (ui) => `
       return !query || candidate.includes(query)
     }
     const visibleSuppliers = (supplierQuery ? ui.snapshot.suppliers.filter((supplier) => [supplier.name, supplier.fantasyName, supplier.tradeName, supplier.contact, supplier.phone, supplier.email, supplier.cuit, supplier.address].some(matchesSupplierQuery)) : ui.snapshot.suppliers.slice(0, 10))
-    const receiptPreview = purchaseReceiptsExpanded ? ui.enrichedReceipts : ui.enrichedReceipts.slice(0, 3)
+    const normalizedReceiptQuery = purchaseHistoryQuery.trim().toLowerCase()
+    const receiptHistory = ui.enrichedReceipts.filter((receipt) => {
+      const matchesQuery = !normalizedReceiptQuery || [receipt.supplierName, receipt.productName, receipt.documentNumber, receipt.note].some((value) => String(value || '').toLowerCase().includes(normalizedReceiptQuery))
+      const matchesSupplier = purchaseHistorySupplier === 'all' || receipt.supplierId === purchaseHistorySupplier
+      const receivedAt = new Date(receipt.receivedAt || 0)
+      const now = new Date()
+      const days = purchaseHistoryPeriod === '7' ? 7 : purchaseHistoryPeriod === '30' ? 30 : purchaseHistoryPeriod === '90' ? 90 : null
+      const matchesPeriod = !days || (Number.isFinite(receivedAt.getTime()) && (now - receivedAt) <= days * 86400000)
+      return matchesQuery && matchesSupplier && matchesPeriod
+    })
+    const receiptPreview = purchaseReceiptsExpanded ? receiptHistory : receiptHistory.slice(0, 3)
+    const receiptTotal = receiptHistory.reduce((sum, receipt) => sum + Number(receipt.totalCost || 0), 0)
+    const allReceiptsTotal = ui.enrichedReceipts.reduce((sum, receipt) => sum + Number(receipt.totalCost || 0), 0)
     const supplierPreview = supplierQuery ? visibleSuppliers : (purchaseSuppliersExpanded ? ui.snapshot.suppliers : ui.snapshot.suppliers.slice(0, 3))
     const debtSuppliers = ui.snapshot.suppliers.filter((supplier) => Number(supplier.balance || 0) > 0)
     const paymentHistory = (ui.snapshot.supplierPayments || []).slice(0, 6)
@@ -2384,14 +2365,15 @@ const purchasesViewV2 = (ui) => `
       return { key, product, isNew: Boolean(detail.isNew), ...detail, name: detail.name ?? product?.name ?? '', sku: detail.sku ?? product?.sku ?? '', barcode: detail.barcode ?? product?.barcode ?? '', category: detail.category ?? product?.category ?? 'General', minStock: Number(detail.minStock ?? product?.minStock ?? 0), salePrice: Number(detail.salePrice ?? product?.salePrice ?? 0), trackStock: detail.trackStock ?? product?.trackStock !== false }
     }).filter((line) => line.isNew || line.product)
     return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Compras</p><h2>Proveedores y recepcion</h2></div><div class="panel-inline-stats section-inline-stats">
+  <section class="view-section purchases-view"><div class="section-header"><div><p class="kicker">Compras</p><h2>Ingresos y proveedores</h2><p class="section-description">Registrá mercadería, controlá costos y seguí lo que queda pendiente con cada proveedor.</p></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.snapshot.suppliers.length}</strong><span>Proveedores</span></span>
       <span class="panel-inline-stat"><strong>${ui.enrichedReceipts.length}</strong><span>Recepciones</span></span>
-      <span class="panel-inline-stat"><strong>${money(ui.snapshot.suppliers.reduce((sum, supplier) => sum + Number(supplier.balance || 0), 0))}</strong><span>Saldo proveedor</span></span>
+      <span class="panel-inline-stat"><strong>${money(allReceiptsTotal)}</strong><span>Total comprado</span></span>
+      <span class="panel-inline-stat"><strong>${money(ui.snapshot.suppliers.reduce((sum, supplier) => sum + Number(supplier.balance || 0), 0))}</strong><span>Saldo pendiente</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="stacked-section">
-      ${showPurchaseForm ? `<article class="panel">
+      ${showPurchaseForm ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel">
         <div class="panel-head"><div><h3>${editingReceipt ? 'Editar compra' : 'Nueva compra'}</h3><p>Ingresa stock y costo del proveedor</p></div><div class="settings-actions">${editingReceipt ? '' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cerrar</button>'}</div></div>
         <form class="form-grid compact-form" data-form="purchase-receipt">
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
@@ -2399,15 +2381,16 @@ const purchasesViewV2 = (ui) => `
           <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(purchaseSupplierSearch || ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
           <label class="stock-adjustment-product">Agregar productos<div class="purchase-product-add"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-purchase-product-search value="${escapeHtml(purchaseQuickAddCode)}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o código de barras" aria-label="Buscar producto" /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div><button type="button" class="ghost-action" data-action="add-new-purchase-product">Nuevo producto</button></div></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
-          <div class="purchase-payment-hint"><strong>Condición de pago</strong><span>Al contado, parcial o a cuenta corriente se registra al confirmar el pago al proveedor.</span></div>
+          <label>Condición de pago<select name="paymentCondition"><option value="cash" ${(!editingReceipt?.paymentCondition || editingReceipt?.paymentCondition === 'cash') ? 'selected' : ''}>Contado</option><option value="partial" ${editingReceipt?.paymentCondition === 'partial' ? 'selected' : ''}>Pago parcial</option><option value="credit" ${editingReceipt?.paymentCondition === 'credit' ? 'selected' : ''}>Cuenta corriente</option></select></label>
+          <label>Vencimiento<input type="date" name="dueDate" value="${editingReceipt?.dueDate || ''}" /></label>
           <div class="full-span purchase-cart">${purchaseLines.length ? purchaseLines.map((line) => { const margin = Number(line.unitCost) > 0 ? ((Number(line.salePrice) - Number(line.unitCost)) / Number(line.unitCost)) * 100 : 0; const field = (label, name, value, extra = '') => `<label><span>${label}</span><input ${extra} value="${escapeHtml(String(value ?? ''))}" data-purchase-field="${line.key}" data-field="${name}" /></label>`; return `<div class="purchase-line">${field('Producto', 'name', line.name, 'type="text" required')}${field('SKU', 'sku', line.sku, 'type="text"')}${field('Código barras', 'barcode', line.barcode, 'type="text"')}${field('Categoría', 'category', line.category, 'type="text"')}${field('Mínimo', 'minStock', line.minStock, 'type="number" min="0"')}${field('Cantidad', 'quantity', line.quantity, 'type="number" min="1" required')}${field('Costo unit.', 'unitCost', line.unitCost, 'type="number" min="0" required')}${field('Precio venta', 'salePrice', line.salePrice, 'type="number" min="0" required step="0.01"')}${field('Margen %', 'margin', margin.toFixed(1), 'type="number" min="0" step="0.1"')}<div class="purchase-line-stock-action"><label class="checkbox-row compact-toggle purchase-stock-toggle"><input type="checkbox" ${line.trackStock ? 'checked' : ''} data-purchase-field="${line.key}" data-field="trackStock" /><span>Controlar stock</span></label><button type="button" class="inline-action danger" data-action="remove-purchase-product" data-id="${line.key}">Quitar</button></div></div>` }).join('') : '<div class="pos-cart-empty"><strong>Compra vacía</strong><span>Buscá un producto o creá uno nuevo para agregarlo a la compra.</span></div>'}</div>
           <label class="full-span">Observaciones<input type="text" name="note" value="${editingReceipt?.note || ''}" placeholder="Pedido, lote o condicion" /></label>
           <div class="purchase-form-actions full-span"><button type="submit" ${purchaseLines.length ? '' : 'disabled'}>${editingReceipt ? 'Guardar cambios' : 'Registrar compra'}</button>${editingReceipt ? '<button type="button" class="danger-action" data-action="cancel-purchase-edit">Cancelar edición</button>' : '<button type="button" class="ghost-action" data-action="close-purchase-form">Cancelar</button>'}</div>
         </form>
-      </article>` : ''}
-      ${supplierPaymentDraft ? (() => { const supplier = ui.snapshot.suppliers.find((entry) => entry.id === supplierPaymentDraft.supplierId); const suggestedAmount = Math.min(Number(supplierPaymentDraft.amount || 0), Number(supplier?.balance || 0)); return supplier ? `<article class="panel supplier-payment-panel"><div class="panel-head"><div><h3>Registrar pago al proveedor</h3><p>${escapeHtml(supplier.name)} · Compra registrada por ${money(supplierPaymentDraft.amount)} · Saldo pendiente ${money(supplier.balance)}</p></div></div><form class="form-grid compact-form" data-form="supplier-payment"><input type="hidden" name="supplierId" value="${supplier.id}" /><label>Importe a pagar<input type="number" name="amount" min="0.01" max="${supplier.balance}" step="0.01" value="${suggestedAmount}" required /></label><label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="cheque">Cheque</option><option value="echeq">E-cheq</option><option value="mercado_pago">Mercado Pago</option><option value="other">Otro</option></select></label><label class="full-span">Referencia (opcional)<input name="reference" placeholder="Nº de transferencia, cheque o comprobante" /></label><div class="purchase-form-actions full-span"><button type="submit">Registrar pago</button><button type="button" class="ghost-action" data-action="leave-supplier-payment">Dejar pendiente</button></div></form></article>` : '' })() : ''}
-      ${supplierPaymentPanelOpen ? `<article class="panel supplier-payment-panel"><div class="panel-head"><div><h3>Pagos a proveedores</h3><p>Buscá solamente proveedores con saldo pendiente.</p></div><button type="button" class="ghost-action" data-action="close-supplier-payment-panel">Cerrar</button></div><form class="form-grid compact-form" data-form="supplier-payment"><label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" list="supplier-payment-options" autocomplete="off" placeholder="Buscar proveedor con deuda" required /><datalist id="supplier-payment-options">${debtSuppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">Saldo ${money(supplier.balance)}</option>`).join('')}</datalist></div></label><label>Importe a pagar<input type="number" name="amount" min="0.01" step="0.01" required /></label><label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="cheque">Cheque</option><option value="echeq">E-cheq</option><option value="mercado_pago">Mercado Pago</option><option value="other">Otro</option></select></label><label>Referencia (opcional)<input name="reference" placeholder="Nº de transferencia, cheque o comprobante" /></label><div class="purchase-form-actions full-span"><button type="submit" ${debtSuppliers.length ? '' : 'disabled'}>Registrar pago</button></div></form>${paymentHistory.length ? `<div class="timeline-list purchase-payment-history">${paymentHistory.map((payment) => { const supplier = ui.snapshot.suppliers.find((entry) => entry.id === payment.supplierId); return `<div class="timeline-item"><strong>${escapeHtml(supplier?.name || 'Proveedor')} · ${money(payment.amount)}</strong><p>${escapeHtml(payment.method || 'Pago')} ${payment.reference ? `· ${escapeHtml(payment.reference)}` : ''}</p></div>` }).join('')}</div>` : '<p class="empty-state">Los pagos registrados aparecerán acá.</p>'}</article>` : ''}
-      ${supplierFormOpen ? `<article class="panel"><div class="panel-head"><div><h3>${editingSupplier ? 'Editar proveedor' : 'Nuevo proveedor'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-supplier-form">Cerrar</button></div></div>
+      </article></div>` : ''}
+      ${supplierPaymentDraft ? (() => { const supplier = ui.snapshot.suppliers.find((entry) => entry.id === supplierPaymentDraft.supplierId); const suggestedAmount = Math.min(Number(supplierPaymentDraft.amount || 0), Number(supplier?.balance || 0)); return supplier ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel supplier-payment-panel"><div class="panel-head"><div><h3>Registrar pago al proveedor</h3><p>${escapeHtml(supplier.name)} · Compra registrada por ${money(supplierPaymentDraft.amount)} · Saldo pendiente ${money(supplier.balance)}</p></div></div><form class="form-grid compact-form" data-form="supplier-payment"><input type="hidden" name="supplierId" value="${supplier.id}" /><label>Importe a pagar<input type="number" name="amount" min="0.01" max="${supplier.balance}" step="0.01" value="${suggestedAmount}" required /></label><label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="cheque">Cheque</option><option value="echeq">E-cheq</option><option value="mercado_pago">Mercado Pago</option><option value="other">Otro</option></select></label><label class="full-span">Referencia (opcional)<input name="reference" placeholder="Nº de transferencia, cheque o comprobante" /></label><div class="purchase-form-actions full-span"><button type="submit">Registrar pago</button><button type="button" class="ghost-action" data-action="leave-supplier-payment">Dejar pendiente</button></div></form></article></div>` : '' })() : ''}
+      ${supplierPaymentPanelOpen ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel supplier-payment-panel"><div class="panel-head"><div><h3>Pagos a proveedores</h3><p>Buscá solamente proveedores con saldo pendiente.</p></div><button type="button" class="ghost-action" data-action="close-supplier-payment-panel">Cerrar</button></div><form class="form-grid compact-form" data-form="supplier-payment"><label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" list="supplier-payment-options" autocomplete="off" placeholder="Buscar proveedor con deuda" required /><datalist id="supplier-payment-options">${debtSuppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">Saldo ${money(supplier.balance)}</option>`).join('')}</datalist></div></label><label>Importe a pagar<input type="number" name="amount" min="0.01" step="0.01" required /></label><label>Medio de pago<select name="method"><option value="cash">Efectivo</option><option value="transfer" selected>Transferencia</option><option value="cheque">Cheque</option><option value="echeq">E-cheq</option><option value="mercado_pago">Mercado Pago</option><option value="other">Otro</option></select></label><label>Referencia (opcional)<input name="reference" placeholder="Nº de transferencia, cheque o comprobante" /></label><div class="purchase-form-actions full-span"><button type="submit" ${debtSuppliers.length ? '' : 'disabled'}>Registrar pago</button></div></form>${paymentHistory.length ? `<div class="timeline-list purchase-payment-history">${paymentHistory.map((payment) => { const supplier = ui.snapshot.suppliers.find((entry) => entry.id === payment.supplierId); return `<div class="timeline-item"><strong>${escapeHtml(supplier?.name || 'Proveedor')} · ${money(payment.amount)}</strong><p>${escapeHtml(payment.method || 'Pago')} ${payment.reference ? `· ${escapeHtml(payment.reference)}` : ''}</p></div>` }).join('')}</div>` : '<p class="empty-state">Los pagos registrados aparecerán acá.</p>'}</article></div>` : ''}
+      ${supplierFormOpen ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel"><div class="panel-head"><div><h3>${editingSupplier ? 'Editar proveedor' : 'Nuevo proveedor'}</h3><p>Contacto, direccion y datos fiscales</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-supplier-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="supplier">
           <input type="hidden" name="supplierId" value="${editingSupplier?.id || ''}" />
           <label>Empresa<input type="text" name="name" value="${escapeHtml(editingSupplier?.name || '')}" required /></label>
@@ -2422,9 +2405,9 @@ const purchasesViewV2 = (ui) => `
           <label>Categoria<input type="text" name="category" value="${escapeHtml(editingSupplier?.category || '')}" placeholder="Opcional" /></label>
           <button type="submit">${editingSupplier ? 'Guardar cambios' : 'Guardar proveedor'}</button>
         </form>
-      </article>` : ''}
+      </article></div>` : ''}
       <article class="panel">
-        <div class="panel-head"><div><h3>Base de compras</h3><p>Ves proveedores y recepciones, y agregas solo cuando hace falta</p></div></div>
+        <div class="panel-head"><div><h3>Historial y gestión</h3><p>Consultá recepciones, proveedores y pagos desde un mismo lugar.</p></div></div>
         <div class="purchase-actions">
           ${editingReceipt ? '' : createToggleButton('purchase', showPurchaseForm, 'Agregar compra')}
           ${createToggleButton('supplier', supplierFormOpen, 'Agregar proveedor')}
@@ -2432,8 +2415,9 @@ const purchasesViewV2 = (ui) => `
         </div>
         <div class="purchase-list-grid">
           <article class="panel purchase-summary-card">
-            <div class="panel-head"><div><h3>Recepciones recientes</h3><p>${purchaseReceiptsExpanded ? `Mostrando ${ui.enrichedReceipts.length}` : 'Últimas 3 recepciones'}</p></div>${ui.enrichedReceipts.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-receipts">${purchaseReceiptsExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
-            <div class="timeline-list purchase-receipt-list">${receiptPreview.map((receipt) => `<div class="timeline-item purchase-receipt-card"><div><strong>${escapeHtml(receipt.supplierName)}</strong><p>${escapeHtml(receipt.productName)}</p><span>${receipt.documentNumber || 'Sin comprobante'} · Cant. ${receipt.quantity} · ${money(receipt.totalCost)}</span></div><span class="purchase-receipt-actions">${purchaseActionButtons(receipt)}</span></div>`).join('') || '<p class="empty-state">Todavía no hay recepciones.</p>'}</div>
+            <div class="panel-head"><div><h3>Recepciones</h3><p>${purchaseReceiptsExpanded ? `Mostrando ${receiptHistory.length}` : 'Últimas 3 recepciones'} · ${money(receiptTotal)} filtrado</p></div>${receiptHistory.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-receipts">${purchaseReceiptsExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
+            <div class="purchase-history-filters"><input type="search" data-purchase-history-query value="${escapeHtml(purchaseHistoryQuery)}" placeholder="Buscar comprobante, proveedor o producto" aria-label="Buscar en recepciones" /><select data-purchase-history-supplier aria-label="Filtrar por proveedor"><option value="all">Todos los proveedores</option>${ui.snapshot.suppliers.map((supplier) => `<option value="${supplier.id}" ${purchaseHistorySupplier === supplier.id ? 'selected' : ''}>${escapeHtml(supplier.name)}</option>`).join('')}</select><select data-purchase-history-period aria-label="Filtrar por período"><option value="all" ${purchaseHistoryPeriod === 'all' ? 'selected' : ''}>Todo el período</option><option value="7" ${purchaseHistoryPeriod === '7' ? 'selected' : ''}>Últimos 7 días</option><option value="30" ${purchaseHistoryPeriod === '30' ? 'selected' : ''}>Últimos 30 días</option><option value="90" ${purchaseHistoryPeriod === '90' ? 'selected' : ''}>Últimos 90 días</option></select></div>
+            <div class="timeline-list purchase-receipt-list">${receiptPreview.map((receipt) => `<div class="timeline-item purchase-receipt-card"><div><strong>${escapeHtml(receipt.supplierName)}</strong><p>${escapeHtml(receipt.productName)}</p><span>${receipt.documentNumber || 'Sin comprobante'} · Cant. ${receipt.quantity} · ${money(receipt.totalCost)} · ${String(receipt.receivedAt || '').slice(0, 10) || 'Sin fecha'}</span></div><span class="purchase-receipt-actions">${purchaseActionButtons(receipt)}</span></div>`).join('') || '<p class="empty-state">No hay recepciones con estos filtros.</p>'}</div>
           </article>
           <article class="panel purchase-summary-card">
             <div class="panel-head"><div><h3>${supplierQuery ? 'Resultados' : 'Proveedores recientes'}</h3><p>${supplierQuery ? `${visibleSuppliers.length} coincidencia${visibleSuppliers.length === 1 ? '' : 's'} sugerida${visibleSuppliers.length === 1 ? '' : 's'}` : (purchaseSuppliersExpanded ? `Mostrando ${ui.snapshot.suppliers.length}` : 'Últimos 3 proveedores')}</p></div>${!supplierQuery && ui.snapshot.suppliers.length > 3 ? `<button type="button" class="ghost-action" data-action="toggle-purchase-suppliers">${purchaseSuppliersExpanded ? 'Ver menos' : 'Ver más'}</button>` : ''}</div>
@@ -2465,7 +2449,7 @@ const invoicesView = (ui) => `
           <label>Vencimiento<input type="date" name="dueDate" value="${editingInvoice?.dueDate || today}" required /></label>
           <label>Estado<select name="status"><option ${editingInvoice?.status === 'Emitida' || !editingInvoice ? 'selected' : ''}>Emitida</option><option ${editingInvoice?.status === 'En revision' ? 'selected' : ''}>En revision</option><option ${editingInvoice?.status === 'Cobrada' ? 'selected' : ''}>Cobrada</option></select></label>
           <label>Emision<select name="fiscalStatus"><option value="Interno" ${editingInvoice?.fiscalStatus === 'Interno' || !editingInvoice ? 'selected' : ''}>Interno</option><option value="Pendiente" ${editingInvoice?.fiscalStatus === 'Pendiente' ? 'selected' : ''}>ARCA · Pendiente</option><option value="Listo para enviar" ${editingInvoice?.fiscalStatus === 'Listo para enviar' ? 'selected' : ''}>ARCA · Listo para enviar</option><option value="Aprobado" ${editingInvoice?.fiscalStatus === 'Aprobado' ? 'selected' : ''}>ARCA · Aprobado</option><option value="Rechazado" ${editingInvoice?.fiscalStatus === 'Rechazado' ? 'selected' : ''}>ARCA · Rechazado</option><option value="Anulado" ${editingInvoice?.fiscalStatus === 'Anulado' ? 'selected' : ''}>ARCA · Anulado</option></select></label>
-          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero de comprobante del PV y usa <strong>Emitir con ARCA</strong> en la fila para solicitar el CAE; no se genera uno interno.</p>
+          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero informado por ARCA; no se genera uno interno.</p>
           <button type="submit">${editingInvoice ? 'Guardar cambios' : 'Guardar factura'}</button>
           ${editingInvoice ? '<button type="button" class="danger-action" data-action="cancel-invoice-edit">Cancelar edicion</button>' : ''}
         </form>
@@ -2480,29 +2464,42 @@ const invoicesView = (ui) => `
 
 const invoicesViewV2 = (ui) => `
   ${(() => {
-    const showInvoiceForm = invoiceFormOpen
+    const editingInvoice = ui.snapshot.invoices.find((invoice) => invoice.id === invoiceEditingId)
+    const showInvoiceForm = invoiceFormOpen || Boolean(editingInvoice)
     const paymentInvoice = ui.snapshot.invoices.find((invoice) => invoice.id === invoicePaymentId)
     const paymentBalance = invoiceBalance(paymentInvoice)
+    const query = invoiceHistoryQuery.trim().toLowerCase()
+    const filteredInvoices = ui.enrichedInvoices.filter((invoice) => {
+      const matchesQuery = !query || [invoice.number, invoice.customerName, invoice.branchName, invoice.kind].some((value) => String(value || '').toLowerCase().includes(query))
+      const matchesStatus = invoiceHistoryStatus === 'all' || invoice.status === invoiceHistoryStatus
+      const matchesFiscal = invoiceHistoryFiscal === 'all' || invoice.fiscalStatus === invoiceHistoryFiscal
+      const matchesKind = invoiceHistoryKind === 'all' || invoice.kind === invoiceHistoryKind
+      return matchesQuery && matchesStatus && matchesFiscal && matchesKind
+    })
+    const openInvoices = ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada')
+    const pendingAmount = openInvoices.reduce((sum, invoice) => sum + invoiceBalance(invoice), 0)
     return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Facturacion</p><h2>Comprobantes</h2></div><div class="panel-inline-stats section-inline-stats">
+  <section class="view-section invoices-view"><div class="section-header"><div><p class="kicker">Facturación</p><h2>Comprobantes y cobros</h2><p class="section-description">Emití comprobantes, seguí su estado y registrá cobros pendientes desde un mismo lugar.</p></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.enrichedInvoices.length}</strong><span>Comprobantes</span></span>
-      <span class="panel-inline-stat"><strong>${ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').length}</strong><span>Abiertas</span></span>
-      <span class="panel-inline-stat"><strong>${money(ui.enrichedInvoices.reduce((sum, invoice) => sum + Number(invoice.totalAmount || 0), 0))}</strong><span>Monto total</span></span>
+      <span class="panel-inline-stat"><strong>${openInvoices.length}</strong><span>Pendientes</span></span>
+      <span class="panel-inline-stat"><strong>${money(pendingAmount)}</strong><span>Por cobrar</span></span>
+      <span class="panel-inline-stat"><strong>${ui.enrichedInvoices.filter((invoice) => invoice.status === 'Cobrada').length}</strong><span>Cobradas</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="stacked-section">
-      ${showInvoiceForm ? `<article class="panel"><div class="panel-head"><div><h3>Nueva factura</h3><p>Numeracion real por sucursal</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-invoice-form">Cerrar</button></div></div>
+      ${showInvoiceForm ? `<article class="panel invoice-form-panel"><div class="panel-head"><div><h3>${editingInvoice ? 'Editar comprobante' : 'Nuevo comprobante'}</h3><p>Completá los datos comerciales y fiscales de la operación.</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-invoice-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="invoice">
-          <label>Numero de comprobante<input type="text" name="number" placeholder="Interno: se genera con el local · ARCA: numero aprobado" /></label>
-          <label>Cliente<select name="customerId" required>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}">${customer.fullName}</option>`).join('')}</select></label>
-          <label>Clase<select name="kind"><option selected>Factura</option><option>Ticket</option><option>Presupuesto</option><option>Remito</option><option>Nota de credito</option></select></label>
-          <label>Total<input type="number" min="1" name="totalAmount" required /></label>
-          <label>Tipo<select name="type"><option>A</option><option selected>B</option><option>C</option></select></label>
-          <label>Vencimiento<input type="date" name="dueDate" value="${today}" required /></label>
-          <label>Estado<select name="status"><option selected>Emitida</option><option>En revision</option><option>Cobrada</option></select></label>
-          <label>Emision<select name="fiscalStatus"><option value="Interno" selected>Interno</option><option value="Pendiente">ARCA · Pendiente</option><option value="Listo para enviar">ARCA · Listo para enviar</option><option value="Aprobado">ARCA · Aprobado</option><option value="Rechazado">ARCA · Rechazado</option><option value="Anulado">ARCA · Anulado</option></select></label>
-          <p class="form-note full-span">Los comprobantes internos se numeran automaticamente con la sucursal actual. Para ARCA, carga el numero de comprobante del PV y usa <strong>Emitir con ARCA</strong> en la fila para solicitar el CAE; no se genera uno interno.</p>
-          <button type="submit">Guardar factura</button>
+          <input type="hidden" name="invoiceId" value="${editingInvoice?.id || ''}" />
+          <label>Número de comprobante<input type="text" name="number" value="${escapeHtml(editingInvoice?.number || '')}" placeholder="Se genera automáticamente si es interno" /></label>
+          <label>Cliente<select name="customerId" required>${ui.snapshot.customers.map((customer) => `<option value="${customer.id}" ${editingInvoice?.customerId === customer.id ? 'selected' : ''}>${escapeHtml(customer.fullName)}</option>`).join('')}</select></label>
+          <label>Clase<select name="kind">${['Factura','Ticket','Presupuesto','Remito','Nota de credito'].map((kind) => `<option ${((editingInvoice?.kind || 'Factura') === kind) ? 'selected' : ''}>${kind}</option>`).join('')}</select></label>
+          <label>Total<input type="number" min="1" name="totalAmount" value="${editingInvoice?.totalAmount || ''}" required /></label>
+          <label>Tipo<select name="type">${['A','B','C'].map((type) => `<option ${((editingInvoice?.type || 'B') === type) ? 'selected' : ''}>${type}</option>`).join('')}</select></label>
+          <label>Vencimiento<input type="date" name="dueDate" value="${editingInvoice?.dueDate || today}" required /></label>
+          <label>Estado<select name="status">${['Emitida','En revision','Cobrada','Anulada'].map((status) => `<option ${((editingInvoice?.status || 'Emitida') === status) ? 'selected' : ''}>${status}</option>`).join('')}</select></label>
+          <label>Emisión<select name="fiscalStatus">${['Interno','Pendiente','Listo para enviar','Aprobado','Rechazado','Anulado'].map((status) => `<option value="${status}" ${((editingInvoice?.fiscalStatus || 'Interno') === status) ? 'selected' : ''}>${status === 'Interno' ? 'Interno' : `ARCA · ${status}`}</option>`).join('')}</select></label>
+          <p class="form-note full-span">Los comprobantes internos se numeran con la sucursal actual. Para ARCA, ingresá el número aprobado por el organismo.</p>
+          <button type="submit">${editingInvoice ? 'Guardar cambios' : 'Guardar comprobante'}</button>
           <button type="button" class="ghost-action" data-action="close-invoice-form">Cancelar</button>
         </form>
       </article>` : ''}
@@ -2521,8 +2518,9 @@ const invoicesViewV2 = (ui) => `
         </form>
       </article>` : ''}
       <article class="panel">
-        <div class="panel-head"><div><h3>Comprobantes</h3><p>Seguimiento comercial y numeracion</p></div><div class="settings-actions">${createToggleButton('invoice', showInvoiceForm, 'Agregar comprobante')}</div></div>
-        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], ui.enrichedInvoices.map((invoice) => `<div class="data-row invoice-open-row" data-invoice-open="${invoice.id}" tabindex="0" role="button" aria-label="Abrir factura ${invoice.number}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName || 'Consumidor final'}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}<br /><small>Saldo: ${money(invoiceBalance(invoice))}</small></span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
+        <div class="panel-head"><div><h3>Historial de comprobantes</h3><p>${filteredInvoices.length} resultado${filteredInvoices.length === 1 ? '' : 's'} · filtrá antes de abrir o cobrar.</p></div><div class="settings-actions">${createToggleButton('invoice', showInvoiceForm, 'Agregar comprobante')}</div></div>
+        <div class="invoice-history-filters"><input type="search" data-invoice-history-query value="${escapeHtml(invoiceHistoryQuery)}" placeholder="Buscar número, cliente o sucursal" aria-label="Buscar comprobantes" /><select data-invoice-history-status aria-label="Filtrar por estado"><option value="all">Todos los estados</option>${['Emitida','En revision','Cobrada','Anulada'].map((status) => `<option value="${status}" ${invoiceHistoryStatus === status ? 'selected' : ''}>${status}</option>`).join('')}</select><select data-invoice-history-fiscal aria-label="Filtrar por emisión"><option value="all">Todas las emisiones</option>${['Interno','Pendiente','Aprobado','Rechazado','Anulado'].map((status) => `<option value="${status}" ${invoiceHistoryFiscal === status ? 'selected' : ''}>${status === 'Interno' ? status : `ARCA · ${status}`}</option>`).join('')}</select><select data-invoice-history-kind aria-label="Filtrar por clase"><option value="all">Todas las clases</option>${['Factura','Ticket','Presupuesto','Remito','Nota de credito'].map((kind) => `<option value="${kind}" ${invoiceHistoryKind === kind ? 'selected' : ''}>${kind}</option>`).join('')}</select></div>
+        ${dataTable(['Comprobante', 'Cliente', 'Sucursal', 'Total', 'Acciones'], filteredInvoices.map((invoice) => `<div class="data-row invoice-open-row" data-invoice-open="${invoice.id}" tabindex="0" role="button" aria-label="Abrir comprobante ${invoice.number}"><span><strong>${invoice.number}</strong><br /><small>${invoiceEmissionLabel(invoice)} · ${invoice.branchName}</small></span><span>${invoice.customerName || 'Consumidor final'}<br /><small>${invoice.kind || 'Factura'} / ${invoice.fiscalStatus || 'Pendiente'}</small></span><span>${invoice.branchName}<br /><small>${invoice.status}</small></span><span>${money(invoice.totalAmount)}<br /><small>Saldo: ${money(invoiceBalance(invoice))}</small></span><span>${invoiceActionButtons(invoice)}</span></div>`), 'invoices-table invoice-compact-table')}
       </article>
     </section>
   </section>
@@ -2533,6 +2531,11 @@ const ticketsView = (ui) => `
   ${(() => {
     const editingTicket = ui.snapshot.tickets.find((ticket) => ticket.id === ticketEditingId)
     const showTicketForm = ticketFormOpen || Boolean(editingTicket)
+    const ticketQuery = ticketHistoryQuery.trim().toLowerCase()
+    const visibleTickets = ui.enrichedTickets.filter((ticket) => {
+      const matchesQuery = !ticketQuery || [ticket.number, ticket.customerName, ticket.device, ticket.issue, ticket.branchName].some((value) => String(value || '').toLowerCase().includes(ticketQuery))
+      return matchesQuery && (ticketHistoryStatus === 'all' || ticket.status === ticketHistoryStatus)
+    })
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Tickets</p><h2>Seguimiento operativo</h2></div></div>
     <section class="content-grid single-focus">
@@ -2566,7 +2569,7 @@ const ticketsViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.enrichedTickets.filter((ticket) => ticket.status === 'En curso').length}</strong><span>En curso</span></span>
       <span class="panel-inline-stat"><strong>${ui.enrichedTickets.filter((ticket) => ticket.status === 'Listo para entregar').length}</strong><span>Listos</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="stacked-section">
       ${showTicketForm ? `<article class="panel"><div class="panel-head"><div><h3>${editingTicket ? 'Editar ticket' : 'Nuevo ticket'}</h3><p>Numeracion y seguimiento por sucursal</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-ticket-form">Cerrar</button></div></div>
         <form class="form-grid" data-form="ticket">
@@ -2582,8 +2585,9 @@ const ticketsViewV2 = (ui) => `
         </form>
       </article>` : ''}
       <article class="panel">
-        <div class="panel-head"><div><h3>Tickets activos</h3><p>Vista rapida del flujo operativo</p></div><div class="settings-actions">${editingTicket ? '' : createToggleButton('ticket', showTicketForm, 'Agregar ticket')}</div></div>
-        ${dataTable(['Ticket', 'Cliente', 'Sucursal', 'Actualizado', 'Acciones'], ui.enrichedTickets.map((ticket) => `<div class="data-row"><span class="ticket-cell"><strong class="ticket-number" title="${escapeHtml(ticket.number)}">${escapeHtml(ticket.number)}</strong><br /><small>${ticket.device || 'Equipo sin detalle'}</small></span><span>${ticket.customerName}<br /><small>${ticket.status}</small></span><span>${ticket.branchName}</span><span class="ticket-updated">${formatTicketUpdatedAt(ticket.updatedAt)}</span><span>${ticketActionButtons(ticket)}</span></div>`), 'is-stable tickets-table')}
+        <div class="panel-head"><div><h3>Tickets activos</h3><p>${visibleTickets.length} resultado${visibleTickets.length === 1 ? '' : 's'} · seguí cada trabajo hasta la entrega.</p></div><div class="settings-actions">${editingTicket ? '' : createToggleButton('ticket', showTicketForm, 'Agregar ticket')}</div></div>
+        <div class="ticket-history-filters"><input type="search" data-ticket-history-query value="${escapeHtml(ticketHistoryQuery)}" placeholder="Buscar ticket, cliente o equipo" aria-label="Buscar tickets" /><select data-ticket-history-status aria-label="Filtrar tickets por estado"><option value="all">Todos los estados</option>${['Recibido','En curso','Esperando aprobacion','Listo para entregar'].map((status) => `<option value="${status}" ${ticketHistoryStatus === status ? 'selected' : ''}>${status}</option>`).join('')}</select></div>
+        ${dataTable(['Ticket', 'Cliente', 'Sucursal', 'Actualizado', 'Acciones'], visibleTickets.map((ticket) => `<div class="data-row"><span class="ticket-cell"><strong class="ticket-number" title="${escapeHtml(ticket.number)}">${escapeHtml(ticket.number)}</strong><br /><small>${ticket.device || 'Equipo sin detalle'}</small></span><span>${ticket.customerName}<br /><small>${ticket.status}</small></span><span>${ticket.branchName}</span><span class="ticket-updated">${formatTicketUpdatedAt(ticket.updatedAt)}</span><span>${ticketActionButtons(ticket)}</span></div>`), 'is-stable tickets-table')}
       </article>
     </section>
   </section>
@@ -2595,7 +2599,7 @@ const branchesView = (ui) => `
     const editingBranch = ui.snapshot.branches.find((branch) => branch.id === branchEditingId)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Sucursales</p><h2>Locales y numeracion</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="content-grid single-focus">
       <article class="panel"><div class="panel-head"><div><h3>${editingBranch ? 'Editar sucursal' : 'Nueva sucursal'}</h3><p>La sucursal actual define la numeracion</p></div></div>
         <form class="form-grid" data-form="branch">
@@ -2624,7 +2628,7 @@ const branchesViewLegacy = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || 'Sin caja'}</strong><span>Caja actual</span></span>
       <span class="panel-inline-stat"><strong>${ui.currentBranch?.name || '-'}</strong><span>Activa</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="module-board branches-board ${showBranchForm ? '' : 'board-expanded'}">
       <article class="panel module-side"><div class="panel-head"><div><h3>${editingBranch ? 'Editar sucursal' : 'Nueva sucursal'}</h3><p>La sucursal actual define la numeracion</p></div></div>
         <form class="form-grid" data-form="branch">
@@ -2666,7 +2670,7 @@ const branchesViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || 'Sin caja'}</strong><span>Caja actual</span></span>
       <span class="panel-inline-stat"><strong>${ui.currentBranch?.name || '-'}</strong><span>Sucursal activa</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="stacked-section">
       ${showBranchForm ? `<article class="panel">
         <div class="panel-head"><div><h3>${editingBranch ? 'Editar sucursal' : 'Nueva sucursal'}</h3><p>La sucursal actual define la numeracion</p></div></div>
@@ -2694,7 +2698,7 @@ const registersView = (ui) => `
     const editingRegister = ui.snapshot.registers.find((register) => register.id === registerEditingId)
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Cajas</p><h2>Cajeros y puestos de cobro</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="content-grid single-focus">
       <article class="panel"><div class="panel-head"><div><h3>${editingRegister ? 'Editar caja' : 'Nueva caja'}</h3><p>Asignacion por sucursal y cajero</p></div></div>
         <form class="form-grid" data-form="register">
@@ -2724,7 +2728,7 @@ const registersViewLegacy = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || '-'}</strong><span>Activa</span></span>
       <span class="panel-inline-stat"><strong>${new Set(ui.enrichedRegisters.map((register) => register.cashierName)).size}</strong><span>Cajeros</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="module-board registers-board ${showRegisterForm ? '' : 'board-expanded'}">
       <article class="panel module-side"><div class="panel-head"><div><h3>${editingRegister ? 'Editar caja' : 'Nueva caja'}</h3><p>Asignacion por sucursal y cajero</p></div></div>
         <form class="form-grid" data-form="register">
@@ -2765,7 +2769,7 @@ const registersViewV2 = (ui) => `
       <span class="panel-inline-stat"><strong>${ui.currentRegister?.name || '-'}</strong><span>Caja activa</span></span>
       <span class="panel-inline-stat"><strong>${new Set(ui.enrichedRegisters.map((register) => register.cashierName)).size}</strong><span>Cajeros</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="stacked-section">
       ${showRegisterForm ? `<article class="panel">
         <div class="panel-head"><div><h3>${editingRegister ? 'Editar caja' : 'Nueva caja'}</h3><p>Asignacion por sucursal y cajero</p></div></div>
@@ -2932,47 +2936,28 @@ const auditView = (ui) => {
   const now = new Date(); const beginningOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const periodStart = auditPeriodFilter === 'today' ? beginningOfDay : auditPeriodFilter === 'week' ? new Date(beginningOfDay.getTime() - (6 * 86400000)) : auditPeriodFilter === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : null
   const query = auditSearchQuery.trim().toLocaleLowerCase()
-  const entries = ui.enrichedAudit.filter((entry) => { const createdAt = new Date(entry.createdAt); if (periodStart && createdAt < periodStart) return false; if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false; if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false; if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false; return !query || auditSearchText(ui, entry).includes(query) })
+  const entries = ui.enrichedAudit.filter((entry) => { const createdAt = new Date(entry.createdAt); if (periodStart && createdAt < periodStart) return false; if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false; if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false; if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false; if (auditActionFilter !== 'all' && entry.action !== auditActionFilter) return false; return !query || auditSearchText(ui, entry).includes(query) })
   const counts = Object.keys(ui.auditModuleLabels).map((key) => ({ key, label: ui.auditModuleLabels[key], count: entries.filter((entry) => entry.modules.includes(key)).length })).filter((item) => item.count)
   const total = Math.max(1, counts.reduce((sum, item) => sum + item.count, 0)); let offset = 0
   const donut = counts.map((item) => { const start = Math.round((offset / total) * 100); offset += item.count; return `${moduleColors[item.key]} ${start}% ${Math.round((offset / total) * 100)}%` }).join(', ') || '#334155 0 100%'
   const sensitiveCount = entries.filter((entry) => ['deleted', 'cancelled', 'returned', 'reset', 'deactivated'].includes(entry.action)).length
-  return `<section class="view-section audit-view"><div class="section-header"><div><p class="kicker">Control y trazabilidad</p><h2>Auditoría</h2><p class="section-description">Seguí cada cambio entre módulos, desde la operación que lo originó.</p></div><div class="panel-inline-stats section-inline-stats"><span class="panel-inline-stat"><strong>${entries.length}</strong><span>Eventos</span></span><span class="panel-inline-stat"><strong>${sensitiveCount}</strong><span>Para revisar</span></span></div></div>${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}<section class="panel audit-controls"><div class="audit-periods" aria-label="Período de auditoría">${[['today', 'Hoy'], ['week', '7 días'], ['month', 'Este mes'], ['custom', 'Personalizado']].map(([key, label]) => `<button type="button" class="audit-filter-button ${auditPeriodFilter === key ? 'is-active' : ''}" data-audit-period="${key}">${label}</button>`).join('')}</div><div class="audit-filter-fields"><label class="audit-search"><span>Buscar</span><input type="search" data-audit-search value="${escapeHtml(auditSearchQuery)}" placeholder="Usuario, operación o módulo" /></label>${auditPeriodFilter === 'custom' ? `<label>Desde<input type="date" data-audit-date="from" value="${auditDateFrom}" /></label><label>Hasta<input type="date" data-audit-date="to" value="${auditDateTo}" /></label>` : ''}</div></section><section class="audit-overview"><article class="panel audit-module-panel"><div class="panel-head"><div><h3>Ramas por módulo</h3><p>Elegí un módulo para seguir su recorrido.</p></div></div><div class="audit-module-filters"><button type="button" class="audit-module-chip ${auditModuleFilter === 'all' ? 'is-active' : ''}" data-audit-module="all">Todos <b>${entries.length}</b></button>${counts.map((item) => `<button type="button" class="audit-module-chip module-${item.key} ${auditModuleFilter === item.key ? 'is-active' : ''}" data-audit-module="${item.key}"><i></i>${item.label} <b>${item.count}</b></button>`).join('')}</div></article><article class="panel audit-distribution"><div class="panel-head"><div><h3>Distribución</h3><p>Eventos del período seleccionado</p></div></div><div class="audit-donut-row"><div class="audit-donut" style="--audit-donut: conic-gradient(${donut})"><strong>${entries.length}</strong><span>eventos</span></div><div class="audit-legend">${counts.slice(0, 5).map((item) => `<span class="module-${item.key}"><i></i>${item.label}<b>${item.count}</b></span>`).join('') || '<span>Sin actividad en este período.</span>'}</div></div></article></section><section class="panel audit-trace-panel"><div class="panel-head"><div><h3>Línea de trazabilidad</h3><p>Los puntos de color muestran los módulos relacionados con cada acción.</p></div></div><div class="audit-trace">${entries.length ? entries.map((entry) => `<article class="audit-trace-event module-${entry.modules[0]}"><div class="audit-trace-node"><i></i></div><div class="audit-trace-content"><div class="audit-event-topline"><span class="audit-module-tag module-${entry.modules[0]}">${entry.moduleLabel}</span><time>${String(entry.createdAt || '').slice(0, 16).replace('T', ' · ')}</time></div><strong>${actionLabels[entry.action] || 'Registró'} ${entry.entityLabel}</strong><p>Por ${escapeHtml(entry.actorName)}${entry.entityId ? ` · Ref. ${escapeHtml(String(entry.entityId).slice(0, 8))}` : ''}</p><div class="audit-related-modules">${entry.modules.map((module) => `<span class="module-${module}" title="${ui.auditModuleLabels[module]}"><i></i>${ui.auditModuleLabels[module]}</span>`).join('')}</div></div></article>`).join('') : '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'}</div></section></section>`
+  return `<section class="view-section audit-view"><div class="section-header"><div><p class="kicker">Bitácora operativa</p><h2>Actividad de la operación</h2><p class="section-description">Encontrá quién hizo qué, cuándo ocurrió y abrí el registro relacionado.</p></div><div class="panel-inline-stats section-inline-stats"><span class="panel-inline-stat"><strong>${entries.length}</strong><span>Eventos visibles</span></span><span class="panel-inline-stat"><strong>${counts.length}</strong><span>Módulos activos</span></span><span class="panel-inline-stat"><strong>${sensitiveCount}</strong><span>Acciones sensibles</span></span></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel audit-controls"><div class="audit-periods" aria-label="Período de actividad">${[['today', 'Hoy'], ['week', '7 días'], ['month', 'Este mes'], ['custom', 'Personalizado']].map(([key, label]) => `<button type="button" class="audit-filter-button ${auditPeriodFilter === key ? 'is-active' : ''}" data-audit-period="${key}">${label}</button>`).join('')}</div><div class="audit-filter-fields"><label class="audit-search"><span>Buscar en la actividad</span><input type="search" data-audit-search value="${escapeHtml(auditSearchQuery)}" placeholder="Venta, factura, cliente, producto o usuario" /></label><label>Acción<select data-audit-action aria-label="Filtrar por acción"><option value="all">Todas las acciones</option>${[['created','Creaciones'],['updated','Actualizaciones'],['deleted','Eliminaciones'],['cancelled','Anulaciones'],['opened','Aperturas'],['closed','Cierres'],['registered','Registros']].map(([value,label]) => `<option value="${value}" ${auditActionFilter === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>${auditPeriodFilter === 'custom' ? `<label>Desde<input type="date" data-audit-date="from" value="${auditDateFrom}" /></label><label>Hasta<input type="date" data-audit-date="to" value="${auditDateTo}" /></label>` : ''}<button type="button" class="audit-clear-button" data-audit-clear ${(!auditSearchQuery && auditPeriodFilter === 'all' && auditModuleFilter === 'all' && auditActionFilter === 'all') ? 'hidden' : ''}>Limpiar filtros</button></div></section><section class="audit-overview"><article class="panel audit-module-panel"><div class="panel-head"><div><p class="kicker">Filtrar por origen</p><h3>Módulos</h3><p>Elegí un módulo para concentrarte en sus movimientos.</p></div></div><div class="audit-module-filters"><button type="button" class="audit-module-chip ${auditModuleFilter === 'all' ? 'is-active' : ''}" data-audit-module="all">Todos <b>${entries.length}</b></button>${counts.map((item) => `<button type="button" class="audit-module-chip module-${item.key} ${auditModuleFilter === item.key ? 'is-active' : ''}" data-audit-module="${item.key}"><i></i>${item.label} <b>${item.count}</b></button>`).join('')}</div></article><article class="panel audit-distribution"><div class="panel-head"><div><p class="kicker">Lectura del período</p><h3>Actividad visible</h3></div></div><div class="audit-legend"><span><i></i>${entries.length} eventos encontrados</span><span><i></i>${sensitiveCount} requieren revisión</span><span><i></i>Seleccioná un evento para ver el detalle</span></div></article></section><section class="panel audit-trace-panel"><div class="panel-head"><div><p class="kicker">Historial</p><h3>Últimos movimientos</h3><p>Seleccioná un evento para ver su detalle y registro relacionado.</p></div></div><div class="audit-trace">${entries.length ? entries.map((entry) => `<article class="audit-trace-event module-${entry.modules[0]}"><div class="audit-trace-node"><i></i></div><div class="audit-trace-content"><div class="audit-event-topline"><span class="audit-module-tag module-${entry.modules[0]}">${entry.moduleLabel}</span><time>${String(entry.createdAt || '').slice(0, 16).replace('T', ' · ')}</time></div><strong>${actionLabels[entry.action] || 'Registró'} ${entry.entityLabel}</strong><p>Por ${escapeHtml(entry.actorName)}${entry.entityId ? ` · Ref. ${escapeHtml(String(entry.entityId).slice(0, 8))}` : ''}</p><div class="audit-related-modules">${entry.modules.map((module) => `<span class="module-${module}" title="${ui.auditModuleLabels[module]}"><i></i>${ui.auditModuleLabels[module]}</span>`).join('')}</div></div></article>`).join('') : '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'}</div></section></section>`
 }
 
-const reportsView = (ui) => `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Reportes</p><h2>Indicadores y movimientos</h2></div><div class="panel-inline-stats section-inline-stats">
-      <span class="panel-inline-stat"><strong>${money(ui.reportScopedSales.reduce((sum, sale) => sum + sale.totalAmount, 0))}</strong><span>Ventas filtradas</span></span>
-      <span class="panel-inline-stat"><strong>${money(ui.reportScopedInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0))}</strong><span>Facturas filtradas</span></span>
-      <span class="panel-inline-stat"><strong>${money(ui.reportScopedCashMovements.reduce((sum, movement) => sum + movement.signedAmount, 0))}</strong><span>Mov. caja</span></span>
-    </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
-    <section class="content-grid single-focus report-filter-shell">
-      <article class="panel"><div class="panel-head"><div><h3>Filtro operativo</h3><p>Separado por sucursal y caja</p></div></div>
-        <form class="form-grid compact-form report-filter-form" data-form="report-filter">
-          <label>Sucursal actual<input type="text" value="${ui.currentBranch?.name || '-'}" disabled /></label>
-          <label>Caja<select name="registerFilter"><option value="all">Todas</option>${ui.branchRegisters.map((register) => `<option value="${register.id}" ${reportRegisterFilter === register.id ? 'selected' : ''}>${register.name}</option>`).join('')}</select></label>
-          <label>Desde<input type="date" name="dateFrom" value="${ui.reportDateFrom}" /></label>
-          <label>Hasta<input type="date" name="dateTo" value="${ui.reportDateTo}" /></label>
-          <button type="submit">Aplicar filtro</button>
-        </form>
-      </article>
-    </section>
-    <section class="dashboard-grid reports-layout">
-      <article class="panel report-top-products-panel"><div class="panel-head"><div><h3>Top productos</h3><p>Movimiento comercial filtrado</p></div></div><div class="top-list">${[...ui.reportScopedSales.reduce((map, sale) => { for (const item of sale.items) { const current = map.get(item.productId) || { name: ui.snapshot.products.find((product) => product.id === item.productId)?.name || 'Articulo', qty: 0 }; current.qty += item.quantity; map.set(item.productId, current) } return map }, new Map()).values()].sort((a, b) => b.qty - a.qty).slice(0, 5).map((item, index) => `<div class="top-row"><span>${index + 1}</span><div><strong>${item.name}</strong><p>${item.qty} unidades vendidas</p></div></div>`).join('') || '<p class="empty-state">Sin ventas en este rango.</p>'}</div></article>
-      <article class="panel report-balance-panel"><div class="panel-head"><div><h3>Resumen del período</h3><p>${ui.currentBranch?.name || 'Sucursal'}${reportRegisterFilter === 'all' ? '' : ` / ${ui.enrichedRegisters.find((register) => register.id === reportRegisterFilter)?.name || 'Caja'}`}</p></div><div class="settings-actions"><button type="button" class="inline-action" data-action="export-report">Exportar CSV</button></div></div><div class="report-summary-grid">
-        <div class="summary-mini-card"><strong>Ventas</strong><span>${money(ui.reportScopedSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0))}</span></div>
-        <div class="summary-mini-card"><strong>Facturas</strong><span>${money(ui.reportScopedInvoices.reduce((sum, invoice) => sum + Number(invoice.totalAmount || 0), 0))}</span></div>
-        <div class="summary-mini-card"><strong>Por cobrar</strong><span>${money(ui.reportScopedSales.reduce((sum, sale) => sum + Math.max(0, Number(sale.totalAmount || 0) - Number(sale.amountPaid || 0)), 0))}</span></div>
-        <div class="summary-mini-card"><strong>Caja neta</strong><span>${money(ui.reportScopedCashMovements.reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0))}</span></div>
-        <div class="summary-mini-card"><strong>Compras</strong><span>${money(ui.reportScopedReceipts.reduce((sum, receipt) => sum + (Number(receipt.quantity || 0) * Number(receipt.unitCost || 0)), 0))}</span></div>
-        <div class="summary-mini-card"><strong>Mov. stock</strong><span>${ui.reportScopedStockMovements.length}</span></div>
-      </div></article>
-      <article class="panel report-movement-panel"><div class="panel-head"><div><h3>Movimientos de stock</h3><p>Ingresos y egresos</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de stock en este rango.</p>'}</div></article>
-      <article class="panel report-movement-panel"><div class="panel-head"><div><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de caja en este rango.</p>'}</div></article>
-    </section>
-  </section>
-`
+const reportsView = (ui) => {
+  const salesTotal = ui.reportScopedSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0)
+  const invoiceTotal = ui.reportScopedInvoices.reduce((sum, invoice) => sum + Number(invoice.totalAmount || 0), 0)
+  const receivables = ui.reportScopedSales.reduce((sum, sale) => sum + Math.max(0, Number(sale.totalAmount || 0) - Number(sale.amountPaid || 0)), 0)
+  const cashNet = ui.reportScopedCashMovements.reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0)
+  const purchasesTotal = ui.reportScopedReceipts.reduce((sum, receipt) => sum + (Number(receipt.quantity || 0) * Number(receipt.unitCost || 0)), 0)
+  const averageTicket = ui.reportScopedSales.length ? salesTotal / ui.reportScopedSales.length : 0
+  const estimatedMargin = Math.max(0, salesTotal - ui.reportScopedSales.reduce((sum, sale) => sum + (sale.items || []).reduce((lineSum, item) => lineSum + Number(item.quantity || 0) * Number(ui.snapshot.products.find((product) => product.id === item.productId)?.costPrice || 0), 0), 0))
+  const collectionRate = salesTotal ? Math.max(0, Math.min(100, ((salesTotal - receivables) / salesTotal) * 100)) : 0
+  const topProducts = [...ui.reportScopedSales.reduce((map, sale) => { for (const item of sale.items) { const current = map.get(item.productId) || { name: ui.snapshot.products.find((product) => product.id === item.productId)?.name || 'Artículo', qty: 0 }; current.qty += item.quantity; map.set(item.productId, current) } return map }, new Map()).values()].sort((a, b) => b.qty - a.qty).slice(0, 5)
+  const maxProductQty = Math.max(1, ...topProducts.map((item) => item.qty))
+  const selectedRegister = reportRegisterFilter === 'all' ? 'Todas las cajas' : (ui.enrichedRegisters.find((register) => register.id === reportRegisterFilter)?.name || 'Caja')
+  return `<section class="view-section reports-view"><div class="section-header"><div><p class="kicker">Centro de lectura</p><h2>Lectura del negocio</h2><p class="section-description">Compará ventas, rentabilidad, caja e inventario en el período que elijas.</p></div><div class="reports-header-actions"><span class="reports-context">${ui.currentBranch?.name || 'Sucursal'} · ${selectedRegister}</span><button type="button" class="primary-action" data-action="export-report">Exportar CSV</button></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel report-filter-shell"><div class="report-filter-heading"><div><p class="kicker">Período de análisis</p><h3>Elegí qué querés comparar</h3></div><span class="report-date-label">${ui.reportDateFrom || ui.reportDateTo ? `${ui.reportDateFrom || 'Inicio'} → ${ui.reportDateTo || 'Hoy'}` : 'Todo el historial'}</span></div><form class="form-grid compact-form report-filter-form" data-form="report-filter"><label>Sucursal<input type="text" value="${ui.currentBranch?.name || '-'}" disabled /></label><label>Caja<select name="registerFilter"><option value="all">Todas</option>${ui.branchRegisters.map((register) => `<option value="${register.id}" ${reportRegisterFilter === register.id ? 'selected' : ''}>${register.name}</option>`).join('')}</select></label><label>Desde<input type="date" name="dateFrom" value="${ui.reportDateFrom}" /></label><label>Hasta<input type="date" name="dateTo" value="${ui.reportDateTo}" /></label><button type="submit">Aplicar período</button></form></section><section class="report-metric-grid"><article class="report-metric is-primary"><span>Ventas</span><strong>${money(salesTotal)}</strong><small>${ui.reportScopedSales.length} operaciones</small></article><article class="report-metric"><span>Ticket promedio</span><strong>${money(averageTicket)}</strong><small>Por operación</small></article><article class="report-metric"><span>Margen estimado</span><strong>${money(estimatedMargin)}</strong><small>Ventas menos costo</small></article><article class="report-metric"><span>Por cobrar</span><strong>${money(receivables)}</strong><small>Saldo pendiente</small></article><article class="report-metric"><span>Compras</span><strong>${money(purchasesTotal)}</strong><small>${ui.reportScopedReceipts.length} recepciones</small></article><article class="report-metric"><span>Stock movido</span><strong>${ui.reportScopedStockMovements.length}</strong><small>${collectionRate.toFixed(0)}% cobrado</small></article></section><section class="reports-focus-grid"><article class="panel report-top-products-panel"><div class="panel-head"><div><p class="kicker">Rendimiento comercial</p><h3>Productos más vendidos</h3><p>Unidades vendidas en el período seleccionado.</p></div></div><div class="report-product-ranking">${topProducts.map((item, index) => `<div class="report-product-row"><span class="report-rank">${String(index + 1).padStart(2, '0')}</span><div class="report-product-info"><strong>${escapeHtml(item.name)}</strong><div class="report-product-bar"><i style="width:${Math.round((item.qty / maxProductQty) * 100)}%"></i></div></div><b>${item.qty}</b></div>`).join('') || '<p class="empty-state">Todavía no hay ventas en este rango.</p>'}</div></article><article class="panel report-balance-panel"><div class="panel-head"><div><p class="kicker">Indicadores clave</p><h3>Salud operativa</h3><p>Lecturas que no aparecen en el Resumen general.</p></div></div><div class="report-summary-list"><div><span>Caja neta</span><strong>${money(cashNet)}</strong></div><div><span>Cobranza</span><strong>${collectionRate.toFixed(0)}%</strong></div><div><span>Comprobantes</span><strong>${ui.reportScopedInvoices.length}</strong></div><div><span>Movimientos de stock</span><strong>${ui.reportScopedStockMovements.length}</strong></div></div></article></section><section class="reports-movement-grid"><article class="panel report-movement-panel"><div class="panel-head"><div><p class="kicker">Inventario</p><h3>Movimientos de stock</h3><p>Ingresos y egresos recientes.</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">No hubo movimientos de stock en este período.</p>'}</div></article><article class="panel report-movement-panel"><div class="panel-head"><div><p class="kicker">Tesorería</p><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales.</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} · ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">No hubo movimientos de caja en este período.</p>'}</div></article></section></section>`
+}
 
 const reportsViewLegacy = (ui) => `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Reportes</p><h2>Indicadores y movimientos</h2></div></div>
@@ -3019,7 +3004,7 @@ const ownerAdminViewV2 = (ui) => {
   const usersWithActivity = allUsers.filter((entry) => entry.activity?.length).length
   const trace = selectedUser?.activity || []
   return `<section class="view-section platform-trace-view"><div class="section-header platform-console-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2><p class="section-description">Elegí una persona para seguir su actividad real en todos sus comercios.</p></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="platform-trace-stats"><span><strong>${allUsers.length}</strong> usuarios</span><span><strong>${activeUsers}</strong> activos</span><span><strong>${usersWithActivity}</strong> con actividad registrada</span></section>
     <section class="platform-trace-workspace"><aside class="panel platform-user-directory"><div class="panel-head"><div><p class="kicker">Directorio</p><h3>Usuarios</h3></div><span class="panel-count">${users.length}</span></div><div class="platform-user-filters"><input type="search" value="${escapeHtml(platformUserSearchQuery)}" data-platform-user-search placeholder="Buscar persona o comercio" /><select data-platform-user-filter><option value="all" ${platformUserFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformUserFilter === 'active' ? 'selected' : ''}>Activos</option><option value="inactive" ${platformUserFilter === 'inactive' ? 'selected' : ''}>Inactivos</option></select></div><div class="platform-user-list">${users.length ? users.map((entry) => `<button type="button" class="platform-user-row ${entry.id === selectedUser?.id ? 'is-selected' : ''}" data-platform-user-select="${entry.id}"><span class="platform-user-avatar">${escapeHtml((entry.fullName || '?').slice(0, 1).toUpperCase())}</span><span><strong>${escapeHtml(entry.fullName)}</strong><small>${escapeHtml(entry.email || 'Sin email')}</small><em>${entry.memberships?.[0]?.commerceName || 'Sin comercio'}</em></span><time>${entry.lastLoginAt ? formatDate(entry.lastLoginAt) : 'Sin acceso'}</time></button>`).join('') : '<p class="empty-state">No hay usuarios para este filtro.</p>'}</div></aside>
       ${selectedUser ? `<section class="platform-user-detail"><header class="platform-user-header"><span class="platform-user-avatar large">${escapeHtml((selectedUser.fullName || '?').slice(0, 1).toUpperCase())}</span><div><p class="kicker">Perfil seleccionado</p><h3>${escapeHtml(selectedUser.fullName)}</h3><p>${escapeHtml(selectedUser.email || 'Sin email')} · ${selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}</p></div><div class="platform-user-meta"><span>Alta<strong>${formatDate(selectedUser.createdAt)}</strong></span><span>Último acceso<strong>${formatDate(selectedUser.lastLoginAt)}</strong></span></div></header>
@@ -3051,30 +3036,25 @@ const settingsViewV2 = (ui) => `
           : ui.snapshot.meta.syncStatus || 'Sin conexion'
     const arcaConnected = arcaConnectionStatus === 'connected'
     return `
-  <section class="view-section"><div class="section-header"><div><p class="kicker">Ajustes</p><h2>Cuenta y configuracion</h2></div><div class="panel-inline-stats section-inline-stats">
-      <span class="panel-inline-stat"><strong>${ui.user.fullName}</strong><span>${ui.role.name}</span></span>
-      <span class="panel-inline-stat"><strong>${syncLabel}</strong><span>Base</span></span>
-      <span class="panel-inline-stat"><strong>${ui.snapshot.business.enabledModules.length}</strong><span>Modulos</span></span>
+  <section class="view-section settings-center"><div class="section-header settings-center-header"><div><p class="kicker">Centro de operación</p><h2>Configurá tu operación</h2><p class="section-description">Organizá el comercio, los accesos y la facturación desde un único lugar.</p></div><div class="panel-inline-stats section-inline-stats">
+      <span class="panel-inline-stat"><strong>${ui.currentBranch?.name || 'Sucursal'}</strong><span>Sucursal activa</span></span>
+      <span class="panel-inline-stat"><strong>${syncLabel}</strong><span>Estado de datos</span></span>
+      <span class="panel-inline-stat"><strong>${ui.snapshot.business.enabledModules.length}</strong><span>Módulos activos</span></span>
     </div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="stacked-section settings-stack">
-      <article class="panel"><div class="panel-head"><div><h3>Cuenta activa</h3><p>Sesion, rol y acceso del negocio</p></div></div>
-        <div class="priority-list">
-          <div class="priority-item"><strong>Usuario</strong><p>${ui.user.fullName}<br /><small>${maskEmail(ui.user.email) || 'Sin email'}</small></p></div>
-          <div class="priority-item"><strong>Perfil</strong><p>${ui.role.name}</p></div>
-          <div class="priority-item"><strong>Comercio</strong><p>${ui.commerceContext?.commerce_name || 'Sin comercio activo'}</p></div>
-          <div class="priority-item"><strong>Estado</strong><p>${syncLabel}${ui.snapshot.meta.lastSyncedAt ? `<br /><small>${ui.snapshot.meta.lastSyncedAt.slice(0, 16).replace('T', ' ')}</small>` : ''}</p></div>
-        </div>
-        <div class="settings-actions"><button type="button" class="primary-action" data-action="open-support">Soporte por WhatsApp</button><button type="button" class="danger-action" data-action="sign-out">Cerrar sesion</button></div>
+      <article class="panel settings-account-strip"><div class="settings-account-identity"><span class="settings-account-avatar">${escapeHtml((ui.user.fullName || '?').slice(0, 1).toUpperCase())}</span><div><p class="kicker">Sesión activa</p><strong>${ui.user.fullName}</strong><span>${ui.role.name} · ${syncLabel}</span></div></div>
+        <div class="settings-account-context"><span>${ui.commerceContext?.commerce_name || 'Sin comercio activo'}</span><small>${ui.snapshot.business.enabledModules.length} módulos disponibles</small></div>
+        <div class="settings-actions"><button type="button" class="ghost-action" data-action="open-support">Soporte</button><button type="button" class="danger-action" data-action="sign-out">Cerrar sesión</button></div>
       </article>
-      <nav class="settings-section-switcher" aria-label="Secciones de configuracion">
+      <p class="settings-group-label">Configuración del negocio</p><nav class="settings-section-switcher settings-priority-grid" aria-label="Secciones de configuración">
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'commerce' ? 'is-active' : ''}" data-settings-panel="commerce" aria-expanded="${settingsPanelOpen === 'commerce' ? 'true' : 'false'}"><strong>Datos del comercio</strong><span>Nombre, razon social y propietario</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'progressive-profile' ? 'is-active' : ''}" data-settings-panel="progressive-profile" aria-expanded="${settingsPanelOpen === 'progressive-profile' ? 'true' : 'false'}"><strong>Perfil opcional</strong><span>${ui.progressiveProfile.status === 'complete' ? 'Personalización lista' : 'Continuar cuando quieras'}</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'users' ? 'is-active' : ''}" data-settings-panel="users" aria-expanded="${settingsPanelOpen === 'users' ? 'true' : 'false'}"><strong>Usuarios y permisos</strong><span>${ui.enrichedUsers.length} cuentas del negocio</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'modules' ? 'is-active' : ''}" data-settings-panel="modules" aria-expanded="${settingsPanelOpen === 'modules' ? 'true' : 'false'}"><strong>Plan y modulos</strong><span>${ui.snapshot.business.enabledModules.length} modulos activos</span></button>
         ${canViewBranches ? `<button type="button" class="settings-section-trigger ${settingsPanelOpen === 'branches' ? 'is-active' : ''}" data-settings-panel="branches" aria-expanded="${settingsPanelOpen === 'branches' ? 'true' : 'false'}"><strong>Sucursales</strong><span>${ui.snapshot.branches.length} locales configurados</span></button>` : ''}
         ${canViewRegisters ? `<button type="button" class="settings-section-trigger ${settingsPanelOpen === 'registers' ? 'is-active' : ''}" data-settings-panel="registers" aria-expanded="${settingsPanelOpen === 'registers' ? 'true' : 'false'}"><strong>Puestos de cobro</strong><span>${ui.enrichedRegisters.length} cajas configuradas</span></button>` : ''}
-        <button type="button" class="settings-section-trigger arca-status-trigger ${arcaConnected ? 'is-connected' : 'is-attention'} ${settingsPanelOpen === 'arca' ? 'is-active' : ''}" data-settings-panel="arca" aria-expanded="${settingsPanelOpen === 'arca' ? 'true' : 'false'}"><strong>Facturacion ARCA <i class="arca-status-dot" aria-hidden="true"></i></strong><span>${arcaConnected ? 'Conexion fiscal activa' : 'Requiere configuracion o verificacion'}</span></button>
+        <button type="button" class="settings-section-trigger arca-status-trigger ${arcaConnected ? 'is-connected' : 'is-attention'} ${settingsPanelOpen === 'arca' ? 'is-active' : ''}" data-settings-panel="arca" aria-expanded="${settingsPanelOpen === 'arca' ? 'true' : 'false'}"><strong>Conexión fiscal ARCA <i class="arca-status-dot" aria-hidden="true"></i></strong><span>${arcaConnected ? 'Lista para emitir' : 'Requiere configuración o verificación'}</span></button>
       </nav>
       ${settingsPanelOpen === 'commerce' ? `<article class="panel settings-expand-panel" data-settings-content="commerce">
         <div class="panel-head"><div><h3>Comercio activo</h3><p>Datos principales del negocio y acceso general</p></div></div>
@@ -3135,7 +3115,7 @@ const settingsViewV2 = (ui) => `
         ${showRegisterForm ? `<form class="form-grid" data-form="register"><input type="hidden" name="registerId" value="${editingRegister?.id || ''}" /><label>Sucursal<select name="branchId" ${canManageUsers ? 'required' : 'disabled'}>${ui.snapshot.branches.map((branch) => `<option value="${branch.id}" ${editingRegister?.branchId === branch.id ? 'selected' : ''}>${branch.name}</option>`).join('')}</select></label><label>Nombre<input type="text" name="name" value="${editingRegister?.name || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label><label>Codigo<input type="text" name="code" value="${editingRegister?.code || ''}" ${canManageUsers ? 'required' : 'disabled'} /></label><label>Cajero<select name="cashierUserId" ${canManageUsers ? '' : 'disabled'}>${ui.snapshot.users.map((user) => `<option value="${user.id}" ${editingRegister?.cashierUserId === user.id ? 'selected' : ''}>${user.fullName}</option>`).join('')}</select></label><button type="submit" ${canManageUsers ? '' : 'disabled'}>${editingRegister ? 'Guardar cambios' : 'Guardar caja'}</button>${editingRegister ? '<button type="button" class="danger-action" data-action="cancel-register-edit">Cancelar edicion</button>' : '<button type="button" class="ghost-action" data-action="close-register-form">Cancelar</button>'}</form>` : ''}
         ${dataTable(['Caja', 'Codigo', 'Sucursal', 'Cajero', 'Accion'], ui.enrichedRegisters.map((register) => `<div class="data-row"><span>${register.name}</span><span>${register.code}</span><span>${register.branchName}</span><span>${register.cashierName}</span><span class="inline-action-group"><button type="button" class="inline-action" data-register-action="select" data-id="${register.id}">Usar</button>${registerActionButtons(register)}</span></div>`))}
       </article>` : ''}
-      ${settingsPanelOpen === 'arca' ? `<article class="panel settings-expand-panel" data-settings-content="arca"><div class="panel-head"><div><h3>${arcaConnected ? 'Facturacion ARCA activa' : 'Activar facturacion ARCA'}</h3><p>Configuracion guiada y segura para emitir comprobantes electronicos</p></div><span class="badge ${arcaConnected ? 'is-success' : 'is-warning'}">${arcaConnected ? 'Conexion activa' : 'Demo visual'}</span></div>
+      ${settingsPanelOpen === 'arca' ? `<article class="panel settings-expand-panel" data-settings-content="arca"><div class="panel-head"><div><h3>${arcaConnected ? 'Facturacion ARCA activa' : 'Activar facturacion ARCA'}</h3><p>Configuracion guiada y segura para emitir comprobantes electronicos</p></div><span class="badge ${arcaConnected ? 'is-success' : 'is-warning'}">${arcaConnected ? 'Conexion activa' : 'Pendiente'}</span></div>
         <div class="info-strip ${arcaConnected ? 'is-success' : 'is-warning'}"><strong>${arcaConnected ? 'ARCA conectada y lista para facturar' : 'Configuracion fiscal pendiente'}</strong><span>${arcaConnected ? 'Certificado, WSAA y punto de venta validados. Operando puede emitir comprobantes con CAE.' : 'Los datos se envian al servicio fiscal privado de Operando. Tu Clave Fiscal nunca se solicita.'}</span></div>
         <div class="arca-steps" aria-label="Progreso de activacion">${['Datos fiscales', 'Certificado', 'Cuenta ARCA', 'Verificacion'].map((label, index) => `<span class="${arcaSetupStep === index + 1 ? 'is-active' : arcaSetupStep > index + 1 ? 'is-complete' : ''}"><i>${arcaSetupStep > index + 1 ? '✓' : index + 1}</i>${label}</span>`).join('')}</div>
         ${arcaSetupStep === 1 ? `<div class="arca-step-content"><div class="panel-head"><div><h3>Datos fiscales del comercio</h3><p>Se usan para crear el certificado y verificar el punto de venta.</p></div></div><div class="form-grid compact-form settings-wide-form"><label>CUIT<input name="arca-cuit" inputmode="numeric" value="${arcaFiscal.cuit}" placeholder="20-12345678-9" /></label><label class="full-span">Razon social<input name="arca-legal-name" value="${arcaFiscal.legalName || ui.snapshot.business.organization || ui.commerceContext?.legal_name || ui.commerceContext?.commerce_name || ''}" placeholder="Nombre fiscal del comercio" /></label><label>Punto de venta Web Services<input name="arca-point-sale" inputmode="numeric" value="${arcaFiscal.pointOfSale}" placeholder="Ej. 0002" /></label></div><div class="settings-actions"><button type="button" class="primary-action" data-action="arca-save-fiscal">Continuar con certificado</button></div></div>` : ''}
@@ -3151,7 +3131,7 @@ const settingsViewV2 = (ui) => `
 
 const basicSettingsView = (ui) => `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Ajustes</p><h2>Mi sesion</h2></div></div>
-    ${feedbackMessage ? `<div class="feedback-banner">${escapeHtml(feedbackMessage)}</div>` : ''}
+    ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
     <section class="module-summary-grid">
       <article class="metric-card compact"><span>Sesion</span><strong>${ui.user.fullName}</strong><p>${ui.role.name}</p></article>
       <article class="metric-card compact"><span>Base</span><strong>${ui.snapshot.meta.syncStatus === 'online' ? 'Operativa' : (ui.snapshot.meta.syncStatus || 'Sin conexion')}</strong><p>Datos del negocio</p></article>
@@ -3195,19 +3175,35 @@ const renderCurrentView = (ui) => {
 }
 
 const progressiveProfileModal = (ui) => {
-  if (!progressiveProfilePromptOpen || !ui.user?.isOwner || (ui.progressiveProfile.status === 'complete' && progressiveProfileStep !== 3)) return ''
+  // Una vez completada la planilla, solo queda la felicitación flotante; no
+  // debemos dejar el formulario de apertura por debajo bloqueando el panel.
+  if (!progressiveProfilePromptOpen || !ui.user?.isOwner || ui.progressiveProfile.status === 'complete') return ''
   const profile = ui.progressiveProfile
   const goals = [['vender','Vender más rápido'],['stock','Controlar stock'],['caja','Ordenar caja'],['clientes','Gestionar clientes'],['facturacion','Emitir comprobantes'],['sucursales','Trabajar con sucursales']]
-  const selectedGoals = progressiveProfileGoalsDraft || profile.operationalGoals
-  const isGoalsStep = progressiveProfileStep === 1
-  const isContactStep = progressiveProfileStep === 2
-  const contactReady = /^[+()0-9\s-]{6,30}$/.test(profile.phone || '') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email || '')
-  const stepContent = isGoalsStep
-    ? `<fieldset class="progressive-goals"><legend>Elegí hasta 5 prioridades</legend><div class="goal-option-grid">${goals.map(([value,label]) => `<label class="goal-option"><input type="checkbox" name="operationalGoals" value="${value}" ${selectedGoals.includes(value) ? 'checked' : ''} /><span class="goal-option-mark">✓</span><span>${label}</span></label>`).join('')}</div><p class="progressive-goal-feedback" aria-live="polite">Elegí las que más impacten hoy. Podés continuar con menos de cinco.</p></fieldset><div class="progressive-profile-actions"><button type="button" class="primary-action" data-action="progressive-profile-next">Continuar</button><button type="button" class="ghost-action" data-action="close-progressive-profile">Ahora no</button></div>`
-    : isContactStep
-      ? `<div class="progressive-profile-step-intro"><span class="progressive-profile-step-label">Paso 2 de 3</span><h3>¿Cómo te contactamos?</h3><p>Teléfono y email son necesarios para acompañarte. País, rubro y ARCA siguen siendo opcionales.</p></div>${selectedGoals.map((goal) => `<input type="hidden" name="operationalGoals" value="${goal}" />`).join('')}<div class="form-grid compact-form progressive-profile-fields"><label>Teléfono de contacto <b aria-hidden="true">*</b><input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="Ej.: 11 4567-8901" autocomplete="tel" inputmode="tel" pattern="[+()0-9\\s-]{6,30}" required /></label><label>Email de contacto <b aria-hidden="true">*</b><input type="email" name="email" value="${escapeHtml(profile.email || '')}" placeholder="nombre@negocio.com" autocomplete="email" required /></label><label>País (opcional)<input type="text" name="country" value="${escapeHtml(profile.country || '')}" placeholder="Ej. Argentina" /></label><label>Rubro (opcional)<input type="text" name="industry" value="${escapeHtml(profile.industry || '')}" placeholder="Ej. Kiosco, indumentaria" /></label><label>¿Necesitás ARCA?<select name="needsArca"><option value="">Todavía no lo sé</option><option value="yes" ${profile.needsArca === true ? 'selected' : ''}>Sí</option><option value="no" ${profile.needsArca === false ? 'selected' : ''}>No por ahora</option></select></label></div><p class="progressive-contact-status ${progressiveProfileError ? 'is-error' : ''}" aria-live="polite">${escapeHtml(progressiveProfileError || (contactReady ? 'Listo para guardar tus datos.' : 'Completá teléfono y email para continuar.'))}</p><div class="progressive-profile-actions"><button type="button" class="ghost-action" data-action="progressive-profile-previous">Volver</button><button type="submit" class="primary-action" data-progressive-contact-submit ${contactReady ? '' : 'disabled'}>Guardar y continuar</button></div>`
-      : `<div class="progressive-profile-success"><span class="progressive-profile-step-label">Paso 3 de 3</span><span class="progressive-profile-success-mark">✓</span><h3>Datos guardados.</h3><p>Ya tenemos la información necesaria para acompañarte. Podés empezar a operar y retomar la configuración cuando quieras.</p><button type="button" class="primary-action" data-action="finish-progressive-profile">Empezar a operar</button></div>`
-  return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title">${isGoalsStep ? '<button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button>' : ''}<div class="progressive-profile-layout"><aside class="progressive-profile-route"><span class="progressive-profile-step">0${progressiveProfileStep}</span><p class="kicker">Puesta a punto</p><h2>${isGoalsStep ? 'Tu operación,<br />a tu medida.' : isContactStep ? 'Sumemos<br />contexto.' : 'Todo<br />listo.'}</h2><p>${isGoalsStep ? 'Elegí qué querés resolver primero. El resto es opcional.' : isContactStep ? 'Datos de contacto para acompañarte cuando lo necesites.' : 'Ya podés seguir con tu operación.'}</p><span class="progressive-profile-time">Paso ${progressiveProfileStep} de 3 · Menos de 1 minuto</span></aside><div class="progressive-profile-content"><p class="kicker">Configuración rápida</p><h2 id="progressive-profile-title">${isGoalsStep ? '¿Por dónde empezamos?' : isContactStep ? 'Personalicemos la ayuda' : 'Perfil completo'}</h2><p class="progressive-profile-copy">Usamos estas respuestas solo para ajustar sugerencias y soporte. No cambia tu acceso ni frena el POS.</p><form class="progressive-profile-modal-form" data-form="progressive-profile">${stepContent}</form></div></div></section></div>`
+  const industryOptions = progressiveIndustryOptions
+  const countryOptions = progressiveCountryOptions
+  const savedIndustry = String(profile.industry || '').trim()
+  const draft = progressiveProfileDraft || { country: profile.country || '', industry: savedIndustry.length < 2 ? '' : savedIndustry, phone: profile.phone || '', email: profile.email || '', needsArca: profile.needsArca, operationalGoals: progressiveProfileGoalsDraft || profile.operationalGoals || [] }
+  const selectedGoals = draft.operationalGoals || []
+  const totalSteps = 6
+  const stepMeta = [
+    ['Abramos tu<br />operación.', '¿Qué querés resolver primero?', 'Elegí el foco de hoy. Configurá el resto mientras trabajás.'],
+    ['Elegí tu<br />rubro.', '¿Qué tipo de comercio tenés?', 'Esto nos ayuda a hablar el idioma de tu operación.'],
+    ['Ubicá tu<br />operación.', '¿En qué país trabajás?', 'Es opcional; sirve para adaptar referencias y soporte.'],
+    ['Dejá un<br />teléfono.', '¿A qué número te acompañamos?', 'Solo si querés que soporte pueda contactarte.'],
+    ['Facturación<br />a tu ritmo.', '¿Necesitás ARCA?', 'Podés decidirlo hoy o configurarlo más adelante.'],
+    ['Todo<br />en marcha.', 'Panel preparado', 'Ya podés cargar, cobrar y seguir cada movimiento.'],
+  ][progressiveProfileStep - 1]
+  const hiddenState = `${selectedGoals.map((goal) => `<input type="hidden" name="operationalGoals" value="${goal}" />`).join('')}<input type="hidden" name="email" value="${escapeHtml(draft.email)}" />`
+  const actions = (next = 'Continuar') => `<div class="progressive-profile-actions">${progressiveProfileStep > 1 ? '<button type="button" class="ghost-action" data-action="progressive-profile-previous">Volver</button>' : ''}<button type="button" class="primary-action" data-action="progressive-profile-next">${next}</button>${progressiveProfileStep > 1 ? '<button type="button" class="text-action" data-action="progressive-profile-skip">Omitir por ahora</button>' : '<button type="button" class="ghost-action" data-action="close-progressive-profile">Ahora no</button>'}</div>`
+  let stepContent = ''
+  if (progressiveProfileStep === 1) stepContent = `<fieldset class="progressive-goals"><legend>Elegí hasta 5 prioridades</legend><div class="goal-option-grid">${goals.map(([value,label]) => `<label class="goal-option"><input type="checkbox" name="operationalGoals" value="${value}" ${selectedGoals.includes(value) ? 'checked' : ''} /><span class="goal-option-mark">✓</span><span>${label}</span></label>`).join('')}</div><p class="progressive-goal-feedback" aria-live="polite">Elegí las que más impacten hoy. Podés continuar con menos de cinco.</p></fieldset>${actions()}`
+  if (progressiveProfileStep === 2) stepContent = `${hiddenState}<label class="progressive-single-field">Rubro<div class="progressive-suggest"><span class="progressive-suggest-ghost" data-progressive-industry-ghost aria-hidden="true" hidden></span><input type="text" name="industry" value="${escapeHtml(draft.industry)}" data-progressive-industry autocomplete="off" placeholder="Escribí el rubro de tu comercio" autofocus /></div><small>Usá Tab para aceptar la sugerencia o seguí escribiendo tu rubro.</small></label>${actions('Siguiente')}`
+  if (progressiveProfileStep === 3) stepContent = `${hiddenState}<input type="hidden" name="industry" value="${escapeHtml(draft.industry)}" /><label class="progressive-single-field">País<div class="progressive-suggest"><span class="progressive-suggest-ghost" data-progressive-country-ghost aria-hidden="true" hidden></span><input type="text" name="country" value="${escapeHtml(draft.country)}" data-progressive-country autocomplete="off" placeholder="Escribí el país donde opera tu comercio" autofocus /></div><small>Usá Tab para aceptar la sugerencia o seguí escribiendo tu país.</small></label>${actions('Siguiente')}`
+  if (progressiveProfileStep === 4) stepContent = `${hiddenState}<input type="hidden" name="industry" value="${escapeHtml(draft.industry)}" /><input type="hidden" name="country" value="${escapeHtml(draft.country)}" /><label class="progressive-single-field">Teléfono<input type="tel" name="phone" value="${escapeHtml(draft.phone)}" placeholder="Ej.: 11 4567-8901" autocomplete="tel" inputmode="tel" pattern="[+()0-9\\s-]{6,30}" autofocus /></label><p class="progressive-contact-status ${progressiveProfileError ? 'is-error' : ''}" aria-live="polite">${escapeHtml(progressiveProfileError || 'Podés dejarlo vacío y continuar.')}</p>${actions('Siguiente')}`
+  if (progressiveProfileStep === 5) stepContent = `${hiddenState}<input type="hidden" name="industry" value="${escapeHtml(draft.industry)}" /><input type="hidden" name="country" value="${escapeHtml(draft.country)}" /><input type="hidden" name="phone" value="${escapeHtml(draft.phone)}" /><fieldset class="arca-choice"><legend>Facturación</legend><label><input type="radio" name="needsArca" value="yes" ${draft.needsArca === true ? 'checked' : ''} /> Sí, quiero prepararla</label><label><input type="radio" name="needsArca" value="no" ${draft.needsArca === false ? 'checked' : ''} /> No por ahora</label><label><input type="radio" name="needsArca" value="" ${draft.needsArca === null || draft.needsArca === undefined ? 'checked' : ''} /> Todavía no lo sé</label></fieldset><div class="progressive-profile-actions"><button type="button" class="ghost-action" data-action="progressive-profile-previous">Volver</button><button type="submit" class="primary-action">Guardar y terminar</button><button type="button" class="text-action" data-action="progressive-profile-skip">Omitir por ahora</button></div>`
+  if (progressiveProfileStep === 6) stepContent = `<div class="progressive-profile-success"><span class="progressive-profile-success-mark">✓</span><h3>Planilla completa.</h3><p>Ya tenés tu punto de partida. Desde el panel podés cargar productos, abrir caja y hacer tu primera venta.</p><button type="button" class="primary-action" data-action="finish-progressive-profile">Ir al panel</button></div>`
+  return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title">${progressiveProfileStep === 1 ? '<button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button>' : ''}<div class="progressive-profile-layout"><aside class="progressive-profile-route"><span class="progressive-profile-step">${String(progressiveProfileStep).padStart(2, '0')}</span><p class="kicker">PLANILLA DE APERTURA</p><h2>${stepMeta[0]}</h2><p>${stepMeta[2]}</p><span class="progressive-profile-time">PASO ${progressiveProfileStep} / ${totalSteps} · MENOS DE 2 MINUTOS</span></aside><div class="progressive-profile-content"><p class="kicker">PUESTA A PUNTO</p><h2 id="progressive-profile-title">${stepMeta[1]}</h2><p class="progressive-profile-copy">Lo esencial primero. Todo lo demás queda disponible cuando lo necesites.</p><form class="progressive-profile-modal-form" data-form="progressive-profile">${stepContent}</form></div></div></section></div>`
 }
 
 const renderApp = (ui) => {
@@ -3234,9 +3230,12 @@ const renderApp = (ui) => {
   const environmentLabel = ui.cloudConnection.environmentLabel || 'Sandbox'
   const statusTitle = ui.openCashSession ? 'Abierta' : 'Cerrada'
   const statusHint = ui.branchRegisters.length > 1 ? registerName : ''
-  const searchOptions = buildQuickSearchTargets(ui).slice(0, 40).map((item) => `<option value="${item.label}"></option>`).join('')
+  const searchOptions = buildQuickSearchTargets(ui).slice(0, 8).map((item) => `<option value="${item.label}"></option>`).join('')
   const userName = ui.user?.fullName || 'Usuario'
-  const userInitials = userName.split(/\s+/).filter(Boolean).slice(0, 2).map((chunk) => chunk[0]?.toUpperCase()).join('') || 'PC'
+  const accountRole = isPlatformConsole ? 'Administrador Operando' : (ui.role?.name || 'Usuario')
+  const accountMeta = accountRole.trim().toLowerCase() === userName.trim().toLowerCase() ? '' : `<span>${accountRole}</span>`
+  const accountAvatarMarkup = '<img src="/operando-logo.png?v=operando-20260831" alt="" />'
+  const accountAvatarClass = 'account-avatar'
   const allAlertItems = isPlatformConsole ? [] : [
     ...(!ui.openCashSession ? [{ id: 'cash-closed', title: 'Caja cerrada', detail: 'No hay una caja abierta para operar en efectivo.', section: 'caja', target: '[data-cash-operation]' }] : []),
     ...ui.lowStock.slice(0, 4).map((product) => ({
@@ -3262,10 +3261,11 @@ const renderApp = (ui) => {
     <div class="app-shell">
       <aside class="sidebar">
         <div class="sidebar-brand">
-          <img class="brand-logo" src="/operando-logo.png?v=operando-20260831" alt="Operando" />
+          <img class="brand-logo" src="/operando-logo.png?v=operando-20260831" alt="" />
+          <span class="sidebar-wordmark" aria-label="Operando punto app">Operando<span>.app</span></span>
         </div>
         <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}</nav>
-        <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square ${supportMenuOpen ? 'is-active' : ''}" type="button" data-action="toggle-support-menu" title="Soporte" aria-label="Abrir opciones de soporte" aria-expanded="${supportMenuOpen}"><span class="nav-icon">${icon('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8.5 9h7"/><path d="M8.5 13h4"/>')}</span><span class="nav-label">Soporte</span></button>${supportMenuOpen ? `<div class="support-menu" role="menu"><button type="button" data-action="open-arca-setup" role="menuitem"><strong>Facturacion ARCA</strong><span>Configura la conexion fiscal</span></button><button type="button" data-action="open-support" role="menuitem"><strong>Soporte general</strong><span>Habla con Operando por WhatsApp</span></button></div>` : ''}</div></div>
+        <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square account-rail-trigger" type="button" data-action="toggle-account-menu" title="Cuenta" aria-label="Abrir menú de cuenta"><span class="account-avatar" aria-hidden="true">${accountAvatarMarkup}</span><span class="nav-label">Cuenta</span></button></div></div>
       </aside>
       <div class="workspace">
         <header class="topbar">
@@ -3281,35 +3281,22 @@ const renderApp = (ui) => {
             <button type="button" class="topbar-guide-action" data-action="resume-onboarding" aria-label="Abrir guía inicial">Guía inicial</button>
             ${isDevEnvironment ? `<span class="topbar-runtime is-dev">${environmentLabel}</span>` : ''}
             <div class="account-alerts-wrap">
-              <button class="account-card compact-meta ${accountAlertsOpen ? 'is-open' : ''}" type="button" data-action="toggle-account-alerts" aria-label="Abrir menu de cuenta" aria-expanded="${accountAlertsOpen ? 'true' : 'false'}">
-                <span class="account-avatar">${userInitials}</span>
-                <span class="account-copy"><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador Operando' : (ui.role?.name || 'Usuario')}</span></span>
+              <button type="button" class="account-notification-trigger ${accountAlertsOpen ? 'is-open' : ''}" data-action="toggle-account-alerts" aria-label="Abrir notificaciones" aria-expanded="${accountAlertsOpen ? 'true' : 'false'}">${icon('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>')}${notificationCount ? `<span class="account-alert-count" aria-label="${notificationCount} alertas">${notificationCount}</span>` : ''}</button>
+              <button class="account-card compact-meta ${accountMenuOpen ? 'is-open' : ''}" type="button" data-action="toggle-account-menu" aria-label="Abrir menu de cuenta" aria-expanded="${accountMenuOpen ? 'true' : 'false'}">
+                <span class="${accountAvatarClass}" aria-hidden="true">${accountAvatarMarkup}</span>
+                <span class="account-copy"><strong>${userName}</strong>${accountMeta}</span>
                 ${isPlatformConsole ? '' : `<span class="account-cash-state ${ui.openCashSession ? 'is-open' : 'is-closed'}"><span class="status-led" aria-hidden="true"></span><span>${statusTitle}</span></span>`}
-                ${notificationCount ? `<span class="account-alert-count" aria-label="${notificationCount} alertas">${notificationCount}</span>` : ''}
                 <span class="account-menu-chevron" aria-hidden="true">⌄</span>
               </button>
-              ${accountAlertsOpen ? `<div class="account-alerts-popover">
+              ${accountAlertsOpen ? `<div class="account-alerts-popover"><div class="account-popover-label">Alertas</div><div class="account-alerts-list">${alertItems.length ? alertItems.map((item) => `<div class="account-alert-item"><button type="button" class="account-alert-open" data-alert-section="${item.section}" data-alert-target="${item.target}"><strong>${item.title}</strong><span>${item.detail}</span></button><button type="button" class="account-alert-dismiss" data-dismiss-alert="${item.id}" aria-label="Descartar alerta: ${item.title}">×</button></div>`).join('') : '<div class="account-alert-item is-empty"><strong>Todo en orden</strong><span>No hay alertas activas.</span></div>'}</div></div>` : ''}
+              ${accountMenuOpen ? `<div class="account-menu-popover">
                 <div class="account-alerts-head">
-                  <div><strong>${userName}</strong><span>${isPlatformConsole ? 'Administrador Operando' : (ui.role?.name || 'Usuario')}</span></div>
+                  <div class="account-popover-identity"><span class="account-popover-avatar" aria-hidden="true">${accountAvatarMarkup}</span><div><strong>${userName}</strong>${accountMeta}</div></div>
                   <button type="button" class="ghost-action account-alerts-link" data-action="open-account-panel">Mi cuenta</button>
                 </div>
-                ${isPlatformConsole ? '' : `<button type="button" class="account-cash-action ${ui.openCashSession ? 'is-open' : 'is-closed'}" data-section="caja" data-cash-operation>
-                  <span class="status-led" aria-hidden="true"></span>
-                  <span><strong>Caja ${statusTitle.toLowerCase()}</strong><small>${statusHint || (ui.openCashSession ? 'Lista para operar' : 'Abrir para cobrar en efectivo')}</small></span>
-                  <span aria-hidden="true">›</span>
-                </button>`}
-                <div class="account-popover-label">${isPlatformConsole ? 'Consola Operando' : 'Alertas'}</div>
-                <div class="account-alerts-list">
-                  ${alertItems.length ? alertItems.map((item) => `<div class="account-alert-item">
-                    <button type="button" class="account-alert-open" data-alert-section="${item.section}" data-alert-target="${item.target}">
-                      <strong>${item.title}</strong>
-                      <span>${item.detail}</span>
-                    </button>
-                    <button type="button" class="account-alert-dismiss" data-dismiss-alert="${item.id}" aria-label="Descartar alerta: ${item.title}" title="Descartar alerta">×</button>
-                  </div>`).join('') : `<div class="account-alert-item is-empty"><strong>Todo en orden</strong><span>No hay alertas activas en este momento.</span></div>`}
-                </div>
+                <button type="button" class="account-cash-action" data-section="caja">${icon('<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16"/>')}<span><strong>${ui.currentBranch?.name || 'Sucursal'}</strong><small>${ui.currentRegister?.name || 'Caja 1'} · ${statusTitle}</small></span><span aria-hidden="true">›</span></button>
+                <button type="button" class="account-support-action" data-action="open-support">${icon('<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 2"/><path d="M12 17h.01"/>')}<span>Ayuda y soporte</span><span aria-hidden="true">›</span></button>
                 <div class="account-menu-actions">
-                  <button class="account-theme-action" type="button" data-action="toggle-theme" aria-label="Cambiar tema"><span>${theme === 'dark' ? 'Modo oscuro' : 'Modo claro'}</span><small>Cambiar apariencia</small></button>
                   <button class="account-signout-action" type="button" data-action="sign-out">Cerrar sesión</button>
                 </div>
               </div>` : ''}
@@ -3318,6 +3305,7 @@ const renderApp = (ui) => {
         </header>
         <main class="page">${guideCard()}${renderCurrentView(ui)}</main>
         ${progressiveProfileModal(ui)}
+        ${arcaCelebrationVisible ? `<section class="opening-celebration arca-celebration" aria-live="polite"><button type="button" class="opening-celebration-close" data-action="dismiss-arca-celebration" aria-label="Cerrar felicitación">×</button><div class="celebration-fireworks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="opening-celebration-copy"><span class="kicker">ARCA / OPERACIÓN FISCAL LISTA</span><h3>¡Felicitaciones!</h3><p>Completaste la activación de ARCA. Ya podés preparar tus comprobantes fiscales desde Operando.app.</p></div><span class="opening-celebration-mark" aria-hidden="true">✓</span></section>` : ''}
       </div>
     </div>
   `
@@ -3364,6 +3352,10 @@ const renderTurnstileWidget = (attempt = 0) => {
 
 const render = () => {
   const ui = getUiState()
+  document.body.classList.toggle('catalog-form-open', Boolean(
+    productFormOpen || stockAdjustmentFormOpen || stockTransferFormOpen
+    || purchaseFormOpen || supplierFormOpen || supplierPaymentPanelOpen || supplierPaymentDraft
+  ))
   app.innerHTML = ui.cloudConnection.required && !ui.cloudConnection.enabled
     ? cloudActivationView(ui)
     : (ui.isAuthenticated ? renderApp(ui) : loginView(ui))
@@ -3483,30 +3475,33 @@ const bootstrap = async () => {
   canonicalizeLegacyPanelRoute()
   canonicalizeRecoveryRoute()
   const initialCloudConfig = await readSiteCloudConfig()
-  window.__operandoTurnstileSiteKey = String(initialCloudConfig?.turnstileSiteKey || '')
+  // The browser preview uses only the seeded local demo. It never restores or
+  // sends a cloud session, even when the production config is present.
+  const authConfig = isLocalDevelopment ? null : initialCloudConfig
+  window.__operandoTurnstileSiteKey = String(authConfig?.turnstileSiteKey || '')
   const entryAuthMode = ({ login: 'login', signup: 'signup', recovery: 'recovery', reset: 'reset' })[operandoEntry] || ''
   authViewMode = authModeFromPath() || entryAuthMode || getRequestedPublicView() || (window.__operandoAppEntry ? 'login' : authViewMode)
   activeSection = sectionFromPath()
-  if (!window.operandoDesktop) {
-    // Clear legacy offline snapshot only. Keep instance/theme/section so F5 feels stable.
+  if (!window.operandoDesktop && !isLocalDevelopment) {
     safeStorage.removeItem(dataStorageKey)
     safeStorage.removeItem(cloudConfigStorageKey)
+    safeStorage.removeItem(instanceStorageKey)
+    safeStorage.removeItem(themeStorageKey)
+    safeStorage.removeItem(sectionStorageKey)
   }
   authInstanceKey = normalizeInstanceKey(
     safeStorage.getItem(instanceStorageKey, '')
-    || initialCloudConfig?.instanceKey
+    || authConfig?.instanceKey
     || 'operando-dev'
   )
   const storeOptions = {
-    initialCloudConfig,
-    requireCloud: !window.operandoDesktop,
+    initialCloudConfig: authConfig,
+    requireCloud: !window.operandoDesktop && !isLocalDevelopment,
   }
   store = createBrowserDataStore(storeOptions)
-  authManager = initialCloudConfig?.url && initialCloudConfig?.anonKey
-    ? createCloudAuthManager({ url: initialCloudConfig.url, anonKey: initialCloudConfig.anonKey, instanceKey: initialCloudConfig.instanceKey, turnstileSiteKey: initialCloudConfig.turnstileSiteKey })
+  authManager = authConfig?.url && authConfig?.anonKey
+    ? createCloudAuthManager({ url: authConfig.url, anonKey: authConfig.anonKey, instanceKey: authConfig.instanceKey, turnstileSiteKey: authConfig.turnstileSiteKey })
     : null
-  // First paint ASAP so "Cargando sistema..." does not wait on restore/sync.
-  try { render() } catch { /* final render still runs in finally */ }
   try {
     if (authManager) {
       recoveryState = await authManager.consumeRecoverySession()
@@ -3516,58 +3511,35 @@ const bootstrap = async () => {
         signupMessage = ''
       }
     }
-    // Restore session before setup_status: panel reload has no Turnstile widget,
-    // and getSetupStatus requires one — that used to skip restore and log users out on F5.
     if (store.getCloudConnection().enabled && authManager) {
+      setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+    }
+    if (store.getCloudConnection().enabled && authManager && setupStatus?.initialized) {
       const restoredSession = await authManager.restoreSession()
       if (restoredSession?.sessionToken) {
         authInstanceKey = normalizeInstanceKey(restoredSession.commerceContext?.instance_key || authInstanceKey)
         safeStorage.setItem(instanceStorageKey, authInstanceKey)
         store.setCloudAccessToken(restoredSession.sessionToken)
-        setupStatus = { initialized: true }
-      }
-    }
-    if (store.getCloudConnection().enabled && authManager && !authManager.getSession()?.sessionToken) {
-      try {
-        setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
-      } catch (error) {
-        // Turnstile may not be ready on first paint; signup/login forms retry with a token.
-        setupStatus = null
       }
     }
     if (store.getCloudConnection().enabled && authManager?.getSession()?.sessionToken) {
-      try {
-        await loadCloudAccess(null, { awaitSync: false })
-      } catch (syncError) {
-        // Keep the restored session visible even if activating the session profile fails.
-        const current = authManager.getSession()
-        if (current?.sessionToken && current?.profile) {
-          commerceContext = current.commerceContext || null
-          store.setCloudAccessToken(current.sessionToken)
-          store.setCloudAuthSession(current.profile, [])
-          feedbackMessage = mapPublicAuthError(syncError?.message, 'login') || 'Sesion restaurada; algunos datos se estan sincronizando.'
-        } else {
-          throw syncError
-        }
-      }
+      cloudSyncBusy = true
+      await loadCloudAccess()
     }
   } catch (error) {
     loginMessage = mapPublicAuthError(error?.message, 'login')
     feedbackMessage = ''
-    // Only wipe UI auth when there is no restorable session token.
-    if (!authManager?.getSession()?.sessionToken) {
-      commerceContext = null
-      store.clearCloudAuthSession()
-    }
+    commerceContext = null
+    store.clearCloudAuthSession()
   } finally {
-    // cloudSyncBusy stays true while a deferred syncFromCloud runs.
+    cloudSyncBusy = false
     try {
       render()
     } catch (error) {
       resetBrokenBrowserState()
       store = createBrowserDataStore(storeOptions)
-      authManager = initialCloudConfig?.url && initialCloudConfig?.anonKey
-        ? createCloudAuthManager({ url: initialCloudConfig.url, anonKey: initialCloudConfig.anonKey, instanceKey: initialCloudConfig.instanceKey })
+      authManager = authConfig?.url && authConfig?.anonKey
+        ? createCloudAuthManager({ url: authConfig.url, anonKey: authConfig.anonKey, instanceKey: authConfig.instanceKey })
         : null
       loginMessage = 'La aplicacion se recupero y reinicio la sesion.'
       render()
@@ -3782,7 +3754,9 @@ const exportReport = () => {
     ['Tipo', 'Fecha', 'Sucursal', 'Caja', 'Detalle', 'Importe'],
     ...ui.reportScopedSales.map((sale) => ['Venta', sale.soldAt.slice(0, 16).replace('T', ' '), sale.branchName, sale.registerName, sale.itemSummary, sale.totalAmount]),
     ...ui.reportScopedInvoices.map((invoice) => ['Factura', invoice.dueDate, invoice.branchName, '-', invoice.number, invoice.totalAmount]),
+    ...ui.reportScopedReceipts.map((receipt) => ['Compra', receipt.receivedAt, receipt.branchName || ui.currentBranch?.name || 'Sucursal', '-', receipt.productName || receipt.note || 'Recepción', Number(receipt.quantity || 0) * Number(receipt.unitCost || 0)]),
     ...ui.reportScopedCashMovements.map((movement) => ['Caja', String(movement.createdAt).slice(0, 16).replace('T', ' '), ui.currentBranch?.name || 'Sucursal', ui.enrichedRegisters.find((register) => register.id === movement.registerId)?.name || 'Caja', `${cashMovementKindLabel(movement.kind)}: ${movement.note}`, movement.signedAmount]),
+    ...ui.reportScopedStockMovements.map((movement) => ['Stock', String(movement.createdAt).slice(0, 16).replace('T', ' '), ui.currentBranch?.name || 'Sucursal', '-', `${stockMovementTypeLabel(movement.type)}: ${movement.productName || movement.note || 'Movimiento'}`, movement.quantity]),
   ]
   const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
@@ -3813,15 +3787,19 @@ const handleSubmit = async (event) => {
   const form = event.currentTarget
   if (form.dataset.submitting === 'true') return
   form.dataset.submitting = 'true'
+  for (const button of form.querySelectorAll('button[type="submit"]')) button.disabled = true
   const formData = new FormData(form, event.submitter)
   const kind = form.dataset.form
-  const busyLabel = kind === 'login'
-    ? 'Ingresando…'
-    : (kind === 'instance-setup' ? 'Creando cuenta…' : '')
-  for (const button of form.querySelectorAll('button[type="submit"]')) {
-    button.disabled = true
-    button.setAttribute('aria-busy', 'true')
-    if (busyLabel) button.textContent = busyLabel
+
+  // Enter en los pasos intermedios equivale a "Siguiente"; no debe guardar
+  // el perfil ni cerrar la planilla antes del último paso.
+  if (kind === 'progressive-profile' && progressiveProfileStep < 5) {
+    captureProgressiveDraft()
+    progressiveProfileError = ''
+    progressiveProfileStep = Math.min(5, progressiveProfileStep + 1)
+    form.dataset.submitting = 'false'
+    render()
+    return
   }
 
   if (kind === 'login') {
@@ -3836,11 +3814,11 @@ const handleSubmit = async (event) => {
       const requestedInstanceKey = String(formData.get('instanceKey') || '').trim()
       const identifier = String(formData.get('identifier') || '').trim()
       const pin = String(formData.get('pin') || '')
-      if (!authManager) throw new Error('La conexion cloud no esta lista.')
+      if (!authManager) throw new Error('La conexión con la operación no está configurada.')
       const sessionPayload = await authManager.signIn({ instanceKey: requestedInstanceKey || null, identifier, pin })
       persistInstanceKey(sessionPayload?.commerceContext?.instance_key || requestedInstanceKey || authInstanceKey)
-      setupStatus = { initialized: true }
-      await loadCloudAccess(sessionPayload, { awaitSync: false })
+      setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+      await loadCloudAccess(sessionPayload)
       activeSection = 'dashboard'
       saveSection()
       window.history.replaceState({ section: activeSection }, '', '/panel/')
@@ -3913,9 +3891,8 @@ const handleSubmit = async (event) => {
         registerName: String(formData.get('registerName') || '').trim(),
         registerCode: String(formData.get('registerCode') || '').trim(),
       })
-      // Turnstile token already consumed by setup_instance; mark initialized locally.
-      setupStatus = { initialized: true }
-      await loadCloudAccess(sessionPayload, { awaitSync: false })
+      setupStatus = await authManager.getSetupStatus({ instanceKey })
+      await loadCloudAccess(sessionPayload)
       activeSection = sectionFromPath()
       saveSection()
       syncSectionPath()
@@ -4022,9 +3999,20 @@ const handleSubmit = async (event) => {
   }
   if (kind === 'progressive-profile') {
     progressiveProfileError = ''
-    const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), email: String(formData.get('email') || '').trim(), needsArca: formData.get('needsArca') === 'yes' ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
+    const wantsArca = formData.get('needsArca') === 'yes'
+    const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), email: String(formData.get('email') || '').trim(), needsArca: wantsArca ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
     feedbackMessage = result.message || ''
-    if (result.ok) progressiveProfileStep = 3
+    if (result.ok) {
+      if (wantsArca) {
+        progressiveProfilePromptOpen = false
+        resetProgressiveProfile()
+        activeSection = 'ajustes'
+        settingsPanelOpen = 'arca'
+        arcaSetupStep = 1
+        queueScrollToSelector('[data-settings-content="arca"]')
+        feedbackMessage = 'Perfil listo. Ahora podés activar ARCA paso a paso.'
+      } else progressiveProfileStep = 6
+    }
     else progressiveProfileError = result.message || 'No se pudieron guardar los datos. Intentá nuevamente.'
   }
   if (kind === 'cloud-connection') {
@@ -4073,13 +4061,8 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    try {
-      const result = await store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
-      if (!result?.ok) throw new Error(result?.message || 'No se pudo ajustar el stock.')
-      feedbackMessage = result.message || ''
-    } catch (error) {
-      feedbackMessage = error?.message || 'No se pudo ajustar el stock.'
-    }
+    const result = store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
+    feedbackMessage = result.message || ''
   }
   if (kind === 'stock-transfer') {
     const search = String(formData.get('productSearch') || '').trim()
@@ -4095,13 +4078,8 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    try {
-      const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
-      if (!result?.ok) throw new Error(result?.message || 'No se pudo transferir el stock.')
-      feedbackMessage = result.message || ''
-    } catch (error) {
-      feedbackMessage = error?.message || 'No se pudo transferir el stock.'
-    }
+    const result = store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
+    feedbackMessage = result.message || ''
   }
   if (kind === 'supplier') {
     const payload = { name: formData.get('name'), contact: formData.get('contact'), phone: formData.get('phone'), email: formData.get('email'), cuit: formData.get('cuit'), address: formData.get('address'), balance: formData.get('balance'), lastDelivery: formData.get('lastDelivery'), category: formData.get('category') }
@@ -4190,7 +4168,17 @@ const handleSubmit = async (event) => {
   if (kind === 'open-cash') {
     const result = await store.openCashSession({ registerId: formData.get('registerId'), openingAmount: formData.get('openingAmount') })
     feedbackMessage = result.message || ''
-    if (result.ok) { completeOnboardingStep('cash'); resumeOnboardingAfterStep('cash') }
+    if (result.ok) {
+      completeOnboardingStep('cash'); resumeOnboardingAfterStep('cash')
+      if (saleReturnAfterCash) {
+        saleReturnAfterCash = false
+        activeSection = 'ventas'
+        saveSection()
+        syncSectionPath()
+        feedbackMessage = 'Caja abierta. Tu carrito sigue listo para cobrar.'
+        queueScrollToSelector('.pos-cart')
+      }
+    }
     cashFormOpen = false
   }
   if (kind === 'close-cash') {
@@ -4223,7 +4211,7 @@ const handleSubmit = async (event) => {
     if (purchaseItems.length) {
       const invalidItem = purchaseItems.find((item) => !String(item.name || '').trim() || (!item.isNew && !products.some((product) => product.id === item.productId)) || Number(item.quantity) <= 0 || Number(item.unitCost) < 0 || Number(item.salePrice) < 0 || Number(item.minStock) < 0)
       if (invalidItem) { feedbackMessage = 'Revisá cantidad y costo de cada producto antes de registrar la compra.'; render(); return }
-      const common = { supplierId, documentNumber: formData.get('documentNumber'), note: formData.get('note') }
+      const common = { supplierId, documentNumber: formData.get('documentNumber'), note: formData.get('note'), paymentCondition: formData.get('paymentCondition') || 'cash', dueDate: formData.get('dueDate') || '' }
       for (const item of purchaseItems) {
         let productId = item.productId
         if (item.isNew) {
@@ -4257,8 +4245,8 @@ const handleSubmit = async (event) => {
       return
     }
     const result = formData.get('receiptId')
-      ? await store.updatePurchaseReceipt(formData.get('receiptId'), { supplierId, productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
-      : await store.createPurchaseReceipt({ supplierId, productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note') })
+      ? await store.updatePurchaseReceipt(formData.get('receiptId'), { supplierId, productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note'), paymentCondition: formData.get('paymentCondition') || 'cash', dueDate: formData.get('dueDate') || '' })
+      : await store.createPurchaseReceipt({ supplierId, productId: product.id, documentNumber: formData.get('documentNumber'), quantity: formData.get('quantity'), unitCost: formData.get('unitCost'), note: formData.get('note'), paymentCondition: formData.get('paymentCondition') || 'cash', dueDate: formData.get('dueDate') || '' })
     feedbackMessage = result.message || (result.ok ? 'Recepcion registrada y stock actualizado.' : '')
     purchaseEditingId = ''
     purchaseFormOpen = false
@@ -4296,16 +4284,11 @@ const handleSubmit = async (event) => {
       }
     }
     const payload = { customerId: formData.get('customerId'), channel: formData.get('channel'), paymentMethod, isPaid, autoInvoice: formData.get('autoInvoice') === 'on', discountAmount: formData.get('discountAmount'), amountPaid: formData.get('amountPaid'), cashAmount: formData.get('cashAmount'), transferAmount: formData.get('transferAmount'), mercadoPagoAmount: formData.get('mercadoPagoAmount'), echeqAmount: formData.get('echeqAmount'), echeqDetails: { number: formData.get('echeqNumber') }, accountAmount: formData.get('accountAmount'), note: formData.get('note'), items, operationId: formData.get('saleId') ? null : saleOperationId }
-    try {
-      const result = formData.get('saleId')
-        ? await store.updateSale(formData.get('saleId'), payload)
-        : await store.createSale(payload)
-      if (!result?.ok) throw new Error(result?.message || 'No se pudo guardar la venta.')
-      feedbackMessage = result.message || ''
-      if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
-    } catch (error) {
-      feedbackMessage = error?.message || 'No se pudo guardar la venta.'
-    }
+    const result = formData.get('saleId')
+      ? await store.updateSale(formData.get('saleId'), payload)
+      : await store.createSale(payload)
+    feedbackMessage = result.message || ''
+    if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
     saleEditingId = ''
     saleDraftQuantities = {}
     saleQuickAddCode = ''
@@ -4411,6 +4394,10 @@ const bindEvents = () => {
     saveOnboarding()
     render()
   })
+  for (const button of document.querySelectorAll('[data-action="dismiss-setup-celebration"]')) button.addEventListener('click', () => {
+    setupCelebrationDismissed = true
+    render()
+  })
   for (const button of document.querySelectorAll('[data-action="next-onboarding-step"]')) button.addEventListener('click', () => {
     onboarding.step = Math.min(onboarding.step + 1, onboardingSteps.length - 1)
     saveOnboarding()
@@ -4465,19 +4452,47 @@ const bindEvents = () => {
   const saleDiscountMode = document.querySelector('select[name="discountMode"]')
   if (saleDiscountMode) saleDiscountMode.addEventListener('change', updateSaleTotals)
   const quickAddInput = document.querySelector('input[name="quickAddCode"]')
-  const runQuickAdd = () => {
+  const productSuggestions = document.querySelector('[data-sale-product-suggestions]')
+  let saleSuggestionIndex = -1
+  const updateSaleProductSuggestions = () => {
+    if (!quickAddInput || !productSuggestions) return
+    const query = String(quickAddInput.value || '').trim().toLocaleLowerCase()
+    if (!query) { saleSuggestionIndex = -1; productSuggestions.hidden = true; productSuggestions.innerHTML = ''; return }
+    const matches = getUiState().scopedProducts.filter((item) => [item.name, item.sku, item.barcode].some((value) => String(value || '').toLocaleLowerCase().includes(query))).slice(0, 5)
+    productSuggestions.innerHTML = matches.length ? matches.map((item) => `<button type="button" class="sale-product-suggestion" data-sale-product-id="${item.id}"><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.sku || item.barcode || '')}</small></span><b>${money(item.salePrice)}</b></button>`).join('') : '<p class="sale-product-suggestions-empty">No encontramos ese artículo. Podés seguir escribiendo o revisar el código.</p>'
+    productSuggestions.hidden = false
+    saleSuggestionIndex = matches.length ? 0 : -1
+    for (const [index, button] of [...productSuggestions.querySelectorAll('[data-sale-product-id]')].entries()) {
+      button.setAttribute('aria-selected', index === saleSuggestionIndex ? 'true' : 'false')
+      button.addEventListener('pointerdown', (event) => event.preventDefault())
+      button.addEventListener('click', () => { quickAddInput.value = button.dataset.saleProductId ? (getUiState().scopedProducts.find((item) => item.id === button.dataset.saleProductId)?.name || '') : ''; runQuickAdd(button.dataset.saleProductId) })
+    }
+  }
+  for (const button of document.querySelectorAll('[data-sale-remove-product]')) {
+    button.addEventListener('click', () => {
+      delete saleDraftQuantities[button.dataset.saleRemoveProduct]
+      feedbackMessage = ''
+      render()
+    })
+  }
+  const runQuickAdd = (preferredProductId = '') => {
     pauseOnboardingFor('cart')
     const currentCode = String(quickAddInput?.value || '').trim()
+    const addKey = currentCode.toLocaleLowerCase()
+    if (addKey && addKey === saleQuickAddLastKey && (Date.now() - saleQuickAddLastAt) < 350) return
     const normalizedCode = currentCode.toLowerCase()
     const scopedMatches = getUiState().scopedProducts.filter((item) => [item.name, item.sku, item.barcode]
       .some((value) => String(value || '').toLowerCase().includes(normalizedCode)))
-    const product = store.findProductByCode(currentCode) || (scopedMatches.length === 1 ? scopedMatches[0] : null)
+    const exactMatch = getUiState().scopedProducts.find((item) => [item.name, item.sku, item.barcode].some((value) => String(value || '').toLowerCase() === normalizedCode))
+    const product = (preferredProductId && getUiState().scopedProducts.find((item) => item.id === preferredProductId)) || store.findProductByCode(currentCode) || exactMatch || (scopedMatches.length === 1 ? scopedMatches[0] : null)
     if (!product) {
       feedbackMessage = currentCode ? 'Selecciona un articulo de la lista o revisa el codigo.' : 'Escribe o escanea un articulo.'
       render()
       return
     }
     saleDraftQuantities = { ...readCurrentSaleQuantities(), [product.id]: Number(readCurrentSaleQuantities()[product.id] || 0) + 1 }
+    saleQuickAddLastKey = addKey
+    saleQuickAddLastAt = Date.now()
     saleQuickAddCode = ''
     completeOnboardingStep('cart')
     resumeOnboardingAfterStep('cart')
@@ -4485,14 +4500,23 @@ const bindEvents = () => {
     render()
   }
   if (quickAddInput) {
-    quickAddInput.addEventListener('input', () => { saleQuickAddCode = quickAddInput.value })
+    quickAddInput.addEventListener('input', () => { saleQuickAddCode = quickAddInput.value; updateSaleProductSuggestions() })
     quickAddInput.addEventListener('change', () => {
+      if (productSuggestions && !productSuggestions.hidden && productSuggestions.querySelector('[data-sale-product-id]')) return
       if (String(quickAddInput.value || '').trim()) runQuickAdd()
     })
     quickAddInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault()
-        runQuickAdd()
+        const buttons = [...(productSuggestions?.querySelectorAll('[data-sale-product-id]') || [])]
+        const selected = buttons[saleSuggestionIndex >= 0 ? saleSuggestionIndex : 0]
+        runQuickAdd(selected?.dataset.saleProductId || '')
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const buttons = [...(productSuggestions?.querySelectorAll('[data-sale-product-id]') || [])]
+        if (!buttons.length) return
+        event.preventDefault()
+        saleSuggestionIndex = event.key === 'ArrowDown' ? (saleSuggestionIndex + 1) % buttons.length : (saleSuggestionIndex - 1 + buttons.length) % buttons.length
+        buttons.forEach((button, index) => button.setAttribute('aria-selected', index === saleSuggestionIndex ? 'true' : 'false'))
       }
     })
     if (activeSection === 'ventas') window.requestAnimationFrame(() => quickAddInput.focus({ preventScroll: true }))
@@ -4500,11 +4524,34 @@ const bindEvents = () => {
   for (const input of document.querySelectorAll('[data-sale-customer-search]')) {
     const form = input.closest('form')
     const hiddenCustomer = form?.querySelector('input[name="customerId"]')
+    const customerSuggestions = input.closest('.customer-search-shell')?.querySelector('[data-sale-customer-suggestions]')
+    const updateCustomerSuggestions = () => {
+      if (!customerSuggestions) return
+      const query = input.value.trim().toLowerCase()
+      if (!query) { customerSuggestions.hidden = true; customerSuggestions.innerHTML = ''; return }
+      const matches = getUiState().snapshot.customers.filter((customer) => [customer.fullName, customer.phone, customer.email].some((value) => String(value || '').toLowerCase().includes(query))).slice(0, 5)
+      customerSuggestions.innerHTML = matches.length ? matches.map((customer) => `<button type="button" class="sale-customer-suggestion" data-sale-customer-id="${customer.id}"><strong>${escapeHtml(customer.fullName)}</strong><small>${escapeHtml([customer.phone, customer.email].filter(Boolean).join(' · '))}</small></button>`).join('') : '<p class="sale-customer-suggestions-empty">No encontramos ese cliente.</p>'
+      customerSuggestions.hidden = false
+      for (const button of customerSuggestions.querySelectorAll('[data-sale-customer-id]')) { button.addEventListener('pointerdown', (event) => event.preventDefault()); button.addEventListener('click', () => {
+        const customer = getUiState().snapshot.customers.find((item) => item.id === button.dataset.saleCustomerId)
+        if (!customer) return
+        input.value = customer.fullName
+        saleCustomerSearchQuery = customer.fullName
+        if (hiddenCustomer) hiddenCustomer.value = customer.id
+        customerSuggestions.hidden = true
+        const customerCard = input.closest('.sale-modal-customer')
+        customerCard?.classList.add('has-selected-customer'); customerCard?.classList.remove('is-counter-default')
+        const status = customerCard?.querySelector('.sale-selected-customer'); if (status) { status.classList.remove('is-default'); status.textContent = `✓ ${customer.fullName} seleccionado` }
+        const counter = customerCard?.querySelector('[data-action="set-counter-customer"]'); if (counter) counter.textContent = 'Cambiar'
+        const clear = customerCard?.querySelector('[data-action="clear-sale-customer"]'); if (clear) clear.hidden = false
+      }) }
+    }
     const findCustomer = () => getUiState().snapshot.customers.find((customer) => customer.fullName.trim().toLowerCase() === input.value.trim().toLowerCase())
     input.addEventListener('input', () => {
       saleCustomerSearchQuery = input.value
       const customer = findCustomer()
       if (hiddenCustomer) hiddenCustomer.value = customer?.id || ''
+      updateCustomerSuggestions()
     })
     input.addEventListener('change', () => {
       const customer = findCustomer()
@@ -4519,7 +4566,50 @@ const bindEvents = () => {
     if (input) input.value = ''
     if (hiddenCustomer) hiddenCustomer.value = ''
     saleCustomerSearchQuery = ''
+    const customerCard = button.closest('.sale-modal-customer')
+    customerCard?.classList.remove('has-selected-customer'); customerCard?.classList.add('is-counter-default')
+    const status = customerCard?.querySelector('.sale-selected-customer'); if (status) { status.classList.add('is-default'); status.textContent = '✓ Mostrador seleccionado · venta rápida' }
+    const clear = customerCard?.querySelector('[data-action="clear-sale-customer"]'); if (clear) clear.hidden = true
   })
+  for (const button of document.querySelectorAll('[data-action="clear-sale-customer"]')) button.addEventListener('click', () => {
+    const card = button.closest('.sale-modal-customer')
+    const input = card?.querySelector('[data-sale-customer-search]')
+    const hiddenCustomer = card?.querySelector('input[name="customerId"]')
+    if (input) input.value = ''
+    if (hiddenCustomer) hiddenCustomer.value = ''
+    saleCustomerSearchQuery = ''
+    card?.classList.remove('has-selected-customer'); card?.classList.add('is-counter-default')
+    const status = card?.querySelector('.sale-selected-customer'); if (status) { status.classList.add('is-default'); status.textContent = '✓ Mostrador seleccionado · venta rápida' }
+    const counter = card?.querySelector('[data-action="set-counter-customer"]'); if (counter) counter.textContent = 'Mostrador'
+    button.hidden = true
+    input?.focus()
+  })
+  for (const button of document.querySelectorAll('[data-action="focus-sale-customer"]')) button.addEventListener('click', () => {
+    button.closest('.sale-modal-customer')?.querySelector('[data-sale-customer-search]')?.focus()
+  })
+  const salePaymentModal = document.querySelector('[data-sale-payment-modal]')
+  const closeSalePayment = () => { if (salePaymentModal) salePaymentModal.hidden = true; document.body.classList.remove('sale-payment-open') }
+  for (const button of document.querySelectorAll('[data-action="open-sale-payment"]')) button.addEventListener('click', () => {
+    if (!getUiState().openCashSession) {
+      saleReturnAfterCash = true
+      activeSection = 'caja'
+      cashFormOpen = true
+      saveSection()
+      syncSectionPath()
+      feedbackMessage = 'Abrí la caja para continuar. Tu carrito quedó guardado.'
+      requestScrollTop()
+      render()
+      return
+    }
+    if (!salePaymentModal) return
+    salePaymentModal.hidden = false
+    document.body.classList.add('sale-payment-open')
+    salePaymentModal.querySelector('select[name="paymentMethod"]')?.focus()
+  })
+  for (const button of document.querySelectorAll('[data-action="close-sale-payment"]')) button.addEventListener('click', closeSalePayment)
+  for (const button of document.querySelectorAll('.sale-payment-confirm')) button.addEventListener('click', closeSalePayment)
+  if (salePaymentModal) salePaymentModal.addEventListener('click', (event) => { if (event.target === salePaymentModal) closeSalePayment() })
+  if (salePaymentModal) salePaymentModal.addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.preventDefault(); closeSalePayment() } })
   for (const select of document.querySelectorAll('select[name="paymentMethod"]')) {
     const form = select.closest('form')
     const echeqField = form?.querySelector('[data-echeq-field]')
@@ -4630,6 +4720,8 @@ const bindEvents = () => {
   }
   for (const button of document.querySelectorAll('[data-audit-period]')) button.addEventListener('click', () => { auditPeriodFilter = button.dataset.auditPeriod || 'all'; render() })
   for (const button of document.querySelectorAll('[data-audit-module]')) button.addEventListener('click', () => { auditModuleFilter = button.dataset.auditModule || 'all'; render() })
+  for (const button of document.querySelectorAll('[data-audit-clear]')) button.addEventListener('click', () => { auditModuleFilter = 'all'; auditActionFilter = 'all'; auditPeriodFilter = 'all'; auditSearchQuery = ''; auditDateFrom = ''; auditDateTo = ''; render() })
+  for (const select of document.querySelectorAll('[data-audit-action]')) select.addEventListener('change', () => { auditActionFilter = select.value || 'all'; render() })
   for (const input of document.querySelectorAll('[data-audit-search]')) {
     input.placeholder = 'Buscar venta, factura, cliente, producto o usuario'
     input.addEventListener('input', () => { auditSearchQuery = input.value; rerenderSearchKeepingFocus(input, '[data-audit-search]') })
@@ -4651,6 +4743,7 @@ const bindEvents = () => {
       if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false
       if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false
       if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false
+      if (auditActionFilter !== 'all' && entry.action !== auditActionFilter) return false
       return !auditTerm || auditSearchText(auditUi, entry).includes(auditTerm)
     })
     for (const [index, event] of [...auditTrace.querySelectorAll('.audit-trace-event')].entries()) {
@@ -4738,6 +4831,7 @@ const bindEvents = () => {
       if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false
       if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false
       if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false
+      if (auditActionFilter !== 'all' && entry.action !== auditActionFilter) return false
       return !term || [entry.actorName, entry.entityLabel, entry.action, entry.entityId, entry.moduleLabel].join(' ').toLowerCase().includes(term)
     })
     const traceKey = (entry) => {
@@ -4817,6 +4911,7 @@ const bindEvents = () => {
     toggleAlertsButton.addEventListener('click', (event) => {
       event.stopPropagation()
       accountAlertsOpen = !accountAlertsOpen
+      accountMenuOpen = false
       render()
     })
   }
@@ -4824,6 +4919,7 @@ const bindEvents = () => {
     openAccountPanelButton.addEventListener('click', (event) => {
       event.stopPropagation()
       accountAlertsOpen = false
+      accountMenuOpen = false
       activeSection = getUiState().user?.isPlatformAdmin ? 'mi-admin' : 'ajustes'
       saveSection()
       requestScrollTop()
@@ -4834,6 +4930,7 @@ const bindEvents = () => {
     alertSectionButton.addEventListener('click', (event) => {
       event.stopPropagation()
       accountAlertsOpen = false
+      accountMenuOpen = false
       activeSection = alertSectionButton.dataset.alertSection || 'dashboard'
       saveSection()
       requestScrollTop()
@@ -4944,6 +5041,7 @@ const bindEvents = () => {
   })
   for (const button of document.querySelectorAll('[data-action="close-cash-form"]')) button.addEventListener('click', () => {
     cashFormOpen = false
+    saleReturnAfterCash = false
     render()
   })
   for (const button of document.querySelectorAll('[data-action="open-product-form"]')) button.addEventListener('click', () => {
@@ -4958,6 +5056,7 @@ const bindEvents = () => {
     render()
   })
   for (const input of document.querySelectorAll('[data-product-search]')) input.addEventListener('input', () => { productSearchQuery = input.value || ''; productEditingId = ''; rerenderSearchKeepingFocus(input, '[data-product-search]') })
+  for (const button of document.querySelectorAll('[data-action="toggle-product-list"]')) button.addEventListener('click', () => { productListExpanded = !productListExpanded; render() })
   for (const button of document.querySelectorAll('[data-action="clear-product-search"]')) button.addEventListener('click', () => { productSearchQuery = ''; productEditingId = ''; render() })
   for (const button of document.querySelectorAll('[data-action="edit-product-inline"]')) button.addEventListener('click', () => { productEditingId = button.dataset.id || ''; render() })
   for (const button of document.querySelectorAll('[data-action="cancel-product-inline-edit"]')) button.addEventListener('click', () => { productEditingId = ''; render() })
@@ -4978,6 +5077,18 @@ const bindEvents = () => {
     rerenderSearchKeepingFocus(input, '[data-supplier-search]')
   })
   for (const input of document.querySelectorAll('input[name="supplierSearch"]')) input.addEventListener('input', () => { purchaseSupplierSearch = input.value })
+  for (const input of document.querySelectorAll('[data-purchase-history-query]')) input.addEventListener('input', () => {
+    purchaseHistoryQuery = input.value
+    rerenderSearchKeepingFocus(input, '[data-purchase-history-query]')
+  })
+  for (const modal of document.querySelectorAll('[data-catalog-modal]')) {
+    const closeControl = () => modal.querySelector('[data-action^="close-"], [data-action="cancel-purchase-edit"], [data-action="leave-supplier-payment"]')
+    modal.addEventListener('click', (event) => { if (event.target !== modal) return; closeControl()?.click() })
+    modal.addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.preventDefault(); closeControl()?.click() } })
+    modal.querySelector('input, select, button')?.focus()
+  }
+  for (const input of document.querySelectorAll('[data-purchase-history-supplier]')) input.addEventListener('change', () => { purchaseHistorySupplier = input.value; render() })
+  for (const input of document.querySelectorAll('[data-purchase-history-period]')) input.addEventListener('change', () => { purchaseHistoryPeriod = input.value; render() })
   const addPurchaseProduct = () => {
     const input = document.querySelector('[data-purchase-product-search]')
     const search = String(input?.value || purchaseQuickAddCode || '').trim().toLowerCase()
@@ -5231,20 +5342,15 @@ const bindEvents = () => {
         exportThermalReceipt(button.dataset.id, '80')
         return
       }
-      try {
-        const result = button.dataset.saleAction === 'invoice'
-          ? await store.createInvoiceFromSale(button.dataset.id, { forArca: isArcaReadyForEmit() })
-          : button.dataset.saleAction === 'ticket'
-            ? await store.createTicketFromSale(button.dataset.id)
-            : button.dataset.saleAction === 'cancel'
-              ? await store.cancelSale(button.dataset.id)
-              : await store.createReturnFromSale(button.dataset.id)
-        if (!result?.ok) throw new Error(result?.message || 'No se pudo completar la accion de venta.')
-        feedbackMessage = result.message || ''
-        if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
-      } catch (error) {
-        feedbackMessage = error?.message || 'No se pudo completar la accion de venta.'
-      }
+      const result = button.dataset.saleAction === 'invoice'
+        ? await store.createInvoiceFromSale(button.dataset.id)
+        : button.dataset.saleAction === 'ticket'
+          ? await store.createTicketFromSale(button.dataset.id)
+          : button.dataset.saleAction === 'cancel'
+            ? store.cancelSale(button.dataset.id)
+            : store.createReturnFromSale(button.dataset.id)
+      feedbackMessage = result.message || ''
+      if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
       render()
     })
   }
@@ -5260,6 +5366,13 @@ const bindEvents = () => {
       }
     })
   }
+  for (const input of document.querySelectorAll('[data-invoice-history-query]')) input.addEventListener('input', () => {
+    invoiceHistoryQuery = input.value
+    rerenderSearchKeepingFocus(input, '[data-invoice-history-query]')
+  })
+  for (const input of document.querySelectorAll('[data-invoice-history-status]')) input.addEventListener('change', () => { invoiceHistoryStatus = input.value; render() })
+  for (const input of document.querySelectorAll('[data-invoice-history-fiscal]')) input.addEventListener('change', () => { invoiceHistoryFiscal = input.value; render() })
+  for (const input of document.querySelectorAll('[data-invoice-history-kind]')) input.addEventListener('change', () => { invoiceHistoryKind = input.value; render() })
   for (const row of document.querySelectorAll('[data-invoice-open]')) {
     const openInvoice = () => {
       const completed = openInvoiceDocument(row.dataset.invoiceOpen)
@@ -5283,111 +5396,6 @@ const bindEvents = () => {
         render()
         return
       }
-      if (action === 'emit-arca') {
-        const snapshot = store.getSnapshot()
-        const invoice = snapshot.invoices.find((entry) => entry.id === button.dataset.id)
-        if (!invoice) { feedbackMessage = 'No se encontro el comprobante.'; render(); return }
-        if (!invoice.saleId) { feedbackMessage = 'Solo se puede emitir CAE desde un comprobante vinculado a una venta.'; render(); return }
-        restoreArcaFiscalBasics()
-        const pointOfSale = String(arcaFiscal.pointOfSale || '').replace(/\D/g, '')
-        if (!pointOfSale) { feedbackMessage = 'Completa el punto de venta en la configuracion ARCA antes de emitir.'; render(); return }
-        const numberDigits = String(invoice.number || '').replace(/\D/g, '')
-        const receiptNumber = Number(numberDigits.slice(-8) || numberDigits)
-        if (!Number.isInteger(receiptNumber) || receiptNumber < 1) {
-          feedbackMessage = 'Carga primero el numero de comprobante ARCA en la factura (solo digitos del PV) y guardala.'
-          render()
-          return
-        }
-        const customer = snapshot.customers.find((entry) => entry.id === invoice.customerId)
-        const cuitDigits = String(customer?.cuit || '').replace(/\D/g, '')
-        const docTipo = cuitDigits.length === 11 ? 80 : 99
-        const docNro = cuitDigits.length === 11 ? cuitDigits : '0'
-        const receiptType = receiptTypeFromLetter(invoice.type || 'B')
-        const cbteFch = String(today || new Date().toISOString().slice(0, 10)).replace(/\D/g, '').slice(0, 8)
-        const requestXml = buildFeCaeReqXml({
-          pointOfSale,
-          receiptType,
-          receiptNumber,
-          cbteFch: cbteFch.length === 8 ? cbteFch : new Date().toISOString().slice(0, 10).replace(/\D/g, ''),
-          docTipo,
-          docNro,
-          impTotal: invoice.totalAmount,
-          fiscalType: invoice.type || 'B',
-        })
-        const idempotencyKey = String(`cae-${invoice.id}-${receiptNumber}`).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 128)
-        feedbackMessage = 'Solicitando CAE a ARCA (homologacion)…'
-        render()
-        try {
-          const result = await callArca('invoices', {
-            saleId: invoice.saleId,
-            receiptType,
-            pointOfSale: Number(pointOfSale),
-            receiptNumber: Number(receiptNumber),
-            idempotencyKey,
-            requestXml,
-          })
-          const parsed = parseArcaCae(result?.responseXml || '')
-          if (!parsed.cae || String(parsed.resultado || '').toUpperCase() !== 'A') {
-            feedbackMessage = 'ARCA no devolvio un CAE aprobado. Revisa el comprobante e intenta otra vez.'
-            render()
-            return
-          }
-          const formattedNumber = formatArcaNumber(pointOfSale, receiptNumber)
-          const updateResult = await store.updateInvoice(invoice.id, {
-            number: formattedNumber,
-            customerId: invoice.customerId,
-            totalAmount: invoice.totalAmount,
-            kind: invoice.kind || 'Factura',
-            type: invoice.type || 'B',
-            dueDate: invoice.dueDate,
-            status: 'Emitida',
-            fiscalStatus: 'Aprobado',
-            branchId: invoice.branchId,
-            saleId: invoice.saleId,
-            relatedDocumentId: invoice.relatedDocumentId || null,
-            payloadJson: {
-              cae: parsed.cae,
-              caeVto: parsed.caeVto,
-              pointOfSale: Number(pointOfSale),
-              receiptType,
-              receiptNumber: Number(receiptNumber),
-              emittedAt: new Date().toISOString(),
-              dueDate: invoice.dueDate || '',
-            },
-          })
-          feedbackMessage = updateResult?.ok === false
-            ? (updateResult.message || 'CAE recibido pero no se pudo guardar el comprobante.')
-            : `CAE ${parsed.cae} aprobado. Vto ${parsed.caeVto || 's/d'}.`
-        } catch (error) {
-          const code = String(error?.code || error?.message || '')
-          const status = Number(error?.status || 0)
-          if (code === 'arca_rejected' || status === 422) {
-            try {
-              await store.updateInvoice(invoice.id, {
-                number: invoice.number,
-                customerId: invoice.customerId,
-                totalAmount: invoice.totalAmount,
-                kind: invoice.kind || 'Factura',
-                type: invoice.type || 'B',
-                dueDate: invoice.dueDate,
-                status: invoice.status || 'Emitida',
-                fiscalStatus: 'Rechazado',
-                branchId: invoice.branchId,
-                saleId: invoice.saleId,
-                relatedDocumentId: invoice.relatedDocumentId || null,
-                payloadJson: { dueDate: invoice.dueDate || '', lastArcaError: code || 'arca_rejected' },
-              })
-            } catch { /* best-effort status update */ }
-            feedbackMessage = 'ARCA rechazo el comprobante. Revisa los datos fiscales y el numero, e intenta otra vez.'
-          } else if (status === 409 || code.includes('uncertain') || code.includes('pending')) {
-            feedbackMessage = 'La autorizacion quedo incierta. Espera un momento y reintenta Emitir con ARCA; no marques el CAE a mano.'
-          } else {
-            feedbackMessage = error?.message || 'No se pudo emitir el CAE.'
-          }
-        }
-        render()
-        return
-      }
       const completed = action === 'print'
         ? openInvoiceDocument(button.dataset.id, true)
         : action === 'view' && openInvoiceDocument(button.dataset.id)
@@ -5396,6 +5404,8 @@ const bindEvents = () => {
       render()
     })
   }
+  for (const input of document.querySelectorAll('[data-ticket-history-query]')) input.addEventListener('input', () => { ticketHistoryQuery = input.value; rerenderSearchKeepingFocus(input, '[data-ticket-history-query]') })
+  for (const select of document.querySelectorAll('[data-ticket-history-status]')) select.addEventListener('change', () => { ticketHistoryStatus = select.value || 'all'; render() })
   for (const button of document.querySelectorAll('[data-ticket-action]')) {
     button.addEventListener('click', () => {
       if (button.dataset.ticketAction === 'edit') {
@@ -5481,8 +5491,6 @@ const bindEvents = () => {
     })
   }
 
-  const themeToggle = document.querySelector('[data-action="toggle-theme"]')
-  if (themeToggle) themeToggle.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; safeStorage.setItem(themeStorageKey, theme); applyTheme(); render() })
   const exportButton = document.querySelector('[data-action="export-data"]')
   if (exportButton) exportButton.addEventListener('click', exportData)
   const exportReportButton = document.querySelector('[data-action="export-report"]')
@@ -5556,23 +5564,151 @@ const bindEvents = () => {
       render()
     })
   }
-  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = true; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileError = ''; activeSection = 'dashboard'; requestScrollTop(); render() })
-  for (const button of document.querySelectorAll('[data-action="close-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileError = ''; render() })
-  for (const button of document.querySelectorAll('[data-action="finish-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileError = ''; feedbackMessage = 'Perfil listo. Ya podés operar normalmente.'; render() })
-  for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { progressiveProfileGoalsDraft = [...document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]:checked')].map((input) => input.value); progressiveProfileError = ''; progressiveProfileStep = 2; render() })
-  for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { progressiveProfileError = ''; progressiveProfileStep = 1; render() })
+  const resetProgressiveProfile = () => { progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileDraft = null; progressiveProfileError = '' }
+  const captureProgressiveDraft = () => {
+    const form = document.querySelector('.progressive-profile-modal-form')
+    const uiProfile = getUiState().progressiveProfile
+    const current = progressiveProfileDraft || { country: uiProfile.country || '', industry: uiProfile.industry || '', phone: uiProfile.phone || '', email: uiProfile.email || '', needsArca: uiProfile.needsArca, operationalGoals: uiProfile.operationalGoals || [] }
+    const read = (name) => form?.querySelector(`[name="${name}"]`)
+    const checked = [...(form?.querySelectorAll('input[name="operationalGoals"]:checked') || [])].map((input) => input.value)
+    progressiveProfileDraft = {
+      ...current,
+      industry: read('industry')?.value?.trim() ?? current.industry,
+      country: read('country')?.value?.trim() ?? current.country,
+      phone: read('phone')?.value?.trim() ?? current.phone,
+      needsArca: read('needsArca')?.value === 'yes' ? true : read('needsArca')?.value === 'no' ? false : (read('needsArca') ? null : current.needsArca),
+      operationalGoals: checked.length ? checked : current.operationalGoals,
+    }
+    progressiveProfileGoalsDraft = progressiveProfileDraft.operationalGoals
+  }
+  for (const toggleAccountButton of document.querySelectorAll('[data-action="toggle-account-menu"]')) toggleAccountButton.addEventListener('click', (event) => { event.stopPropagation(); accountMenuOpen = !accountMenuOpen; accountAlertsOpen = false; render() })
+  const focusProgressiveField = () => window.requestAnimationFrame(() => {
+    const nextField = document.querySelector('.progressive-profile-modal-form input[autofocus]')
+    nextField?.focus({ preventScroll: true })
+    if (nextField && typeof nextField.setSelectionRange === 'function') {
+      const end = nextField.value.length
+      nextField.setSelectionRange(end, end)
+    }
+  })
+  for (const button of document.querySelectorAll('[data-customer-filter]')) button.addEventListener('click', () => { customerListFilter = button.dataset.customerFilter || 'all'; customerListExpanded = false; customerMapPreviewId = ''; render() })
+  for (const button of document.querySelectorAll('[data-action="toggle-customer-list"]')) button.addEventListener('click', () => { customerListExpanded = !customerListExpanded; render() })
+  for (const button of document.querySelectorAll('[data-action="open-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = true; resetProgressiveProfile(); activeSection = 'dashboard'; requestScrollTop(); render() })
+  for (const button of document.querySelectorAll('[data-action="close-progressive-profile"]')) button.addEventListener('click', () => { progressiveProfilePromptOpen = false; resetProgressiveProfile(); render() })
+  for (const button of document.querySelectorAll('[data-action="finish-progressive-profile"]')) button.addEventListener('click', () => {
+    const wantsArca = getUiState().progressiveProfile.needsArca === true
+    progressiveProfilePromptOpen = false
+    resetProgressiveProfile()
+    if (wantsArca) {
+      activeSection = 'ajustes'
+      settingsPanelOpen = 'arca'
+      arcaSetupStep = 1
+      queueScrollToSelector('[data-settings-content="arca"]')
+      feedbackMessage = 'Perfil listo. Ahora podés activar ARCA paso a paso.'
+    } else feedbackMessage = 'Planilla completa. Ya podés operar normalmente.'
+    render()
+  })
+  for (const input of document.querySelectorAll('[data-sales-history-search]')) input.addEventListener('input', () => { salesHistoryQuery = input.value; listPagination.ventas.page = 1; rerenderSearchKeepingFocus(input, '[data-sales-history-search]') })
+  for (const select of document.querySelectorAll('[data-sales-history-period]')) select.addEventListener('change', () => { salesHistoryPeriod = select.value || 'all'; listPagination.ventas.page = 1; render() })
+  for (const select of document.querySelectorAll('[data-sales-history-payment]')) select.addEventListener('change', () => { salesHistoryPayment = select.value || 'all'; listPagination.ventas.page = 1; render() })
+  for (const button of document.querySelectorAll('[data-sales-history-status]')) button.addEventListener('click', () => { salesHistoryStatus = button.dataset.salesHistoryStatus || 'all'; listPagination.ventas.page = 1; render() })
+  for (const choice of document.querySelectorAll('.progressive-profile-modal-form input[name="needsArca"][value="yes"]')) choice.addEventListener('change', async () => {
+    if (!choice.checked || progressiveProfileStep !== 5) return
+    captureProgressiveDraft()
+    const draft = progressiveProfileDraft || {}
+    const result = await store.updateProgressiveProfile({ country: draft.country || '', industry: draft.industry || '', phone: draft.phone || '', email: draft.email || '', needsArca: true, operationalGoals: draft.operationalGoals || [], status: 'complete' })
+    if (!result.ok) { progressiveProfileError = result.message || 'No se pudo guardar la selección.'; render(); return }
+    progressiveProfilePromptOpen = false
+    resetProgressiveProfile()
+    activeSection = 'ajustes'
+    settingsPanelOpen = 'arca'
+    arcaSetupStep = 1
+    queueScrollToSelector('[data-settings-content="arca"]')
+    feedbackMessage = 'Perfecto. Ahora activá ARCA paso a paso.'
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-action="dismiss-arca-celebration"]')) button.addEventListener('click', () => { arcaCelebrationVisible = false; render() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-skip"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.max(1, progressiveProfileStep - 1); render() })
+  for (const form of document.querySelectorAll('form.progressive-profile-modal-form')) form.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || progressiveProfileStep >= 5) return
+    const target = event.target
+    if (!(target instanceof HTMLInputElement) || ['checkbox', 'radio', 'button', 'submit'].includes(target.type)) return
+    event.preventDefault()
+    captureProgressiveDraft()
+    progressiveProfileError = ''
+    progressiveProfileStep = Math.min(5, progressiveProfileStep + 1)
+    render()
+    focusProgressiveField()
+  })
   const updateProgressiveContactState = () => {
     const phone = document.querySelector('.progressive-profile-modal-form input[name="phone"]')
     const email = document.querySelector('.progressive-profile-modal-form input[name="email"]')
     const submit = document.querySelector('[data-progressive-contact-submit]')
     const status = document.querySelector('.progressive-contact-status')
     if (!phone || !email || !submit || !status) return
-    const ready = /^[+()0-9\s-]{6,30}$/.test(phone.value.trim()) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())
+    const phoneValue = phone.value.trim()
+    const emailValue = email.value.trim()
+    const ready = (!phoneValue || /^[+()0-9\s-]{6,30}$/.test(phoneValue)) && (!emailValue || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue))
     submit.disabled = !ready
-    status.textContent = ready ? 'Listo para guardar tus datos.' : 'Completá teléfono y email para continuar.'
+    status.textContent = ready ? 'Podés completar esto ahora o más adelante desde Configuración.' : 'Revisá el teléfono o email ingresado.'
   }
   for (const input of document.querySelectorAll('.progressive-profile-modal-form input[name="phone"], .progressive-profile-modal-form input[name="email"]')) input.addEventListener('input', updateProgressiveContactState)
   updateProgressiveContactState()
+  const setupInlineCompletion = (selector, ghostSelector, options) => { for (const input of document.querySelectorAll(selector)) {
+    const ghost = input.closest('.progressive-suggest')?.querySelector(ghostSelector)
+    const paintCompletion = () => {
+      const query = input.value.trim()
+      const normalized = query.toLocaleLowerCase('es-AR')
+      const completion = normalized ? options.find((option) => option.toLocaleLowerCase('es-AR').startsWith(normalized)) : ''
+      if (!ghost || !completion || completion.toLocaleLowerCase('es-AR') === normalized) {
+        if (ghost) {
+          ghost.hidden = true
+          delete ghost.dataset.completion
+        }
+        return
+      }
+      if (action === 'edit') {
+        invoiceEditingId = button.dataset.id
+        invoiceFormOpen = true
+        invoicePaymentId = ''
+        queueScrollToSelector('form[data-form="invoice"]')
+        feedbackMessage = 'Comprobante cargado para edición.'
+        render()
+        return
+      }
+      ghost.innerHTML = `<i>${escapeHtml(query)}</i><b>${escapeHtml(completion.slice(query.length))}</b>`
+      ghost.dataset.completion = completion
+      ghost.hidden = false
+    }
+    input.addEventListener('input', paintCompletion)
+    input.addEventListener('focus', paintCompletion)
+    input.addEventListener('keydown', (event) => {
+      const completion = ghost?.dataset.completion
+      if (event.key !== 'Tab' || !completion) return
+      event.preventDefault()
+      input.value = completion
+      input.setSelectionRange(completion.length, completion.length)
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    input.addEventListener('keydown', (event) => { if (event.key === 'Escape' && customerSuggestions) { customerSuggestions.hidden = true } })
+    paintCompletion()
+  } }
+  setupInlineCompletion('[data-progressive-industry]', '[data-progressive-industry-ghost]', progressiveIndustryOptions)
+  setupInlineCompletion('[data-progressive-country]', '[data-progressive-country-ghost]', progressiveCountryOptions)
+  // Todas las búsquedas muestran sugerencias acotadas y filtradas, nunca una lista interminable.
+  for (const input of document.querySelectorAll('input[list]')) {
+    const list = document.getElementById(input.getAttribute('list'))
+    if (!list) continue
+    const options = [...list.querySelectorAll('option')].map((option) => ({ value: option.value, label: option.label || option.textContent || '' }))
+    const paintSuggestions = () => {
+      const query = input.value.trim().toLocaleLowerCase('es-AR')
+      const visible = (query ? options.filter((option) => `${option.value} ${option.label}`.toLocaleLowerCase('es-AR').includes(query)) : options).slice(0, 8)
+      list.replaceChildren(...visible.map((option) => { const node = document.createElement('option'); node.value = option.value; node.label = option.label; return node }))
+    }
+    input.addEventListener('focus', paintSuggestions)
+    input.addEventListener('input', paintSuggestions)
+  }
   for (const input of document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]')) input.addEventListener('change', () => {
     let selected = [...document.querySelectorAll('.progressive-profile-modal-form input[name="operationalGoals"]:checked')]
     if (selected.length > 5) { input.checked = false; selected = selected.filter((entry) => entry !== input) }
@@ -5601,7 +5737,6 @@ const bindEvents = () => {
     arcaFiscal.legalName = String(document.querySelector('[name="arca-legal-name"]')?.value || '').trim()
     arcaFiscal.pointOfSale = String(document.querySelector('[name="arca-point-sale"]')?.value || '').trim()
     if (!/^\d{11}$/.test(arcaFiscal.cuit) || !arcaFiscal.legalName || !/^\d{1,5}$/.test(arcaFiscal.pointOfSale)) { feedbackMessage = 'Completa CUIT, razon social y punto de venta validos.'; render(); return }
-    persistArcaFiscalBasics({ connected: arcaConnectionStatus === 'connected' })
     arcaSetupStep = 2; render()
   })
   for (const button of document.querySelectorAll('[data-action="arca-generate-csr"]')) button.addEventListener('click', async () => {
@@ -5622,7 +5757,7 @@ const bindEvents = () => {
     if (arcaVerificationState === 'verified') return
     arcaVerificationState = 'checking'
     render()
-    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; persistArcaFiscalBasics({ connected: true }); feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
+    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; arcaCelebrationVisible = true; feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
   })
   for (const importSupportButton of document.querySelectorAll('[data-action="request-bulk-import"]')) {
     importSupportButton.addEventListener('click', () => {
@@ -5632,10 +5767,11 @@ const bindEvents = () => {
   for (const templateButton of document.querySelectorAll('[data-action="download-product-template"]')) templateButton.addEventListener('click', downloadBulkProductTemplate)
   for (const bulkImportInput of document.querySelectorAll('[data-input="bulk-product-import"]')) bulkImportInput.addEventListener('change', importBulkProductsFile)
   document.addEventListener('click', (event) => {
-    if (!accountAlertsOpen) return
+    if (!accountAlertsOpen && !accountMenuOpen) return
     const target = event.target
     if (target instanceof Element && target.closest('.account-alerts-wrap')) return
     accountAlertsOpen = false
+    accountMenuOpen = false
     render()
   }, { once: true })
   const cancelSaleEdit = document.querySelector('[data-action="cancel-sale-edit"]')
