@@ -3828,11 +3828,10 @@ const handleSubmit = async (event) => {
       if (!authManager) throw new Error('La conexión con la operación no está configurada.')
       const sessionPayload = await authManager.signIn({ instanceKey: requestedInstanceKey || null, identifier, pin })
       persistInstanceKey(sessionPayload?.commerceContext?.instance_key || requestedInstanceKey || authInstanceKey)
-      try {
-        setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
-      } catch {
-        setupStatus = { initialized: true }
-      }
+      // Turnstile tokens are single-use. signIn already consumed the token;
+      // do not call setup_status here with the same token or a valid login is
+      // incorrectly reported as an expired security check.
+      setupStatus = { initialized: true }
       await loadCloudAccess(sessionPayload)
       activeSection = 'dashboard'
       saveSection()
