@@ -187,9 +187,22 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
     return setSession(payload)
   }
 
+  const readDeviceId = () => {
+    const key = `operando.device.${currentInstanceKey || 'operando-dev'}`
+    try {
+      const existing = String(globalThis.localStorage?.getItem(key) || '').trim()
+      if (existing) return existing
+      const created = crypto.randomUUID()
+      globalThis.localStorage?.setItem(key, created)
+      return created
+    } catch {
+      return crypto.randomUUID()
+    }
+  }
+
   const signIn = async ({ instanceKey: requestedInstanceKey, identifier, pin }) => {
     if (!turnstileEnabled) throw new Error('security_not_configured')
-    const deviceId = crypto.randomUUID()
+    const deviceId = readDeviceId()
     const turnstileToken = readTurnstileToken()
     if (!turnstileToken) throw new Error('turnstile_required')
     const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, { method: 'POST', headers: buildHeaders(publishableKey), body: JSON.stringify({ instanceKey: normalizeOptionalInstanceKey(requestedInstanceKey), identifier, pin, deviceId, turnstileToken }) })
