@@ -3340,10 +3340,10 @@ const renderTurnstileWidget = (attempt = 0) => {
         size: 'flexible',
         theme: 'dark',
         'expired-callback': () => {
-          try { globalThis.turnstile?.reset(widgetId) } catch { /* widget will retry below */ }
+          try { globalThis.turnstile?.reset(widgetId) } catch { /* retry on next render */ }
         },
         'timeout-callback': () => {
-          try { globalThis.turnstile?.reset(widgetId) } catch { /* widget will retry below */ }
+          try { globalThis.turnstile?.reset(widgetId) } catch { /* retry on next render */ }
         },
         'error-callback': () => {
           if (widgetId) globalThis.turnstile?.remove(widgetId)
