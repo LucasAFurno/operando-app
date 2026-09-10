@@ -3215,8 +3215,8 @@ const renderMarketingPage = (page) => {
   </head>
   <body data-page="${page.slug ? escapeHtml(page.slug) : 'home'}" data-theme="${getMarketingTheme(page)}">
     ${gtmBodySnippet}
+    ${renderTopbar(page)}
     <div class="marketing-shell">
-      ${renderTopbar(page)}
       <main class="${primaryMain ? 'marketing-primary-main' : ''}">
         ${primaryMain || `
         <div class="marketing-ticker" aria-hidden="true"><div class="marketing-ticker-track"><span class="marketing-ticker-sequence">VENTAS <b>●</b> CAJA <b>●</b> STOCK <b>●</b> CLIENTES <b>●</b> SUCURSALES <b>●</b> CATÁLOGO <b>●</b></span><span class="marketing-ticker-sequence">VENTAS <b>●</b> CAJA <b>●</b> STOCK <b>●</b> CLIENTES <b>●</b> SUCURSALES <b>●</b> CATÁLOGO <b>●</b></span></div></div>
