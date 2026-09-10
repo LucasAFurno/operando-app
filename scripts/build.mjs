@@ -3205,6 +3205,7 @@ const renderMarketingPage = (page) => {
     <link rel="icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <title>${escapeHtml(page.seoTitle)}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" />
     <style>${marketingStyles}${marketingRefreshStyles}</style>
     ${gtmHeadSnippet}
     <script type="application/ld+json">${structuredData}</script>
