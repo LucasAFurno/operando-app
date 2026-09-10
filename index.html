@@ -24,6 +24,18 @@
 .brand { display: inline-flex; align-items: center; gap: 8px; }
 .nav .button { min-height: 42px; padding: 0 16px; font-family: Outfit, Arial, sans-serif; }
 
+
+
+/* === Standard mobile topbar: links desktop-only; Menú button on small screens === */
+.home-mobile-menu { display: none; position: relative; }
+@media (max-width: 740px) {
+  .nav-links { display: none !important; }
+  .home-mobile-menu { display: block !important; margin-left: auto; }
+  .site-topbar-wrap .nav-links { display: none !important; }
+  .site-topbar-wrap .home-mobile-menu { display: block !important; margin-left: auto; }
+  .nav { flex-wrap: nowrap; gap: 12px; }
+}
+
 </style><style>.brand-logo{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:7px}.proof{padding:82px clamp(4px,7vw,110px);border-top:1px solid #353535;border-bottom:1px solid #353535;background:#161616}.proof-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:28px}.proof-grid article{padding:12px 0}.proof-grid strong{display:block;color:#fff;font-size:clamp(2.1rem,4vw,4rem);letter-spacing:-.09em}.proof-grid span{color:#c4c4c0;font-size:.84rem}.proof-note{margin:28px 0 0;color:#92928f;font-size:.75rem}@media(max-width:740px){.proof{padding:62px 16px}.proof-grid{grid-template-columns:repeat(2,1fr);gap:22px 14px}.proof-grid strong{font-size:2.45rem}}</style><style>
     h1 { letter-spacing: -.075em; }
     .home-mobile-menu { display: none; }
