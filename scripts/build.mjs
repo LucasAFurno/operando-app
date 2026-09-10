@@ -3448,6 +3448,7 @@ const renderHomePageExtended = () => {
     @media (max-width: 740px) { .support-band { padding-bottom: 560px; } .support-live-phone { width: 316px; height: 488px; } }
     .support-live-message, .support-live-message span { color: #ecf4f1 !important; }.support-live-message small { color: rgba(255,255,255,.68) !important; }
     .support-band:after { display: block; }.support-band.has-live-chat:after { display: none; }
+    @media (max-width: 560px) { .mobile-story { grid-template-columns: minmax(0, 1fr); } .phone-stage { min-width: 0; } .phone-stage:after { width: min(390px, 100%); } }
   </style>`
   const counterScript = `<script>
     (() => {
