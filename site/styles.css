@@ -302,6 +302,25 @@ input[type='search'] { color: var(--text); }
   .app-shell .topbar-right .account-menu-chevron { display: none !important; }
 }
 
+/* Móvil ultra compacto: marca a la izquierda, comercio centrado y cuenta única. */
+@media (max-width: 740px) {
+  .app-shell .sidebar { position: relative !important; padding-top: 8px !important; }
+  .app-shell .sidebar-brand { display: flex !important; align-items: center !important; justify-content: flex-start !important; min-height: 42px !important; padding: 0 4px !important; }
+  .app-shell .sidebar-brand .brand-logo { width: 36px !important; }
+  .app-shell .sidebar-brand::after { content: none !important; }
+  .app-shell .topbar { position: absolute !important; top: 8px !important; right: 10px !important; z-index: 20 !important; width: auto !important; min-height: 42px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+  .app-shell .topbar-left { position: fixed !important; top: 14px !important; left: 50% !important; display: block !important; transform: translateX(-50%); white-space: nowrap; pointer-events: none; }
+  .app-shell .topbar-left .kicker, .app-shell .topbar-left span { display: none !important; }
+  .app-shell .topbar-left h1 { margin: 0 !important; font-size: 1rem !important; }
+  .app-shell .topbar-center { display: none !important; }
+  .app-shell .topbar-right { position: static !important; display: flex !important; gap: 5px !important; }
+  .app-shell .topbar-right .account-notification-trigger { width: 34px !important; height: 34px !important; }
+  .app-shell .topbar-right .account-card { width: 132px !important; min-height: 36px !important; }
+  .app-shell .topbar-right .account-copy strong { font-size: .66rem !important; }
+  .app-shell .topbar-right .account-copy span { font-size: .52rem !important; }
+  .app-shell .sidebar-nav { margin-top: 3px !important; }
+}
+
 /* Encabezado móvil: una sola navegación compacta y una única cuenta visible. */
 @media (max-width: 740px) {
   .app-shell .sidebar { gap: 6px !important; padding: 8px 10px 10px !important; }
