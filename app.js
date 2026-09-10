@@ -1,10 +1,10 @@
-import { createBrowserDataStore } from './data-store.js?v=bd824620c7a5'
-import { createCloudAuthManager } from './cloud-auth.js?v=bd824620c7a5'
+import { createBrowserDataStore } from './data-store.js?v=6219682f6b14'
+import { createCloudAuthManager } from './cloud-auth.js?v=6219682f6b14'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'Operando'
-const appVersion = 'vbd824620c7a5'
+const appVersion = 'v6219682f6b14'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'
 const publicSiteUrl = 'https://operando.app'
@@ -3277,6 +3277,13 @@ const renderApp = (ui) => {
   const alertItems = allAlertItems.filter((item) => !dismissedAccountAlertIds.has(item.id))
   const notificationCount = alertItems.length
   const topbarRightClass = 'topbar-right is-account-only'
+  const normalizedSearchQuery = topbarSearch.trim().toLowerCase()
+  const quickSearchSuggestions = normalizedSearchQuery
+    ? [...new Map(buildQuickSearchTargets(ui)
+      .filter((item) => item.search.includes(normalizedSearchQuery))
+      .map((item) => [`${item.section}:${item.label}`, item]))
+      .values()].slice(0, 6)
+    : []
 
   return `
     <div class="app-shell">
@@ -3296,7 +3303,7 @@ const renderApp = (ui) => {
               <span class="quick-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span>
               <input type="search" name="query" value="${escapeHtml(topbarSearch)}" autocomplete="off" aria-label="Buscar en el panel" placeholder="Buscar ventas, clientes, productos, stock, facturas o cajas" />
               <button type="button" class="mobile-search-close" data-action="close-mobile-search" aria-label="Cerrar búsqueda">×</button>
-            </form>`}
+            </form>${quickSearchSuggestions.length ? `<div class="quick-search-suggestions" role="listbox" aria-label="Sugerencias de búsqueda">${quickSearchSuggestions.map((item) => `<button type="button" role="option" data-action="choose-topbar-search" data-search-section="${escapeHtml(item.section)}" data-search-label="${escapeHtml(item.label)}"><span>${escapeHtml(item.label)}</span><small>${escapeHtml(navItems.find((navItem) => navItem.id === item.section)?.label || item.section)}</small></button>`).join('')}</div>` : ''}`}
           </div>
           <div class="${topbarRightClass}">
             <button type="button" class="topbar-guide-action" data-action="resume-onboarding" aria-label="Abrir guía inicial">Guía inicial</button>
@@ -3394,7 +3401,7 @@ const render = () => {
   applyFieldGuidance()
   markBootComplete()
   bindEvents()
-  if (searchHadFocus && document.body.classList.contains('mobile-search-open')) {
+  if (searchHadFocus) {
     document.querySelector('.quick-search input')?.focus()
   }
   if (pendingOnboardingFocus) {
@@ -4699,22 +4706,21 @@ const bindEvents = () => {
     requestScrollTop()
     render()
   }
+  for (const button of document.querySelectorAll('[data-action="choose-topbar-search"]')) button.addEventListener('click', () => {
+    const nextSection = button.dataset.searchSection
+    if (!nextSection) return
+    activeSection = nextSection
+    topbarSearch = ''
+    saveSection()
+    syncSectionPath()
+    requestScrollTop()
+    render()
+  })
   if (quickSearchInput) {
     quickSearchInput.addEventListener('input', () => {
       topbarSearch = quickSearchInput.value
-      const ui = getUiState()
-      const normalized = String(quickSearchInput.value || '').trim().toLowerCase()
-      if (!normalized) return
-      const targets = buildQuickSearchTargets(ui)
-      const exactMatch = targets.find((item) => item.label.toLowerCase() === normalized)
-      if (exactMatch) {
-        jumpToSearchMatch(quickSearchInput.value)
-        return
-      }
-      const partialMatches = targets.filter((item) => item.search.includes(normalized))
-      if (partialMatches.length === 1) jumpToSearchMatch(partialMatches[0].label)
+      rerenderSearchKeepingFocus(quickSearchInput, '.quick-search input[name="query"]')
     })
-    quickSearchInput.addEventListener('change', () => jumpToSearchMatch(quickSearchInput.value))
   }
   for (const button of document.querySelectorAll('[data-section]')) button.addEventListener('click', () => {
     const nextSection = button.dataset.section

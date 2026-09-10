@@ -4434,6 +4434,40 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
    escape a display:none parent. Keep the trigger available for closing. */
 .app-shell .sidebar-nav .mobile-search-trigger { display: none !important; }
 .mobile-search-close { display: none; }
+.topbar-center { position: relative; }
+.quick-search-suggestions {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 12px;
+  background: #171717;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .42);
+}
+.quick-search-suggestions button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 42px;
+  padding: 9px 14px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, .09);
+  background: transparent;
+  color: #f7f5ee;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.quick-search-suggestions button:first-child { border-top: 0; }
+.quick-search-suggestions button:hover,
+.quick-search-suggestions button:focus-visible { background: rgba(237, 33, 27, .16); outline: 0; }
+.quick-search-suggestions span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .86rem; font-weight: 700; }
+.quick-search-suggestions small { color: #aaa79e; font-size: .68rem; }
 @media (max-width: 740px) {
   .app-shell .sidebar-nav .mobile-search-trigger { display: grid !important; }
   body.mobile-search-open .app-shell .topbar-center {
@@ -4457,6 +4491,7 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
     box-shadow: 0 6px 20px #0005;
   }
   body.mobile-search-open .app-shell .quick-search input { min-width: 0; font-size: 16px; }
+  body.mobile-search-open .app-shell .quick-search-suggestions { top: calc(100% + 8px); }
   body.mobile-search-open .app-shell .mobile-search-close {
     display: grid;
     place-items: center;
