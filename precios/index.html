@@ -20,17 +20,20 @@
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=operando-20260831" />
     <title>Acceso gratis durante 2026 | Operando</title>
     <style>
+/* purged legacy aesthetic -> Opera tokens; keep current Outfit layer. DEV branch only. */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap');
+
       html, body {
         margin: 0;
         min-height: 100%;
         background:
-          radial-gradient(circle at top right, rgba(255, 59, 48, 0.12), transparent 18%),
+          radial-gradient(circle at top right, rgba(237, 33, 27, 0.12), transparent 18%),
           radial-gradient(circle at bottom left, rgba(121, 200, 28, 0.08), transparent 14%),
-          linear-gradient(180deg, #050505 0%, #0b0b0b 100%);
+          linear-gradient(180deg, #080808 0%, #080808 100%);
       }
       body {
         color: #f3f4f6;
-        font-family: Inter, Arial, sans-serif;
+        font-family: Outfit, Arial, sans-serif;
       }
       * { box-sizing: border-box; }
       a { color: inherit; }
@@ -80,7 +83,7 @@
       .marketing-hero-copy h1,
       .marketing-card h2,
       .marketing-faq h2 {
-        font-family: Oswald, Arial, sans-serif;
+        font-family: Outfit, Arial, sans-serif;
       }
       .marketing-brand strong {
         display: block;
@@ -184,7 +187,7 @@
       }
       .marketing-auth-links .is-primary,
       .marketing-cta-row .is-primary {
-        border: 1px solid rgba(255,59,48,0.3);
+        border: 1px solid rgba(237,33,27,0.3);
         background: linear-gradient(180deg, #ff4d45 0%, #db1616 100%);
       }
       .marketing-hero {
@@ -338,7 +341,7 @@
       @keyframes marketing-interface-sheen { 0%, 68% { transform: translateX(-120%); } 82%, 100% { transform: translateX(120%); } }
       .marketing-story-copy h2 {
         margin: 0 0 12px;
-        font-family: Oswald, Arial, sans-serif;
+        font-family: Outfit, Arial, sans-serif;
         font-size: clamp(2rem, 3.5vw, 3.15rem);
         line-height: 1.02;
         max-width: 11ch;
@@ -402,7 +405,7 @@
         text-decoration: none;
       }
       .marketing-card > a:hover {
-        border-color: rgba(255,59,48,0.55);
+        border-color: rgba(237,33,27,0.55);
         color: #fff;
       }
       .marketing-compare-head,
@@ -456,7 +459,7 @@
       .marketing-demo-form button {
         min-height: 48px;
         border-radius: 14px;
-        border: 1px solid rgba(255,59,48,0.3);
+        border: 1px solid rgba(237,33,27,0.3);
         background: linear-gradient(180deg, #ff4d45 0%, #db1616 100%);
         color: #fff;
         font: inherit;
@@ -506,7 +509,7 @@
         align-content: start;
       }
       .marketing-footer strong {
-        font-family: Oswald, Arial, sans-serif;
+        font-family: Outfit, Arial, sans-serif;
         font-size: 1.35rem;
       }
       .marketing-footer p {
@@ -994,7 +997,7 @@
         box-sizing: border-box;
         padding: 2px;
         border: 1px solid rgba(255,255,255,0.28);
-        background: #050505;
+        background: #080808;
         object-fit: contain;
       }
       .marketing-phone-head strong,
