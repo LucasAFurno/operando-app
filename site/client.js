@@ -3252,7 +3252,6 @@ const renderApp = (ui) => {
   const environmentLabel = ui.cloudConnection.environmentLabel || 'Sandbox'
   const statusTitle = ui.openCashSession ? 'Abierta' : 'Cerrada'
   const statusHint = ui.branchRegisters.length > 1 ? registerName : ''
-  const searchOptions = buildQuickSearchTargets(ui).slice(0, 8).map((item) => `<option value="${item.label}"></option>`).join('')
   const userName = ui.user?.fullName || 'Usuario'
   const accountRole = isPlatformConsole ? 'Administrador Operando' : (ui.role?.name || 'Usuario')
   const accountMeta = accountRole.trim().toLowerCase() === userName.trim().toLowerCase() ? '' : `<span>${accountRole}</span>`
@@ -3295,9 +3294,8 @@ const renderApp = (ui) => {
           <div class="topbar-center" id="panel-global-search">
             ${isPlatformConsole ? '' : `<form class="quick-search" data-form="topbar-jump">
               <span class="quick-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span>
-              <input type="search" name="query" value="${escapeHtml(topbarSearch)}" list="nav-search-options" aria-label="Buscar en el panel" placeholder="Buscar ventas, clientes, productos, stock, facturas o cajas" />
+              <input type="search" name="query" value="${escapeHtml(topbarSearch)}" autocomplete="off" aria-label="Buscar en el panel" placeholder="Buscar ventas, clientes, productos, stock, facturas o cajas" />
               <button type="button" class="mobile-search-close" data-action="close-mobile-search" aria-label="Cerrar búsqueda">×</button>
-              <datalist id="nav-search-options">${searchOptions}</datalist>
             </form>`}
           </div>
           <div class="${topbarRightClass}">
