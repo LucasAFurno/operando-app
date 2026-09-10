@@ -23,6 +23,17 @@
 /* CURRENT ONLY — legacy marketing CSS removed */
 
 /* === Shared site topbar (same as index) === */
+
+/* === Standard mobile topbar: links desktop-only; Menú button on small screens === */
+.home-mobile-menu { display: none; position: relative; }
+@media (max-width: 740px) {
+  .nav-links { display: none !important; }
+  .home-mobile-menu { display: block !important; margin-left: auto; }
+  .site-topbar-wrap .nav-links { display: none !important; }
+  .site-topbar-wrap .home-mobile-menu { display: block !important; margin-left: auto; }
+  .nav { flex-wrap: nowrap; gap: 12px; }
+}
+
 .site-topbar-wrap { width: min(1500px, calc(100% - 56px)); margin: 0 auto; padding: 20px 0 0; position: relative; z-index: 5; }
 /* Match index: only one top offset (topbar), not marketing-shell + topbar */
 body .marketing-shell { padding-top: 0 !important; }
@@ -79,8 +90,8 @@ body .marketing-shell { padding-top: 0 !important; }
 }
 .site-topbar-wrap .home-mobile-menu nav a:hover { background: #252525; color: var(--opera-red, #ed211b); }
 @media (max-width: 740px) {
-  .site-topbar-wrap .nav-links { display: none; }
-  .site-topbar-wrap .home-mobile-menu { display: block; margin-left: auto; }
+  .site-topbar-wrap .nav-links { display: none !important; }
+  .site-topbar-wrap .home-mobile-menu { display: block !important; margin-left: auto; }
 }
 
 *, *::before, *::after { box-sizing: border-box; }
