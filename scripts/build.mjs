@@ -3424,6 +3424,11 @@ const renderHomePageExtended = () => {
     .phone-stage { align-items: center; }
     .phone-screen { min-height: 0; aspect-ratio: 461 / 686; }
     .phone-activity-image { min-height: 0; object-fit: contain; }
+    .mobile-phone { display: none; }
+    .phone-stage:after { position: relative; z-index: 1; display: block; width: min(100%, 450px); aspect-ratio: 1228 / 1281; background: url('/operando-activity-phone-mockup.png') center / contain no-repeat; clip-path: polygon(30% 0, 55% 0, 100% 85%, 100% 96%, 80% 100%, 58% 98%, 4% 20%, 4% 11%); content: ''; filter: drop-shadow(14px 18px 0 #ed211b); }
+    @media (max-width: 740px) { .phone-stage:after { width: min(100%, 390px); } }
+    @media (max-width: 560px) { .phone-stage:after { width: 390px; max-width: none; filter: drop-shadow(10px 13px 0 #ed211b); } }
+    .phone-stage:after { clip-path: none; }
   </style>`
   const counterScript = `<script>
     (() => {
