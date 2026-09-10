@@ -3158,7 +3158,9 @@ const basicSettingsView = (ui) => `
 `
 
 const renderCurrentView = (ui) => {
-  if (ui.user?.isPlatformAdmin) return ownerAdminViewV2(ui)
+  // La consola de plataforma es una sección más; no debe bloquear el resto
+  // de módulos cuando un administrador navega a Servicios, Ventas, etc.
+  if (ui.user?.isPlatformAdmin && activeSection === 'mi-admin') return ownerAdminViewV2(ui)
   const canManageCommerceSettings = Boolean(ui.user?.isPlatformAdmin || ui.user?.isOwner || ui.role?.key === 'admin')
   switch (activeSection) {
     case 'clientes': return customersViewV2(ui)
