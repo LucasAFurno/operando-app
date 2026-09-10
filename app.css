@@ -718,6 +718,20 @@ input[type='search'] { color: var(--text); }
   }
 }
 
+/* La navegación móvil conserva su altura intrínseca en todos los módulos.
+   Evita que el contenido más alto de Configuración estire la fila negra. */
+@media (max-width: 740px) {
+  .app-shell { align-content: start; }
+  .app-shell .sidebar,
+  .app-shell .workspace,
+  .app-shell .topbar {
+    align-self: start;
+    min-height: 0 !important;
+  }
+  .app-shell .sidebar,
+  .app-shell .topbar { height: auto !important; }
+}
+
 .public-topbar-copy span {
   color: var(--muted);
   font-size: 0.82rem;
