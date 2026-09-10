@@ -3367,7 +3367,7 @@ const renderHomePageExtended = () => {
     const value = Number(metric.value || 0)
     const formatType = metric.format || 'integer'
     const formattedValue = formatType === 'millions' ? String(Math.round(value / 1000000)) : new Intl.NumberFormat('es-AR').format(Math.round(value))
-    const fallback = `${metric.prefix || ''}${formattedValue}${metric.suffix || ''}`
+    const fallback = value > 0 ? `${metric.prefix || ''}${formattedValue}${metric.suffix || ''}` : '—'
     return `<article><strong class="metric-value" data-value="${value}" data-prefix="${escapeHtml(metric.prefix || '')}" data-suffix="${escapeHtml(metric.suffix || '')}" data-format="${escapeHtml(formatType)}">${escapeHtml(fallback)}</strong><span>${escapeHtml(metric.label)}</span></article>`
   }).join('')
   const metricSection = `<section class="proof"><p class="label">Datos de operación</p><div class="proof-grid">${metricCards}</div></section>`
