@@ -47,6 +47,10 @@ const safeStorage = {
     }
   },
 }
+const uiFlagStorage = {
+  get(key) { try { return String(globalThis.localStorage?.getItem(`operando.ui.${key}`) || '') } catch { return '' } },
+  set(key, value) { try { globalThis.localStorage?.setItem(`operando.ui.${key}`, String(value)) } catch { /* storage may be restricted */ } },
+}
 
 const icon = (path) => `
   <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -3264,7 +3268,7 @@ const renderApp = (ui) => {
           <img class="brand-logo" src="/operando-logo.png?v=operando-20260831" alt="" />
           <span class="sidebar-wordmark" aria-label="Operando punto app">Operando<span>.app</span></span>
         </div>
-        <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}<button class="nav-square mobile-search-trigger" type="button" data-action="focus-mobile-search" title="Buscar" aria-label="Abrir búsqueda"><span class="nav-icon">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><span class="nav-label">Buscar</span></button></nav>
+        <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}${isPlatformConsole ? '' : '<button class="nav-square mobile-search-trigger" type="button" data-action="focus-mobile-search" title="Buscar" aria-label="Abrir búsqueda"><span class="nav-icon">'+icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')+'</span><span class="nav-label">Buscar</span></button>'}</nav>
         <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square account-rail-trigger" type="button" data-action="toggle-account-menu" title="Cuenta" aria-label="Abrir menú de cuenta"><span class="account-avatar" aria-hidden="true">${accountAvatarMarkup}</span><span class="nav-label">Cuenta</span></button></div></div>
       </aside>
       <div class="workspace">
@@ -5640,7 +5644,7 @@ const bindEvents = () => {
     feedbackMessage = 'Perfecto. Ahora activá ARCA paso a paso.'
     render()
   })
-  for (const button of document.querySelectorAll('[data-action="dismiss-arca-celebration"]')) button.addEventListener('click', () => { arcaCelebrationVisible = false; safeStorage.setItem('arcaCelebrationSeen', '1'); render() })
+  for (const button of document.querySelectorAll('[data-action="dismiss-arca-celebration"]')) button.addEventListener('click', () => { arcaCelebrationVisible = false; uiFlagStorage.set('arcaCelebrationSeen', '1'); render() })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-skip"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.max(1, progressiveProfileStep - 1); render() })
@@ -5771,7 +5775,7 @@ const bindEvents = () => {
     if (arcaVerificationState === 'verified') return
     arcaVerificationState = 'checking'
     render()
-    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; if (safeStorage.getItem('arcaCelebrationSeen', '') !== '1') { arcaCelebrationVisible = true; safeStorage.setItem('arcaCelebrationSeen', '1') }; feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
+    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; if (uiFlagStorage.get('arcaCelebrationSeen') !== '1') { arcaCelebrationVisible = true; uiFlagStorage.set('arcaCelebrationSeen', '1') }; feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
   })
   for (const importSupportButton of document.querySelectorAll('[data-action="request-bulk-import"]')) {
     importSupportButton.addEventListener('click', () => {
