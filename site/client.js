@@ -47,9 +47,11 @@ const safeStorage = {
     }
   },
 }
+const uiFlagsInMemory = new Map()
+const setupProgressObserved = new Set()
 const uiFlagStorage = {
-  get(key) { try { return String(globalThis.localStorage?.getItem(`operando.ui.${key}`) || '') } catch { return '' } },
-  set(key, value) { try { globalThis.localStorage?.setItem(`operando.ui.${key}`, String(value)) } catch { /* storage may be restricted */ } },
+  get(key) { try { return String(globalThis.localStorage?.getItem(`operando.ui.${key}`) || uiFlagsInMemory.get(key) || '') } catch { return uiFlagsInMemory.get(key) || '' } },
+  set(key, value) { uiFlagsInMemory.set(key, String(value)); try { globalThis.localStorage?.setItem(`operando.ui.${key}`, String(value)) } catch { /* Keep the flag for this session when storage is restricted. */ } },
 }
 
 const icon = (path) => `
@@ -172,7 +174,6 @@ let branchFormOpen = false
 let registerFormOpen = false
 let commerceContext = null
 let setupStatus = null
-let setupCelebrationDismissed = false
 let authInstanceKey = ''
 let authViewMode = 'landing'
 let recoveryState = null
@@ -361,6 +362,7 @@ const hasPendingOperationalForm = () => Boolean(
   saleFormOpen || cashFormOpen || productFormOpen || stockAdjustmentFormOpen || stockTransferFormOpen
   || supplierFormOpen || purchaseFormOpen || invoiceFormOpen || ticketFormOpen || branchFormOpen
   || registerFormOpen || customerFormOpen || invoicePaymentId
+  || document.body.classList.contains('mobile-search-open')
 ) || Array.from(document.forms).some(formHasUnsavedChanges)
 
 const operationDomains = {
@@ -1715,7 +1717,16 @@ const dashboardViewV2 = (ui) => {
     { label: 'Hacé tu primera venta', detail: ui.enrichedSales.length ? `${ui.enrichedSales.length} venta${ui.enrichedSales.length === 1 ? '' : 's'} registrada${ui.enrichedSales.length === 1 ? '' : 's'}` : 'Probá el flujo completo', section: 'ventas', done: ui.enrichedSales.length > 0 },
   ]
   const setupComplete = setupTasks.filter((task) => task.done).length
-  const setupFinished = setupComplete === setupTasks.length
+  const setupCelebrationKey = `setup-completed:${ui.commerceContext?.commerce_id || authInstanceKey}:${ui.user.id}`
+  const setupAlreadyCompleted = uiFlagStorage.get(setupCelebrationKey) === '1'
+  const setupFinished = setupAlreadyCompleted || setupComplete === setupTasks.length
+  const showSetupCelebration = setupFinished && !setupAlreadyCompleted && setupProgressObserved.has(setupCelebrationKey)
+  if (!setupFinished) setupProgressObserved.add(setupCelebrationKey)
+  // Record the first display, not just dismissal: reloads and navigation must
+  // not reopen the celebration. Closing a cash session cannot undo setup.
+  // Existing completed businesses should not celebrate again after this update
+  // or on another device. Celebrate only an observed incomplete -> complete setup.
+  if (setupFinished && !setupAlreadyCompleted) uiFlagStorage.set(setupCelebrationKey, '1')
   return `
   <section class="view-section dashboard-view">
     <div class="section-header dashboard-header"><div><p class="kicker">Resumen de operación</p><h2>Operación del local</h2><p class="section-description">Todo el historial de tu sucursal y lo que requiere atención ahora.</p></div><div class="dashboard-quick-actions">
@@ -1724,7 +1735,7 @@ const dashboardViewV2 = (ui) => {
       <button type="button" class="ghost-action" data-dashboard-section="caja">Ingreso de caja</button>
     </div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
-    ${setupFinished ? (!setupCelebrationDismissed ? `<section class="opening-celebration" aria-live="polite"><button type="button" class="opening-celebration-close" data-action="dismiss-setup-celebration" aria-label="Cerrar felicitación">×</button><div class="celebration-fireworks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="opening-celebration-copy"><span class="kicker">04 / OPERACIÓN LISTA</span><h3>¡Felicitaciones!</h3><p>Ya completaste tu puesta a punto. Ahora disfrutá de Operando.app y hacé que el negocio siga tu ritmo.</p></div><span class="opening-celebration-mark" aria-hidden="true">✓</span></section>` : '') : `<section class="opening-checklist" aria-label="Puesta a punto del comercio">
+    ${setupFinished ? (showSetupCelebration ? `<section class="opening-celebration" aria-live="polite"><button type="button" class="opening-celebration-close" data-action="dismiss-setup-celebration" aria-label="Cerrar felicitación">×</button><div class="celebration-fireworks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="opening-celebration-copy"><span class="kicker">04 / OPERACIÓN LISTA</span><h3>¡Felicitaciones!</h3><p>Ya completaste tu puesta a punto. Ahora disfrutá de Operando.app y hacé que el negocio siga tu ritmo.</p></div><span class="opening-celebration-mark" aria-hidden="true">✓</span></section>` : '') : `<section class="opening-checklist" aria-label="Puesta a punto del comercio">
       <div class="opening-checklist-title"><span>01 / PUESTA A PUNTO</span><div><strong>${setupComplete}/4</strong><small>listo para operar</small></div></div>
       <div class="opening-checklist-copy"><h3>Abrí tu operación.</h3><p>Completá lo esencial ahora. El resto lo ajustás mientras trabajás.</p></div>
       <div class="opening-checklist-tasks">${setupTasks.map((task, index) => `<button type="button" class="opening-task ${task.done ? 'is-complete' : ''}" ${task.action ? `data-action="${task.action}"` : `data-dashboard-section="${task.section}"`}><span>${task.done ? '✓' : `0${index + 1}`}</span><div><strong>${task.label}</strong><small>${task.detail}</small></div><b aria-hidden="true">→</b></button>`).join('')}</div>
@@ -2567,6 +2578,11 @@ const ticketsViewV2 = (ui) => `
   ${(() => {
     const editingTicket = ui.snapshot.tickets.find((ticket) => ticket.id === ticketEditingId)
     const showTicketForm = ticketFormOpen || Boolean(editingTicket)
+    const ticketQuery = ticketHistoryQuery.trim().toLowerCase()
+    const visibleTickets = ui.enrichedTickets.filter((ticket) => {
+      const matchesQuery = !ticketQuery || [ticket.number, ticket.customerName, ticket.device, ticket.issue, ticket.branchName].some((value) => String(value || '').toLowerCase().includes(ticketQuery))
+      return matchesQuery && (ticketHistoryStatus === 'all' || ticket.status === ticketHistoryStatus)
+    })
     return `
   <section class="view-section"><div class="section-header"><div><p class="kicker">Tickets</p><h2>Seguimiento operativo</h2></div><div class="panel-inline-stats section-inline-stats">
       <span class="panel-inline-stat"><strong>${ui.enrichedTickets.length}</strong><span>Tickets activos</span></span>
@@ -3270,16 +3286,17 @@ const renderApp = (ui) => {
           <img class="brand-logo" src="/operando-logo.png?v=operando-20260831" alt="" />
           <span class="sidebar-wordmark" aria-label="Operando punto app">Operando<span>.app</span></span>
         </div>
-        <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}${isPlatformConsole ? '' : '<button class="nav-square mobile-search-trigger" type="button" data-action="focus-mobile-search" title="Buscar" aria-label="Abrir búsqueda"><span class="nav-icon">'+icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')+'</span><span class="nav-label">Buscar</span></button>'}</nav>
+        <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}${isPlatformConsole ? '' : '<button class="nav-square mobile-search-trigger" type="button" data-action="focus-mobile-search" title="Buscar" aria-label="Abrir búsqueda" aria-controls="panel-global-search" aria-expanded="false"><span class="nav-icon">'+icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')+'</span><span class="nav-label">Buscar</span></button>'}</nav>
         <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square account-rail-trigger" type="button" data-action="toggle-account-menu" title="Cuenta" aria-label="Abrir menú de cuenta"><span class="account-avatar" aria-hidden="true">${accountAvatarMarkup}</span><span class="nav-label">Cuenta</span></button></div></div>
       </aside>
       <div class="workspace">
         <header class="topbar">
           <div class="topbar-left"><p class="kicker">${isPlatformConsole ? 'Administracion de plataforma' : 'Panel de control'}</p><h1>${isPlatformConsole ? productName : (ui.commerceContext?.commerce_name || productName)}</h1><span>${isPlatformConsole ? `Consola interna · ${appVersion}` : `${branchName} · ${appVersion}`}</span></div>
-          <div class="topbar-center">
+          <div class="topbar-center" id="panel-global-search">
             ${isPlatformConsole ? '' : `<form class="quick-search" data-form="topbar-jump">
               <span class="quick-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span>
-              <input type="search" name="query" value="${topbarSearch}" list="nav-search-options" placeholder="Buscar ventas, clientes, productos, stock, facturas o cajas" />
+              <input type="search" name="query" value="${escapeHtml(topbarSearch)}" list="nav-search-options" aria-label="Buscar en el panel" placeholder="Buscar ventas, clientes, productos, stock, facturas o cajas" />
+              <button type="button" class="mobile-search-close" data-action="close-mobile-search" aria-label="Cerrar búsqueda">×</button>
               <datalist id="nav-search-options">${searchOptions}</datalist>
             </form>`}
           </div>
@@ -3363,6 +3380,10 @@ const renderTurnstileWidget = (attempt = 0) => {
 }
 
 const render = () => {
+  const searchHadFocus = document.activeElement?.matches('.quick-search input')
+  if (document.querySelector('.sidebar-nav .is-active')?.dataset.section !== activeSection) {
+    document.body.classList.remove('mobile-search-open')
+  }
   const ui = getUiState()
   document.body.classList.toggle('catalog-form-open', Boolean(
     productFormOpen || stockAdjustmentFormOpen || stockTransferFormOpen
@@ -3375,6 +3396,9 @@ const render = () => {
   applyFieldGuidance()
   markBootComplete()
   bindEvents()
+  if (searchHadFocus && document.body.classList.contains('mobile-search-open')) {
+    document.querySelector('.quick-search input')?.focus()
+  }
   if (pendingOnboardingFocus) {
     pendingOnboardingFocus = false
     window.requestAnimationFrame(() => document.querySelector('[data-action="focus-onboarding-control"]')?.click())
@@ -3985,6 +4009,7 @@ const handleSubmit = async (event) => {
       activeSection = match.section
       topbarSearch = ''
       saveSection()
+      syncSectionPath()
       feedbackMessage = `Mostrando ${match.label}.`
       requestScrollTop()
       render()
@@ -4411,7 +4436,6 @@ const bindEvents = () => {
     render()
   })
   for (const button of document.querySelectorAll('[data-action="dismiss-setup-celebration"]')) button.addEventListener('click', () => {
-    setupCelebrationDismissed = true
     render()
   })
   for (const button of document.querySelectorAll('[data-action="next-onboarding-step"]')) button.addEventListener('click', () => {
@@ -4640,10 +4664,29 @@ const bindEvents = () => {
     syncEcheqField()
   }
   const quickSearchInput = document.querySelector('.quick-search input[name="query"]')
-  for (const button of document.querySelectorAll('[data-action="focus-mobile-search"]')) button.addEventListener('click', () => {
-    const isOpen = document.body.classList.toggle('mobile-search-open')
-    if (isOpen) window.setTimeout(() => quickSearchInput?.focus(), 0)
+  const closeMobileSearch = () => {
+    document.body.classList.remove('mobile-search-open')
+    const trigger = document.querySelector('[data-action="focus-mobile-search"]')
+    trigger?.setAttribute('aria-expanded', 'false')
+    trigger?.focus()
+  }
+  for (const button of document.querySelectorAll('[data-action="close-mobile-search"]')) button.addEventListener('click', closeMobileSearch)
+  quickSearchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') { event.preventDefault(); closeMobileSearch() }
   })
+  for (const button of document.querySelectorAll('[data-action="focus-mobile-search"]')) {
+    button.setAttribute('aria-expanded', String(document.body.classList.contains('mobile-search-open')))
+    button.addEventListener('click', () => {
+      if (!quickSearchInput) return
+      const isOpen = document.body.classList.toggle('mobile-search-open')
+      button.setAttribute('aria-expanded', String(isOpen))
+      if (isOpen) {
+        const navBottom = document.querySelector('.sidebar')?.getBoundingClientRect().bottom || 172
+        document.body.style.setProperty('--mobile-search-top', `${Math.max(8, navBottom + 8)}px`)
+        quickSearchInput.focus()
+      }
+    })
+  }
   const jumpToSearchMatch = (value) => {
     const normalized = String(value || '').trim().toLowerCase()
     if (!normalized) return

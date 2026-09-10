@@ -3819,7 +3819,7 @@ await writeFile(path.join(dist, 'CNAME'), cnameFile)
 await writeFile(path.join(serverDir, 'index.js'), serverCode)
 await copyDirectory(path.join(root, 'public'), dist)
 
-if (!isDevBuild) {
+if (!isDevBuild && !process.argv.includes('--dist-only')) {
   await writePageTree(root)
   await writeFile(path.join(root, 'app.css'), stylesCss)
   await writeFile(path.join(root, 'app.js'), builtClientJs)

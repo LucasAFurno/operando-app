@@ -307,19 +307,18 @@ input[type='search'] { color: var(--text); }
   .app-shell .sidebar { position: relative !important; padding-top: 8px !important; }
   .app-shell .sidebar-brand { display: flex !important; align-items: center !important; justify-content: flex-start !important; min-height: 42px !important; padding: 0 4px !important; }
   .app-shell .sidebar-brand .brand-logo { width: 36px !important; }
-  .app-shell .sidebar-brand::after { position: absolute; top: 15px; left: 50%; color: #f7f5ee; content: 'Operación del local'; font-family: 'Oswald', sans-serif; font-size: 1rem; transform: translateX(-50%); white-space: nowrap; }
+  .app-shell .sidebar-brand::after { content: none !important; }
   .app-shell .topbar { position: absolute !important; top: 8px !important; right: 10px !important; z-index: 20 !important; width: auto !important; min-height: 42px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
-  .app-shell .topbar-left, .app-shell .topbar-center { display: none !important; }
+  .app-shell .topbar-left { position: fixed !important; top: 14px !important; left: 54px !important; display: block !important; max-width: 180px; transform: none; white-space: nowrap; pointer-events: none; }
+  .app-shell .topbar-left .kicker, .app-shell .topbar-left span { display: none !important; }
+  .app-shell .topbar-left h1 { margin: 0 !important; font-size: 1rem !important; }
+  .app-shell .topbar-center { display: none !important; }
   .app-shell .topbar-right { position: static !important; display: flex !important; gap: 5px !important; }
   .app-shell .topbar-right .account-notification-trigger { width: 34px !important; height: 34px !important; }
   .app-shell .topbar-right .account-card { width: 132px !important; min-height: 36px !important; }
   .app-shell .topbar-right .account-copy strong { font-size: .66rem !important; }
   .app-shell .topbar-right .account-copy span { font-size: .52rem !important; }
   .app-shell .sidebar-nav { margin-top: 3px !important; }
-  .app-shell .mobile-search-trigger { display: grid !important; }
-  .app-shell .quick-search { display: none !important; }
-  body.mobile-search-open .app-shell .quick-search { position: fixed !important; top: 58px !important; left: 12px !important; right: 12px !important; z-index: 40 !important; display: flex !important; width: auto !important; max-width: none !important; }
-  body.mobile-search-open .app-shell .mobile-search-trigger { display: none !important; }
 }
 
 /* Encabezado móvil: una sola navegación compacta y una única cuenta visible. */
@@ -1121,6 +1120,14 @@ input[type='search'] { color: var(--text); }
   background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
   color: #fff;
   font-weight: 700;
+}
+
+.login-form button[type='submit']:disabled,
+.auth-standalone-card .login-form button[type='submit']:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  filter: saturate(0.7);
+  pointer-events: none;
 }
 
 .login-error {
@@ -4420,6 +4427,46 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
     top: calc(100% + 8px) !important;
     right: 0 !important;
     max-height: min(70vh, 520px) !important;
+  }
+}
+
+/* Reveal the search container as well as its form; a visible child cannot
+   escape a display:none parent. Keep the trigger available for closing. */
+.app-shell .sidebar-nav .mobile-search-trigger { display: none !important; }
+.mobile-search-close { display: none; }
+@media (max-width: 740px) {
+  .app-shell .sidebar-nav .mobile-search-trigger { display: grid !important; }
+  body.mobile-search-open .app-shell .topbar-center {
+    display: block !important;
+    position: fixed !important;
+    top: var(--mobile-search-top, 180px) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    margin: 0 !important;
+    z-index: 50;
+  }
+  body.mobile-search-open .app-shell .quick-search {
+    display: flex !important;
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    background: #171717;
+    box-shadow: 0 6px 20px #0005;
+  }
+  body.mobile-search-open .app-shell .quick-search input { min-width: 0; font-size: 16px; }
+  body.mobile-search-open .app-shell .mobile-search-close {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #f7f5ee;
+    font-size: 24px;
   }
 }
 
@@ -7833,22 +7880,4 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
     right: 0 !important;
     max-height: min(70vh, 520px) !important;
   }
-}
-/* Móvil ultra compacto: marca a la izquierda, comercio centrado y cuenta única. */
-@media (max-width: 740px) {
-  .app-shell .sidebar { position: relative !important; padding-top: 8px !important; }
-  .app-shell .sidebar-brand { display: flex !important; align-items: center !important; justify-content: flex-start !important; min-height: 42px !important; padding: 0 4px !important; }
-  .app-shell .sidebar-brand .brand-logo { width: 36px !important; }
-  .app-shell .sidebar-brand::after { content: none !important; }
-  .app-shell .topbar { position: absolute !important; top: 8px !important; right: 10px !important; z-index: 20 !important; width: auto !important; min-height: 42px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
-  .app-shell .topbar-left { position: fixed !important; top: 14px !important; left: 54px !important; display: block !important; max-width: 180px; transform: none; white-space: nowrap; pointer-events: none; }
-  .app-shell .topbar-left .kicker, .app-shell .topbar-left span { display: none !important; }
-  .app-shell .topbar-left h1 { margin: 0 !important; font-size: 1rem !important; }
-  .app-shell .topbar-center { display: none !important; }
-  .app-shell .topbar-right { position: static !important; display: flex !important; gap: 5px !important; }
-  .app-shell .topbar-right .account-notification-trigger { width: 34px !important; height: 34px !important; }
-  .app-shell .topbar-right .account-card { width: 132px !important; min-height: 36px !important; }
-  .app-shell .topbar-right .account-copy strong { font-size: .66rem !important; }
-  .app-shell .topbar-right .account-copy span { font-size: .52rem !important; }
-  .app-shell .sidebar-nav { margin-top: 3px !important; }
 }
