@@ -3431,6 +3431,7 @@ const renderHomePageExtended = () => {
     .phone-stage:after { clip-path: none; }
     .real-pos-preview { background-image: url('/operando-devices-mockup.png') !important; aspect-ratio: 3 / 2; }
     .real-pos-preview { width: 112% !important; max-width: 720px; margin-left: -6%; }
+    .phone-stage:after { filter: none; }
   </style>`
   const counterScript = `<script>
     (() => {
