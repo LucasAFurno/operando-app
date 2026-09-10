@@ -76,12 +76,12 @@
 <div id="op-index-chrome-host"></div>
 <style>
   /* Hero: una notebook real, no una tarjeta suelta. Conserva pos-float. */
-  .real-pos-preview { position: relative; display: block !important; width: min(100%, 560px) !important; padding: 12px 12px 29px !important; border: 2px solid #171717 !important; border-radius: 17px 17px 7px 7px !important; background: linear-gradient(135deg,#2a2a29,#0b0b0b 48%,#252524) !important; box-shadow: 19px 19px 0 #ed211b !important; overflow: visible !important; }
-  .real-pos-preview::before { position: absolute; z-index: 2; right: -4%; bottom: -18px; left: -4%; height: 21px; border: 2px solid #171717; border-radius: 4px 4px 14px 14px; background: linear-gradient(#d5d4cf,#898884); box-shadow: 0 6px 0 rgba(0,0,0,.16); content: ''; }
-  .real-pos-preview::after { position: absolute; z-index: 3; bottom: -13px; left: 50%; width: 25%; height: 6px; border-radius: 0 0 8px 8px; background: #66655f; content: ''; transform: translateX(-50%); }
-  .real-pos-preview > img { display: block; width: 100% !important; height: auto !important; aspect-ratio: 1.76; border: 2px solid #050505; border-radius: 8px !important; object-fit: cover !important; object-position: center top !important; box-shadow: inset 0 0 0 1px #5a5a56; }
+  .real-pos-preview { position: relative; display: block !important; width: min(100%, 560px) !important; padding: 12px 12px 92px !important; border: 2px solid #171717 !important; border-radius: 17px 17px 7px 7px !important; background: linear-gradient(135deg,#2a2a29,#0b0b0b 48%,#252524) !important; box-shadow: 19px 19px 0 #ed211b !important; overflow: visible !important; }
+  .real-pos-preview::before { position:absolute;z-index:1;right:-8%;bottom:-78px;left:-8%;height:91px;border:2px solid #181818;border-radius:5px 5px 15px 15px;clip-path:polygon(7% 0,93% 0,100% 100%,0 100%);background:repeating-linear-gradient(90deg,#313131 0 7%,transparent 7.6% 10%) 50% 15% / 78% 14% no-repeat,repeating-linear-gradient(90deg,#313131 0 7%,transparent 7.6% 10%) 50% 39% / 75% 14% no-repeat,repeating-linear-gradient(90deg,#313131 0 7%,transparent 7.6% 10%) 50% 63% / 70% 14% no-repeat,linear-gradient(#b9b8b3,#777672);box-shadow:0 8px 0 rgba(0,0,0,.2);content:''; }
+  .real-pos-preview::after { position:absolute;z-index:2;bottom:-61px;left:50%;width:24%;height:24px;border:1px solid #72716c;border-radius:5px 5px 8px 8px;background:linear-gradient(#c8c7c2,#a5a49e);box-shadow:inset 0 1px rgba(255,255,255,.55);content:'';transform:translateX(-50%); }
+  .real-pos-preview > img { position:relative;z-index:2;display:block;width:100% !important;height:auto !important;aspect-ratio:1.76;border:2px solid #050505;border-radius:8px !important;object-fit:cover !important;object-position:center top !important;box-shadow:inset 0 0 0 1px #5a5a56; }
   .real-pos-preview:hover { filter: brightness(1.05); }
-  @media (max-width: 740px) { .real-pos-preview { padding: 8px 8px 23px !important; border-radius: 12px 12px 5px 5px !important; box-shadow: 11px 12px 0 #ed211b !important; } .real-pos-preview::before { bottom: -15px; height: 17px; } .real-pos-preview::after { bottom: -11px; } .real-pos-preview > img { border-radius: 5px !important; } }
+  @media (max-width: 740px) { .real-pos-preview { padding:8px 8px 62px !important;border-radius:12px 12px 5px 5px !important;box-shadow:11px 12px 0 #ed211b !important; } .real-pos-preview::before { bottom:-54px;height:65px; } .real-pos-preview::after { bottom:-42px;height:17px; } .real-pos-preview > img { border-radius:5px !important; } }
 </style>
 <script>
 (function(){
