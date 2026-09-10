@@ -1,0 +1,41 @@
+<div id="op-index-chrome-host"></div>
+<script>
+(function(){
+  var host=document.getElementById('op-index-chrome-host');
+  if(!host || host.shadowRoot) return;
+  var shadow=host.attachShadow({mode:'open'});
+  shadow.innerHTML=`<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+:host { display: block; width: 100%; background: #080808; }
+*, *::before, *::after { box-sizing: border-box; }
+.wrap { all: initial; display: block; background: #080808; color: #fff; font-family: Outfit, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+.wrap * { box-sizing: border-box; }
+.site { max-width: 1500px; margin: auto; padding: 20px 28px 0; background: #080808; color: #fff; font-family: Outfit, Arial, sans-serif; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 22px; }
+.brand { display: inline-flex; align-items: center; font-size: 1.2rem; font-weight: 800; letter-spacing: -.08em; text-decoration: none; color: #fff; font-family: Outfit, Arial, sans-serif; }
+.brand b { color: #ed211b; font-weight: 800; }
+.brand-logo { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 7px; }
+.nav-links { display: flex; align-items: center; gap: clamp(16px, 2.2vw, 28px); font-size: .8rem; font-weight: 700; letter-spacing: -.01em; }
+.nav-links a { position: relative; color: #c8c8c3; text-decoration: none; padding: 8px 2px; transition: color .18s; font-family: Outfit, Arial, sans-serif; font-size: .8rem; font-weight: 700; }
+.nav-links a:hover, .nav-links a:focus-visible { color: #ed211b; }
+.nav-links a[aria-current="page"] { color: #c8c8c3; }
+/* no active underline */
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border: 1px solid #fff; border-radius: 8px; background: #fff; color: #080808; text-decoration: none; font-size: .84rem; font-weight: 800; font-family: Outfit, Arial, sans-serif; transition: transform .18s, background .18s, color .18s, border-color .18s; cursor: pointer; }
+.button:hover { transform: translateY(-3px); background: #ed211b; border-color: #ed211b; color: #fff; }
+.home-mobile-menu { display: none; position: relative; }
+.home-mobile-menu summary { padding: 9px 11px; border: 1px solid #4a4a4a; border-radius: 7px; color: #111; background: #f7f6f0; cursor: pointer; font-size: .72rem; font-weight: 800; list-style: none; font-family: Outfit, Arial, sans-serif; }
+.home-mobile-menu summary::-webkit-details-marker { display: none; }
+.home-mobile-menu summary::after { content: '⌄'; margin-left: 6px; color: #ed211b; }
+.home-mobile-menu[open] summary::after { content: '⌃'; }
+.home-mobile-menu nav { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; display: grid; min-width: 190px; gap: 2px; padding: 8px; border: 1px solid #4a4a4a; border-radius: 9px; background: #111; box-shadow: 6px 6px 0 #ed211b; }
+.home-mobile-menu nav a { padding: 10px 11px; color: #f7f6f0; font-size: .78rem; font-weight: 700; text-decoration: none; font-family: Outfit, Arial, sans-serif; }
+.home-mobile-menu nav a:hover, .home-mobile-menu nav a:focus-visible { background: #252525; color: #ed211b; }
+/* mobile: no persistent active color — hover only */
+@media (max-width: 740px) {
+  .site { padding: 14px 14px 0; }
+  .nav-links { display: none !important; }
+  .home-mobile-menu { display: block !important; margin-left: auto; }
+}
+</style><div class="wrap"><div class="site"><nav class="nav"><a class="brand" href="/"><img class="brand-logo" src="/operando-logo.png" alt="Logo de operando.app"/>operando<b>.app</b></a><div class="nav-links"><a href="/funciones/">Funciones</a><a href="/precios/">Precios</a><a href="/como-funciona/">Cómo funciona</a><a href="/pos-por-rubro/">Por rubro</a><a href="/blog/">Guías</a></div><details class="home-mobile-menu"><summary>Menú</summary><nav aria-label="Navegación móvil"><a href="/funciones/">Funciones</a><a href="/precios/">Precios</a><a href="/como-funciona/">Cómo funciona</a><a href="/pos-por-rubro/">Por rubro</a><a href="/blog/">Guías</a></nav></details><a class="button" href="/ingresar/">Ingresar</a></nav></div></div>`;
+})();
+</script>
