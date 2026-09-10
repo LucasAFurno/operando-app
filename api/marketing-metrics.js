@@ -20,12 +20,12 @@ export default async function handler(request) {
     return total
   }
   try {
-    const [commerces, sales] = await Promise.all([count('commerce_accounts'), fetch(`${url}/rest/v1/sales?select=total_amount&limit=10000`, { headers }).then(async (response) => {
+    const [commerces, sales] = await Promise.all([count('commerce_accounts'), fetch(`${url}/rest/v1/sales?select=total_amount,status&limit=100000`, { headers }).then(async (response) => {
       if (!response.ok) throw new Error('sales')
       const rows = await response.json()
       return {
         count: Number((response.headers.get('content-range') || '').split('/')[1]),
-        total: rows.reduce((sum, row) => sum + Number(row.total_amount || 0), 0),
+        total: rows.filter((row) => !['cancelled', 'returned'].includes(String(row.status || '').toLowerCase())).reduce((sum, row) => sum + Number(row.total_amount || 0), 0),
       }
     })])
     if (!Number.isFinite(sales.count) || !Number.isFinite(sales.total)) throw new Error('sales')
