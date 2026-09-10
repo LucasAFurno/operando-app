@@ -180,159 +180,52 @@ button, input, select, textarea { font: inherit; }
 
   </head>
   <body data-page="pos-por-rubro" data-theme="sectors">
+<div id="op-index-chrome-host"></div>
+<script>
+(function(){
+  var host=document.getElementById('op-index-chrome-host');
+  if(!host || host.shadowRoot) return;
+  var shadow=host.attachShadow({mode:'open'});
+  shadow.innerHTML=`<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+:host { display: block; width: 100%; background: #080808; }
+*, *::before, *::after { box-sizing: border-box; }
+.wrap { all: initial; display: block; background: #080808; color: #fff; font-family: Outfit, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+.wrap * { box-sizing: border-box; }
+.site { max-width: 1500px; margin: auto; padding: 20px 28px 0; background: #080808; color: #fff; font-family: Outfit, Arial, sans-serif; }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 22px; }
+.brand { display: inline-flex; align-items: center; font-size: 1.2rem; font-weight: 800; letter-spacing: -.08em; text-decoration: none; color: #fff; font-family: Outfit, Arial, sans-serif; }
+.brand b { color: #ed211b; font-weight: 800; }
+.brand-logo { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 7px; }
+.nav-links { display: flex; align-items: center; gap: clamp(16px, 2.2vw, 28px); font-size: .8rem; font-weight: 700; letter-spacing: -.01em; }
+.nav-links a { position: relative; color: #c8c8c3; text-decoration: none; padding: 8px 2px; transition: color .18s; font-family: Outfit, Arial, sans-serif; font-size: .8rem; font-weight: 700; }
+.nav-links a:hover, .nav-links a:focus-visible { color: #ed211b; }
+.nav-links a[aria-current="page"] { color: #fff; }
+.nav-links a[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 2px; height: 2px; background: #ed211b; }
+.button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border: 1px solid #fff; border-radius: 8px; background: #fff; color: #080808; text-decoration: none; font-size: .84rem; font-weight: 800; font-family: Outfit, Arial, sans-serif; transition: transform .18s, background .18s, color .18s, border-color .18s; cursor: pointer; }
+.button:hover { transform: translateY(-3px); background: #ed211b; border-color: #ed211b; color: #fff; }
+.home-mobile-menu { display: none; position: relative; }
+.home-mobile-menu summary { padding: 9px 11px; border: 1px solid #4a4a4a; border-radius: 7px; color: #111; background: #f7f6f0; cursor: pointer; font-size: .72rem; font-weight: 800; list-style: none; font-family: Outfit, Arial, sans-serif; }
+.home-mobile-menu summary::-webkit-details-marker { display: none; }
+.home-mobile-menu summary::after { content: '⌄'; margin-left: 6px; color: #ed211b; }
+.home-mobile-menu[open] summary::after { content: '⌃'; }
+.home-mobile-menu nav { position: absolute; z-index: 30; top: calc(100% + 8px); right: 0; display: grid; min-width: 190px; gap: 2px; padding: 8px; border: 1px solid #4a4a4a; border-radius: 9px; background: #111; box-shadow: 6px 6px 0 #ed211b; }
+.home-mobile-menu nav a { padding: 10px 11px; color: #f7f6f0; font-size: .78rem; font-weight: 700; text-decoration: none; font-family: Outfit, Arial, sans-serif; }
+.home-mobile-menu nav a:hover, .home-mobile-menu nav a:focus-visible { background: #252525; color: #ed211b; }
+.home-mobile-menu nav a[aria-current="page"] { color: #ed211b; background: #1a1a1a; }
+@media (max-width: 740px) {
+  .site { padding: 14px 14px 0; }
+  .nav-links { display: none !important; }
+  .home-mobile-menu { display: block !important; margin-left: auto; }
+}
+</style><div class="wrap"><div class="site"><nav class="nav"><a class="brand" href="/"><img class="brand-logo" src="/operando-logo.png" alt="Logo de operando.app"/>operando<b>.app</b></a><div class="nav-links"><a href="/funciones/">Funciones</a><a href="/precios/">Precios</a><a href="/como-funciona/">Cómo funciona</a><a href="/pos-por-rubro/" aria-current="page">Por rubro</a><a href="/blog/">Guías</a></div><details class="home-mobile-menu"><summary>Menú</summary><nav aria-label="Navegación móvil"><a href="/funciones/">Funciones</a><a href="/precios/">Precios</a><a href="/como-funciona/">Cómo funciona</a><a href="/pos-por-rubro/" aria-current="page">Por rubro</a><a href="/blog/">Guías</a></nav></details><a class="button" href="/ingresar/">Ingresar</a></nav></div></div>`;
+})();
+</script>
+
 
     <div class="marketing-shell">
 
-  <div id="op-index-chrome">
-<style>
-/* Isolated index chrome — immune to page CSS */
-#op-index-chrome {
-  all: initial;
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  background: #080808;
-  color: #fff;
-  font-family: Outfit, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-#op-index-chrome *, #op-index-chrome *::before, #op-index-chrome *::after { box-sizing: border-box; }
-#op-index-chrome a { color: inherit; text-decoration: none; }
-#op-index-chrome .site {
-  max-width: 1500px;
-  margin: auto;
-  padding: 20px 28px 0;
-  background: #080808;
-  color: #fff;
-  font-family: Outfit, Arial, sans-serif;
-}
-#op-index-chrome .nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 22px;
-}
-#op-index-chrome .brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: -.08em;
-  text-decoration: none;
-  color: #fff;
-  font-family: Outfit, Arial, sans-serif;
-}
-#op-index-chrome .brand b { color: #ed211b; font-weight: 800; }
-#op-index-chrome .brand-logo {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  vertical-align: middle;
-  margin-right: 7px;
-}
-#op-index-chrome .nav-links {
-  display: flex;
-  align-items: center;
-  gap: clamp(16px, 2.2vw, 28px);
-  font-size: .8rem;
-  font-weight: 700;
-  letter-spacing: -.01em;
-}
-#op-index-chrome .nav-links a {
-  position: relative;
-  color: #c8c8c3;
-  text-decoration: none;
-  padding: 8px 2px;
-  transition: color .18s;
-  font-family: Outfit, Arial, sans-serif;
-  font-size: .8rem;
-  font-weight: 700;
-}
-#op-index-chrome .nav-links a:hover,
-#op-index-chrome .nav-links a:focus-visible { color: #ed211b; }
-#op-index-chrome .nav-links a[aria-current="page"] { color: #fff; }
-#op-index-chrome .nav-links a[aria-current="page"]::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: 2px;
-  height: 2px;
-  background: #ed211b;
-}
-#op-index-chrome .button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 0 18px;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  background: #fff;
-  color: #080808;
-  text-decoration: none;
-  font-size: .84rem;
-  font-weight: 800;
-  font-family: Outfit, Arial, sans-serif;
-  transition: transform .18s, background .18s, color .18s, border-color .18s;
-  cursor: pointer;
-}
-#op-index-chrome .button:hover {
-  transform: translateY(-3px);
-  background: #ed211b;
-  border-color: #ed211b;
-  color: #fff;
-}
-#op-index-chrome .home-mobile-menu { display: none; position: relative; }
-#op-index-chrome .home-mobile-menu summary {
-  padding: 9px 11px;
-  border: 1px solid #4a4a4a;
-  border-radius: 7px;
-  color: #111;
-  background: #f7f6f0;
-  cursor: pointer;
-  font-size: .72rem;
-  font-weight: 800;
-  list-style: none;
-  font-family: Outfit, Arial, sans-serif;
-}
-#op-index-chrome .home-mobile-menu summary::-webkit-details-marker { display: none; }
-#op-index-chrome .home-mobile-menu summary::after { content: '⌄'; margin-left: 6px; color: #ed211b; }
-#op-index-chrome .home-mobile-menu[open] summary::after { content: '⌃'; }
-#op-index-chrome .home-mobile-menu nav {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 8px);
-  right: 0;
-  display: grid;
-  min-width: 190px;
-  gap: 2px;
-  padding: 8px;
-  border: 1px solid #4a4a4a;
-  border-radius: 9px;
-  background: #111;
-  box-shadow: 6px 6px 0 #ed211b;
-}
-#op-index-chrome .home-mobile-menu nav a {
-  padding: 10px 11px;
-  color: #f7f6f0;
-  font-size: .78rem;
-  font-weight: 700;
-  text-decoration: none;
-  font-family: Outfit, Arial, sans-serif;
-}
-#op-index-chrome .home-mobile-menu nav a:hover,
-#op-index-chrome .home-mobile-menu nav a:focus-visible { background: #252525; color: #ed211b; }
-#op-index-chrome .home-mobile-menu nav a[aria-current="page"] { color: #ed211b; background: #1a1a1a; }
-@media (max-width: 740px) {
-  #op-index-chrome .site { padding: 14px 14px 0; }
-  #op-index-chrome .nav-links { display: none !important; }
-  #op-index-chrome .home-mobile-menu { display: block !important; margin-left: auto; }
-}
-</style>
-<div class="site"><nav class="nav"><a class="brand" href="/"><img class="brand-logo" src="/operando-logo.png" alt="Logo de operando.app"/>operando<b>.app</b></a><div class="nav-links"><a href="/funciones/">Funciones</a><a href="/precios/">Precios</a><a href="/como-funciona/">Cómo funciona</a><a href="/pos-por-rubro/" aria-current="page">Por rubro</a><a href="/blog/">Guías</a></div><details class="home-mobile-menu"><summary>Menú</summary><nav aria-label="Navegación móvil"><a href="/funciones/">Funciones</a><a href="/precios/">Precios</a><a href="/como-funciona/">Cómo funciona</a><a href="/pos-por-rubro/" aria-current="page">Por rubro</a><a href="/blog/">Guías</a></nav></details><a class="button" href="/ingresar/">Ingresar</a></nav></div>
-</div>
-
-      <main class="marketing-primary-main">
+  <main class="marketing-primary-main">
         <section class="sectors-cover"><p>04 / POR RUBRO</p><h1>No todos los comercios trabajan igual.</h1><p>Cada rubro tiene un ritmo distinto. Elegi tu actividad y conoce los flujos de operando.app que sirven para su operacion diaria.</p><div class="sectors-marquee" aria-hidden="true"><span>RITMO · MOSTRADOR · EQUIPO · PRODUCTOS · CAJA · STOCK ·</span></div></section><section class="sectors-atlas"><header><p>ENCONTRÁ TU RITMO</p><span>Elegí tu actividad para ver un recorrido pensado para su operación.</span></header><div><a href="/pos-por-rubro/kiosco/"><b>01</b><h2>Kiosco</h2><p>Ventas de alta rotacion, caja diaria, productos y cuenta corriente sin depender de anotaciones separadas.</p><i>↗</i></a><a href="/pos-por-rubro/almacen/"><b>02</b><h2>Almacen</h2><p>Productos, clientes, cuentas corrientes, compras y reposicion para el comercio de todos los dias.</p><i>↗</i></a><a href="/pos-por-rubro/farmacia/"><b>03</b><h2>Farmacia</h2><p>Catalogo, lector, stock minimo, clientes, cajeros y reportes para ordenar la operacion comercial.</p><i>↗</i></a><a href="/pos-por-rubro/ferreteria/"><b>04</b><h2>Ferreteria</h2><p>Catalogo amplio, importacion CSV, lectores, stock, clientes y proveedores para el mostrador.</p><i>↗</i></a><a href="/pos-por-rubro/indumentaria/"><b>05</b><h2>Indumentaria</h2><p>Productos, precios, stock, clientes, compras y reportes para ordenar un local de ropa.</p><i>↗</i></a><a href="/pos-por-rubro/panaderia/"><b>06</b><h2>Panaderia</h2><p>Ventas, caja, productos, compras y control de existencias para el ritmo diario del mostrador.</p><i>↗</i></a><a href="/pos-por-rubro/carniceria/"><b>07</b><h2>Carniceria</h2><p>Ventas de mostrador, stock, caja, clientes y compras en una operacion comercial trazable.</p><i>↗</i></a><a href="/pos-por-rubro/verduleria/"><b>08</b><h2>Verduleria</h2><p>Productos, ventas, caja, clientes y proveedores para mantener visible la operacion cotidiana.</p><i>↗</i></a><a href="/pos-por-rubro/electronica/"><b>09</b><h2>Electronica</h2><p>Stock de equipos y accesorios, ventas, clientes, repuestos y tickets de servicio tecnico.</p><i>↗</i></a><a href="/pos-por-rubro/pet-shop/"><b>10</b><h2>Pet Shop</h2><p>Productos, clientes, stock, proveedores y ventas para alimentos, accesorios y servicios.</p><i>↗</i></a><a href="/pos-por-rubro/zapateria/"><b>11</b><h2>Zapateria</h2><p>Catalogo, ventas, clientes, stock y reportes para el comercio de calzado.</p><i>↗</i></a><a href="/pos-por-rubro/libreria/"><b>12</b><h2>Libreria</h2><p>Catalogo amplio, lectores, importacion CSV, stock y caja para fechas de alta demanda.</p><i>↗</i></a><a href="/pos-por-rubro/gimnasio/"><b>13</b><h2>Gimnasio</h2><p>Clientes, cobros, productos, caja y reportes para la operacion comercial del gimnasio.</p><i>↗</i></a><a href="/pos-por-rubro/veterinaria/"><b>14</b><h2>Veterinaria</h2><p>Productos, clientes, stock, compras y ventas para ordenar la gestion comercial del local.</p><i>↗</i></a><a href="/pos-por-rubro/peluqueria/"><b>15</b><h2>Peluqueria</h2><p>Servicios, productos, clientes, cobros y caja para ordenar la actividad diaria.</p><i>↗</i></a><a href="/pos-por-rubro/bar-cerveceria/"><b>16</b><h2>Bar y cerveceria</h2><p>Productos, ventas, caja, compras y stock para el control comercial del local.</p><i>↗</i></a><a href="/pos-por-rubro/heladeria/"><b>17</b><h2>Heladeria</h2><p>Productos, ventas, caja, stock y compras para seguir la operacion del local.</p><i>↗</i></a><a href="/pos-por-rubro/dietetica/"><b>18</b><h2>Dietetica</h2><p>Productos, ventas, caja, stock, clientes y proveedores para ordenar el comercio de todos los dias.</p><i>↗</i></a></div></section>
       </main>
 
