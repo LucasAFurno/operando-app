@@ -23,7 +23,10 @@
 /* CURRENT ONLY — legacy marketing CSS removed */
 
 /* === Shared site topbar (same as index) === */
-.site-topbar-wrap { width: min(1500px, calc(100% - 40px)); margin: 0 auto; padding: 20px 0 0; position: relative; z-index: 5; }
+.site-topbar-wrap { width: min(1500px, calc(100% - 56px)); margin: 0 auto; padding: 20px 0 0; position: relative; z-index: 5; }
+/* Match index: only one top offset (topbar), not marketing-shell + topbar */
+body .marketing-shell { padding-top: 0 !important; }
+.marketing-shell > .site-topbar-wrap { padding-top: 20px; }
 .site-topbar-wrap .nav {
   display: flex; align-items: center; justify-content: space-between; gap: 22px;
   min-height: 62px; padding: 0 0 18px; border-bottom: 1px solid #282828;
