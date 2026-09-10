@@ -3264,7 +3264,7 @@ const renderApp = (ui) => {
           <img class="brand-logo" src="/operando-logo.png?v=operando-20260831" alt="" />
           <span class="sidebar-wordmark" aria-label="Operando punto app">Operando<span>.app</span></span>
         </div>
-        <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}</nav>
+        <nav class="sidebar-nav">${allowedNav.map((item) => `<button class="nav-square ${activeSection === item.id ? 'is-active' : ''}" type="button" data-section="${item.id}" title="${item.label}" aria-label="${item.label}"><span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span></button>`).join('')}<button class="nav-square mobile-search-trigger" type="button" data-action="focus-mobile-search" title="Buscar" aria-label="Abrir búsqueda"><span class="nav-icon">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><span class="nav-label">Buscar</span></button></nav>
         <div class="sidebar-support"><div class="support-menu-wrap"><button class="nav-square support-square account-rail-trigger" type="button" data-action="toggle-account-menu" title="Cuenta" aria-label="Abrir menú de cuenta"><span class="account-avatar" aria-hidden="true">${accountAvatarMarkup}</span><span class="nav-label">Cuenta</span></button></div></div>
       </aside>
       <div class="workspace">
@@ -4634,6 +4634,10 @@ const bindEvents = () => {
     syncEcheqField()
   }
   const quickSearchInput = document.querySelector('.quick-search input[name="query"]')
+  for (const button of document.querySelectorAll('[data-action="focus-mobile-search"]')) button.addEventListener('click', () => {
+    document.body.classList.add('mobile-search-open')
+    quickSearchInput?.focus()
+  })
   const jumpToSearchMatch = (value) => {
     const normalized = String(value || '').trim().toLowerCase()
     if (!normalized) return
