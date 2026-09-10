@@ -7856,6 +7856,44 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
   border-color: rgba(214, 16, 16, .42) !important;
 }
 
+/* Mensajes de operación: misma estética oscura y roja del menú principal,
+   con una celebración sutil que refuerza cada logro sin tapar la pantalla. */
+.feedback-banner {
+  overflow: hidden;
+  gap: 12px;
+  border: 2px solid #ed211b !important;
+  border-radius: 12px !important;
+  background: #171717 !important;
+  color: #f7f5ee !important;
+  box-shadow: 5px 6px 0 rgba(237,33,27,.55), 0 18px 42px rgba(0,0,0,.36) !important;
+  font-weight: 700;
+}
+.feedback-banner::before {
+  width: 10px;
+  height: 10px;
+  background: #ed211b;
+  box-shadow: 0 0 0 5px rgba(237,33,27,.16);
+}
+.feedback-banner::after {
+  content: '✨  📈  🚀';
+  flex: 0 0 auto;
+  margin-left: 4px;
+  font-size: 1.05rem;
+  letter-spacing: .12em;
+  animation: feedback-celebrate 1.8s ease-in-out infinite;
+}
+@keyframes feedback-celebrate {
+  0%, 100% { transform: translateY(1px) rotate(-2deg); opacity: .78; }
+  50% { transform: translateY(-3px) rotate(2deg); opacity: 1; }
+}
+@media (max-width: 520px) {
+  .feedback-banner { max-width: calc(100vw - 24px); padding: 11px 12px; font-size: .86rem; }
+  .feedback-banner::after { font-size: .92rem; letter-spacing: .04em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feedback-banner::after { animation: none; }
+}
+
 /* Debe prevalecer sobre las reglas compartidas del panel en las rutas públicas. */
 .login-card.auth-standalone-card {
   border: 0;
