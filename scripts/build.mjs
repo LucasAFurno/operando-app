@@ -3483,6 +3483,24 @@ const renderHomePageExtended = () => {
         }
         requestAnimationFrame(frame)
       }
+      // Refresh public figures from the official runtime endpoint. The values
+      // rendered in HTML remain as an offline fallback if the endpoint is down.
+      fetch('/api/marketing-metrics', { headers: { Accept: 'application/json' } })
+        .then((response) => response.ok ? response.json() : null)
+        .then((payload) => {
+          if (!Array.isArray(payload?.metrics)) return
+          payload.metrics.forEach((metric, index) => {
+            const element = counters[index]
+            if (!element || !Number.isFinite(Number(metric.value))) return
+            element.dataset.value = String(metric.value)
+            element.dataset.prefix = String(metric.prefix || '')
+            element.dataset.suffix = String(metric.suffix || '')
+            if (metric.format) element.dataset.format = String(metric.format)
+            if (metric.label) element.nextElementSibling.textContent = String(metric.label)
+            render(element, Number(metric.value))
+          })
+        })
+        .catch(() => {})
       if (!counters.length) return
       const section = document.querySelector('.proof')
       if (!section || !('IntersectionObserver' in window)) { counters.forEach(animate); return }
