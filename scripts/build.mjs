@@ -3504,7 +3504,7 @@ const renderHomePageExtended = () => {
         })
         .catch(() => {})
       const supportBand = document.querySelector('.support-band')
-      if (supportBand && !supportBand.querySelector('.support-live-phone')) {
+      if (false && supportBand && !supportBand.querySelector('.support-live-phone')) {
         supportBand.classList.add('has-live-chat')
         const phone = document.createElement('aside')
         phone.className = 'support-live-phone'
