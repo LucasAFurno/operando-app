@@ -306,6 +306,40 @@ button, input, select, textarea { font: inherit; }
   .marketing-floating-whatsapp { right:18px; bottom:18px; border:1px solid #fff; border-radius:7px; background:var(--opera-red); box-shadow:6px 6px 0 #111; font-size:.75rem; font-weight:800; }.marketing-floating-whatsapp::after { content:none !important; }
   @media (max-width:960px) { .marketing-topbar { flex-wrap:wrap; }.marketing-nav { order:3; width:100%; justify-content:flex-start; }.marketing-hero { grid-template-columns:1fr; padding:76px 40px; }.marketing-hero-copy h1 { max-width:12ch; }.marketing-hero-media { max-width:650px; width:calc(100% - 18px); margin:12px auto 0; }.marketing-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.marketing-faq, .marketing-compare { grid-template-columns:1fr; gap:36px; }.marketing-footer { grid-template-columns:repeat(2,1fr); } }
   @media (max-width:640px) { .marketing-shell { width:100%; padding:12px 12px 0; }.marketing-topbar { min-height:48px; padding:0 2px 12px; }.marketing-nav, .marketing-auth-links > a:first-child { display:none; }.marketing-mobile-menu { display:block; margin-left:auto; order:0; }.marketing-mobile-menu summary { cursor:pointer; list-style:none; font-size:.78rem; font-weight:800; }.marketing-mobile-menu summary::-webkit-details-marker { display:none; }.marketing-mobile-menu nav { position:absolute; z-index:10; top:48px; right:0; display:grid; min-width:190px; gap:0; padding:8px; border:1px solid #4a4a4a; border-radius:8px; background:#111; }.marketing-mobile-menu nav a { padding:10px; font-size:.8rem; text-decoration:none; }.marketing-auth-links { margin-left:0; }.marketing-auth-links .is-primary { min-height:38px; padding:0 12px; font-size:.74rem; }.marketing-ticker { width:calc(100% + 24px); margin:0 -12px; }.marketing-ticker-track { padding:11px 0; animation-duration:14s !important; }.marketing-hero { min-height:0; gap:42px; padding:64px 18px 66px; }.marketing-hero:before { inset:20px 0 0; border-radius:16px 16px 0 0; }.marketing-hero-copy h1 { font-size:clamp(3.1rem,14vw,5rem); }.marketing-lead { font-size:.94rem; }.marketing-hero-media { width:calc(100% - 12px); animation-name:marketing-screen-float-mobile !important; }.marketing-image-caption { display:none; } @keyframes marketing-screen-float-mobile { 50% { transform:translateY(-8px); } } .marketing-grid { grid-template-columns:1fr; margin:0 16px; }.marketing-card { min-height:200px; }.marketing-faq, .marketing-compare { padding:70px 20px; }.marketing-footer { grid-template-columns:1fr; gap:30px; padding:38px 20px 82px; }.marketing-floating-whatsapp { right:12px; bottom:12px; } }
+
+/* === FINAL topbar parity with index (beats leftover marketing rules) === */
+body .site-topbar-wrap {
+  max-width: 1500px !important;
+  width: auto !important;
+  margin: 0 auto !important;
+  padding: 20px 28px 0 !important;
+  box-sizing: border-box !important;
+}
+body .site-topbar-wrap .nav {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 22px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+}
+body .marketing-shell {
+  padding-top: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+@media (max-width: 740px) {
+  body .site-topbar-wrap { padding: 14px 14px 0 !important; }
+  body .site-topbar-wrap .nav-links { display: none !important; }
+  body .site-topbar-wrap .home-mobile-menu { display: block !important; margin-left: auto !important; }
+}
+
 </style>
 
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"operando.app","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://operando.app/pos-por-rubro/","image":"https://operando.app/operando-logo.png","screenshot":["https://operando.app/pantalla-ventas-operando.svg","https://operando.app/control-stock-por-sucursal.svg","https://operando.app/cierre-caja-comercio.svg"],"softwareVersion":"1462db19a1a0","description":"Conoce como operando.app acompana kioscos, tiendas y servicios tecnicos con ventas, caja, stock y seguimiento operativo.","featureList":["Ventas","Caja","Stock","Clientes","Soporte"],"offers":{"@type":"Offer","availability":"https://schema.org/InStock","description":"Prueba gratis y planes comerciales para comercios.","url":"https://operando.app/precios/"}}</script>
