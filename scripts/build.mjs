@@ -3429,6 +3429,7 @@ const renderHomePageExtended = () => {
     @media (max-width: 740px) { .phone-stage:after { width: min(100%, 390px); } }
     @media (max-width: 560px) { .phone-stage:after { width: 390px; max-width: none; filter: drop-shadow(10px 13px 0 #ed211b); } }
     .phone-stage:after { clip-path: none; }
+    .real-pos-preview { background-image: url('/operando-devices-mockup.png') !important; aspect-ratio: 3 / 2; }
   </style>`
   const counterScript = `<script>
     (() => {
