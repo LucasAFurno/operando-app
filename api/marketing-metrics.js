@@ -20,12 +20,19 @@ export default async function handler(request) {
     return total
   }
   try {
-    const [commerces, sales] = await Promise.all([count('commerce_accounts'), count('sales')])
-    const averageSaleAmount = Number(process.env.MARKETING_AVERAGE_SALE_AMOUNT || 80000)
+    const [commerces, sales] = await Promise.all([count('commerce_accounts'), fetch(`${url}/rest/v1/sales?select=total_amount&limit=10000`, { headers }).then(async (response) => {
+      if (!response.ok) throw new Error('sales')
+      const rows = await response.json()
+      return {
+        count: Number((response.headers.get('content-range') || '').split('/')[1]),
+        total: rows.reduce((sum, row) => sum + Number(row.total_amount || 0), 0),
+      }
+    })])
+    if (!Number.isFinite(sales.count) || !Number.isFinite(sales.total)) throw new Error('sales')
     return json({ metrics: [
       { value: commerces, prefix: '+', suffix: '', label: 'comercios registrados' },
-      { value: sales, prefix: '+', suffix: '', label: 'ventas procesadas' },
-      { value: sales * averageSaleAmount, prefix: '+$', suffix: 'M', format: 'millions', label: 'ARS procesados' },
+      { value: sales.count, prefix: '+', suffix: '', label: 'ventas procesadas' },
+      { value: sales.total, prefix: '+$', suffix: 'M', format: 'millions', label: 'ARS procesados' },
       { value: Number(process.env.MARKETING_SUPPORT_AVAILABILITY || 24), prefix: '', suffix: '/7', label: 'soporte operativo' },
     ] })
   } catch {
