@@ -7863,11 +7863,15 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
   gap: 12px;
   border: 2px solid #ed211b !important;
   border-radius: 12px !important;
-  background: #171717 !important;
+  background: linear-gradient(110deg, #171717 0%, #242424 48%, #171717 100%) !important;
   color: #f7f5ee !important;
   box-shadow: 5px 6px 0 rgba(237,33,27,.55), 0 18px 42px rgba(0,0,0,.36) !important;
   font-weight: 700;
+  isolation: isolate;
 }
+.feedback-banner > * { position: relative; z-index: 1; }
+.feedback-banner::marker { content: none; }
+.feedback-banner::selection { background: transparent; }
 .feedback-banner::before {
   width: 10px;
   height: 10px;
@@ -7886,12 +7890,31 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
   0%, 100% { transform: translateY(1px) rotate(-2deg); opacity: .78; }
   50% { transform: translateY(-3px) rotate(2deg); opacity: 1; }
 }
-@media (max-width: 520px) {
-  .feedback-banner { max-width: calc(100vw - 24px); padding: 11px 12px; font-size: .86rem; }
+@keyframes feedback-shine {
+  0% { transform: translateX(-120%); opacity: 0; }
+  18%, 72% { opacity: .35; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+.feedback-banner {
+  animation: feedback-arrive 220ms ease-out both, feedback-glow 2.2s ease-in-out infinite 220ms;
+}
+.feedback-banner::marker { display: none; }
+.feedback-banner::after { position: relative; z-index: 2; }
+.feedback-banner::before { position: relative; z-index: 2; }
+.feedback-banner {
+  --feedback-shine: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.16) 50%, transparent 65%);
+}
+.feedback-banner > :first-child { position: relative; }
+@keyframes feedback-glow {
+  0%, 100% { box-shadow: 5px 6px 0 rgba(237,33,27,.55), 0 18px 42px rgba(0,0,0,.36); }
+  50% { box-shadow: 5px 6px 0 rgba(237,33,27,.8), 0 18px 42px rgba(237,33,27,.2); }
+}
+@media (max-width: 740px) {
+  .feedback-banner { top: 194px; max-width: calc(100vw - 24px); padding: 11px 12px; font-size: .86rem; }
   .feedback-banner::after { font-size: .92rem; letter-spacing: .04em; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .feedback-banner::after { animation: none; }
+  .feedback-banner, .feedback-banner::after { animation: none; }
 }
 
 /* Debe prevalecer sobre las reglas compartidas del panel en las rutas públicas. */
