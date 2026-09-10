@@ -3432,6 +3432,11 @@ const renderHomePageExtended = () => {
     .real-pos-preview { background-image: url('/operando-devices-mockup.png') !important; aspect-ratio: 3 / 2; }
     .real-pos-preview { width: 112% !important; max-width: 720px; margin-left: -6%; }
     .phone-stage:after { filter: none; }
+    .support-band { position: relative; display: block; min-height: 520px; padding-right: clamp(330px, 35vw, 520px); overflow: hidden; }
+    .support-band > div { position: relative; z-index: 1; }
+    .support-band .button { position: relative; z-index: 1; margin-top: 34px; }
+    .support-band:after { position: absolute; top: 50%; right: clamp(18px, 5vw, 86px); z-index: 1; width: min(37vw, 440px); aspect-ratio: 1; background: url('/operando-whatsapp-support-phone.png') center / contain no-repeat; content: ''; transform: translateY(-50%); }
+    @media (max-width: 740px) { .support-band { min-height: 0; padding: 60px 28px 390px; overflow: visible; } .support-band:after { top: auto; right: 50%; bottom: 14px; width: min(86vw, 390px); transform: translateX(50%); } }
   </style>`
   const counterScript = `<script>
     (() => {
