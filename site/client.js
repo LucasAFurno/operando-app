@@ -4635,8 +4635,8 @@ const bindEvents = () => {
   }
   const quickSearchInput = document.querySelector('.quick-search input[name="query"]')
   for (const button of document.querySelectorAll('[data-action="focus-mobile-search"]')) button.addEventListener('click', () => {
-    document.body.classList.add('mobile-search-open')
-    quickSearchInput?.focus()
+    const isOpen = document.body.classList.toggle('mobile-search-open')
+    if (isOpen) window.setTimeout(() => quickSearchInput?.focus(), 0)
   })
   const jumpToSearchMatch = (value) => {
     const normalized = String(value || '').trim().toLowerCase()

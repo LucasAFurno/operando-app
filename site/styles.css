@@ -322,6 +322,7 @@ input[type='search'] { color: var(--text); }
   .app-shell .mobile-search-trigger { display: grid !important; }
   .app-shell .quick-search { display: none !important; }
   body.mobile-search-open .app-shell .quick-search { position: fixed !important; top: 58px !important; left: 12px !important; right: 12px !important; z-index: 40 !important; display: flex !important; width: auto !important; max-width: none !important; }
+  body.mobile-search-open .app-shell .mobile-search-trigger { display: none !important; }
 }
 
 /* Encabezado móvil: una sola navegación compacta y una única cuenta visible. */
