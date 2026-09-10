@@ -1,10 +1,10 @@
-import { createBrowserDataStore } from './data-store.js?v=c62a2c1c552a'
-import { createCloudAuthManager } from './cloud-auth.js?v=c62a2c1c552a'
+import { createBrowserDataStore } from './data-store.js?v=0a3f0d74f214'
+import { createCloudAuthManager } from './cloud-auth.js?v=0a3f0d74f214'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = new Date().toISOString().slice(0, 10)
 const productName = 'Operando'
-const appVersion = 'vc62a2c1c552a'
+const appVersion = 'v0a3f0d74f214'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
 const bulkImportSupportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20cargar%20productos%20desde%20una%20planilla%20en%20operando.app.'
 const publicSiteUrl = 'https://operando.app'
@@ -4711,6 +4711,7 @@ const bindEvents = () => {
     if (!nextSection) return
     activeSection = nextSection
     topbarSearch = ''
+    feedbackMessage = ''
     saveSection()
     syncSectionPath()
     requestScrollTop()
@@ -4726,6 +4727,7 @@ const bindEvents = () => {
     const nextSection = button.dataset.section
     if (nextSection === 'ajustes' && activeSection !== 'ajustes') settingsPanelOpen = ''
     activeSection = nextSection
+    feedbackMessage = ''
     saveSection()
     syncSectionPath()
     // En PC conservamos la posicion para que cambiar de modulo no obligue
@@ -4739,6 +4741,7 @@ const bindEvents = () => {
     const nextSection = button.dataset.dashboardSection
     if (!nextSection || !getAllowedNav(getUiState()).some((item) => item.id === nextSection)) return
     activeSection = nextSection
+    feedbackMessage = ''
     saveSection()
     syncSectionPath()
     requestScrollTop()
@@ -4988,6 +4991,7 @@ const bindEvents = () => {
       accountAlertsOpen = false
       accountMenuOpen = false
       activeSection = getUiState().user?.isPlatformAdmin ? 'mi-admin' : 'ajustes'
+      feedbackMessage = ''
       saveSection()
       requestScrollTop()
       render()
@@ -4999,6 +5003,7 @@ const bindEvents = () => {
       accountAlertsOpen = false
       accountMenuOpen = false
       activeSection = alertSectionButton.dataset.alertSection || 'dashboard'
+      feedbackMessage = ''
       saveSection()
       requestScrollTop()
       queueScrollToSelector(alertSectionButton.dataset.alertTarget)

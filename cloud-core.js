@@ -1,4 +1,4 @@
-import { cloudMutationMethods, cloudMutationRpcNames, cloudMutationModules } from './cloud-mutations.js?v=c62a2c1c552a'
+import { cloudMutationMethods, cloudMutationRpcNames, cloudMutationModules } from './cloud-mutations.js?v=0a3f0d74f214'
 
 const buildHeaders = (anonKey) => ({
   apikey: anonKey,

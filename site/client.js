@@ -4711,6 +4711,7 @@ const bindEvents = () => {
     if (!nextSection) return
     activeSection = nextSection
     topbarSearch = ''
+    feedbackMessage = ''
     saveSection()
     syncSectionPath()
     requestScrollTop()
@@ -4726,6 +4727,7 @@ const bindEvents = () => {
     const nextSection = button.dataset.section
     if (nextSection === 'ajustes' && activeSection !== 'ajustes') settingsPanelOpen = ''
     activeSection = nextSection
+    feedbackMessage = ''
     saveSection()
     syncSectionPath()
     // En PC conservamos la posicion para que cambiar de modulo no obligue
@@ -4739,6 +4741,7 @@ const bindEvents = () => {
     const nextSection = button.dataset.dashboardSection
     if (!nextSection || !getAllowedNav(getUiState()).some((item) => item.id === nextSection)) return
     activeSection = nextSection
+    feedbackMessage = ''
     saveSection()
     syncSectionPath()
     requestScrollTop()
@@ -4988,6 +4991,7 @@ const bindEvents = () => {
       accountAlertsOpen = false
       accountMenuOpen = false
       activeSection = getUiState().user?.isPlatformAdmin ? 'mi-admin' : 'ajustes'
+      feedbackMessage = ''
       saveSection()
       requestScrollTop()
       render()
@@ -4999,6 +5003,7 @@ const bindEvents = () => {
       accountAlertsOpen = false
       accountMenuOpen = false
       activeSection = alertSectionButton.dataset.alertSection || 'dashboard'
+      feedbackMessage = ''
       saveSection()
       requestScrollTop()
       queueScrollToSelector(alertSectionButton.dataset.alertTarget)
