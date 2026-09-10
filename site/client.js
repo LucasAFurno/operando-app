@@ -5640,7 +5640,7 @@ const bindEvents = () => {
     feedbackMessage = 'Perfecto. Ahora activá ARCA paso a paso.'
     render()
   })
-  for (const button of document.querySelectorAll('[data-action="dismiss-arca-celebration"]')) button.addEventListener('click', () => { arcaCelebrationVisible = false; render() })
+  for (const button of document.querySelectorAll('[data-action="dismiss-arca-celebration"]')) button.addEventListener('click', () => { arcaCelebrationVisible = false; safeStorage.setItem('arcaCelebrationSeen', '1'); render() })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-skip"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.max(1, progressiveProfileStep - 1); render() })
@@ -5771,7 +5771,7 @@ const bindEvents = () => {
     if (arcaVerificationState === 'verified') return
     arcaVerificationState = 'checking'
     render()
-    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; arcaCelebrationVisible = true; feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
+    try { await callArca('verify', { cuit: arcaFiscal.cuit, pointOfSale: Number(arcaFiscal.pointOfSale) }); arcaVerificationState = 'verified'; arcaConnectionStatus = 'connected'; if (safeStorage.getItem('arcaCelebrationSeen', '') !== '1') { arcaCelebrationVisible = true; safeStorage.setItem('arcaCelebrationSeen', '1') }; feedbackMessage = 'Conexion ARCA de homologacion activa.' } catch (error) { arcaVerificationState = 'idle'; feedbackMessage = error.message } render()
   })
   for (const importSupportButton of document.querySelectorAll('[data-action="request-bulk-import"]')) {
     importSupportButton.addEventListener('click', () => {

@@ -7840,7 +7840,7 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
   .app-shell .sidebar-brand .brand-logo { width: 36px !important; }
   .app-shell .sidebar-brand::after { content: none !important; }
   .app-shell .topbar { position: absolute !important; top: 8px !important; right: 10px !important; z-index: 20 !important; width: auto !important; min-height: 42px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
-  .app-shell .topbar-left { position: fixed !important; top: 14px !important; left: 50% !important; display: block !important; transform: translateX(-50%); white-space: nowrap; pointer-events: none; }
+  .app-shell .topbar-left { position: fixed !important; top: 14px !important; left: 54px !important; display: block !important; max-width: 180px; transform: none; white-space: nowrap; pointer-events: none; }
   .app-shell .topbar-left .kicker, .app-shell .topbar-left span { display: none !important; }
   .app-shell .topbar-left h1 { margin: 0 !important; font-size: 1rem !important; }
   .app-shell .topbar-center { display: none !important; }
