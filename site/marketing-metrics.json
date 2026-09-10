@@ -1,5 +1,4 @@
 {
-  "averageSaleAmount": 80000,
   "supportAvailability": 24,
   "metrics": [
     { "value": 0, "prefix": "+", "suffix": "", "label": "comercios registrados" },

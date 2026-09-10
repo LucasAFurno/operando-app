@@ -32,19 +32,26 @@ const count = async (table) => {
   return total
 }
 
-const [commerces, operations] = await Promise.all([
+const salesTotals = async () => {
+  const response = await fetch(`${supabaseUrl}/rest/v1/sales?select=total_amount,status&limit=100000`, { headers, signal: AbortSignal.timeout(15_000) })
+  if (!response.ok) throw new Error(`Supabase no pudo leer el total de ventas (${response.status}).`)
+  const rows = await response.json()
+  return rows.filter((sale) => !['cancelled', 'returned'].includes(String(sale.status || '').toLowerCase())).reduce((sum, sale) => sum + Number(sale.total_amount || 0), 0)
+}
+
+const [commerces, operations, salesAmount] = await Promise.all([
   count('commerce_accounts'),
   count('sales'),
+  salesTotals(),
 ])
 
 const source = JSON.parse(await readFile(metricsPath, 'utf8'))
-const averageSaleAmount = Number(source.averageSaleAmount || 0)
 const supportAvailability = Number(source.supportAvailability || 24)
 source.metrics = [
   { value: commerces, prefix: '+', suffix: '', label: 'comercios registrados' },
   { value: operations, prefix: '+', suffix: '', label: 'ventas procesadas' },
-  { value: operations * averageSaleAmount, prefix: '+$', suffix: 'M', format: 'millions', label: 'ARS procesados' },
+  { value: salesAmount, prefix: '+$', suffix: 'M', format: 'millions', label: 'ARS procesados' },
   { value: supportAvailability, prefix: '', suffix: '/7', label: 'soporte operativo' },
 ]
 await writeFile(metricsPath, `${JSON.stringify(source, null, 2)}\n`)
-process.stdout.write(`Métricas sincronizadas: ${commerces} comercios, ${operations} ventas y $${operations * averageSaleAmount} ARS.\n`)
+process.stdout.write(`Métricas sincronizadas: ${commerces} comercios, ${operations} ventas y $${salesAmount} ARS.\n`)
