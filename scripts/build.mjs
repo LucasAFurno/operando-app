@@ -3447,6 +3447,7 @@ const renderHomePageExtended = () => {
     .support-live-phone:before { display: none; }.support-live-header { min-height: 68px; padding: 16px; background: #075e54; }.support-live-header img { width: 34px; height: 34px; padding: 2px; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: #050505; }.support-live-header strong { font-size: .86rem; }.support-live-header small { color: #d6f4ea; font-size: .68rem; }.support-live-chat { gap: 10px; height: calc(100% - 68px); padding: 15px 12px 18px; overflow: hidden; background: #0b141a; }.support-live-chat:after { padding: 10px 12px; background: #202c33; color: #aebfba; font-size: .68rem; }.support-live-message { max-width: 86%; padding: 10px 11px 6px; border-radius: 12px; background: #202c33; box-shadow: none; color: #ecf4f1; font-size: .72rem; line-height: 1.38; }.support-live-message.is-client { background: #005c4b; }.support-live-message small { color: rgba(255,255,255,.62); font-size: .58rem; }
     @media (max-width: 740px) { .support-band { padding-bottom: 560px; } .support-live-phone { width: 316px; height: 488px; } }
     .support-live-message, .support-live-message span { color: #ecf4f1 !important; }.support-live-message small { color: rgba(255,255,255,.68) !important; }
+    .support-band:after { display: block; }.support-band.has-live-chat:after { display: none; }
   </style>`
   const counterScript = `<script>
     (() => {
@@ -3504,6 +3505,7 @@ const renderHomePageExtended = () => {
         .catch(() => {})
       const supportBand = document.querySelector('.support-band')
       if (supportBand && !supportBand.querySelector('.support-live-phone')) {
+        supportBand.classList.add('has-live-chat')
         const phone = document.createElement('aside')
         phone.className = 'support-live-phone'
         phone.setAttribute('aria-label', 'Conversación de soporte en vivo por WhatsApp')
