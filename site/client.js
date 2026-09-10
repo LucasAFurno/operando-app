@@ -83,6 +83,32 @@ let activeSection = 'dashboard'
 let loginMessage = ''
 let signupMessage = ''
 let feedbackMessage = ''
+
+const firstNameOf = (value) => String(value || '').trim().split(/\s+/)[0] || 'equipo'
+const timeGreeting = (date = new Date()) => {
+  const hour = date.getHours()
+  if (hour < 12) return 'Buen día'
+  if (hour < 19) return 'Buenas tardes'
+  return 'Buenas noches'
+}
+const welcomeMessage = (fullName) => {
+  const name = firstNameOf(fullName)
+  const options = [
+    `${timeGreeting()} ${name}, ¡que tengas buenas ventas!`,
+    `${timeGreeting()} ${name}, tu operación está lista para hoy.`,
+    `${timeGreeting()} ${name}, ¡a mover el negocio!`,
+  ]
+  return options[new Date().getDate() % options.length]
+}
+const saleSuccessMessage = (fullName) => {
+  const name = firstNameOf(fullName)
+  const options = [
+    `¡Venta registrada, ${name}! Así se mueve el negocio.`,
+    `¡Excelente venta, ${name}! Todo quedó actualizado.`,
+    `¡Muy bien, ${name}! Cobro confirmado y stock al día.`,
+  ]
+  return options[new Date().getSeconds() % options.length]
+}
 let saleEditingId = ''
 let purchaseEditingId = ''
 let invoiceEditingId = ''
@@ -3866,7 +3892,7 @@ const handleSubmit = async (event) => {
       activeSection = 'dashboard'
       saveSection()
       window.history.replaceState({ section: activeSection }, '', '/panel/')
-      feedbackMessage = 'Sesion iniciada correctamente.'
+      feedbackMessage = welcomeMessage(getUiState().user?.fullName)
       requestScrollTop()
     } catch (error) {
       loginMessage = mapPublicAuthError(error.message, 'login')
@@ -4333,7 +4359,7 @@ const handleSubmit = async (event) => {
     const result = formData.get('saleId')
       ? await store.updateSale(formData.get('saleId'), payload)
       : await store.createSale(payload)
-    feedbackMessage = result.message || ''
+    feedbackMessage = result.ok ? saleSuccessMessage(getUiState().user?.fullName) : (result.message || '')
     if (result.ok && !formData.get('saleId')) { completeOnboardingStep('cart'); completeOnboardingStep('charge'); resumeOnboardingAfterStep('charge') }
     saleEditingId = ''
     saleDraftQuantities = {}
