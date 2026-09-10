@@ -69,7 +69,7 @@ const builtCloudCoreJs = cloudCoreJs.replaceAll('__OPERANDO_ASSET_VERSION__', as
 const builtCloudMutationsJs = cloudMutationsJs.replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
 const faviconSvg = await readFile(path.join(root, 'public', 'favicon.svg'), 'utf8')
 const cnameFile = await readFile(path.join(root, 'public', 'CNAME'), 'utf8')
-const indexChromeHtml = await readFile(path.join(root, 'scripts', 'index-chrome.html'), 'utf8')
+const indexChromeHtml = (await readFile(path.join(root, 'scripts', 'index-chrome.html'), 'utf8')).replace('/index-chrome.js"', `/index-chrome.js?v=${releaseVersion}"`)
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
