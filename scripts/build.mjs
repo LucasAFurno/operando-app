@@ -69,6 +69,7 @@ const builtCloudCoreJs = cloudCoreJs.replaceAll('__OPERANDO_ASSET_VERSION__', as
 const builtCloudMutationsJs = cloudMutationsJs.replaceAll('__OPERANDO_ASSET_VERSION__', assetVersion)
 const faviconSvg = await readFile(path.join(root, 'public', 'favicon.svg'), 'utf8')
 const cnameFile = await readFile(path.join(root, 'public', 'CNAME'), 'utf8')
+const indexChromeHtml = await readFile(path.join(root, 'scripts', 'index-chrome.html'), 'utf8')
 
 const escapeHtml = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
@@ -1051,37 +1052,7 @@ const buildFaqJsonLd = (page) => {
   }
 }
 
-const renderTopbar = (page) => `
-  <header class="marketing-topbar">
-    <a class="marketing-brand" href="/">
-      <img src="/operando-logo.png?v=operando-20260831" alt="operando.app" width="48" height="46" />
-      <div>
-        <strong><span>Operando</span><em>.app</em></strong>
-      </div>
-    </a>
-    <nav class="marketing-nav" aria-label="Navegacion principal">
-      <a href="/funciones/" data-analytics="nav_funciones">Funciones</a>
-      <a href="/precios/" data-analytics="nav_precios">Precios</a>
-      <a href="/como-funciona/" data-analytics="nav_como_funciona">Cómo funciona</a>
-      <a href="/pos-por-rubro/" data-analytics="nav_pos_por_rubro">Por rubro</a>
-      <a href="/blog/" data-analytics="nav_blog">Guías</a>
-    </nav>
-    <details class="marketing-mobile-menu">
-      <summary>Menú</summary>
-      <nav aria-label="Navegación móvil">
-        <a href="/funciones/" data-analytics="mobile_nav_funciones">Funciones</a>
-        <a href="/precios/" data-analytics="mobile_nav_precios">Precios</a>
-        <a href="/como-funciona/" data-analytics="mobile_nav_como_funciona">Cómo funciona</a>
-        <a href="/pos-por-rubro/" data-analytics="mobile_nav_pos_por_rubro">Por rubro</a>
-        <a href="/blog/" data-analytics="mobile_nav_blog">Blog</a>
-      </nav>
-    </details>
-    <div class="marketing-auth-links">
-      <a href="${loginPath}" data-analytics="header_login">Iniciar sesion</a>
-      <a class="is-primary" href="${signupPath}" data-analytics="header_signup">Probar gratis</a>
-    </div>
-  </header>
-`
+const renderTopbar = (page) => indexChromeHtml
 
 const renderFooter = () => `
   <footer class="marketing-footer">
@@ -3672,9 +3643,18 @@ const appHtml = (entry = 'panel') => `<!doctype html>
 </html>
 `
 
+const withSharedChrome = (html) => {
+  // Strip the home inline top nav (may contain a nested mobile <nav>); stop at </nav> before <section.
+  const stripped = html.replace(/<nav class="nav">[\s\S]*?<\/nav>(?=<section)/, '')
+  if (stripped.includes('<main class="site">')) {
+    return stripped.replace('<main class="site">', `${indexChromeHtml}<main class="site">`)
+  }
+  return stripped.replace('<body>', `<body>${indexChromeHtml}`)
+}
+
 const pageEntries = marketingPages.map((page) => ({
   pathname: page.slug ? `/${page.slug}/` : '/',
-  html: page.slug ? renderMarketingPage(page) : refineHomeFooter(refineHomeFaq(renderHomePageExtended(page))),
+  html: page.slug ? renderMarketingPage(page) : withSharedChrome(refineHomeFooter(refineHomeFaq(renderHomePageExtended(page)))),
   filePath: page.slug ? `${page.slug}/index.html` : 'index.html',
   cacheControl: 'public, max-age=300',
 }))
