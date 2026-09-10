@@ -302,6 +302,19 @@ input[type='search'] { color: var(--text); }
   .app-shell .topbar-right .account-menu-chevron { display: none !important; }
 }
 
+/* Encabezado móvil: una sola navegación compacta y una única cuenta visible. */
+@media (max-width: 740px) {
+  .app-shell .sidebar { gap: 6px !important; padding: 8px 10px 10px !important; }
+  .app-shell .sidebar-brand { grid-template-columns: 1fr !important; padding: 2px 0 6px !important; }
+  .app-shell .sidebar-brand .brand-logo { width: 40px !important; }
+  .app-shell .sidebar-wordmark { display: none !important; }
+  .app-shell .sidebar-nav { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 3px !important; }
+  .app-shell .sidebar-nav .nav-square { min-height: 46px !important; padding: 4px 2px !important; }
+  .app-shell .sidebar-nav .nav-label { font-size: .5rem !important; }
+  .app-shell .sidebar-support { display: none !important; }
+  .app-shell .topbar-guide-action { display: none !important; }
+}
+
 @media (min-width: 741px) {
   .app-shell .topbar-right { display: flex !important; flex-wrap: nowrap !important; align-items: center !important; justify-content: flex-end !important; gap: 8px !important; min-width: max-content !important; }
   .app-shell .topbar-right .account-alerts-wrap { display: flex !important; flex: 0 0 auto !important; align-items: center !important; gap: 8px !important; min-width: 0 !important; }
