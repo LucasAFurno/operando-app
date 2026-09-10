@@ -1,4 +1,4 @@
-import { cloudMutationMethods, cloudMutationRpcNames, cloudMutationModules } from './cloud-mutations.js?v=__OPERANDO_ASSET_VERSION__'
+import { cloudMutationMethods, cloudMutationRpcNames, cloudMutationModules } from './cloud-mutations.js?v=6219682f6b14'
 
 const buildHeaders = (anonKey) => ({
   apikey: anonKey,
@@ -298,15 +298,9 @@ export const createSupabaseCoreAdapter = (config) => {
         p_register_id: payload?.registerId || null,
         p_operation_id: payload?.operationId || null,
       }
-      try {
-        return await rpc('app_public_create_sale', request)
-      } catch (error) {
-        // Permite publicar cliente y migracion en cualquier orden. La proteccion
-        // se activa apenas la base conoce p_operation_id.
-        if (!payload?.operationId || !/p_operation_id|could not find.*app_public_create_sale/i.test(String(error?.message || ''))) throw error
-        const { p_operation_id: _ignored, ...legacyRequest } = request
-        return rpc('app_public_create_sale', legacyRequest)
-      }
+      // operation_id obligatorio: sin fallback a overload legacy (evita bypass de
+      // idempotencia / blocked_permissions / validación de sucursal-caja).
+      return rpc('app_public_create_sale', request)
     },
     async registerInvoicePayment(payload) {
       return rpc('app_public_register_invoice_payment', { p_session_token: getSessionToken(), p_invoice_id: payload?.invoiceId || null, p_method_key: payload?.method || 'transfer', p_amount: Number(payload?.amount || 0), p_reference: payload?.reference || '', p_echeq_details: payload?.echeqDetails || {} })

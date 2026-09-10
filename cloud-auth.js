@@ -49,8 +49,10 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
   if (!baseUrl || !publishableKey) {
     return null
   }
-  // Custom Operando sessions are memory-only; no bearer credential is persisted.
+  // Operando session_token persists in localStorage so F5 keeps the user logged in.
+  // Profile/context are refreshed via app_public_restore_session on boot.
   let session = null
+  const sessionStorageKey = `operando.session.${currentInstanceKey || 'operando-dev'}`
   const supabase = createClient(baseUrl, publishableKey, {
     auth: {
       persistSession: false,
@@ -65,6 +67,40 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
     recoveryState = payload || null
   }
   const readRecovery = () => recoveryState
+
+  const clearPersistedSession = () => {
+    try {
+      globalThis.localStorage?.removeItem(sessionStorageKey)
+    } catch {
+      // ignore quota / private mode
+    }
+  }
+
+  const persistSession = () => {
+    if (!session?.sessionToken) {
+      clearPersistedSession()
+      return
+    }
+    try {
+      globalThis.localStorage?.setItem(sessionStorageKey, JSON.stringify({
+        session_token: session.sessionToken,
+        saved_at: new Date().toISOString(),
+      }))
+    } catch {
+      // ignore quota / private mode
+    }
+  }
+
+  const readPersistedToken = () => {
+    try {
+      const raw = globalThis.localStorage?.getItem(sessionStorageKey)
+      if (!raw) return ''
+      const parsed = JSON.parse(raw)
+      return String(parsed?.session_token || '').trim()
+    } catch {
+      return ''
+    }
+  }
 
   const rpc = async (fnName, body = {}) => {
     const response = await fetch(`${baseUrl}/rest/v1/rpc/${fnName}`, {
@@ -94,6 +130,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
 
   const setSession = (payload) => {
     session = normalizeSessionPayload(payload)
+    persistSession()
     return session
   }
 
@@ -150,9 +187,22 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
     return setSession(payload)
   }
 
+  const readDeviceId = () => {
+    const key = `operando.device.${currentInstanceKey || 'operando-dev'}`
+    try {
+      const existing = String(globalThis.localStorage?.getItem(key) || '').trim()
+      if (existing) return existing
+      const created = crypto.randomUUID()
+      globalThis.localStorage?.setItem(key, created)
+      return created
+    } catch {
+      return crypto.randomUUID()
+    }
+  }
+
   const signIn = async ({ instanceKey: requestedInstanceKey, identifier, pin }) => {
     if (!turnstileEnabled) throw new Error('security_not_configured')
-    const deviceId = crypto.randomUUID()
+    const deviceId = readDeviceId()
     const turnstileToken = readTurnstileToken()
     if (!turnstileToken) throw new Error('turnstile_required')
     const response = await fetch(`${baseUrl}/functions/v1/auth-gateway`, { method: 'POST', headers: buildHeaders(publishableKey), body: JSON.stringify({ instanceKey: normalizeOptionalInstanceKey(requestedInstanceKey), identifier, pin, deviceId, turnstileToken }) })
@@ -170,10 +220,26 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
     return nextSession
   }
 
-  const restoreSession = async () => null
+  const restoreSession = async () => {
+    const token = readPersistedToken()
+    if (!token) return null
+    try {
+      const payload = await rpc('app_public_restore_session', { p_session_token: token })
+      const next = setSession(payload)
+      if (!next) {
+        clearPersistedSession()
+        return null
+      }
+      return next
+    } catch {
+      clearPersistedSession()
+      session = null
+      return null
+    }
+  }
 
   const signOut = async () => {
-    const token = session?.sessionToken || ''
+    const token = session?.sessionToken || readPersistedToken() || ''
     if (token) {
       try {
         await rpc('app_public_sign_out', { p_session_token: token })
@@ -182,6 +248,7 @@ export const createCloudAuthManager = ({ url, anonKey, instanceKey = 'operando-d
       }
     }
     session = null
+    clearPersistedSession()
   }
 
   const sendRecoveryMagicLink = async ({ email, redirectTo }) => {

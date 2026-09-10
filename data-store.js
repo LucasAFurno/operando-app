@@ -1,4 +1,5 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=1462db19a1a0'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=6219682f6b14'
+import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=6219682f6b14'
 
 const dataStorageKey = 'operando-control-data-v2'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
@@ -2301,9 +2302,10 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Venta actualizada.' }
   }
 
-  const createInvoiceFromSale = async (saleId) => {
+  const createInvoiceFromSale = async (saleId, options = {}) => {
     const denied = ensurePermission(actionPermissions.invoicesWrite)
     if (denied) return denied
+    const forArca = Boolean(options?.forArca)
     if (cloudCoreAdapter) {
       const sale = state.sales.find((entry) => entry.id === saleId)
       if (!sale) return { ok: false, message: 'Venta no encontrada.' }
@@ -2313,24 +2315,46 @@ export const createBrowserDataStore = (options = {}) => {
         saleId: sale.id,
         customerId: sale.customerId,
         relatedDocumentId: null,
-        number: generateInternalInvoiceNumber(state, sale.branchId),
+        number: forArca ? '' : generateInternalInvoiceNumber(state, sale.branchId),
         kind: 'factura',
-        type: 'X',
+        type: forArca ? (options.type || 'B') : 'X',
         status: sale.status === 'completed' ? 'Cobrada' : 'Emitida',
-        fiscalStatus: 'Interno',
+        fiscalStatus: forArca ? 'Pendiente' : 'Interno',
         totalAmount: Number(sale.totalAmount || 0),
         payloadJson: {
           source: 'sale',
           saleId: sale.id,
+          ...(forArca ? { arcaPending: true } : {}),
         },
       })
       await syncFromCloud()
-      return { ok: true, message: 'Factura creada desde la venta.' }
+      return { ok: true, message: forArca ? 'Factura ARCA pendiente creada desde la venta. Carga el numero y usa Emitir con ARCA.' : 'Factura creada desde la venta.' }
     }
     const sale = state.sales.find((entry) => entry.id === saleId)
     if (!sale) return { ok: false, message: 'Venta no encontrada.' }
     const existing = state.invoices.find((invoice) => invoice.saleId === saleId)
     if (existing) return { ok: false, message: 'Esa venta ya tiene una factura.' }
+
+    if (forArca) {
+      const invoice = {
+        id: makeId(),
+        number: '',
+        customerId: sale.customerId,
+        totalAmount: sale.totalAmount,
+        status: sale.status === 'completed' ? 'Cobrada' : 'Emitida',
+        dueDate: todayDate(),
+        type: options.type || 'B',
+        kind: 'Factura',
+        fiscalStatus: 'Pendiente',
+        saleId,
+        branchId: sale.branchId || getCurrentBranch(state)?.id || null,
+        payloadJson: { source: 'sale', saleId: sale.id, arcaPending: true },
+      }
+      state.invoices.unshift(invoice)
+      pushAudit(state, currentUser().id, 'invoice', invoice.id, 'created_from_sale', invoice)
+      save()
+      return { ok: true, message: 'Factura ARCA pendiente creada desde la venta. Carga el numero y usa Emitir con ARCA.' }
+    }
 
     const result = buildInvoiceForSale(state, saleId)
     if (result.ok) save()
@@ -2676,20 +2700,22 @@ export const createBrowserDataStore = (options = {}) => {
     const denied = ensurePermission(actionPermissions.invoicesWrite)
     if (denied) return denied
     if (cloudCoreAdapter) {
+      const existing = state.invoices.find((entry) => entry.id === invoiceId)
       await cloudCoreAdapter.upsertDocument({
         id: invoiceId,
-        branchId: payload.branchId || getCurrentBranch(state)?.id || null,
-        saleId: payload.saleId || null,
-        customerId: payload.customerId || null,
-        relatedDocumentId: payload.relatedDocumentId || null,
-        number: payload.number || '',
-        kind: normalizeDocumentKind(payload.kind || 'Factura'),
-        type: payload.type || 'B',
-        status: payload.status || 'Emitida',
-        fiscalStatus: payload.fiscalStatus || 'Pendiente',
-        totalAmount: Number(payload.totalAmount || 0),
+        branchId: payload.branchId || existing?.branchId || getCurrentBranch(state)?.id || null,
+        saleId: payload.saleId !== undefined ? payload.saleId : (existing?.saleId || null),
+        customerId: payload.customerId !== undefined ? payload.customerId : (existing?.customerId || null),
+        relatedDocumentId: payload.relatedDocumentId !== undefined ? payload.relatedDocumentId : (existing?.relatedDocumentId || null),
+        number: payload.number || existing?.number || '',
+        kind: normalizeDocumentKind(payload.kind || existing?.kind || 'Factura'),
+        type: payload.type || existing?.type || 'B',
+        status: payload.status || existing?.status || 'Emitida',
+        fiscalStatus: payload.fiscalStatus || existing?.fiscalStatus || 'Pendiente',
+        totalAmount: Number(payload.totalAmount ?? existing?.totalAmount ?? 0),
         payloadJson: {
-          dueDate: payload.dueDate || '',
+          dueDate: payload.dueDate || existing?.dueDate || '',
+          ...(payload.payloadJson && typeof payload.payloadJson === 'object' ? payload.payloadJson : {}),
         },
       })
       await syncFromCloud()
@@ -2700,14 +2726,16 @@ export const createBrowserDataStore = (options = {}) => {
     const before = clone(invoice)
     invoice.number = payload.number || invoice.number
     invoice.branchId = payload.branchId || invoice.branchId || getCurrentBranch(state)?.id || null
-    invoice.customerId = payload.customerId || null
+    invoice.customerId = payload.customerId !== undefined ? payload.customerId : invoice.customerId
     invoice.totalAmount = Number(payload.totalAmount)
     invoice.status = payload.status
     invoice.dueDate = payload.dueDate
     invoice.type = payload.type
     invoice.kind = payload.kind || invoice.kind || 'Factura'
     invoice.fiscalStatus = payload.fiscalStatus || invoice.fiscalStatus || 'Pendiente'
-    invoice.relatedDocumentId = payload.relatedDocumentId || invoice.relatedDocumentId || null
+    invoice.relatedDocumentId = payload.relatedDocumentId !== undefined ? payload.relatedDocumentId : (invoice.relatedDocumentId || null)
+    if (payload.saleId !== undefined) invoice.saleId = payload.saleId
+    if (payload.payloadJson && typeof payload.payloadJson === 'object') invoice.payloadJson = { ...(invoice.payloadJson || {}), ...payload.payloadJson }
     pushAudit(state, currentUser().id, 'invoice', invoice.id, 'updated', invoice, before)
     save()
     return { ok: true, message: 'Factura actualizada.' }
@@ -2977,7 +3005,7 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: result?.message || 'Comercio actualizado.' }
   }
 
-  return {
+  const api = {
     permissionCatalog,
     moduleCatalog,
     modulePresets,
@@ -3056,6 +3084,17 @@ export const createBrowserDataStore = (options = {}) => {
     importData,
     resetData,
   }
+  return wireDataStoreCloudMutations(api, {
+    getCloudCoreAdapter: () => cloudCoreAdapter,
+    syncFromCloud,
+    getState: () => state,
+    getProduct: (productId) => getProduct(state, productId),
+    getBranch: (branchId) => getBranch(state, branchId),
+    getCurrentBranch: () => getCurrentBranch(state),
+    getCurrentRegister: () => getCurrentRegister(state),
+    getCurrentUser: () => currentUser(),
+    makeOperationId,
+  })
 }
 
 
