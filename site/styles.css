@@ -7934,6 +7934,25 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
 }
 .login-card.auth-standalone-card .login-form label { color: #262521; }
 .login-card.auth-standalone-card .auth-route-note { color: #5a5852; }
+.login-card.auth-standalone-card .auth-route-note a,
+.login-card.auth-standalone-card .auth-support .auth-text-action {
+  color: #c81e1a;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  transition: color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+.login-card.auth-standalone-card .auth-route-note a:hover,
+.login-card.auth-standalone-card .auth-route-note a:focus-visible,
+.login-card.auth-standalone-card .auth-support .auth-text-action:hover,
+.login-card.auth-standalone-card .auth-support .auth-text-action:focus-visible {
+  color: #fff;
+  background: #c81e1a;
+  border-radius: 4px;
+  box-shadow: 0 0 0 4px rgba(200, 30, 26, .14);
+  outline: none;
+}
 .auth-operation-intro h2,
 .auth-operation-intro h2 em {
   position: relative;

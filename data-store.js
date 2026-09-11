@@ -1,5 +1,5 @@
-import { createSupabaseCoreAdapter } from './cloud-core.js?v=e032a5e35522'
-import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=e032a5e35522'
+import { createSupabaseCoreAdapter } from './cloud-core.js?v=64f24babdbbc'
+import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=64f24babdbbc'
 
 const dataStorageKey = 'operando-control-data-v2'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
