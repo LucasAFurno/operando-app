@@ -145,7 +145,7 @@ Deno.serve(async (request) => {
           }
         }
 
-        const accessToken = Deno.env.get('SUPABASE_ACCESS_TOKEN') || Deno.env.get('SUPABASE_MANAGEMENT_TOKEN') || ''
+        const accessToken = Deno.env.get('MANAGEMENT_ACCESS_TOKEN') || Deno.env.get('SUPABASE_ACCESS_TOKEN') || Deno.env.get('SUPABASE_MANAGEMENT_TOKEN') || ''
         let projectRef = 'rfwsnqmjkclxhbmidbkm'
         try {
           projectRef = new URL(supabaseUrl).hostname.split('.')[0] || projectRef
