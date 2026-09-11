@@ -1096,7 +1096,7 @@ const clearFeedbackSoon = () => {
     if (feedbackMessage !== currentMessage) return
     feedbackMessage = ''
     document.querySelectorAll('.feedback-banner').forEach((banner) => banner.remove())
-  }, 2800)
+  }, 6500)
 }
 const getAllowedNav = (ui) => navItems.filter((item) => (
   (ui.user?.isPlatformAdmin

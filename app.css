@@ -7860,6 +7860,10 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
    con una celebración sutil que refuerza cada logro sin tapar la pantalla. */
 .feedback-banner {
   overflow: hidden;
+  top: 86px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 16px 18px;
+  font-size: .98rem;
   gap: 12px;
   border: 2px solid #35e08b !important;
   border-radius: 0 !important;
@@ -7910,7 +7914,7 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
   50% { box-shadow: 5px 6px 0 rgba(53,224,139,.9), 0 18px 42px rgba(53,224,139,.26), 0 0 28px rgba(53,224,139,.52); }
 }
 @media (max-width: 740px) {
-  .feedback-banner { top: 194px; max-width: calc(100vw - 24px); padding: 11px 12px; font-size: .86rem; }
+  .feedback-banner { top: 194px; max-width: calc(100vw - 24px); padding: 13px 14px; font-size: .88rem; }
   .feedback-banner::after { font-size: .92rem; letter-spacing: .04em; }
 }
 @media (prefers-reduced-motion: reduce) {
