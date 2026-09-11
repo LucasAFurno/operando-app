@@ -7861,11 +7861,11 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
 .feedback-banner {
   overflow: hidden;
   gap: 12px;
-  border: 2px solid #ed211b !important;
-  border-radius: 12px !important;
+  border: 2px solid #35e08b !important;
+  border-radius: 0 !important;
   background: linear-gradient(110deg, #171717 0%, #242424 48%, #171717 100%) !important;
   color: #f7f5ee !important;
-  box-shadow: 5px 6px 0 rgba(237,33,27,.55), 0 18px 42px rgba(0,0,0,.36) !important;
+  box-shadow: 5px 6px 0 rgba(53,224,139,.55), 0 18px 42px rgba(0,0,0,.36) !important;
   font-weight: 700;
   isolation: isolate;
 }
@@ -7875,8 +7875,8 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
 .feedback-banner::before {
   width: 10px;
   height: 10px;
-  background: #ed211b;
-  box-shadow: 0 0 0 5px rgba(237,33,27,.16);
+  background: #35e08b;
+  box-shadow: 0 0 0 5px rgba(53,224,139,.18), 0 0 16px rgba(53,224,139,.8);
 }
 .feedback-banner::after {
   content: '✨  📈  🚀';
@@ -7906,8 +7906,8 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
 }
 .feedback-banner > :first-child { position: relative; }
 @keyframes feedback-glow {
-  0%, 100% { box-shadow: 5px 6px 0 rgba(237,33,27,.55), 0 18px 42px rgba(0,0,0,.36); }
-  50% { box-shadow: 5px 6px 0 rgba(237,33,27,.8), 0 18px 42px rgba(237,33,27,.2); }
+  0%, 100% { box-shadow: 5px 6px 0 rgba(53,224,139,.45), 0 18px 42px rgba(0,0,0,.36), 0 0 12px rgba(53,224,139,.18); }
+  50% { box-shadow: 5px 6px 0 rgba(53,224,139,.9), 0 18px 42px rgba(53,224,139,.26), 0 0 28px rgba(53,224,139,.52); }
 }
 @media (max-width: 740px) {
   .feedback-banner { top: 194px; max-width: calc(100vw - 24px); padding: 11px 12px; font-size: .86rem; }
