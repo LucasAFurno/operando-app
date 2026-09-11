@@ -1148,6 +1148,33 @@ export const createBrowserDataStore = (options = {}) => {
           createdAt: activity.created_at || activity.createdAt || '',
         })) : [],
       })) : [],
+      infra: (() => {
+        const raw = payload.infra && typeof payload.infra === 'object' ? payload.infra : null
+        if (!raw) return null
+        const disk = raw.disk && typeof raw.disk === 'object' ? raw.disk : null
+        return {
+          dbSizeBytes: raw.db_size_bytes ?? raw.dbSizeBytes ?? null,
+          dbSizePretty: raw.db_size_pretty || raw.dbSizePretty || null,
+          connections: raw.connections == null ? null : Number(raw.connections),
+          cacheHitPct: raw.cache_hit_pct ?? raw.cacheHitPct ?? null,
+          source: raw.source || null,
+          checkedAt: raw.checked_at || raw.checkedAt || null,
+          enrichedAt: raw.enriched_at || raw.enrichedAt || null,
+          healthOk: raw.health_ok ?? raw.healthOk ?? null,
+          healthServices: Array.isArray(raw.health_services)
+            ? raw.health_services
+            : (Array.isArray(raw.healthServices) ? raw.healthServices : null),
+          managementHealth: raw.management_health ?? raw.managementHealth ?? null,
+          authProbeMs: raw.auth_probe_ms ?? raw.authProbeMs ?? null,
+          authProbeOk: raw.auth_probe_ok ?? raw.authProbeOk ?? null,
+          disk: disk ? {
+            readBytesTotal: disk.read_bytes_total ?? disk.readBytesTotal ?? null,
+            writtenBytesTotal: disk.written_bytes_total ?? disk.writtenBytesTotal ?? null,
+            ioTimeSecondsTotal: disk.io_time_seconds_total ?? disk.ioTimeSecondsTotal ?? null,
+            note: disk.note || null,
+          } : null,
+        }
+      })(),
       commerces: Array.isArray(payload.commerces) ? payload.commerces.map((entry) => ({
         id: entry.id,
         name: entry.name || 'Comercio',

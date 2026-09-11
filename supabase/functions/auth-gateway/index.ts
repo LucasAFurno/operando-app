@@ -123,7 +123,140 @@ Deno.serve(async (request) => {
         const overview = await rpc('app_public_platform_overview', { p_session_token: sessionToken })
         const payload = await overview.json()
         if (!overview.ok) return json({ error: payload?.message || payload?.hint || 'platform_denied' }, overview.status || 403, headers)
-        return json(payload, 200, headers)
+
+        // Enrich Postgres infra with live Supabase signals. Failures → null fields, never 500.
+        // Disk IO Burst Balance % is NOT available via Management API with access token (404/401).
+        // Prometheus customer metrics expose node_disk_* counters (absolute values), not Burst %.
+        try {
+        const baseInfra = (payload && typeof payload === 'object' && payload.infra && typeof payload.infra === 'object')
+          ? payload.infra
+          : {}
+        const infra: Record<string, unknown> = { ...baseInfra }
+
+        const shortFetch = async (url: string, init: RequestInit = {}, ms = 2500): Promise<Response | null> => {
+          const controller = new AbortController()
+          const timer = setTimeout(() => controller.abort(), ms)
+          try {
+            return await fetch(url, { ...init, signal: controller.signal })
+          } catch {
+            return null
+          } finally {
+            clearTimeout(timer)
+          }
+        }
+
+        const accessToken = Deno.env.get('SUPABASE_ACCESS_TOKEN') || Deno.env.get('SUPABASE_MANAGEMENT_TOKEN') || ''
+        let projectRef = 'rfwsnqmjkclxhbmidbkm'
+        try {
+          projectRef = new URL(supabaseUrl).hostname.split('.')[0] || projectRef
+        } catch {
+          // keep default
+        }
+
+        if (accessToken) {
+          const healthRes = await shortFetch(
+            `https://api.supabase.com/v1/projects/${projectRef}/health?services=auth&services=db&services=rest`,
+            { headers: { authorization: `Bearer ${accessToken}`, accept: 'application/json' } },
+            2500,
+          )
+          if (healthRes?.ok) {
+            try {
+              const healthPayload = await healthRes.json()
+              infra.management_health = healthPayload
+              const statuses = Array.isArray(healthPayload)
+                ? healthPayload.map((entry: { name?: string; status?: string }) => ({
+                  name: entry?.name || 'service',
+                  status: entry?.status || 'unknown',
+                }))
+                : []
+              infra.health_services = statuses
+              infra.health_ok = statuses.length
+                ? statuses.every((entry: { status: string }) => /^(ACTIVE_HEALTHY|healthy|ACTIVE)$/i.test(String(entry.status || '')))
+                : null
+            } catch {
+              infra.management_health = null
+              infra.health_services = null
+              infra.health_ok = null
+            }
+          } else {
+            infra.management_health = null
+            infra.health_services = null
+            infra.health_ok = null
+          }
+        } else {
+          infra.management_health = null
+          infra.health_services = null
+          infra.health_ok = null
+        }
+
+        const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY') || ''
+        const probeKey = serviceKey || anonKey
+        if (probeKey) {
+          const started = Date.now()
+          const probeRes = await shortFetch(
+            `${supabaseUrl}/auth/v1/settings`,
+            { headers: { apikey: probeKey, authorization: `Bearer ${probeKey}` } },
+            2000,
+          )
+          infra.auth_probe_ms = probeRes ? Date.now() - started : null
+          infra.auth_probe_ok = Boolean(probeRes?.ok)
+        } else {
+          infra.auth_probe_ms = null
+          infra.auth_probe_ok = null
+        }
+
+        const metricsRes = await shortFetch(
+          `${supabaseUrl}/customer/v1/privileged/metrics`,
+          {
+            headers: {
+              authorization: `Basic ${btoa(`service_role:${serviceKey}`)}`,
+              accept: 'text/plain',
+            },
+          },
+          3000,
+        )
+        if (metricsRes?.ok) {
+          try {
+            const metricsText = await metricsRes.text()
+            const pickSum = (metricName: string) => {
+              let total = 0
+              let found = false
+              const prefix = `${metricName}{`
+              const bare = `${metricName} `
+              for (const line of metricsText.split('\n')) {
+                if (!line || line.startsWith('#')) continue
+                if (line.startsWith(prefix) || line.startsWith(bare)) {
+                  const parts = line.trim().split(/\s+/)
+                  const value = Number(parts[parts.length - 1])
+                  if (Number.isFinite(value)) {
+                    total += value
+                    found = true
+                  }
+                }
+              }
+              return found ? total : null
+            }
+            infra.disk = {
+              read_bytes_total: pickSum('node_disk_read_bytes_total'),
+              written_bytes_total: pickSum('node_disk_written_bytes_total'),
+              io_time_seconds_total: pickSum('node_disk_io_time_seconds_total'),
+              note: 'Valores absolutos de Prometheus (counters). Disk IO Burst Balance % no está en esta API ni en Management con access token.',
+            }
+          } catch {
+            infra.disk = null
+          }
+        } else {
+          infra.disk = null
+        }
+
+        infra.enriched_at = new Date().toISOString()
+        const enriched = (payload && typeof payload === 'object')
+          ? { ...payload, infra }
+          : { infra }
+        return json(enriched, 200, headers)
+        } catch {
+          return json(payload, 200, headers)
+        }
       }
 
       const update = await rpc('app_public_platform_update_commerce', {

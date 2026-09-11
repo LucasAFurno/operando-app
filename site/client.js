@@ -3034,6 +3034,14 @@ const ownerAdminViewV2 = (ui) => {
   if (!platform) return `<section class="view-section"><div class="section-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2></div></div><article class="panel empty-panel"><h3>Consola global no disponible</h3><p>Actualizá para volver a consultar los datos de plataforma.</p><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></article></section>`
 
   const formatDate = (value) => value ? String(value).replace('T', ' · ').slice(0, 16) : 'Sin dato'
+  const formatBytes = (value) => {
+    const n = Number(value)
+    if (!Number.isFinite(n) || n < 0) return null
+    if (n < 1024) return `${Math.round(n)} B`
+    if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`
+    if (n < 1024 ** 3) return `${(n / (1024 ** 2)).toFixed(1)} MB`
+    return `${(n / (1024 ** 3)).toFixed(2)} GB`
+  }
   const actionLabels = { created: 'Cuenta creada', updated: 'Actualización', deleted: 'Eliminación', signed_in: 'Inicio de sesión', signed_out: 'Cierre de sesión', assigned: 'Acceso asignado', unassigned: 'Acceso retirado', opened: 'Apertura de caja', closed: 'Cierre de caja' }
   const entityLabels = { user: 'Usuario', user_assignment: 'Acceso', session: 'Sesión', sale: 'Venta', cash_session: 'Caja', cash_movement: 'Movimiento de caja', product: 'Producto', stock_movement: 'Movimiento de stock', purchase_receipt: 'Compra', customer: 'Cliente', supplier: 'Proveedor', document: 'Comprobante', ticket: 'Ticket', branch: 'Sucursal', register: 'Caja', business: 'Comercio' }
   const entityModule = { sale: 'sales', cash_session: 'cash', cash_movement: 'cash', product: 'products', stock_movement: 'stock', purchase_receipt: 'purchases', customer: 'customers', supplier: 'purchases', document: 'invoices', ticket: 'tickets', user: 'settings', user_assignment: 'settings', session: 'settings', branch: 'settings', register: 'settings', business: 'settings' }
@@ -3049,8 +3057,40 @@ const ownerAdminViewV2 = (ui) => {
   const activeUsers = allUsers.filter((entry) => entry.status === 'active').length
   const usersWithActivity = allUsers.filter((entry) => entry.activity?.length).length
   const trace = selectedUser?.activity || []
+  const infra = platform.infra || null
+  const summary = platform.summary || {}
+  const healthLabel = infra?.healthOk === true
+    ? 'Saludable'
+    : infra?.healthOk === false
+      ? 'Con alertas'
+      : (infra?.authProbeOk === true ? 'Auth OK' : (infra ? 'Sin Management' : 'Sin dato'))
+  const healthClass = infra?.healthOk === true || (infra?.healthOk == null && infra?.authProbeOk === true)
+    ? 'is-highlighted'
+    : infra?.healthOk === false
+      ? 'is-alert'
+      : ''
+  const cacheLabel = infra?.cacheHitPct == null ? 'Sin dato' : `${Number(infra.cacheHitPct).toFixed(1)}%`
+  const dbSizeLabel = infra?.dbSizePretty || formatBytes(infra?.dbSizeBytes) || 'Sin dato'
+  const connectionsLabel = infra?.connections == null ? 'Sin dato' : String(infra.connections)
+  const authLatencyLabel = infra?.authProbeMs == null ? 'Sin dato' : `${infra.authProbeMs} ms`
+  const diskRead = formatBytes(infra?.disk?.readBytesTotal)
+  const diskWrite = formatBytes(infra?.disk?.writtenBytesTotal)
+  const diskLabel = (diskRead || diskWrite)
+    ? `${diskRead ? `R ${diskRead}` : ''}${diskRead && diskWrite ? ' · ' : ''}${diskWrite ? `W ${diskWrite}` : ''}`
+    : 'Sin dato'
+  const infraChecked = infra?.enrichedAt || infra?.checkedAt
+  const infraStrip = `<article class="panel platform-infra-strip"><div class="panel-head"><div><p class="kicker">Ops</p><h3>Estado Supabase</h3><p>Señales vivas desde Postgres y APIs de Supabase. Burst Balance % sigue solo en el dashboard de Supabase.</p></div><span class="panel-count">${infraChecked ? formatDate(infraChecked) : '—'}</span></div>
+    <section class="platform-kpi-grid platform-infra-grid" aria-label="Estado de infraestructura Supabase">
+      <article class="metric-card compact ${healthClass}"><span>Salud</span><strong>${escapeHtml(healthLabel)}</strong><p>${infra?.authProbeMs != null ? `Auth ${escapeHtml(authLatencyLabel)}` : (summary.activeCommerces != null ? `${summary.activeCommerces} comercios activos` : 'Sin Management token')}</p></article>
+      <article class="metric-card compact"><span>Tamaño DB</span><strong>${escapeHtml(dbSizeLabel)}</strong><p>pg_database_size</p></article>
+      <article class="metric-card compact"><span>Conexiones</span><strong>${escapeHtml(connectionsLabel)}</strong><p>pg_stat_activity</p></article>
+      <article class="metric-card compact"><span>Cache hit</span><strong>${escapeHtml(cacheLabel)}</strong><p>pg_stat_database</p></article>
+      <article class="metric-card compact"><span>Disco (acumulado)</span><strong>${escapeHtml(diskLabel)}</strong><p>Prometheus node_disk_*</p></article>
+    </section>
+  </article>`
   return `<section class="view-section platform-trace-view"><div class="section-header platform-console-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2><p class="section-description">Elegí una persona para seguir su actividad real en todos sus comercios.</p></div><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></div>
     ${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}
+    ${infraStrip}
     <section class="platform-trace-stats"><span><strong>${allUsers.length}</strong> usuarios</span><span><strong>${activeUsers}</strong> activos</span><span><strong>${usersWithActivity}</strong> con actividad registrada</span></section>
     <section class="platform-trace-workspace"><aside class="panel platform-user-directory"><div class="panel-head"><div><p class="kicker">Directorio</p><h3>Usuarios</h3></div><span class="panel-count">${users.length}</span></div><div class="platform-user-filters"><input type="search" value="${escapeHtml(platformUserSearchQuery)}" data-platform-user-search placeholder="Buscar persona o comercio" /><select data-platform-user-filter><option value="all" ${platformUserFilter === 'all' ? 'selected' : ''}>Todos</option><option value="active" ${platformUserFilter === 'active' ? 'selected' : ''}>Activos</option><option value="inactive" ${platformUserFilter === 'inactive' ? 'selected' : ''}>Inactivos</option></select></div><div class="platform-user-list">${users.length ? users.map((entry) => `<button type="button" class="platform-user-row ${entry.id === selectedUser?.id ? 'is-selected' : ''}" data-platform-user-select="${entry.id}"><span class="platform-user-avatar">${escapeHtml((entry.fullName || '?').slice(0, 1).toUpperCase())}</span><span><strong>${escapeHtml(entry.fullName)}</strong><small>${escapeHtml(entry.email || 'Sin email')}</small><em>${entry.memberships?.[0]?.commerceName || 'Sin comercio'}</em></span><time>${entry.lastLoginAt ? formatDate(entry.lastLoginAt) : 'Sin acceso'}</time></button>`).join('') : '<p class="empty-state">No hay usuarios para este filtro.</p>'}</div></aside>
       ${selectedUser ? `<section class="platform-user-detail"><header class="platform-user-header"><span class="platform-user-avatar large">${escapeHtml((selectedUser.fullName || '?').slice(0, 1).toUpperCase())}</span><div><p class="kicker">Perfil seleccionado</p><h3>${escapeHtml(selectedUser.fullName)}</h3><p>${escapeHtml(selectedUser.email || 'Sin email')} · ${selectedUser.status === 'active' ? 'Activo' : 'Inactivo'}</p></div><div class="platform-user-meta"><span>Alta<strong>${formatDate(selectedUser.createdAt)}</strong></span><span>Último acceso<strong>${formatDate(selectedUser.lastLoginAt)}</strong></span></div></header>
