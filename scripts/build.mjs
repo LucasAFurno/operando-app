@@ -3450,8 +3450,8 @@ const renderHomePageExtended = () => {
     .support-band:after { display: block; }.support-band.has-live-chat:after { display: none; }
     @media (max-width: 560px) { .mobile-story { grid-template-columns: minmax(0, 1fr); } .phone-stage { min-width: 0; } .phone-stage:after { width: min(390px, 100%); } }
     .phone-stage:before { border-color: #575757 !important; background: repeating-linear-gradient(0deg, transparent 0 58px, #2b2b2b 59px 60px), linear-gradient(145deg, #292929, #1d1d1d) !important; box-shadow: inset 0 0 70px rgba(255,255,255,.055), 0 0 0 1px rgba(255,255,255,.04); }
-    .phone-stage:after { animation: landing-phone-float 4.8s ease-in-out infinite !important; transform-origin: 50% 70%; will-change: transform; }
-    @keyframes landing-phone-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(-1.2deg); } }
+    .phone-stage:after { animation: landing-phone-float 3.6s ease-in-out infinite !important; transform-origin: 50% 70%; will-change: transform; }
+    @keyframes landing-phone-float { 0%, 100% { transform: translateY(8px) rotate(1.5deg); } 50% { transform: translateY(-20px) rotate(-2.5deg); } }
     @media (prefers-reduced-motion: reduce) { .phone-stage:after { animation: none !important; } }
   </style>`
   const counterScript = `<script>
