@@ -1,0 +1,37 @@
+-- Additive public FK indexes for Operando (performance advisor)
+-- Safe: IF NOT EXISTS; tiny tables; reduces seq scans on FK joins.
+BEGIN;
+CREATE INDEX IF NOT EXISTS idx_audit_logs_core_actor_user_id ON public.audit_logs_core (actor_user_id);
+CREATE INDEX IF NOT EXISTS idx_cash_movements_branch_id ON public.cash_movements (branch_id);
+CREATE INDEX IF NOT EXISTS idx_cash_movements_created_by ON public.cash_movements (created_by);
+CREATE INDEX IF NOT EXISTS idx_cash_movements_register_id ON public.cash_movements (register_id);
+CREATE INDEX IF NOT EXISTS idx_cash_sessions_branch_id ON public.cash_sessions (branch_id);
+CREATE INDEX IF NOT EXISTS idx_cash_sessions_closed_by ON public.cash_sessions (closed_by);
+CREATE INDEX IF NOT EXISTS idx_cash_sessions_commerce_id ON public.cash_sessions (commerce_id);
+CREATE INDEX IF NOT EXISTS idx_cash_sessions_opened_by ON public.cash_sessions (opened_by);
+CREATE INDEX IF NOT EXISTS idx_document_payments_commerce_id ON public.document_payments (commerce_id);
+CREATE INDEX IF NOT EXISTS idx_document_payments_created_by ON public.document_payments (created_by);
+CREATE INDEX IF NOT EXISTS idx_document_payments_document_id ON public.document_payments (document_id);
+CREATE INDEX IF NOT EXISTS idx_document_payments_sale_id ON public.document_payments (sale_id);
+CREATE INDEX IF NOT EXISTS idx_documents_customer_id ON public.documents (customer_id);
+CREATE INDEX IF NOT EXISTS idx_documents_related_document_id ON public.documents (related_document_id);
+CREATE INDEX IF NOT EXISTS idx_product_branch_stock_commerce_id ON public.product_branch_stock (commerce_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_receipts_branch_id ON public.purchase_receipts (branch_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_receipts_commerce_id ON public.purchase_receipts (commerce_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_receipts_product_id ON public.purchase_receipts (product_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_receipts_received_by ON public.purchase_receipts (received_by);
+CREATE INDEX IF NOT EXISTS idx_purchase_receipts_supplier_id ON public.purchase_receipts (supplier_id);
+CREATE INDEX IF NOT EXISTS idx_registers_cashier_user_id ON public.registers (cashier_user_id);
+CREATE INDEX IF NOT EXISTS idx_sale_items_commerce_id ON public.sale_items (commerce_id);
+CREATE INDEX IF NOT EXISTS idx_sale_items_product_id ON public.sale_items (product_id);
+CREATE INDEX IF NOT EXISTS idx_sale_payments_commerce_id ON public.sale_payments (commerce_id);
+CREATE INDEX IF NOT EXISTS idx_sale_payments_sale_id ON public.sale_payments (sale_id);
+CREATE INDEX IF NOT EXISTS idx_sales_cash_session_id ON public.sales (cash_session_id);
+CREATE INDEX IF NOT EXISTS idx_sales_register_id ON public.sales (register_id);
+CREATE INDEX IF NOT EXISTS idx_sales_seller_user_id ON public.sales (seller_user_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_branch_id ON public.stock_movements (branch_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movements_created_by ON public.stock_movements (created_by);
+CREATE INDEX IF NOT EXISTS idx_supplier_payments_branch_id ON public.supplier_payments (branch_id);
+CREATE INDEX IF NOT EXISTS idx_supplier_payments_commerce_id ON public.supplier_payments (commerce_id);
+CREATE INDEX IF NOT EXISTS idx_supplier_payments_created_by ON public.supplier_payments (created_by);
+COMMIT;
