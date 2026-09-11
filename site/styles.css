@@ -7935,6 +7935,7 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
 .login-card.auth-standalone-card .login-form label { color: #262521; }
 .login-card.auth-standalone-card .auth-route-note { color: #5a5852; }
 .login-card.auth-standalone-card .auth-route-note a,
+.login-card.auth-standalone-card .auth-inline-link,
 .login-card.auth-standalone-card .auth-support .auth-text-action {
   color: #c81e1a;
   font-weight: 800;
@@ -7945,6 +7946,8 @@ html:has(.catalog-form-modal), body.catalog-form-open { overflow-x: hidden; }
 }
 .login-card.auth-standalone-card .auth-route-note a:hover,
 .login-card.auth-standalone-card .auth-route-note a:focus-visible,
+.login-card.auth-standalone-card .auth-inline-link:hover,
+.login-card.auth-standalone-card .auth-inline-link:focus-visible,
 .login-card.auth-standalone-card .auth-support .auth-text-action:hover,
 .login-card.auth-standalone-card .auth-support .auth-text-action:focus-visible {
   color: #fff;
