@@ -1518,22 +1518,44 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Sucursal actualizada.' }
   }
 
-  const selectBranch = (branchId) => {
+  const selectBranch = async (branchId) => {
     if (!state.branches.some((branch) => branch.id === branchId)) return { ok: false, message: 'Sucursal no encontrada.' }
     state.business.currentBranchId = branchId
     const currentRegister = getRegister(state, state.business.currentRegisterId)
     if (!currentRegister || currentRegister.branchId !== branchId) {
       state.business.currentRegisterId = state.registers.find((register) => register.branchId === branchId)?.id || ''
     }
+    if (cloudCoreAdapter) {
+      const registerId = state.business.currentRegisterId
+      if (!registerId) return { ok: false, message: 'No hay caja activa para esa sucursal.' }
+      try {
+        await cloudCoreAdapter.setActiveContext({ branchId, registerId })
+        await syncFromCloud()
+        return { ok: true, message: 'Sucursal actual cambiada.' }
+      } catch (error) {
+        await syncFromCloud().catch(() => {})
+        return { ok: false, message: error?.message || 'No se pudo cambiar la sucursal en el servidor.' }
+      }
+    }
     save()
-    return { ok: true }
+    return { ok: true, message: 'Sucursal actual cambiada.' }
   }
 
-  const selectRegister = (registerId) => {
+  const selectRegister = async (registerId) => {
     const register = getRegister(state, registerId)
     if (!register) return { ok: false, message: 'Caja no encontrada.' }
     state.business.currentBranchId = register.branchId
     state.business.currentRegisterId = register.id
+    if (cloudCoreAdapter) {
+      try {
+        await cloudCoreAdapter.setActiveContext({ branchId: register.branchId, registerId: register.id })
+        await syncFromCloud()
+        return { ok: true, message: 'Caja actual cambiada.' }
+      } catch (error) {
+        await syncFromCloud().catch(() => {})
+        return { ok: false, message: error?.message || 'No se pudo cambiar la caja en el servidor.' }
+      }
+    }
     save()
     return { ok: true, message: 'Caja actual cambiada.' }
   }
