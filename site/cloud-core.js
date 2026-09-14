@@ -34,6 +34,7 @@ export const createSupabaseCoreAdapter = (config) => {
     'app_public_toggle_user_active',
     'app_public_upsert_product',
     'app_public_open_cash_session',
+    'app_public_set_active_context',
     'app_public_close_cash_session',
     'app_public_create_cash_movement',
     'app_public_create_sale',
@@ -48,7 +49,7 @@ export const createSupabaseCoreAdapter = (config) => {
   let pendingModules = null
   const mutationModules = {
     app_public_upsert_customer: ['customers'], app_public_upsert_supplier: ['purchases'], app_public_upsert_product: ['products', 'stock'],
-    app_public_open_cash_session: ['cash'], app_public_close_cash_session: ['cash'], app_public_create_cash_movement: ['cash'],
+    app_public_open_cash_session: ['cash'], app_public_set_active_context: ['settings', 'cash'], app_public_close_cash_session: ['cash'], app_public_create_cash_movement: ['cash'],
     app_public_create_sale: ['sales', 'cash', 'products', 'customers', 'invoices'], ...cloudMutationModules, app_public_register_invoice_payment: ['invoices', 'sales', 'cash', 'customers'],
     app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock'], app_public_upsert_document: ['invoices', 'tickets', 'sales', 'audit'],
     app_public_upsert_branch: ['settings', 'cash'], app_public_upsert_register: ['settings', 'cash'], app_public_upsert_user: ['settings'], app_public_toggle_user_active: ['settings'],
@@ -259,6 +260,13 @@ export const createSupabaseCoreAdapter = (config) => {
         p_session_token: getSessionToken(),
         p_register_id: payload?.registerId || null,
         p_opening_amount: Number(payload?.openingAmount || 0),
+      })
+    },
+    async setActiveContext(payload) {
+      return rpc('app_public_set_active_context', {
+        p_session_token: getSessionToken(),
+        p_branch_id: payload?.branchId || null,
+        p_register_id: payload?.registerId || null,
       })
     },
     async closeCashSession(payload) {
