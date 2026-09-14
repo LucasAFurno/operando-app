@@ -1579,7 +1579,7 @@ const loginViewV2 = (ui) => `
           <form class="login-form" data-form="login" autocomplete="off">
             <label>Usuario o email<input type="text" name="identifier" value="" placeholder="tu usuario" autocomplete="username" autocapitalize="off" spellcheck="false" data-lpignore="true" required /></label>
             <label>Clave<input type="password" name="pin" placeholder="Tu clave" autocomplete="current-password" required /></label>
-            <input type="hidden" name="instanceKey" value="${ui.cloudConnection.environment === 'development' ? (ui.cloudConnection.instanceKey || 'operando-dev') : ''}" />
+            <input type="hidden" name="instanceKey" value="${authInstanceKey || (ui.cloudConnection.environment === 'development' ? (ui.cloudConnection.instanceKey || 'operando-dev') : '')}" />
             ${window.__operandoTurnstileSiteKey ? `<div class="turnstile-container" data-sitekey="${window.__operandoTurnstileSiteKey}"></div>` : ''}
             <p class="login-hints">Si no recuerdas tu clave, puedes pedir recuperacion o hablar con soporte.</p>
             ${loginMessage ? `<p class="login-error">${loginMessage}</p>` : ''}
@@ -3592,15 +3592,22 @@ const bootstrap = async () => {
   if (!window.operandoDesktop && !isLocalDevelopment) {
     safeStorage.removeItem(dataStorageKey)
     safeStorage.removeItem(cloudConfigStorageKey)
-    safeStorage.removeItem(instanceStorageKey)
+    // Keep last commerce instanceKey so cashiers can sign in by login_name
+    // after an owner session on the same browser. Never default to cloud-config
+    // keys like operando-prod (platform), which are not commerce instances.
     safeStorage.removeItem(themeStorageKey)
     safeStorage.removeItem(sectionStorageKey)
   }
-  authInstanceKey = normalizeInstanceKey(
-    safeStorage.getItem(instanceStorageKey, '')
-    || authConfig?.instanceKey
-    || 'operando-dev'
-  )
+  const persistedCommerceInstance = String(safeStorage.getItem(instanceStorageKey, '') || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]/g, '-')
+  const platformInstanceKey = String(authConfig?.instanceKey || '').trim().toLowerCase()
+  const isPlatformInstanceKey = (key) => {
+    const value = String(key || '').trim().toLowerCase()
+    return !value || value === platformInstanceKey || value === 'operando-prod'
+  }
+  authInstanceKey = isPlatformInstanceKey(persistedCommerceInstance) ? '' : persistedCommerceInstance
   const storeOptions = {
     initialCloudConfig: authConfig,
     requireCloud: !window.operandoDesktop && !isLocalDevelopment,
@@ -3619,7 +3626,7 @@ const bootstrap = async () => {
       }
     }
     if (store.getCloudConnection().enabled && authManager) {
-      setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey })
+      setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey || platformInstanceKey || 'operando-dev' })
     }
     if (store.getCloudConnection().enabled && authManager && setupStatus?.initialized) {
       const restoredSession = await authManager.restoreSession()
@@ -3918,12 +3925,19 @@ const handleSubmit = async (event) => {
       // el navegador conserva un fragmento o una URL antigua.
       recoveryState = null
       authViewMode = 'login'
-      const requestedInstanceKey = String(formData.get('instanceKey') || '').trim()
+      const requestedInstanceKey = String(formData.get('instanceKey') || '').trim().toLowerCase()
       const identifier = String(formData.get('identifier') || '').trim()
       const pin = String(formData.get('pin') || '')
       if (!authManager) throw new Error('La conexión con la operación no está configurada.')
-      const sessionPayload = await authManager.signIn({ instanceKey: requestedInstanceKey || null, identifier, pin })
-      persistInstanceKey(sessionPayload?.commerceContext?.instance_key || requestedInstanceKey || authInstanceKey)
+      // login_name users need a commerce instanceKey. Prefer form → last commerce
+      // session. Never send platform keys (operando-prod / cloud-config).
+      const platformKey = String(initialCloudConfig?.instanceKey || '').trim().toLowerCase()
+      const candidateInstance = requestedInstanceKey || authInstanceKey || ''
+      const resolvedInstanceKey = (!candidateInstance || candidateInstance === platformKey || candidateInstance === 'operando-prod')
+        ? null
+        : candidateInstance
+      const sessionPayload = await authManager.signIn({ instanceKey: resolvedInstanceKey, identifier, pin })
+      persistInstanceKey(sessionPayload?.commerceContext?.instance_key || resolvedInstanceKey || authInstanceKey)
       // Turnstile tokens are single-use. signIn already consumed the token;
       // do not call setup_status here with the same token or a valid login is
       // incorrectly reported as an expired security check.
