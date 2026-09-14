@@ -18,7 +18,7 @@ const signupPath = '/crear-cuenta/'
 const recoveryPath = '/recuperar-clave/'
 const resetPasswordPath = '/restablecer-clave/'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20quiero%20informacion%20de%20operando.app.'
-const gtmContainerId = String(process.env.OPERANDO_GTM_ID || '').trim()
+const gtmContainerId = String(process.env.OPERANDO_GTM_ID || 'GTM-WFW5KTHS').trim()
 const gtmHeadSnippet = gtmContainerId ? [
   '<script>',
   'window.dataLayer=window.dataLayer||[];',
@@ -3309,8 +3309,23 @@ const renderMarketingPage = (page) => {
     </div>
     <a href="${pageSupportUrl}" class="marketing-floating-whatsapp" target="_blank" rel="noreferrer" data-analytics="whatsapp_support">Hablar por WhatsApp</a>
     <script>
+      const track = function (eventName, params) {
+        if (!Array.isArray(window.dataLayer)) return;
+        window.dataLayer.push(Object.assign({
+          event: eventName,
+          page_title: document.title,
+          page_location: window.location.href,
+          page_path: window.location.pathname
+        }, params || {}));
+      };
       const demoForm = document.querySelector('[data-demo-form]');
       if (demoForm) {
+        let formStarted = false;
+        demoForm.addEventListener('focusin', function () {
+          if (formStarted) return;
+          formStarted = true;
+          track('form_start', { form_id: 'demo_form' });
+        });
         demoForm.addEventListener('submit', function (event) {
           event.preventDefault();
           const data = new FormData(demoForm);
@@ -3323,26 +3338,55 @@ const renderMarketingPage = (page) => {
             data.get('cajas') ? 'Cajas: ' + data.get('cajas') : ''
           ].filter(Boolean);
           const href = 'https://wa.me/5491135708345?text=' + encodeURIComponent(parts.join('\\n'));
-          if (Array.isArray(window.dataLayer)) {
-            window.dataLayer.push({
-              event: 'generate_lead',
-              page_title: document.title,
-              page_location: window.location.href
-            });
-          }
+          track('form_submit', { form_id: 'demo_form' });
+          track('generate_lead', { lead_source: 'demo_form', form_id: 'demo_form' });
           window.open(href, '_blank', 'noopener,noreferrer');
         });
       }
       document.querySelectorAll('[data-analytics]').forEach(function (element) {
         element.addEventListener('click', function () {
-          if (Array.isArray(window.dataLayer)) {
-            window.dataLayer.push({
-              event: element.getAttribute('data-analytics'),
-              page_title: document.title,
-              page_location: window.location.href
-            });
+          const href = element.getAttribute('href') || '';
+          const destination = href ? new URL(href, window.location.origin) : null;
+          track(element.getAttribute('data-analytics'), {
+            link_text: (element.textContent || '').trim().slice(0, 80),
+            link_location: element.closest('header, nav, main, footer')?.tagName.toLowerCase() || 'body',
+            destination_path: destination && destination.origin === window.location.origin ? destination.pathname : undefined
+          });
+          if (destination && destination.pathname === '/crear-cuenta/') {
+            track('begin_signup', { signup_location: element.getAttribute('data-analytics') || 'link' });
+          }
+          if (destination && destination.hostname === 'wa.me') {
+            track('generate_lead', { lead_source: 'whatsapp', link_location: element.getAttribute('data-analytics') || 'link' });
           }
         });
+      });
+      document.querySelectorAll('.pricing-plan:not(.pricing-ai) .pricing-plan-action').forEach(function (element) {
+        element.addEventListener('click', function () {
+          const plan = element.closest('.pricing-plan');
+          track('select_item', {
+            item_list_name: 'pricing_plans',
+            item_id: plan?.querySelector('.pricing-plan-index')?.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'pricing_plan',
+            item_name: plan?.querySelector('h3')?.textContent.trim() || 'Plan'
+          });
+        });
+      });
+      document.querySelectorAll('[data-ai-interest]').forEach(function (element) {
+        element.addEventListener('click', function () {
+          track('select_content', { content_type: 'ai_waitlist', item_id: 'ai_interest' });
+        });
+      });
+      [25, 50, 75, 90].forEach(function (threshold) {
+        let sent = false;
+        const sendScrollDepth = function () {
+          if (sent) return;
+          const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+          if (scrollable <= 0 || (window.scrollY / scrollable) * 100 < threshold) return;
+          sent = true;
+          track('scroll_depth', { percent_scrolled: threshold });
+          window.removeEventListener('scroll', sendScrollDepth);
+        };
+        window.addEventListener('scroll', sendScrollDepth, { passive: true });
+        sendScrollDepth();
       });
       const formatPublicMetric = function (value) {
         return new Intl.NumberFormat('es-AR').format(value);
