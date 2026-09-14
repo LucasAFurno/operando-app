@@ -5581,16 +5581,28 @@ const bindEvents = () => {
         render()
         return
       }
-      const result = store.selectBranch(button.dataset.id)
-      feedbackMessage = result.ok ? 'Sucursal actual cambiada.' : (result.message || '')
+      try {
+        const result = await store.selectBranch(button.dataset.id)
+        feedbackMessage = result?.ok === false
+          ? (result.message || 'No se pudo cambiar la sucursal.')
+          : (result?.message || 'Sucursal actual cambiada.')
+      } catch (error) {
+        feedbackMessage = error?.message || 'No se pudo cambiar la sucursal.'
+      }
       render()
     })
   }
   for (const button of document.querySelectorAll('[data-register-action]')) {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       if (button.dataset.registerAction === 'select') {
-        const result = store.selectRegister(button.dataset.id)
-        feedbackMessage = result.message || ''
+        try {
+          const result = await store.selectRegister(button.dataset.id)
+          feedbackMessage = result?.ok === false
+            ? (result.message || 'No se pudo cambiar la caja.')
+            : (result?.message || 'Caja actual cambiada.')
+        } catch (error) {
+          feedbackMessage = error?.message || 'No se pudo cambiar la caja.'
+        }
         render()
         return
       }
