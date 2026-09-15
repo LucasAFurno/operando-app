@@ -301,7 +301,14 @@ Deno.serve(async (request) => {
 
     // login
     const deviceHash = await digest(String(body.deviceId || 'unknown-device'))
-    const login = await rpc('app_public_sign_in', { p_instance_key: body.instanceKey || '', p_identifier: body.identifier || '', p_pin: body.pin || '', p_device_hash: deviceHash }).then((response) => response.json())
+    const loginResponse = await rpc('app_public_sign_in', { p_instance_key: body.instanceKey || '', p_identifier: body.identifier || '', p_pin: body.pin || '', p_device_hash: deviceHash })
+    const login = await loginResponse.json()
+    if (!loginResponse.ok) {
+      // Preserve the database error code so the client can show a useful
+      // authentication message instead of collapsing infrastructure failures
+      // into the generic access_denied response below.
+      return json({ error: login?.message || login?.code || 'access_denied' }, loginResponse.status || 403, headers)
+    }
     if (!login?.session_token) return json({ error: 'invalid_credentials' }, 401, headers)
     if (login.new_device && Deno.env.get('RESEND_API_KEY')) {
       // Do not block login on email delivery latency.
