@@ -3037,7 +3037,43 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Conexion cloud desactivada.' }
   }
 
-  const markProductGuideSeen = async () => {
+  const listAuthSessions = async () => {
+    if (!cloudCoreAdapter?.listSessions) return { ok: false, message: 'Sesiones no disponibles.', sessions: [], ttlHours: 48 }
+    try {
+      const result = await cloudCoreAdapter.listSessions()
+      return {
+        ok: result?.ok !== false,
+        sessions: Array.isArray(result?.sessions) ? result.sessions : [],
+        ttlHours: Number(result?.ttl_hours || 48),
+        message: result?.message || '',
+      }
+    } catch (error) {
+      return { ok: false, message: error?.message || 'No se pudieron listar las sesiones.', sessions: [], ttlHours: 48 }
+    }
+  }
+
+  const revokeAuthSession = async (targetToken) => {
+    if (!cloudCoreAdapter?.revokeSession) return { ok: false, message: 'No se puede cerrar esa sesión.' }
+    try {
+      await cloudCoreAdapter.revokeSession({ targetToken })
+      return { ok: true, message: 'Sesión cerrada.' }
+    } catch (error) {
+      return { ok: false, message: error?.message || 'No se pudo cerrar la sesión.' }
+    }
+  }
+
+  const revokeOtherAuthSessions = async () => {
+    if (!cloudCoreAdapter?.revokeOtherSessions) return { ok: false, message: 'No se pueden cerrar las otras sesiones.' }
+    try {
+      const result = await cloudCoreAdapter.revokeOtherSessions()
+      const count = Number(result?.revoked_count || 0)
+      return { ok: true, message: count ? `Cerraste ${count} sesión${count === 1 ? '' : 'es'} en otros dispositivos.` : 'No había otras sesiones activas.', revokedCount: count }
+    } catch (error) {
+      return { ok: false, message: error?.message || 'No se pudieron cerrar las otras sesiones.' }
+    }
+  }
+
+    const markProductGuideSeen = async () => {
     if (!cloudCoreAdapter?.markProductGuideSeen) return { ok: true, productGuideSeenAt: new Date().toISOString() }
     const result = await cloudCoreAdapter.markProductGuideSeen()
     const productGuideSeenAt = result?.product_guide_seen_at || result?.productGuideSeenAt || new Date().toISOString()
@@ -3075,6 +3111,9 @@ export const createBrowserDataStore = (options = {}) => {
     authenticateUser,
     signOut,
     openCashSession,
+    listAuthSessions,
+    revokeAuthSession,
+    revokeOtherAuthSessions,
     closeCashSession,
     createCashMovement,
     createCustomer,

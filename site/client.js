@@ -214,6 +214,9 @@ let accountMenuOpen = false
 let dismissedAccountAlertIds = new Set()
 let supportMenuOpen = false
 let settingsPanelOpen = ''
+let authSessions = []
+let authSessionsTtlHours = 48
+let authSessionsBusy = false
 let progressiveProfilePromptOpen = true
 let progressiveProfileStep = 1
 let progressiveProfileGoalsDraft = null
@@ -3101,6 +3104,32 @@ const ownerAdminViewV2 = (ui) => {
   </section>`
 }
 
+
+const formatSessionWhen = (value) => {
+  if (!value) return '—'
+  try {
+    return new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+  } catch {
+    return String(value)
+  }
+}
+
+const loadAuthSessionsPanel = async () => {
+  if (!store?.listAuthSessions || authSessionsBusy) return
+  authSessionsBusy = true
+  try {
+    const result = await store.listAuthSessions()
+    authSessions = result?.sessions || []
+    authSessionsTtlHours = Number(result?.ttlHours || 48)
+    if (result?.ok === false) feedbackMessage = result.message || 'No se pudieron cargar las sesiones.'
+  } catch (error) {
+    authSessions = []
+    feedbackMessage = error?.message || 'No se pudieron cargar las sesiones.'
+  } finally {
+    authSessionsBusy = false
+  }
+}
+
 const settingsView = (ui) => settingsViewV2(ui)
 
 const settingsViewV2 = (ui) => `
@@ -3137,6 +3166,7 @@ const settingsViewV2 = (ui) => `
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'commerce' ? 'is-active' : ''}" data-settings-panel="commerce" aria-expanded="${settingsPanelOpen === 'commerce' ? 'true' : 'false'}"><strong>Datos del comercio</strong><span>Nombre, razon social y propietario</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'progressive-profile' ? 'is-active' : ''}" data-settings-panel="progressive-profile" aria-expanded="${settingsPanelOpen === 'progressive-profile' ? 'true' : 'false'}"><strong>Perfil opcional</strong><span>${ui.progressiveProfile.status === 'complete' ? 'Personalización lista' : 'Continuar cuando quieras'}</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'users' ? 'is-active' : ''}" data-settings-panel="users" aria-expanded="${settingsPanelOpen === 'users' ? 'true' : 'false'}"><strong>Usuarios y permisos</strong><span>${ui.enrichedUsers.length} cuentas del negocio</span></button>
+        <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'sessions' ? 'is-active' : ''}" data-settings-panel="sessions" aria-expanded="${settingsPanelOpen === 'sessions' ? 'true' : 'false'}"><strong>Sesiones activas</strong><span>TTL ${authSessionsTtlHours}h · cerrá dispositivos</span></button>
         <button type="button" class="settings-section-trigger ${settingsPanelOpen === 'modules' ? 'is-active' : ''}" data-settings-panel="modules" aria-expanded="${settingsPanelOpen === 'modules' ? 'true' : 'false'}"><strong>Plan y modulos</strong><span>${ui.snapshot.business.enabledModules.length} modulos activos</span></button>
         ${canViewBranches ? `<button type="button" class="settings-section-trigger ${settingsPanelOpen === 'branches' ? 'is-active' : ''}" data-settings-panel="branches" aria-expanded="${settingsPanelOpen === 'branches' ? 'true' : 'false'}"><strong>Sucursales</strong><span>${ui.snapshot.branches.length} locales configurados</span></button>` : ''}
         ${canViewRegisters ? `<button type="button" class="settings-section-trigger ${settingsPanelOpen === 'registers' ? 'is-active' : ''}" data-settings-panel="registers" aria-expanded="${settingsPanelOpen === 'registers' ? 'true' : 'false'}"><strong>Puestos de cobro</strong><span>${ui.enrichedRegisters.length} cajas configuradas</span></button>` : ''}
@@ -3172,6 +3202,11 @@ const settingsViewV2 = (ui) => `
           </form>
           ${dataTable(['Usuario', 'Perfil', 'Estado', 'Acceso', 'Gestion'], ui.enrichedUsers.map((entry) => `<div class="data-row"><span>${entry.fullName}${entry.isOwner ? ' <small>/ Propietario</small>' : ''}<br /><small>${entry.loginName ? `Usuario: ${entry.loginName}` : (entry.email || 'Sin usuario')}</small></span><span>${entry.roleName}</span><span>${entry.status === 'active' ? 'Activo' : entry.status === 'pending' ? 'Pendiente' : 'Deshabilitado'}</span><span>${entry.id === ui.user.id ? 'Sesion actual' : entry.isOwner ? 'Control total' : `${entry.moduleScopeCount} modulos / ${entry.blockedPermissionsCount} bloqueos`}</span><span>${userActionButtons(entry)}</span></div>`), 'is-stable settings-users-table')}
       </article>` : ''}
+      ${settingsPanelOpen === 'sessions' ? `<article class="panel settings-expand-panel" data-settings-content="sessions"><div class="panel-head"><div><h3>Sesiones activas</h3><p>Dispositivos con acceso a tu cuenta. Las sesiones vencen a las ${authSessionsTtlHours} horas.</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="refresh-auth-sessions" ${authSessionsBusy ? 'disabled' : ''}>Actualizar</button><button type="button" class="danger-action" data-action="revoke-other-auth-sessions" ${authSessionsBusy ? 'disabled' : ''}>Cerrar otras sesiones</button></div></div>
+        ${authSessionsBusy && !authSessions.length ? '<p class="empty-state">Cargando sesiones…</p>' : ''}
+        ${!authSessionsBusy && !authSessions.length ? '<p class="empty-state">No hay sesiones activas para mostrar.</p>' : ''}
+        ${authSessions.length ? `<div class="data-table sessions-table">${authSessions.map((session) => `<div class="data-row"><span><strong>${session.is_current ? 'Este dispositivo' : 'Otro dispositivo'}</strong><small>Entró ${formatSessionWhen(session.created_at)} · visto ${formatSessionWhen(session.last_seen_at)}</small><small>Vence ${formatSessionWhen(session.expires_at)}</small></span><span class="inline-action-group">${session.is_current ? '<em class="badge is-success">Actual</em>' : `<button type="button" class="inline-action danger" data-revoke-session-token="${escapeHtml(String(session.token || ''))}">Cerrar</button>`}</span></div>`).join('')}</div>` : ''}
+        <p class="form-note">Si cerrás la sesión actual, vas a tener que ingresar de nuevo.</p></article>` : ''}
       ${settingsPanelOpen === 'modules' ? `<article class="panel settings-expand-panel" data-settings-content="modules"><div class="panel-head"><div><h3>Plan y modulos</h3><p>Activa solo lo que el cliente necesita</p></div></div>
         <form class="form-grid compact-form" data-form="module-preset">
           <label>Pack<select name="presetKey"><option value="basic" ${ui.snapshot.business.activePlan === 'basic' ? 'selected' : ''}>Gestion base</option><option value="retail" ${ui.snapshot.business.activePlan === 'retail' ? 'selected' : ''}>Mostrador</option><option value="full" ${ui.snapshot.business.activePlan === 'full' ? 'selected' : ''}>Operacion</option><option value="multi" ${ui.snapshot.business.activePlan === 'multi' ? 'selected' : ''}>Multi sucursal</option></select></label>
@@ -4834,6 +4869,7 @@ const bindEvents = () => {
       settingsPanelOpen = settingsPanelOpen === nextPanel ? '' : nextPanel
       render()
       if (!settingsPanelOpen) return
+      if (settingsPanelOpen === 'sessions') void loadAuthSessionsPanel().then(() => render())
       requestAnimationFrame(() => document.querySelector(`[data-settings-content="${settingsPanelOpen}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     })
   }
@@ -5663,6 +5699,48 @@ const bindEvents = () => {
   if (importInput) importInput.addEventListener('change', importData)
   const resetButton = document.querySelector('[data-action="reset-data"]')
   if (resetButton) resetButton.addEventListener('click', () => { const result = store.resetData(); feedbackMessage = result?.message || ''; render() })
+  const refreshSessionsButton = document.querySelector('[data-action="refresh-auth-sessions"]')
+  if (refreshSessionsButton) refreshSessionsButton.addEventListener('click', async () => {
+    await loadAuthSessionsPanel()
+    render()
+  })
+  const revokeOthersButton = document.querySelector('[data-action="revoke-other-auth-sessions"]')
+  if (revokeOthersButton) revokeOthersButton.addEventListener('click', async () => {
+    if (!window.confirm('¿Cerrar todas las sesiones en otros dispositivos? Vas a seguir en este.')) return
+    try {
+      const result = await store.revokeOtherAuthSessions()
+      feedbackMessage = result?.message || ''
+      await loadAuthSessionsPanel()
+    } catch (error) {
+      feedbackMessage = error?.message || 'No se pudieron cerrar las otras sesiones.'
+    }
+    render()
+  })
+  for (const button of document.querySelectorAll('[data-revoke-session-token]')) {
+    button.addEventListener('click', async () => {
+      const token = button.dataset.revokeSessionToken || ''
+      if (!token) return
+      if (!window.confirm('¿Cerrar esta sesión?')) return
+      try {
+        const result = await store.revokeAuthSession(token)
+        feedbackMessage = result?.message || ''
+        if (result?.ok) {
+          const current = authSessions.find((entry) => entry.is_current)
+          if (current && String(current.token) === String(token)) {
+            if (authManager) await authManager.signOut()
+            store.signOut()
+            authViewMode = 'login'
+            window.history.replaceState({}, '', '/ingresar/')
+          } else {
+            await loadAuthSessionsPanel()
+          }
+        }
+      } catch (error) {
+        feedbackMessage = error?.message || 'No se pudo cerrar la sesión.'
+      }
+      render()
+    })
+  }
   const signOutButton = document.querySelector('[data-action="sign-out"]')
   if (signOutButton) signOutButton.addEventListener('click', async () => {
     if (authManager) await authManager.signOut()
