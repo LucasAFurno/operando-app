@@ -3625,10 +3625,10 @@ const bootstrap = async () => {
         signupMessage = ''
       }
     }
+    // Do not preflight setup_status during bootstrap. It requires a one-shot
+    // Turnstile token before the widget has rendered and leaves a stale login
+    // error visible next to an already successful challenge.
     if (store.getCloudConnection().enabled && authManager) {
-      setupStatus = await authManager.getSetupStatus({ instanceKey: authInstanceKey || platformInstanceKey || 'operando-dev' })
-    }
-    if (store.getCloudConnection().enabled && authManager && setupStatus?.initialized) {
       const restoredSession = await authManager.restoreSession()
       if (restoredSession?.sessionToken) {
         authInstanceKey = normalizeInstanceKey(restoredSession.commerceContext?.instance_key || authInstanceKey)
