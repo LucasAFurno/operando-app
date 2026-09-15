@@ -3943,7 +3943,7 @@ const handleSubmit = async (event) => {
       if (!authManager) throw new Error('La conexión con la operación no está configurada.')
       // login_name users need a commerce instanceKey. Prefer form → last commerce
       // session. Never send platform keys (operando-prod / cloud-config).
-      const platformKey = String(initialCloudConfig?.instanceKey || '').trim().toLowerCase()
+      const platformKey = String(store?.getCloudConnection?.()?.instanceKey || '').trim().toLowerCase()
       const candidateInstance = requestedInstanceKey || authInstanceKey || ''
       const resolvedInstanceKey = (!candidateInstance || candidateInstance === platformKey || candidateInstance === 'operando-prod')
         ? null
