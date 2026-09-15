@@ -3428,18 +3428,29 @@ const renderTurnstileWidget = (attempt = 0) => {
     try {
       target.dataset.rendered = 'true'
       let widgetId = ''
+      globalThis.__operandoTurnstileToken = ''
       widgetId = globalThis.turnstile.render(target, {
         sitekey: String(target.dataset.sitekey || ''),
         action: 'turnstile-spin-v2',
         size: 'flexible',
         theme: 'dark',
+        callback: (token) => {
+          globalThis.__operandoTurnstileToken = String(token || '')
+          loginMessage = ''
+          signupMessage = ''
+          const staleSecurityMessage = target.parentElement?.querySelector('.login-error')
+          if (staleSecurityMessage?.textContent?.includes('verificacion de seguridad')) staleSecurityMessage.remove()
+        },
         'expired-callback': () => {
+          globalThis.__operandoTurnstileToken = ''
           try { globalThis.turnstile?.reset(widgetId) } catch { /* retry on next render */ }
         },
         'timeout-callback': () => {
+          globalThis.__operandoTurnstileToken = ''
           try { globalThis.turnstile?.reset(widgetId) } catch { /* retry on next render */ }
         },
         'error-callback': () => {
+          globalThis.__operandoTurnstileToken = ''
           if (widgetId) globalThis.turnstile?.remove(widgetId)
           showUnavailableMessage()
         },
