@@ -641,6 +641,7 @@ const mapPublicAuthError = (message, context = 'login') => {
     const remaining = Number(remainingMatch[1])
     return `La clave no coincide. Te queda${remaining === 1 ? '' : 'n'} ${remaining} intento${remaining === 1 ? '' : 's'} antes del bloqueo temporal. Si no la recuerdas, puedes recuperar tu clave.`
   }
+  if (!messages[normalized]) console.error('[operando-auth-error]', normalized)
   return messages[normalized] || (context === 'signup'
     ? 'No se pudo crear la cuenta. Revisá los datos e intentá nuevamente.'
     : 'No se pudo completar la operación. Revisá los datos e intentá nuevamente.')
