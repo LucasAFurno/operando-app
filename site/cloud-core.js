@@ -269,6 +269,22 @@ export const createSupabaseCoreAdapter = (config) => {
         p_register_id: payload?.registerId || null,
       })
     },
+    async listSessions() {
+      return rpc('app_public_list_sessions', {
+        p_session_token: getSessionToken(),
+      })
+    },
+    async revokeSession(payload) {
+      return rpc('app_public_revoke_session', {
+        p_session_token: getSessionToken(),
+        p_target_token: payload?.token || payload?.targetToken || null,
+      })
+    },
+    async revokeOtherSessions() {
+      return rpc('app_public_revoke_other_sessions', {
+        p_session_token: getSessionToken(),
+      })
+    },
     async closeCashSession(payload) {
       return rpc('app_public_close_cash_session', {
         p_session_token: getSessionToken(),
