@@ -3428,9 +3428,14 @@ const renderTurnstileWidget = (attempt = 0) => {
     try {
       target.dataset.rendered = 'true'
       let widgetId = ''
+      // Non-interactive Turnstile: spinner only (no checkbox). Gateway still
+      // requires action === 'turnstile-spin-v2'. The Cloudflare dashboard widget
+      // for this sitekey must also be set to Non-Interactive.
       widgetId = globalThis.turnstile.render(target, {
         sitekey: String(target.dataset.sitekey || ''),
         action: 'turnstile-spin-v2',
+        appearance: 'always',
+        execution: 'render',
         size: 'flexible',
         theme: 'dark',
         'expired-callback': () => {
