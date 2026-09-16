@@ -1748,8 +1748,9 @@ const dashboardViewV2 = (ui) => {
   const visibleActivity = ui.recentCommerceActivity.slice(0, 4)
   const activityTime = (createdAt) => String(createdAt || '').slice(11, 16) || '--:--'
   const topProductMax = Math.max(1, ...ui.topProducts.slice(0, 5).map(([, qty]) => Number(qty) || 0))
+  const profileCreated = Boolean(ui.commerceContext?.commerce_id)
   const setupTasks = [
-    { label: 'Definí tu operación', detail: ui.progressiveProfile.status === 'complete' ? 'Perfil listo' : 'Rubro y prioridades', section: 'dashboard', done: ui.progressiveProfile.status === 'complete', action: 'open-progressive-profile' },
+    { label: 'Definí tu operación', detail: ui.progressiveProfile.status === 'complete' ? 'Perfil listo' : (profileCreated ? 'Perfil creado' : 'Rubro y prioridades'), section: 'dashboard', done: ui.progressiveProfile.status === 'complete' || profileCreated, action: 'open-progressive-profile' },
     { label: 'Cargá tu catálogo', detail: `${ui.snapshot.products.length} producto${ui.snapshot.products.length === 1 ? '' : 's'} disponible${ui.snapshot.products.length === 1 ? '' : 's'}`, section: 'productos', done: ui.snapshot.products.length > 0 },
     { label: 'Prepará la caja', detail: ui.openCashSession ? 'Caja abierta' : 'Elegí cómo cobrar', section: 'caja', done: Boolean(ui.openCashSession) },
     { label: 'Hacé tu primera venta', detail: ui.enrichedSales.length ? `${ui.enrichedSales.length} venta${ui.enrichedSales.length === 1 ? '' : 's'} registrada${ui.enrichedSales.length === 1 ? '' : 's'}` : 'Probá el flujo completo', section: 'ventas', done: ui.enrichedSales.length > 0 },
