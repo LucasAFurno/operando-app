@@ -26,8 +26,13 @@ const normalizeSessionPayload = (payload) => {
   }
 }
 
-const readTurnstileToken = () => String(globalThis.document?.querySelector('input[name="cf-turnstile-response"]')?.value || '')
+const readTurnstileToken = () => String(
+  globalThis.__operandoTurnstileToken
+  || globalThis.document?.querySelector('input[name="cf-turnstile-response"]')?.value
+  || ''
+)
 const resetTurnstile = () => {
+  globalThis.__operandoTurnstileToken = ''
   try {
     globalThis.turnstile?.reset()
   } catch {
