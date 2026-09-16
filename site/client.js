@@ -358,7 +358,7 @@ const flushPendingScrollTarget = () => {
   })
 }
 
-const loadCloudAccess = async (sessionPayload = null) => {
+const loadCloudAccess = async (sessionPayload = null, { backgroundSync = false } = {}) => {
   if (!authManager) throw new Error('La conexion cloud no esta lista.')
   const currentSession = sessionPayload || authManager.getSession()
   if (!currentSession?.sessionToken) throw new Error('No hay sesion valida para sincronizar.')
@@ -370,7 +370,14 @@ const loadCloudAccess = async (sessionPayload = null) => {
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
-  await store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
+  const syncPromise = store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
+  if (backgroundSync) {
+    syncPromise.then(() => {
+      if (store?.isAuthenticated?.()) render()
+    }).catch(() => {})
+    return
+  }
+  await syncPromise
   store.setCloudAuthSession(currentSession.profile, [])
   startOperationalRealtime()
   return activeProfile
@@ -3917,7 +3924,10 @@ const handleSubmit = async (event) => {
   const form = event.currentTarget
   if (form.dataset.submitting === 'true') return
   form.dataset.submitting = 'true'
-  for (const button of form.querySelectorAll('button[type="submit"]')) button.disabled = true
+  for (const button of form.querySelectorAll('button[type="submit"]')) {
+    button.disabled = true
+    if (form.dataset.form === 'instance-setup') button.textContent = 'Creando cuenta…'
+  }
   const formData = new FormData(form, event.submitter)
   const kind = form.dataset.form
 
@@ -3958,7 +3968,7 @@ const handleSubmit = async (event) => {
       // do not call setup_status here with the same token or a valid login is
       // incorrectly reported as an expired security check.
       setupStatus = { initialized: true }
-      await loadCloudAccess(sessionPayload)
+      await loadCloudAccess(sessionPayload, { backgroundSync: true })
       activeSection = 'dashboard'
       saveSection()
       window.history.replaceState({ section: activeSection }, '', '/panel/')
