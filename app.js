@@ -1200,10 +1200,10 @@ const getUiState = () => {
     product: ['products', 'stock'], stock_movement: ['stock', 'products'], stock_adjustment: ['stock', 'products'], stock_transfer: ['stock', 'products'],
     purchase_receipt: ['purchases', 'products', 'stock'], supplier: ['purchases'], customer: ['customers'],
     invoice: ['invoices', 'sales'], ticket: ['tickets'], document: ['invoices'], branch: ['settings'], register: ['settings', 'cash'],
-    user: ['settings'], user_assignment: ['settings'], business: ['settings'], business_module: ['settings'], business_plan: ['settings'], session: ['settings'], system: ['settings'],
+    user: ['settings'], user_assignment: ['settings'], business: ['settings'], progressive_profile: ['settings'], business_module: ['settings'], business_plan: ['settings'], session: ['settings'], system: ['settings'],
   }
   const auditModuleLabels = { sales: 'Ventas', cash: 'Caja', stock: 'Stock', products: 'Productos', purchases: 'Compras', customers: 'Clientes', invoices: 'Facturación', tickets: 'Tickets', settings: 'Configuración' }
-  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', document: 'comprobante', branch: 'sucursal', register: 'caja', user: 'usuario', user_assignment: 'acceso de usuario', business: 'comercio', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
+  const auditEntityLabels = { sale: 'venta', cash_movement: 'movimiento de caja', cash_session: 'sesión de caja', product: 'producto', stock_movement: 'movimiento de stock', stock_adjustment: 'ajuste de stock', stock_transfer: 'transferencia de stock', purchase_receipt: 'ingreso de mercadería', supplier: 'proveedor', customer: 'cliente', invoice: 'factura', ticket: 'ticket', document: 'comprobante', branch: 'sucursal', register: 'caja', user: 'usuario', user_assignment: 'acceso de usuario', business: 'comercio', progressive_profile: 'perfil', business_module: 'módulo', business_plan: 'plan', session: 'sesión', system: 'sistema' }
   let enrichedAudit = byRecentDate(snapshot.auditLogs, 'createdAt').map((log) => {
     const afterData = log.afterData || log.after_data || {}
     const beforeData = log.beforeData || log.before_data || {}
@@ -1240,6 +1240,7 @@ const getUiState = () => {
     enabled: 'Habilitó una opción',
     disabled: 'Deshabilitó una opción',
   }
+  const recentActivityTitle = (log) => log.entityType === 'progressive_profile' ? 'Creación de perfil' : (auditActionLabels[log.action] || 'Actividad registrada')
   const recentCommerceActivity = [
     ...filteredSales.map((sale) => ({ id: `sale-${sale.id}`, module: 'sales', createdAt: sale.soldAt, title: 'Venta registrada', detail: `${sale.customerName} · ${money(sale.totalAmount)}` })),
     ...enrichedScopedReceipts.map((receipt) => ({ id: `receipt-${receipt.id}`, module: 'purchases', createdAt: receipt.receivedAt, title: 'Ingreso de mercadería', detail: `${receipt.productName} · ${receipt.supplierName}` })),
@@ -1247,7 +1248,7 @@ const getUiState = () => {
     ...scopedStockMovements.map((movement) => ({ id: `stock-${movement.id}`, module: 'stock', createdAt: movement.createdAt, title: 'Movimiento de stock', detail: `${productMap.get(movement.productId)?.name || 'Producto'} · ${Number(movement.quantity || 0) > 0 ? '+' : ''}${movement.quantity || 0}` })),
     ...enrichedAudit
       .filter((log) => !['sale', 'purchase_receipt', 'cash_movement', 'stock_adjustment', 'stock_transfer'].includes(log.entityType))
-      .map((log) => ({ id: `audit-${log.id}`, module: log.modules[0] || 'settings', createdAt: log.createdAt, title: auditActionLabels[log.action] || 'Actividad registrada', detail: `${log.actorName} · ${log.entityType}` })),
+      .map((log) => ({ id: `audit-${log.id}`, module: log.modules[0] || 'settings', createdAt: log.createdAt, title: recentActivityTitle(log), detail: `${log.actorName} · ${log.entityLabel}` })),
   ].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 50)
 
   return {
