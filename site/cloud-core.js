@@ -244,7 +244,7 @@ export const createSupabaseCoreAdapter = (config) => {
         p_session_token: getSessionToken(),
         p_product_id: payload?.id || null,
         p_name: payload?.name || '',
-        p_sku: payload?.sku || '',
+        p_sku: (String(payload?.sku || '').trim() || null),
         p_barcode: payload?.barcode || '',
         p_stock: Number(payload?.stock || 0),
         p_sale_price: Number(payload?.salePrice || 0),
