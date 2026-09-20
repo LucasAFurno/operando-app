@@ -4210,8 +4210,13 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
-    feedbackMessage = result.message || ''
+    try {
+      const result = await store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
+      feedbackMessage = result.message || ''
+      if (result.ok) stockAdjustmentFormOpen = false
+    } catch (error) {
+      feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo aplicar el ajuste de stock.', 'login')
+    }
   }
   if (kind === 'stock-transfer') {
     const search = String(formData.get('productSearch') || '').trim()
@@ -4227,8 +4232,13 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
-    feedbackMessage = result.message || ''
+    try {
+      const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
+      feedbackMessage = result.message || ''
+      if (result.ok) stockTransferFormOpen = false
+    } catch (error) {
+      feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo registrar la transferencia de stock.', 'login')
+    }
   }
   if (kind === 'supplier') {
     const payload = { name: formData.get('name'), contact: formData.get('contact'), phone: formData.get('phone'), email: formData.get('email'), cuit: formData.get('cuit'), address: formData.get('address'), balance: formData.get('balance'), lastDelivery: formData.get('lastDelivery'), category: formData.get('category') }
