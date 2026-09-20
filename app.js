@@ -4142,15 +4142,10 @@ const handleSubmit = async (event) => {
     const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), email: String(formData.get('email') || '').trim(), needsArca: wantsArca ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
     feedbackMessage = result.message || ''
     if (result.ok) {
-      if (wantsArca) {
-        progressiveProfilePromptOpen = false
-        resetProgressiveProfile()
-        activeSection = 'ajustes'
-        settingsPanelOpen = 'arca'
-        arcaSetupStep = 1
-        queueScrollToSelector('[data-settings-content="arca"]')
-        feedbackMessage = 'Perfil listo. Ahora podés activar ARCA paso a paso.'
-      } else progressiveProfileStep = 6
+      progressiveProfilePromptOpen = false
+      resetProgressiveProfile()
+      activeSection = 'dashboard'
+      feedbackMessage = wantsArca ? 'Perfil listo. Podés activar ARCA desde Ajustes cuando quieras.' : 'Perfil listo. Ya podés operar normalmente.'
     }
     else progressiveProfileError = result.message || 'No se pudieron guardar los datos. Intentá nuevamente.'
   }
@@ -5776,24 +5771,21 @@ const bindEvents = () => {
   for (const select of document.querySelectorAll('[data-sales-history-period]')) select.addEventListener('change', () => { salesHistoryPeriod = select.value || 'all'; listPagination.ventas.page = 1; render() })
   for (const select of document.querySelectorAll('[data-sales-history-payment]')) select.addEventListener('change', () => { salesHistoryPayment = select.value || 'all'; listPagination.ventas.page = 1; render() })
   for (const button of document.querySelectorAll('[data-sales-history-status]')) button.addEventListener('click', () => { salesHistoryStatus = button.dataset.salesHistoryStatus || 'all'; listPagination.ventas.page = 1; render() })
-  for (const choice of document.querySelectorAll('.progressive-profile-modal-form input[name="needsArca"][value="yes"]')) choice.addEventListener('change', async () => {
-    if (!choice.checked || progressiveProfileStep !== 5) return
-    captureProgressiveDraft()
-    const draft = progressiveProfileDraft || {}
-    const result = await store.updateProgressiveProfile({ country: draft.country || '', industry: draft.industry || '', phone: draft.phone || '', email: draft.email || '', needsArca: true, operationalGoals: draft.operationalGoals || [], status: 'complete' })
-    if (!result.ok) { progressiveProfileError = result.message || 'No se pudo guardar la selección.'; render(); return }
-    progressiveProfilePromptOpen = false
-    resetProgressiveProfile()
-    activeSection = 'ajustes'
-    settingsPanelOpen = 'arca'
-    arcaSetupStep = 1
-    queueScrollToSelector('[data-settings-content="arca"]')
-    feedbackMessage = 'Perfecto. Ahora activá ARCA paso a paso.'
-    render()
-  })
   for (const button of document.querySelectorAll('[data-action="dismiss-arca-celebration"]')) button.addEventListener('click', () => { arcaCelebrationVisible = false; uiFlagStorage.set('arcaCelebrationSeen', '1'); render() })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-next"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
-  for (const button of document.querySelectorAll('[data-action="progressive-profile-skip"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.min(5, progressiveProfileStep + 1); render(); focusProgressiveField() })
+  for (const button of document.querySelectorAll('[data-action="progressive-profile-skip"]')) button.addEventListener('click', async () => {
+    captureProgressiveDraft()
+    progressiveProfileError = ''
+    if (progressiveProfileStep < 5) { progressiveProfileStep += 1; render(); focusProgressiveField(); return }
+    const draft = progressiveProfileDraft || {}
+    const result = await store.updateProgressiveProfile({ country: draft.country || '', industry: draft.industry || '', phone: draft.phone || '', email: draft.email || '', needsArca: draft.needsArca === true ? true : draft.needsArca === false ? false : null, operationalGoals: draft.operationalGoals || [], status: 'complete' })
+    if (!result.ok) { progressiveProfileError = result.message || 'No se pudo guardar el perfil.'; render(); return }
+    progressiveProfilePromptOpen = false
+    resetProgressiveProfile()
+    activeSection = 'dashboard'
+    feedbackMessage = 'Perfil listo. Ya podés operar normalmente.'
+    render()
+  })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.max(1, progressiveProfileStep - 1); render() })
   for (const form of document.querySelectorAll('form.progressive-profile-modal-form')) form.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' || progressiveProfileStep >= 5) return
