@@ -3143,6 +3143,7 @@ export const createBrowserDataStore = (options = {}) => {
     getCurrentRegister: () => getCurrentRegister(state),
     getCurrentUser: () => currentUser(),
     makeOperationId,
+    persistLocal: () => persistLocalState(),
   })
 }
 

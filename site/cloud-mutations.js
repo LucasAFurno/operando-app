@@ -98,9 +98,53 @@ export const wireDataStoreCloudMutations = (api, deps) => {
     getCurrentBranch,
     getCurrentRegister,
     makeOperationId,
+    persistLocal,
   } = deps
 
   const original = { ...api }
+
+  // Parche local post-RPC: evita syncFromCloud completo tras ajuste/transferencia.
+  const saveLocalAfterPatch = () => {
+    if (typeof persistLocal === 'function') persistLocal()
+  }
+
+  const ensureStockByBranch = (product) => {
+    if (!product.stockByBranch || typeof product.stockByBranch !== 'object') {
+      product.stockByBranch = {}
+    }
+    return product.stockByBranch
+  }
+
+  const resyncProductStockTotal = (product) => {
+    product.stock = Object.values(ensureStockByBranch(product)).reduce(
+      (sum, quantity) => sum + Number(quantity || 0),
+      0,
+    )
+    return product.stock
+  }
+
+  const patchProductBranchStockAbsolute = (productId, branchId, absoluteStock) => {
+    const product = getProduct(productId)
+    if (!product || !branchId) return false
+    const next = Number(absoluteStock)
+    if (!Number.isFinite(next)) return false
+    ensureStockByBranch(product)[String(branchId)] = Math.max(0, next)
+    resyncProductStockTotal(product)
+    return true
+  }
+
+  const patchProductBranchStockDelta = (productId, branchId, delta) => {
+    const product = getProduct(productId)
+    if (!product || !branchId) return false
+    const change = Number(delta)
+    if (!Number.isFinite(change)) return false
+    const map = ensureStockByBranch(product)
+    const key = String(branchId)
+    const current = Number(map[key] ?? 0)
+    map[key] = Math.max(0, current + change)
+    resyncProductStockTotal(product)
+    return true
+  }
 
   api.updateSale = async (saleId, payload) => {
     const adapter = getCloudCoreAdapter?.()
@@ -151,21 +195,30 @@ export const wireDataStoreCloudMutations = (api, deps) => {
     if (!product) return { ok: false, message: 'Producto no encontrado.' }
     const quantity = Number(payload.quantity || 0)
     if (!quantity) return { ok: false, message: 'La cantidad debe ser distinta de cero.' }
-    await adapter.createStockAdjustment({
+    const branchId = getCurrentBranch()?.id || state.branches[0]?.id || null
+    const rpcResult = await adapter.createStockAdjustment({
       productId: payload.productId,
       quantity,
       note: payload.note || '',
-      branchId: getCurrentBranch()?.id || state.branches[0]?.id || null,
+      branchId,
       operationId: makeOperationId(),
     })
-    await syncFromCloud()
+    // RPC: { movement_id, product_id, branch_id, quantity, stock } — stock = qty absoluta post-ajuste.
+    const patchProductId = rpcResult?.product_id || payload.productId
+    const patchBranchId = rpcResult?.branch_id || branchId
+    if (rpcResult?.stock != null) {
+      patchProductBranchStockAbsolute(patchProductId, patchBranchId, rpcResult.stock)
+      saveLocalAfterPatch()
+    } else if (rpcResult?.quantity != null && patchBranchId) {
+      patchProductBranchStockDelta(patchProductId, patchBranchId, rpcResult.quantity)
+      saveLocalAfterPatch()
+    }
     return { ok: true, message: 'Ajuste de stock aplicado.' }
   }
 
   api.transferStock = async (payload) => {
     const adapter = getCloudCoreAdapter?.()
     if (!adapter) return original.transferStock(payload)
-    const state = getState()
     const product = getProduct(payload.productId)
     if (!product) return { ok: false, message: 'Producto no encontrado.' }
     const quantity = Number(payload.quantity || 0)
@@ -176,7 +229,7 @@ export const wireDataStoreCloudMutations = (api, deps) => {
     const fromBranch = getBranch(payload.fromBranchId)
     const toBranch = getBranch(payload.toBranchId)
     if (!fromBranch || !toBranch) return { ok: false, message: 'Sucursal invalida.' }
-    await adapter.transferStock({
+    const rpcResult = await adapter.transferStock({
       productId: payload.productId,
       quantity,
       fromBranchId: payload.fromBranchId,
@@ -184,7 +237,17 @@ export const wireDataStoreCloudMutations = (api, deps) => {
       note: payload.note || '',
       operationId: makeOperationId(),
     })
-    await syncFromCloud()
+    // RPC: { transfer_id, product_id, quantity, from_branch_id, to_branch_id } — sin stock absoluto.
+    // Camino seguro mínimo: aplicar deltas locales post-éxito (sin syncFromCloud).
+    const patchProductId = rpcResult?.product_id || payload.productId
+    const fromId = rpcResult?.from_branch_id || payload.fromBranchId
+    const toId = rpcResult?.to_branch_id || payload.toBranchId
+    const movedQty = Number(rpcResult?.quantity ?? quantity)
+    if (fromId && toId && Number.isFinite(movedQty) && movedQty > 0) {
+      patchProductBranchStockDelta(patchProductId, fromId, -movedQty)
+      patchProductBranchStockDelta(patchProductId, toId, movedQty)
+      saveLocalAfterPatch()
+    }
     return { ok: true, message: 'Transferencia registrada entre sucursales.' }
   }
 
