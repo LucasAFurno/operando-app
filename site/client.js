@@ -2252,10 +2252,10 @@ const productsView = (ui) => {
             <button type="submit">Guardar producto</button>
           </form>
         </article></div>` : ''}
-        ${stockAdjustmentFormOpen ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel"><div class="panel-head"><div><h3>Ajuste de stock</h3><p>Ingreso o salida manual por diferencia</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-stock-adjustment-form">Cerrar</button></div></div>
+        ${stockAdjustmentFormOpen ? `<div class="catalog-form-modal" data-catalog-modal><article class="panel"><div class="panel-head"><div><h3>Ajuste de stock</h3><p>Poné 5 para sumar o -5 para restar</p></div><div class="settings-actions"><button type="button" class="ghost-action" data-action="close-stock-adjustment-form">Cerrar</button></div></div>
           <form class="form-grid compact-form" data-form="stock-adjustment">
             <label class="stock-adjustment-product">Producto<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="productSearch" list="stock-adjustment-product-options" autocomplete="off" placeholder="Buscar producto, SKU o codigo de barras" aria-label="Buscar producto" required /><datalist id="stock-adjustment-product-options">${ui.scopedProducts.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')} · stock ${product.scopedStock}</option>`).join('')}</datalist></div></label>
-            <label>Cantidad (+/-)<input type="number" name="quantity" required /></label>
+            <label>Cantidad<input type="number" name="quantity" step="1" required placeholder="5 suma, -5 resta" aria-describedby="stock-qty-hint" /><small id="stock-qty-hint" class="field-hint">Número solo suma; con menos (−) resta.</small></label>
             <label class="full-span">Motivo<input type="text" name="note" placeholder="Conteo, rotura, merma o correccion" required /></label>
             <button type="submit">Aplicar ajuste</button>
           </form>
@@ -3536,7 +3536,7 @@ const fieldExamples = {
   amount: 'Ej.: 2500',
   note: 'Ej.: Pago de flete, reposicion o referencia',
   documentNumber: 'Ej.: FAC-000123',
-  quantity: 'Ej.: 12',
+  quantity: 'Ej.: 5 (suma) o -5 (resta)',
   unitCost: 'Ej.: 850',
   lastDelivery: 'Ej.: 23/07/2026',
   contact: 'Ej.: Maria Gonzalez',
@@ -4210,8 +4210,20 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.createStockAdjustment({ productId: product.id, quantity: formData.get('quantity'), note: formData.get('note') })
-    feedbackMessage = result.message || ''
+    const rawQty = String(formData.get('quantity') || '').trim().replace(',', '.')
+    const quantity = Number(rawQty)
+    if (!Number.isFinite(quantity) || quantity === 0) {
+      feedbackMessage = 'Ingresá una cantidad distinta de cero. Ejemplo: 5 suma, -5 resta.'
+      render()
+      return
+    }
+    try {
+      const result = await store.createStockAdjustment({ productId: product.id, quantity, note: formData.get('note') })
+      feedbackMessage = result.message || ''
+      if (result.ok) stockAdjustmentFormOpen = false
+    } catch (error) {
+      feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo aplicar el ajuste de stock.', 'login')
+    }
   }
   if (kind === 'stock-transfer') {
     const search = String(formData.get('productSearch') || '').trim()
@@ -4227,8 +4239,13 @@ const handleSubmit = async (event) => {
       render()
       return
     }
-    const result = store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
-    feedbackMessage = result.message || ''
+    try {
+      const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
+      feedbackMessage = result.message || ''
+      if (result.ok) stockTransferFormOpen = false
+    } catch (error) {
+      feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo registrar la transferencia de stock.', 'login')
+    }
   }
   if (kind === 'supplier') {
     const payload = { name: formData.get('name'), contact: formData.get('contact'), phone: formData.get('phone'), email: formData.get('email'), cuit: formData.get('cuit'), address: formData.get('address'), balance: formData.get('balance'), lastDelivery: formData.get('lastDelivery'), category: formData.get('category') }
