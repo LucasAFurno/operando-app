@@ -1096,6 +1096,23 @@ const buildQuickSearchTargets = (ui) => {
   for (const register of ui.snapshot.registers) pushTarget('ajustes', register.name, [register.code, 'puestos de cobro', 'cajas'])
   return normalizedEntries
 }
+
+const applyOptimisticBranchStockDelta = (productId, branchId, delta) => {
+  const product = store.getSnapshot().products.find((entry) => entry.id === productId)
+  if (!product || !branchId) return null
+  if (!product.stockByBranch || typeof product.stockByBranch !== 'object') product.stockByBranch = {}
+  const key = String(branchId)
+  const previous = Number(product.stockByBranch[key] ?? 0)
+  const change = Number(delta || 0)
+  if (!Number.isFinite(change) || change === 0) return null
+  product.stockByBranch[key] = Math.max(0, previous + change)
+  product.stock = Object.values(product.stockByBranch).reduce((sum, quantity) => sum + Number(quantity || 0), 0)
+  return () => {
+    product.stockByBranch[key] = previous
+    product.stock = Object.values(product.stockByBranch).reduce((sum, quantity) => sum + Number(quantity || 0), 0)
+  }
+}
+
 const clearFeedbackSoon = () => {
   if (feedbackTimer) window.clearTimeout(feedbackTimer)
   if (!feedbackMessage) return
@@ -4217,11 +4234,26 @@ const handleSubmit = async (event) => {
       render()
       return
     }
+    const branchId = getUiState().currentBranch?.id || store.getSnapshot().business?.currentBranchId || ''
+    const revertOptimistic = applyOptimisticBranchStockDelta(product.id, branchId, quantity)
+    if (revertOptimistic) {
+      stockAdjustmentFormOpen = false
+      feedbackMessage = 'Aplicando ajuste…'
+      render()
+    }
     try {
       const result = await store.createStockAdjustment({ productId: product.id, quantity, note: formData.get('note') })
-      feedbackMessage = result.message || ''
-      if (result.ok) stockAdjustmentFormOpen = false
+      if (!result.ok) {
+        revertOptimistic?.()
+        feedbackMessage = result.message || 'No se pudo aplicar el ajuste de stock.'
+        stockAdjustmentFormOpen = true
+      } else {
+        feedbackMessage = result.message || 'Ajuste de stock aplicado.'
+        stockAdjustmentFormOpen = false
+      }
     } catch (error) {
+      revertOptimistic?.()
+      stockAdjustmentFormOpen = true
       feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo aplicar el ajuste de stock.', 'login')
     }
   }
