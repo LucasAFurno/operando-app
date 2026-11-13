@@ -980,6 +980,8 @@ const migrateState = (source, fallbackState = defaultState) => {
     number: invoice.number,
     customerId: invoice.customerId || null,
     totalAmount: Number(invoice.totalAmount || invoice.total || 0),
+    amountPaid: Number(invoice.amountPaid || 0),
+    paymentHistory: Array.isArray(invoice.paymentHistory) ? invoice.paymentHistory.map((payment) => ({ ...payment })) : [],
     status: invoice.status || 'Emitida',
     dueDate: invoice.dueDate || todayDate(),
     type: invoice.type || 'B',
