@@ -640,6 +640,7 @@ const mapPublicAuthError = (message, context = 'login') => {
     'sale item required': 'Agrega al menos un producto antes de registrar la venta.',
     sale_item_required: 'Agrega al menos un producto antes de registrar la venta.',
     sale_items_required: 'Agrega al menos un producto antes de registrar la venta.',
+    stock_insufficient: 'No hay stock suficiente en la sucursal de origen para esa cantidad.',
     cash_session_required: 'Caja cerrada. Abri una caja para poder registrar la venta.',
     'duplicate key value violates unique constraint "products_commerce_id_sku_key"': 'Ya existe un producto con ese SKU en este comercio.',
     'duplicate key value violates unique constraint "documents_commerce_id_document_number_key"': 'Ese numero de comprobante ya existe. Usa otro o dejalo vacio para autogenerarlo.',
@@ -4250,6 +4251,19 @@ const handleSubmit = async (event) => {
     }
   }
   if (kind === 'stock-transfer') {
+    const showTransferError = (message) => {
+      let alert = form.querySelector('[data-transfer-error]')
+      if (!alert) {
+        alert = document.createElement('p')
+        alert.dataset.transferError = ''
+        alert.setAttribute('role', 'alert')
+        alert.className = 'form-note full-span is-error'
+        form.prepend(alert)
+      }
+      alert.textContent = message
+      form.dataset.submitting = 'false'
+      for (const button of form.querySelectorAll('button[type="submit"]')) button.disabled = false
+    }
     const search = String(formData.get('productSearch') || '').trim()
     const normalizedSearch = search.toLowerCase()
     const scopedProducts = getUiState().scopedProducts
@@ -4259,16 +4273,17 @@ const handleSubmit = async (event) => {
       .some((value) => String(value || '').toLowerCase().includes(normalizedSearch)))
     const product = exactProduct || (matches.length === 1 ? matches[0] : null)
     if (!product) {
-      feedbackMessage = search ? 'Selecciona un producto de la lista o revisa la busqueda.' : 'Busca el producto que queres transferir.'
-      render()
+      showTransferError(search ? 'Seleccioná un producto de la lista o revisá la búsqueda.' : 'Buscá el producto que querés transferir.')
       return
     }
     try {
       const result = await store.transferStock({ productId: product.id, quantity: formData.get('quantity'), fromBranchId: formData.get('fromBranchId'), toBranchId: formData.get('toBranchId'), note: formData.get('note') })
       feedbackMessage = result.message || ''
       if (result.ok) stockTransferFormOpen = false
+      else { showTransferError(result.message || 'No se pudo registrar la transferencia.'); return }
     } catch (error) {
-      feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo registrar la transferencia de stock.', 'login')
+      showTransferError(mapPublicAuthError(error?.message || 'No se pudo registrar la transferencia de stock.', 'login'))
+      return
     }
   }
   if (kind === 'supplier') {
