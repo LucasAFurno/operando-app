@@ -1,13 +1,21 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { getCashSessionTotals } from '../site/operational-utils.js'
+import { getCashSessionTotals, getRegisterCashSession } from '../site/operational-utils.js'
 import { createBrowserDataStore } from '../site/data-store.js'
 
 const session = { id: 'session-qa', openingAmount: 5000 }
 const sale = { cashSessionId: session.id, paymentMethod: 'cash', amountPaid: 3000, paymentBreakdown: { cash: 3000 } }
 const receipt = { cashSessionId: session.id, kind: 'sale', signedAmount: 3000 }
 const movement = (kind, signedAmount) => ({ cashSessionId: session.id, kind, signedAmount })
+
+test('open sessions are isolated by branch and register', () => {
+  const sessions = [{ id: 'one', status: 'open', branchId: 'A', registerId: 'A1' }, { id: 'two', status: 'open', branchId: 'B', registerId: 'B1' }]
+  assert.equal(getRegisterCashSession(sessions, 'A', 'A1').id, 'one')
+  assert.equal(getRegisterCashSession(sessions, 'B', 'B1').id, 'two')
+  assert.equal(getRegisterCashSession(sessions, 'B', 'A1'), null)
+  assert.equal(getRegisterCashSession(sessions, 'B', ''), null)
+})
 
 test('cash receipt is counted once and is not a manual income', () => {
   assert.deepEqual(getCashSessionTotals(session, [sale], [receipt]), {

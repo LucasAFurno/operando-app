@@ -1,5 +1,8 @@
 // Cloud operations record receipts in the cash ledger. Desktop/legacy sales
 // may only have a payment breakdown; use that fallback only without sale entries.
+export const getRegisterCashSession = (sessions, branchId, registerId) =>
+  branchId && registerId ? sessions.find((session) => session.status === 'open' && session.branchId === branchId && session.registerId === registerId) || null : null
+
 export const getCashSessionTotals = (session, sales = [], movements = []) => {
   const entries = session ? movements.filter((entry) => entry.cashSessionId === session.id) : []
   const receipts = entries.filter((entry) => entry.kind === 'sale')

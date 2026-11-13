@@ -1,6 +1,6 @@
 import { createBrowserDataStore } from './data-store.js?v=__OPERANDO_ASSET_VERSION__'
 import { createCloudAuthManager } from './cloud-auth.js?v=__OPERANDO_ASSET_VERSION__'
-import { getCashSessionTotals, invoiceBalance, localDateKey, localDateTime, localTime } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
+import { getCashSessionTotals, getRegisterCashSession, invoiceBalance, localDateKey, localDateTime, localTime } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = localDateKey()
@@ -1133,10 +1133,11 @@ const getUiState = () => {
   const branchMap = new Map(snapshot.branches.map((item) => [item.id, item]))
   const activeRegisters = snapshot.registers.filter((register) => register.isActive !== false)
   const registerMap = new Map(activeRegisters.map((item) => [item.id, item]))
-  const openCashSession = snapshot.cashSessions.find((session) => session.status === 'open') || null
-  const cashTotals = getCashSessionTotals(openCashSession, snapshot.sales, snapshot.cashMovements)
   const currentBranch = branchMap.get(snapshot.business.currentBranchId) || snapshot.branches[0]
-  const currentRegister = registerMap.get(snapshot.business.currentRegisterId) || activeRegisters.find((register) => register.branchId === currentBranch?.id) || null
+  const assignedRegister = registerMap.get(snapshot.business.currentRegisterId)
+  const currentRegister = assignedRegister?.branchId === currentBranch?.id ? assignedRegister : activeRegisters.find((register) => register.branchId === currentBranch?.id) || null
+  const openCashSession = getRegisterCashSession(snapshot.cashSessions, currentBranch?.id, currentRegister?.id)
+  const cashTotals = getCashSessionTotals(openCashSession, snapshot.sales, snapshot.cashMovements)
   const branchRegisters = activeRegisters.filter((register) => register.branchId === currentBranch?.id)
   const scopedProducts = snapshot.products.map((product) => ({
     ...product,

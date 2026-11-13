@@ -1,6 +1,6 @@
 import { createSupabaseCoreAdapter } from './cloud-core.js?v=__OPERANDO_ASSET_VERSION__'
 import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=__OPERANDO_ASSET_VERSION__'
-import { getCashSessionTotals, invoiceBalance } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
+import { getCashSessionTotals, getRegisterCashSession, invoiceBalance } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
 
 const dataStorageKey = 'operando-control-data-v2'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
@@ -370,7 +370,7 @@ const findProductByCode = (state, code) => {
     || String(product.name || '').trim().toLowerCase() === normalized
   )) || null
 }
-const getOpenCashSession = (state) => state.cashSessions.find((session) => session.status === 'open') || null
+const getOpenCashSession = (state) => getRegisterCashSession(state.cashSessions, state.business.currentBranchId, state.business.currentRegisterId)
 const getInvoiceBySaleId = (state, saleId) => state.invoices.find((invoice) => invoice.saleId === saleId) || null
 const getBranch = (state, branchId) => state.branches.find((branch) => branch.id === branchId)
 const getRegister = (state, registerId) => state.registers.find((register) => register.id === registerId)
