@@ -1,6 +1,6 @@
 import { createBrowserDataStore } from './data-store.js?v=__OPERANDO_ASSET_VERSION__'
 import { createCloudAuthManager } from './cloud-auth.js?v=__OPERANDO_ASSET_VERSION__'
-import { getCashSessionTotals, localDateKey, localDateTime, localTime } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
+import { getCashSessionTotals, invoiceBalance, localDateKey, localDateTime, localTime } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = localDateKey()
@@ -913,7 +913,6 @@ const invoiceActionButtons = (invoice) => rowActionsMenu('Acciones de comprobant
   `)
 
 const invoiceEmissionLabel = (invoice) => invoice.fiscalStatus === 'Interno' ? 'Interno · no fiscal' : 'ARCA'
-const invoiceBalance = (invoice) => Math.max(0, Number(invoice?.totalAmount || 0) - Number(invoice?.amountPaid || 0))
 const ticketActionButtons = (ticket) => rowActionsMenu('Acciones de ticket', `
     <button type="button" class="inline-action" data-ticket-action="edit" data-id="${ticket.id}">Editar</button>
     <button type="button" class="inline-action danger" data-delete="ticket" data-id="${ticket.id}">Eliminar</button>
@@ -1268,7 +1267,7 @@ const getUiState = () => {
     ...cashTotals,
     unpaidSales: scopedSales.reduce((sum, sale) => sum + Math.max(0, Number(sale.totalAmount || 0) - Number(sale.amountPaid || 0)), 0),
     totalSales: scopedSales.reduce((sum, sale) => sum + sale.totalAmount, 0),
-    pendingInvoices: scopedInvoices.filter((invoice) => invoice.status !== 'Cobrada').reduce((sum, invoice) => sum + invoice.totalAmount, 0),
+    pendingInvoices: scopedInvoices.reduce((sum, invoice) => sum + invoiceBalance(invoice), 0),
     scopedProducts,
     lowStock: scopedProducts.filter((product) => product.trackStock && product.scopedStock <= product.minStock),
     topProducts: [...scopedSales.reduce((map, sale) => {
@@ -1742,7 +1741,7 @@ const dashboardActivityIcon = (activity) => {
 }
 
 const dashboardViewV2 = (ui) => {
-  const pendingInvoiceCount = ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').length
+  const pendingInvoiceCount = ui.enrichedInvoices.filter((invoice) => invoiceBalance(invoice) > 0).length
   const visibleActivity = ui.recentCommerceActivity.slice(0, 4)
   const activityTime = (createdAt) => localTime(createdAt)
   const topProductMax = Math.max(1, ...ui.topProducts.slice(0, 5).map(([, qty]) => Number(qty) || 0))
@@ -2431,7 +2430,7 @@ const purchasesViewV2 = (ui) => `
           <input type="hidden" name="receiptId" value="${editingReceipt?.id || ''}" />
           <input type="hidden" name="purchaseItems" value="${escapeHtml(JSON.stringify(purchaseLines.map((line) => ({ key: line.key, productId: line.product?.id || '', isNew: line.isNew, name: line.name, sku: line.sku, barcode: line.barcode, category: line.category, minStock: line.minStock, trackStock: line.trackStock, quantity: line.quantity, unitCost: line.unitCost, salePrice: line.salePrice }))))}" />
           <label class="stock-adjustment-product">Proveedor<div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" name="supplierSearch" value="${escapeHtml(purchaseSupplierSearch || ui.snapshot.suppliers.find((supplier) => supplier.id === editingReceipt?.supplierId)?.name || '')}" list="purchase-supplier-options" autocomplete="off" placeholder="Buscar proveedor, contacto o teléfono" aria-label="Buscar proveedor" required /><datalist id="purchase-supplier-options">${ui.snapshot.suppliers.map((supplier) => `<option value="${escapeHtml(supplier.name)}">${escapeHtml([supplier.contact, supplier.phone].filter(Boolean).join(' · '))}</option>`).join('')}</datalist></div></label>
-          <label class="stock-adjustment-product">Agregar productos<div class="purchase-product-add"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-purchase-product-search value="${escapeHtml(purchaseQuickAddCode)}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o código de barras" aria-label="Buscar producto" /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div><button type="button" class="ghost-action" data-action="add-new-purchase-product">Nuevo producto</button></div></label>
+          <label class="stock-adjustment-product">Agregar productos<div class="purchase-product-add"><div class="stock-adjustment-search"><span class="pos-search-icon" aria-hidden="true">${icon('<circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/>')}</span><input type="search" data-purchase-product-search value="${escapeHtml(purchaseQuickAddCode)}" list="purchase-product-options" autocomplete="off" placeholder="Buscar producto, SKU o código de barras" aria-label="Buscar producto" aria-describedby="purchase-product-hint" /><datalist id="purchase-product-options">${ui.snapshot.products.map((product) => `<option value="${escapeHtml(product.name)}">${escapeHtml(product.sku || product.barcode || '')}</option>`).join('')}</datalist></div><button type="button" class="ghost-action" data-action="add-purchase-product">Agregar</button><button type="button" class="ghost-action" data-action="add-new-purchase-product">Nuevo producto</button></div><small id="purchase-product-hint">Seleccioná una sugerencia o escribí el nombre completo y presioná Enter o Agregar.</small></label>
           <label>Comprobante<input type="text" name="documentNumber" value="${editingReceipt?.documentNumber || ''}" placeholder="FAC-000123" /></label>
           <label>Condición de pago<select name="paymentCondition"><option value="cash" ${(!editingReceipt?.paymentCondition || editingReceipt?.paymentCondition === 'cash') ? 'selected' : ''}>Contado</option><option value="partial" ${editingReceipt?.paymentCondition === 'partial' ? 'selected' : ''}>Pago parcial</option><option value="credit" ${editingReceipt?.paymentCondition === 'credit' ? 'selected' : ''}>Cuenta corriente</option></select></label>
           <label>Vencimiento<input type="date" name="dueDate" value="${editingReceipt?.dueDate || ''}" /></label>
@@ -2528,7 +2527,7 @@ const invoicesViewV2 = (ui) => `
       const matchesKind = invoiceHistoryKind === 'all' || invoice.kind === invoiceHistoryKind
       return matchesQuery && matchesStatus && matchesFiscal && matchesKind
     })
-    const openInvoices = ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada')
+    const openInvoices = ui.enrichedInvoices.filter((invoice) => invoiceBalance(invoice) > 0)
     const pendingAmount = openInvoices.reduce((sum, invoice) => sum + invoiceBalance(invoice), 0)
     return `
   <section class="view-section invoices-view"><div class="section-header"><div><p class="kicker">Facturación</p><h2>Comprobantes y cobros</h2><p class="section-description">Emití comprobantes, seguí su estado y registrá cobros pendientes desde un mismo lugar.</p></div><div class="panel-inline-stats section-inline-stats">
@@ -3343,7 +3342,7 @@ const renderApp = (ui) => {
       section: 'productos',
       target: `[data-product-id=${product.id}]`,
     })),
-    ...ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').slice(0, 4).map((invoice) => ({
+    ...ui.enrichedInvoices.filter((invoice) => invoiceBalance(invoice) > 0).slice(0, 4).map((invoice) => ({
       id: `pending-invoice-${invoice.id}`,
       title: 'Factura pendiente',
       detail: `${invoice.number} / ${invoice.customerName} / ${money(invoice.totalAmount)}.`,
@@ -5317,6 +5316,7 @@ const bindEvents = () => {
   for (const input of document.querySelectorAll('[data-purchase-product-search]')) {
     input.addEventListener('input', () => { purchaseQuickAddCode = input.value })
     input.addEventListener('change', addPurchaseProduct)
+    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); addPurchaseProduct() } })
   }
   for (const button of document.querySelectorAll('[data-action="add-purchase-product"]')) button.addEventListener('click', addPurchaseProduct)
   for (const button of document.querySelectorAll('[data-action="add-new-purchase-product"]')) button.addEventListener('click', () => {

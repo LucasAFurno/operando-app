@@ -36,3 +36,10 @@ export const localDateTime = (value) => {
   const day = localDateKey(value)
   return day ? `${day} · ${localTime(value)}` : 'Sin fecha'
 }
+
+export const invoiceBalance = (invoice) => {
+  const kind = String(invoice?.kind || 'Factura').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const status = String(invoice?.status || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (['presupuesto', 'quote', 'remito', 'delivery_note', 'nota de credito', 'nota_credito', 'credit_note'].includes(kind) || ['anulada', 'anulado', 'cancelled', 'cobrada', 'cobrado'].includes(status)) return 0
+  return Math.max(0, Number(invoice?.totalAmount || 0) - Number(invoice?.amountPaid || 0))
+}

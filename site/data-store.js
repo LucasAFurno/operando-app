@@ -1,6 +1,6 @@
 import { createSupabaseCoreAdapter } from './cloud-core.js?v=__OPERANDO_ASSET_VERSION__'
 import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=__OPERANDO_ASSET_VERSION__'
-import { getCashSessionTotals } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
+import { getCashSessionTotals, invoiceBalance } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
 
 const dataStorageKey = 'operando-control-data-v2'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
@@ -2969,6 +2969,7 @@ export const createBrowserDataStore = (options = {}) => {
     if (denied) return denied
     const invoice = state.invoices.find((entry) => entry.id === payload.invoiceId)
     if (!invoice) return { ok: false, message: 'Factura no encontrada.' }
+    if (invoiceBalance(invoice) <= 0) return { ok: false, message: 'Este comprobante no tiene saldo cobrable.' }
     const amount = Number(payload.amount || 0)
     const due = Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0))
     if (amount <= 0 || amount > due) return { ok: false, message: 'El abono debe ser mayor a cero y no superar el saldo pendiente.' }
