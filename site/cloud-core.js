@@ -29,6 +29,7 @@ export const createSupabaseCoreAdapter = (config) => {
     'app_public_upsert_branch',
     'app_public_upsert_register',
     'app_public_upsert_supplier',
+    'app_public_register_supplier_payment',
     'app_public_upsert_user',
     'app_public_platform_update_commerce',
     'app_public_toggle_user_active',
@@ -48,7 +49,7 @@ export const createSupabaseCoreAdapter = (config) => {
 
   let pendingModules = null
   const mutationModules = {
-    app_public_upsert_customer: ['customers'], app_public_upsert_supplier: ['purchases'], app_public_upsert_product: ['products', 'stock'],
+    app_public_upsert_customer: ['customers'], app_public_upsert_supplier: ['purchases'], app_public_register_supplier_payment: ['purchases', 'cash'], app_public_upsert_product: ['products', 'stock'],
     app_public_open_cash_session: ['cash'], app_public_set_active_context: ['settings', 'cash'], app_public_close_cash_session: ['cash'], app_public_create_cash_movement: ['cash'],
     app_public_create_sale: ['sales', 'cash', 'products', 'customers', 'invoices'], ...cloudMutationModules, app_public_register_invoice_payment: ['invoices', 'sales', 'cash', 'customers'],
     app_public_upsert_purchase_receipt: ['purchases', 'products', 'stock'], app_public_upsert_document: ['invoices', 'tickets', 'sales', 'audit'],

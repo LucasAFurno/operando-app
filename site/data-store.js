@@ -2964,6 +2964,28 @@ export const createBrowserDataStore = (options = {}) => {
     return { ok: true, message: 'Registro eliminado y movimientos revertidos cuando correspondia.' }
   }
 
+  const registerSupplierPayment = async (payload) => {
+    const denied = ensurePermission(actionPermissions.purchasesWrite)
+    if (denied) return denied
+    const supplier = state.suppliers.find((entry) => entry.id === payload.supplierId)
+    const amount = Number(payload.amount || 0)
+    if (!supplier) return { ok: false, message: 'Proveedor no encontrado.' }
+    if (!Number.isFinite(amount) || amount <= 0 || amount > Number(supplier.balance || 0)) return { ok: false, message: 'El pago debe ser mayor a cero y no superar el saldo pendiente.' }
+    if (payload.method === 'cash' && !getOpenCashSession(state)) return { ok: false, message: 'Abrí una caja para pagar en efectivo.' }
+    if (cloudCoreAdapter) {
+      await cloudCoreAdapter.registerSupplierPayment({ ...payload, amount, branchId: getCurrentBranch(state)?.id || null })
+      await syncFromCloud()
+    } else {
+      const session = getOpenCashSession(state)
+      supplier.balance = Number(supplier.balance || 0) - amount
+      state.supplierPayments ||= []
+      state.supplierPayments.unshift({ id: makeId(), supplierId: supplier.id, amount, method: payload.method || 'transfer', reference: payload.reference || '', createdAt: todayIso() })
+      if (payload.method === 'cash') state.cashMovements.unshift({ id: makeId(), cashSessionId: session.id, branchId: session.branchId, registerId: session.registerId, createdBy: currentUser().id, kind: 'expense', signedAmount: -amount, note: `Pago a proveedor ${supplier.name}`, createdAt: todayIso() })
+      save()
+    }
+    return { ok: true, message: 'Pago al proveedor registrado.' }
+  }
+
   const registerInvoicePayment = async (payload) => {
     const denied = ensurePermission(actionPermissions.invoicesWrite)
     if (denied) return denied
@@ -3113,6 +3135,7 @@ export const createBrowserDataStore = (options = {}) => {
     transferStock,
     createSale,
     registerInvoicePayment,
+    registerSupplierPayment,
     updateSale,
     cancelSale,
     createReturnFromSale,
