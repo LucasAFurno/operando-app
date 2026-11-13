@@ -835,6 +835,7 @@ const buildEmptyState = () => {
   state.customers = []
   state.products = []
   state.suppliers = []
+  state.supplierPayments = []
   state.cashSessions = []
   state.purchaseReceipts = []
   state.sales = []
@@ -914,6 +915,7 @@ const migrateState = (source, fallbackState = defaultState) => {
   })
 
   const rawSuppliers = source.suppliers || source.providers
+  if (Array.isArray(source.supplierPayments)) migrated.supplierPayments = source.supplierPayments.map((payment) => ({ ...payment }))
   if (Array.isArray(rawSuppliers)) migrated.suppliers = rawSuppliers.map((supplier) => ({
     id: supplier.id || makeId(),
     name: supplier.name,
@@ -1281,7 +1283,7 @@ export const createBrowserDataStore = (options = {}) => {
   }
 
   const mergeCloudState = (payload) => {
-    const emptyCollections = { customers: [], products: [], suppliers: [], cashSessions: [], cashMovements: [], sales: [], purchaseReceipts: [], invoices: [], tickets: [], stockMovements: [], auditLogs: [] }
+    const emptyCollections = { customers: [], products: [], suppliers: [], supplierPayments: [], cashSessions: [], cashMovements: [], sales: [], purchaseReceipts: [], invoices: [], tickets: [], stockMovements: [], auditLogs: [] }
     const next = cloudStateLoaded ? { ...state, ...payload } : { ...state, ...emptyCollections, ...payload }
     for (const [key, value] of Object.entries(payload || {})) {
       if (value && typeof value === 'object' && !Array.isArray(value) && state[key] && typeof state[key] === 'object' && !Array.isArray(state[key])) next[key] = { ...state[key], ...value }
