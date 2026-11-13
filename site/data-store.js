@@ -1,5 +1,6 @@
 import { createSupabaseCoreAdapter } from './cloud-core.js?v=__OPERANDO_ASSET_VERSION__'
 import { wireDataStoreCloudMutations } from './cloud-mutations.js?v=__OPERANDO_ASSET_VERSION__'
+import { getCashSessionTotals } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
 
 const dataStorageKey = 'operando-control-data-v2'
 const cloudConfigStorageKey = 'operando-control-cloud-config'
@@ -473,9 +474,6 @@ const changeBranchStock = (product, branchId, delta, fallbackBranchId = '') => {
   syncProductStock(product)
   return Number(product.stockByBranch[branchId] || 0)
 }
-const getCashMovementDelta = (state, sessionId) => state.cashMovements
-  .filter((movement) => movement.cashSessionId === sessionId)
-  .reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0)
 const getSaleBalanceDue = (sale) => Math.max(0, Number(sale.totalAmount || 0) - Number(sale.amountPaid || 0))
 const getPaymentBreakdown = (payload, totalAmount) => {
   const normalizedTotal = Number(totalAmount || 0)
@@ -1726,7 +1724,7 @@ export const createBrowserDataStore = (options = {}) => {
         branchId,
       })
       await syncFromCloud()
-      return { ok: true, message: 'Producto guardado en la base real.' }
+      return { ok: true, message: 'Producto guardado.' }
     }
     const product = {
       id: makeId(),
@@ -2181,14 +2179,11 @@ export const createBrowserDataStore = (options = {}) => {
     }
     const session = getOpenCashSession(state)
     if (!session) return { ok: false, message: 'No hay caja abierta.' }
-    const cashSales = state.sales
-      .filter((sale) => sale.cashSessionId === session.id)
-      .reduce((sum, sale) => sum + getCashPortion(sale.paymentBreakdown), 0)
-    const manualDelta = getCashMovementDelta(state, session.id)
+    const { expectedCash } = getCashSessionTotals(session, state.sales, state.cashMovements)
     session.countedAmount = Number(countedAmount || 0)
     session.closedAt = todayIso()
     session.status = 'closed'
-    session.differenceAmount = session.countedAmount - (Number(session.openingAmount) + cashSales + manualDelta)
+    session.differenceAmount = session.countedAmount - expectedCash
     pushAudit(state, currentUser().id, 'cash_session', session.id, 'closed', session)
     save()
     return { ok: true, message: 'Caja cerrada correctamente.' }

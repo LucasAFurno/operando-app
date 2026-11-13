@@ -1,8 +1,9 @@
 import { createBrowserDataStore } from './data-store.js?v=__OPERANDO_ASSET_VERSION__'
 import { createCloudAuthManager } from './cloud-auth.js?v=__OPERANDO_ASSET_VERSION__'
+import { getCashSessionTotals, localDateKey, localDateTime, localTime } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
-const today = new Date().toISOString().slice(0, 10)
+const today = localDateKey()
 const productName = 'Operando'
 const appVersion = '__OPERANDO_RELEASE_VERSION__'
 const supportUrl = 'https://wa.me/5491135708345?text=Hola%20operando.app%2C%20necesito%20soporte%20de%20operando.app.'
@@ -506,6 +507,8 @@ const startOperationalRealtime = async () => {
 }
 
 const money = (value) => currency.format(Number(value) || 0)
+const paymentMethodLabel = (value) => ({ cash: 'Efectivo', transfer: 'Transferencia', mercado_pago: 'Mercado Pago', mercadoPago: 'Mercado Pago', echeq: 'E-cheq', account: 'Cuenta corriente', mixed: 'Mixto' }[value] || 'Sin medio de pago')
+const saleStatusLabel = (value) => ({ completed: 'Cobrada', partial: 'Pago parcial', pending: 'Pendiente', cancelled: 'Anulada', returned: 'Devuelta' }[value] || value)
 const balanceTone = (value) => Number(value || 0) > 0 ? 'balance-due' : 'balance-clear'
 const balanceText = (value) => Number(value || 0) > 0 ? 'Debe' : 'Al dia'
 const balanceBadge = (value) => `<span class="balance-badge ${balanceTone(value)}"><strong>${money(value)}</strong><small>${balanceText(value)}</small></span>`
@@ -678,7 +681,7 @@ const resetBrokenBrowserState = () => {
 }
 const byRecentDate = (items, key) => items.slice().sort((a, b) => String(b[key]).localeCompare(String(a[key])))
 const isWithinDateRange = (value, from, to) => {
-  const normalized = String(value || '').slice(0, 10)
+  const normalized = value ? localDateKey(value) : ''
   if (!normalized) return false
   if (from && normalized < from) return false
   if (to && normalized > to) return false
@@ -1132,8 +1135,7 @@ const getUiState = () => {
   const activeRegisters = snapshot.registers.filter((register) => register.isActive !== false)
   const registerMap = new Map(activeRegisters.map((item) => [item.id, item]))
   const openCashSession = snapshot.cashSessions.find((session) => session.status === 'open') || null
-  const cashSales = snapshot.sales.filter((sale) => sale.cashSessionId === openCashSession?.id && sale.paymentMethod === 'cash')
-  const cashSalesTotal = cashSales.reduce((sum, sale) => sum + sale.amountPaid, 0)
+  const cashTotals = getCashSessionTotals(openCashSession, snapshot.sales, snapshot.cashMovements)
   const currentBranch = branchMap.get(snapshot.business.currentBranchId) || snapshot.branches[0]
   const currentRegister = registerMap.get(snapshot.business.currentRegisterId) || activeRegisters.find((register) => register.branchId === currentBranch?.id) || null
   const branchRegisters = activeRegisters.filter((register) => register.branchId === currentBranch?.id)
@@ -1159,7 +1161,6 @@ const getUiState = () => {
     if (sale && reportRegisterFilter !== 'all') return sale.registerId === reportRegisterFilter
     return reportRegisterFilter === 'all' || !movement.registerId || movement.registerId === reportRegisterFilter
   })
-  const sessionCashMovementTotal = openCashSession ? snapshot.cashMovements.filter((movement) => movement.cashSessionId === openCashSession.id).reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0) : 0
 
   const enrichedSales = byRecentDate(snapshot.sales, 'soldAt').map((sale) => ({
     ...sale,
@@ -1169,7 +1170,7 @@ const getUiState = () => {
     registerName: registerMap.get(sale.registerId)?.name || 'Sin caja',
     paymentSummary: sale.paymentMethod === 'mixed'
       ? `Mixto: Ef ${money(sale.paymentBreakdown?.cash || 0)} / Tr ${money(sale.paymentBreakdown?.transfer || 0)} / MP ${money(sale.paymentBreakdown?.mercadoPago || 0)}`
-      : sale.paymentMethod,
+      : paymentMethodLabel(sale.paymentMethod),
   }))
   const filteredSales = byRecentDate(enrichedSales.filter((sale) => sale.branchId === currentBranch?.id && (reportRegisterFilter === 'all' || sale.registerId === reportRegisterFilter)), 'soldAt')
   const reportScopedSales = filteredSales.filter((sale) => isWithinDateRange(sale.soldAt, reportDateFrom, reportDateTo))
@@ -1264,11 +1265,7 @@ const getUiState = () => {
     cloudConnection: store.getCloudConnection(),
     isAuthenticated: store.isAuthenticated(),
     openCashSession,
-    cashSalesTotal,
-    sessionCashMovementTotal,
-    sessionCashIncome: openCashSession ? snapshot.cashMovements.filter((movement) => movement.cashSessionId === openCashSession.id && Number(movement.signedAmount || 0) > 0).reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0) : 0,
-    sessionCashExpenses: openCashSession ? Math.abs(snapshot.cashMovements.filter((movement) => movement.cashSessionId === openCashSession.id && Number(movement.signedAmount || 0) < 0).reduce((sum, movement) => sum + Number(movement.signedAmount || 0), 0)) : 0,
-    expectedCash: openCashSession ? Number(openCashSession.openingAmount) + cashSalesTotal + sessionCashMovementTotal : 0,
+    ...cashTotals,
     unpaidSales: scopedSales.reduce((sum, sale) => sum + Math.max(0, Number(sale.totalAmount || 0) - Number(sale.amountPaid || 0)), 0),
     totalSales: scopedSales.reduce((sum, sale) => sum + sale.totalAmount, 0),
     pendingInvoices: scopedInvoices.filter((invoice) => invoice.status !== 'Cobrada').reduce((sum, invoice) => sum + invoice.totalAmount, 0),
@@ -1719,7 +1716,7 @@ const dashboardView = (ui) => `
     ${ui.user?.isOwner && ui.progressiveProfile.status === 'complete' ? `<div class="info-strip progressive-suggestion"><strong>${ui.progressiveProfile.industry ? `Sugerencia para ${escapeHtml(ui.progressiveProfile.industry)}` : 'Sugerencia para tu operación'}</strong><span>${progressiveSuggestion(ui.progressiveProfile)}</span></div>` : ''}
     <section class="dashboard-grid dashboard-operation-grid">
       <article class="panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Con multiples articulos</p></div></div><div class="list">
-        ${ui.enrichedSales.slice(0, 5).map((sale) => `<div class="list-row"><div><strong>${sale.customerName}</strong><p>${sale.itemSummary}</p></div><div class="right"><strong>${money(sale.totalAmount)}</strong><p>${sale.channel} - ${sale.paymentMethod}</p></div></div>`).join('')}
+        ${ui.enrichedSales.slice(0, 5).map((sale) => `<div class="list-row"><div><strong>${sale.customerName}</strong><p>${sale.itemSummary}</p></div><div class="right"><strong>${money(sale.totalAmount)}</strong><p>${sale.channel} - ${paymentMethodLabel(sale.paymentMethod)}</p></div></div>`).join('')}
       </div></article>
       <article class="panel"><div class="panel-head"><div><h3>Top productos</h3><p>Ranking de movimiento</p></div></div><div class="top-list">
         ${ui.topProducts.length ? ui.topProducts.map(([name, qty], index) => `<div class="top-row"><span>${index + 1}</span><div><strong>${name}</strong><p>${qty} unidades vendidas</p></div></div>`).join('') : '<p class="empty-state">Todavia no hay ventas cargadas.</p>'}
@@ -1728,7 +1725,7 @@ const dashboardView = (ui) => `
         ${ui.lowStock.length ? (() => { const visibleStock = dashboardStockExpanded ? ui.lowStock : ui.lowStock.slice(0, 10); return `${visibleStock.map((product) => `<div class="alert-card"><strong>${product.name}</strong><p>Stock ${product.scopedStock} en ${ui.currentBranch?.name || 'sucursal'} / minimo ${product.minStock}</p></div>`).join('')}${ui.lowStock.length > 10 ? `<button type="button" class="ghost-action dashboard-show-more" data-action="toggle-dashboard-stock">${dashboardStockExpanded ? 'Ver menos' : `Ver más (${ui.lowStock.length - 10})`}</button>` : ''}` })() : '<div class="alert-card ok"><strong>Sin alertas</strong><p>No hay productos con stock bajo.</p></div>'}
       </div></article>
       <article class="panel dashboard-audit-panel"><div class="panel-head"><div><h3>Auditoría</h3><p>Lo último que pasó en el comercio</p></div></div><div class="timeline-list">
-        ${ui.recentCommerceActivity.length ? (() => { const visibleActivity = dashboardAuditExpanded ? ui.recentCommerceActivity : ui.recentCommerceActivity.slice(0, 10); return `${visibleActivity.map((activity) => `<div class="timeline-item"><strong>${activity.title}</strong><p>${activity.detail}</p><span>${String(activity.createdAt || '').slice(0, 16).replace('T', ' ')}</span></div>`).join('')}${ui.recentCommerceActivity.length > 10 ? `<button type="button" class="ghost-action dashboard-show-more" data-action="toggle-dashboard-audit">${dashboardAuditExpanded ? 'Ver menos' : `Ver más (${ui.recentCommerceActivity.length - 10})`}</button>` : ''}` })() : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
+        ${ui.recentCommerceActivity.length ? (() => { const visibleActivity = dashboardAuditExpanded ? ui.recentCommerceActivity : ui.recentCommerceActivity.slice(0, 10); return `${visibleActivity.map((activity) => `<div class="timeline-item"><strong>${activity.title}</strong><p>${activity.detail}</p><span>${localDateTime(activity.createdAt)}</span></div>`).join('')}${ui.recentCommerceActivity.length > 10 ? `<button type="button" class="ghost-action dashboard-show-more" data-action="toggle-dashboard-audit">${dashboardAuditExpanded ? 'Ver menos' : `Ver más (${ui.recentCommerceActivity.length - 10})`}</button>` : ''}` })() : '<p class="empty-state">Todavía no hay movimientos registrados.</p>'}
       </div></article>
     </section>
   </section>
@@ -1747,7 +1744,7 @@ const dashboardActivityIcon = (activity) => {
 const dashboardViewV2 = (ui) => {
   const pendingInvoiceCount = ui.enrichedInvoices.filter((invoice) => invoice.status !== 'Cobrada').length
   const visibleActivity = ui.recentCommerceActivity.slice(0, 4)
-  const activityTime = (createdAt) => String(createdAt || '').slice(11, 16) || '--:--'
+  const activityTime = (createdAt) => localTime(createdAt)
   const topProductMax = Math.max(1, ...ui.topProducts.slice(0, 5).map(([, qty]) => Number(qty) || 0))
   const profileCreated = Boolean(ui.commerceContext?.commerce_id)
   const setupTasks = [
@@ -1794,7 +1791,7 @@ const dashboardViewV2 = (ui) => {
     </section>
     <section class="dashboard-primary-grid">
       <article class="panel dashboard-sales-panel"><div class="panel-head"><div><h3>Ventas recientes</h3><p>Últimas operaciones registradas</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="ventas">Ver todas</button></div><div class="dashboard-sales-list">
-        ${ui.enrichedSales.length ? ui.enrichedSales.slice(0, 5).map((sale) => `<div class="dashboard-sale-row"><div><strong>${escapeHtml(sale.itemSummary)}</strong><p>${escapeHtml(sale.customerName)} · ${escapeHtml(sale.paymentMethod || 'Sin medio de pago')}</p></div><div><strong>${money(sale.totalAmount)}</strong><time>${activityTime(sale.soldAt)}</time></div></div>`).join('') : '<p class="empty-state">Todavía no hay ventas registradas.</p>'}
+        ${ui.enrichedSales.length ? ui.enrichedSales.slice(0, 5).map((sale) => `<div class="dashboard-sale-row"><div><strong>${escapeHtml(sale.itemSummary)}</strong><p>${escapeHtml(sale.customerName)} · ${escapeHtml(paymentMethodLabel(sale.paymentMethod))}</p></div><div><strong>${money(sale.totalAmount)}</strong><time>${activityTime(sale.soldAt)}</time></div></div>`).join('') : '<p class="empty-state">Todavía no hay ventas registradas.</p>'}
       </div></article>
       <article class="panel dashboard-stock-panel"><div class="panel-head"><div><h3>Stock crítico</h3><p>${ui.lowStock.length ? 'Productos que requieren reposición' : 'Inventario estable'}</p></div><button type="button" class="ghost-action dashboard-panel-link" data-dashboard-section="productos">Ver ${ui.lowStock.length || ''} productos</button></div><div class="dashboard-stock-list">
         ${ui.lowStock.length ? ui.lowStock.slice(0, 4).map((product) => `<div class="dashboard-stock-row"><strong>${escapeHtml(product.name)}</strong><span>Stock <b>${product.scopedStock}</b> · mínimo ${product.minStock}</span></div>`).join('') : '<div class="alert-card ok"><strong>Sin alertas</strong><p>No hay productos con stock bajo.</p></div>'}
@@ -1978,7 +1975,7 @@ const cashView = (ui) => `
         ${byRecentDate(ui.scopedCashSessions.filter((session) => session.status === 'closed'), 'closedAt').slice(0, 5).map((session) => `<div class="timeline-item"><strong>Cierre ${session.closedAt?.slice(0, 10) || '-'}</strong><p>Contado ${money(session.countedAmount || 0)} / diferencia ${money(session.differenceAmount || 0)}</p><span>${ui.enrichedRegisters.find((register) => register.id === session.registerId)?.name || 'Caja'} / fondo ${money(session.openingAmount || 0)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay cierres para este filtro.</p>'}
       </div></article>
       <article class="panel"><div class="panel-head"><div><h3>Bitácora de caja</h3><p>Últimos movimientos que impactan en el arqueo.</p></div></div><div class="timeline-list">
-        ${ui.enrichedCashMovements.slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note}</p><span>${movement.registerName} / ${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
+        ${ui.enrichedCashMovements.slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note}</p><span>${movement.registerName} / ${money(movement.signedAmount)} / ${localDateTime(movement.createdAt)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
       </div></article>
     </section>
   </section>
@@ -2120,7 +2117,7 @@ const cashViewLegacy = (ui) => `
           ${byRecentDate(ui.scopedCashSessions.filter((session) => session.status === 'closed'), 'closedAt').slice(0, 5).map((session) => `<div class="timeline-item"><strong>Cierre ${session.closedAt?.slice(0, 10) || '-'}</strong><p>Contado ${money(session.countedAmount || 0)} / diferencia ${money(session.differenceAmount || 0)}</p><span>${ui.enrichedRegisters.find((register) => register.id === session.registerId)?.name || 'Caja'} / fondo ${money(session.openingAmount || 0)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay cierres para este filtro.</p>'}
         </div></article>
         <article class="panel"><div class="panel-head"><div><h3>Bitacora de caja</h3><p>Impacta en el arqueo esperado</p></div></div><div class="timeline-list">
-          ${ui.enrichedCashMovements.slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note}</p><span>${movement.registerName} / ${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
+          ${ui.enrichedCashMovements.slice(0, 6).map((movement) => `<div class="timeline-item"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note}</p><span>${movement.registerName} / ${money(movement.signedAmount)} / ${localDateTime(movement.createdAt)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay movimientos manuales.</p>'}
         </div></article>
       </div>
     </section>
@@ -2996,12 +2993,12 @@ const auditView = (ui) => {
   const now = new Date(); const beginningOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const periodStart = auditPeriodFilter === 'today' ? beginningOfDay : auditPeriodFilter === 'week' ? new Date(beginningOfDay.getTime() - (6 * 86400000)) : auditPeriodFilter === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1) : null
   const query = auditSearchQuery.trim().toLocaleLowerCase()
-  const entries = ui.enrichedAudit.filter((entry) => { const createdAt = new Date(entry.createdAt); if (periodStart && createdAt < periodStart) return false; if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false; if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false; if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false; if (auditActionFilter !== 'all' && entry.action !== auditActionFilter) return false; return !query || auditSearchText(ui, entry).includes(query) })
+  const entries = ui.enrichedAudit.filter((entry) => { const createdAt = new Date(entry.createdAt); if (periodStart && createdAt < periodStart) return false; if (auditPeriodFilter === 'custom' && auditDateFrom && localDateKey(entry.createdAt) < auditDateFrom) return false; if (auditPeriodFilter === 'custom' && auditDateTo && localDateKey(entry.createdAt) > auditDateTo) return false; if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false; if (auditActionFilter !== 'all' && entry.action !== auditActionFilter) return false; return !query || auditSearchText(ui, entry).includes(query) })
   const counts = Object.keys(ui.auditModuleLabels).map((key) => ({ key, label: ui.auditModuleLabels[key], count: entries.filter((entry) => entry.modules.includes(key)).length })).filter((item) => item.count)
   const total = Math.max(1, counts.reduce((sum, item) => sum + item.count, 0)); let offset = 0
   const donut = counts.map((item) => { const start = Math.round((offset / total) * 100); offset += item.count; return `${moduleColors[item.key]} ${start}% ${Math.round((offset / total) * 100)}%` }).join(', ') || '#334155 0 100%'
   const sensitiveCount = entries.filter((entry) => ['deleted', 'cancelled', 'returned', 'reset', 'deactivated'].includes(entry.action)).length
-  return `<section class="view-section audit-view"><div class="section-header"><div><p class="kicker">Bitácora operativa</p><h2>Actividad de la operación</h2><p class="section-description">Encontrá quién hizo qué, cuándo ocurrió y abrí el registro relacionado.</p></div><div class="panel-inline-stats section-inline-stats"><span class="panel-inline-stat"><strong>${entries.length}</strong><span>Eventos visibles</span></span><span class="panel-inline-stat"><strong>${counts.length}</strong><span>Módulos activos</span></span><span class="panel-inline-stat"><strong>${sensitiveCount}</strong><span>Acciones sensibles</span></span></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel audit-controls"><div class="audit-periods" aria-label="Período de actividad">${[['today', 'Hoy'], ['week', '7 días'], ['month', 'Este mes'], ['custom', 'Personalizado']].map(([key, label]) => `<button type="button" class="audit-filter-button ${auditPeriodFilter === key ? 'is-active' : ''}" data-audit-period="${key}">${label}</button>`).join('')}</div><div class="audit-filter-fields"><label class="audit-search"><span>Buscar en la actividad</span><input type="search" data-audit-search value="${escapeHtml(auditSearchQuery)}" placeholder="Venta, factura, cliente, producto o usuario" /></label><label>Acción<select data-audit-action aria-label="Filtrar por acción"><option value="all">Todas las acciones</option>${[['created','Creaciones'],['updated','Actualizaciones'],['deleted','Eliminaciones'],['cancelled','Anulaciones'],['opened','Aperturas'],['closed','Cierres'],['registered','Registros']].map(([value,label]) => `<option value="${value}" ${auditActionFilter === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>${auditPeriodFilter === 'custom' ? `<label>Desde<input type="date" data-audit-date="from" value="${auditDateFrom}" /></label><label>Hasta<input type="date" data-audit-date="to" value="${auditDateTo}" /></label>` : ''}<button type="button" class="audit-clear-button" data-audit-clear ${(!auditSearchQuery && auditPeriodFilter === 'all' && auditModuleFilter === 'all' && auditActionFilter === 'all') ? 'hidden' : ''}>Limpiar filtros</button></div></section><section class="audit-overview"><article class="panel audit-module-panel"><div class="panel-head"><div><p class="kicker">Filtrar por origen</p><h3>Módulos</h3><p>Elegí un módulo para concentrarte en sus movimientos.</p></div></div><div class="audit-module-filters"><button type="button" class="audit-module-chip ${auditModuleFilter === 'all' ? 'is-active' : ''}" data-audit-module="all">Todos <b>${entries.length}</b></button>${counts.map((item) => `<button type="button" class="audit-module-chip module-${item.key} ${auditModuleFilter === item.key ? 'is-active' : ''}" data-audit-module="${item.key}"><i></i>${item.label} <b>${item.count}</b></button>`).join('')}</div></article><article class="panel audit-distribution"><div class="panel-head"><div><p class="kicker">Lectura del período</p><h3>Actividad visible</h3></div></div><div class="audit-legend"><span><i></i>${entries.length} eventos encontrados</span><span><i></i>${sensitiveCount} requieren revisión</span><span><i></i>Seleccioná un evento para ver el detalle</span></div></article></section><section class="panel audit-trace-panel"><div class="panel-head"><div><p class="kicker">Historial</p><h3>Últimos movimientos</h3><p>Seleccioná un evento para ver su detalle y registro relacionado.</p></div></div><div class="audit-trace">${entries.length ? entries.map((entry) => `<article class="audit-trace-event module-${entry.modules[0]}"><div class="audit-trace-node"><i></i></div><div class="audit-trace-content"><div class="audit-event-topline"><span class="audit-module-tag module-${entry.modules[0]}">${entry.moduleLabel}</span><time>${String(entry.createdAt || '').slice(0, 16).replace('T', ' · ')}</time></div><strong>${actionLabels[entry.action] || 'Registró'} ${entry.entityLabel}</strong><p>Por ${escapeHtml(entry.actorName)}${entry.entityId ? ` · Ref. ${escapeHtml(String(entry.entityId).slice(0, 8))}` : ''}</p><div class="audit-related-modules">${entry.modules.map((module) => `<span class="module-${module}" title="${ui.auditModuleLabels[module]}"><i></i>${ui.auditModuleLabels[module]}</span>`).join('')}</div></div></article>`).join('') : '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'}</div></section></section>`
+  return `<section class="view-section audit-view"><div class="section-header"><div><p class="kicker">Bitácora operativa</p><h2>Actividad de la operación</h2><p class="section-description">Encontrá quién hizo qué, cuándo ocurrió y abrí el registro relacionado.</p></div><div class="panel-inline-stats section-inline-stats"><span class="panel-inline-stat"><strong>${entries.length}</strong><span>Eventos visibles</span></span><span class="panel-inline-stat"><strong>${counts.length}</strong><span>Módulos activos</span></span><span class="panel-inline-stat"><strong>${sensitiveCount}</strong><span>Acciones sensibles</span></span></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel audit-controls"><div class="audit-periods" aria-label="Período de actividad">${[['today', 'Hoy'], ['week', '7 días'], ['month', 'Este mes'], ['custom', 'Personalizado']].map(([key, label]) => `<button type="button" class="audit-filter-button ${auditPeriodFilter === key ? 'is-active' : ''}" data-audit-period="${key}">${label}</button>`).join('')}</div><div class="audit-filter-fields"><label class="audit-search"><span>Buscar en la actividad</span><input type="search" data-audit-search value="${escapeHtml(auditSearchQuery)}" placeholder="Venta, factura, cliente, producto o usuario" /></label><label>Acción<select data-audit-action aria-label="Filtrar por acción"><option value="all">Todas las acciones</option>${[['created','Creaciones'],['updated','Actualizaciones'],['deleted','Eliminaciones'],['cancelled','Anulaciones'],['opened','Aperturas'],['closed','Cierres'],['registered','Registros']].map(([value,label]) => `<option value="${value}" ${auditActionFilter === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>${auditPeriodFilter === 'custom' ? `<label>Desde<input type="date" data-audit-date="from" value="${auditDateFrom}" /></label><label>Hasta<input type="date" data-audit-date="to" value="${auditDateTo}" /></label>` : ''}<button type="button" class="audit-clear-button" data-audit-clear ${(!auditSearchQuery && auditPeriodFilter === 'all' && auditModuleFilter === 'all' && auditActionFilter === 'all') ? 'hidden' : ''}>Limpiar filtros</button></div></section><section class="audit-overview"><article class="panel audit-module-panel"><div class="panel-head"><div><p class="kicker">Filtrar por origen</p><h3>Módulos</h3><p>Elegí un módulo para concentrarte en sus movimientos.</p></div></div><div class="audit-module-filters"><button type="button" class="audit-module-chip ${auditModuleFilter === 'all' ? 'is-active' : ''}" data-audit-module="all">Todos <b>${entries.length}</b></button>${counts.map((item) => `<button type="button" class="audit-module-chip module-${item.key} ${auditModuleFilter === item.key ? 'is-active' : ''}" data-audit-module="${item.key}"><i></i>${item.label} <b>${item.count}</b></button>`).join('')}</div></article><article class="panel audit-distribution"><div class="panel-head"><div><p class="kicker">Lectura del período</p><h3>Actividad visible</h3></div></div><div class="audit-legend"><span><i></i>${entries.length} eventos encontrados</span><span><i></i>${sensitiveCount} requieren revisión</span><span><i></i>Seleccioná un evento para ver el detalle</span></div></article></section><section class="panel audit-trace-panel"><div class="panel-head"><div><p class="kicker">Historial</p><h3>Últimos movimientos</h3><p>Seleccioná un evento para ver su detalle y registro relacionado.</p></div></div><div class="audit-trace">${entries.length ? entries.map((entry) => `<article class="audit-trace-event module-${entry.modules[0]}"><div class="audit-trace-node"><i></i></div><div class="audit-trace-content"><div class="audit-event-topline"><span class="audit-module-tag module-${entry.modules[0]}">${entry.moduleLabel}</span><time>${localDateTime(entry.createdAt)}</time></div><strong>${actionLabels[entry.action] || 'Registró'} ${entry.entityLabel}</strong><p>Por ${escapeHtml(entry.actorName)}${entry.entityId ? ` · Ref. ${escapeHtml(String(entry.entityId).slice(0, 8))}` : ''}</p><div class="audit-related-modules">${entry.modules.map((module) => `<span class="module-${module}" title="${ui.auditModuleLabels[module]}"><i></i>${ui.auditModuleLabels[module]}</span>`).join('')}</div></div></article>`).join('') : '<p class="empty-state">No hay eventos que coincidan con estos filtros.</p>'}</div></section></section>`
 }
 
 const reportsView = (ui) => {
@@ -3016,7 +3013,7 @@ const reportsView = (ui) => {
   const topProducts = [...ui.reportScopedSales.reduce((map, sale) => { for (const item of sale.items) { const current = map.get(item.productId) || { name: ui.snapshot.products.find((product) => product.id === item.productId)?.name || 'Artículo', qty: 0 }; current.qty += item.quantity; map.set(item.productId, current) } return map }, new Map()).values()].sort((a, b) => b.qty - a.qty).slice(0, 5)
   const maxProductQty = Math.max(1, ...topProducts.map((item) => item.qty))
   const selectedRegister = reportRegisterFilter === 'all' ? 'Todas las cajas' : (ui.enrichedRegisters.find((register) => register.id === reportRegisterFilter)?.name || 'Caja')
-  return `<section class="view-section reports-view"><div class="section-header"><div><p class="kicker">Centro de lectura</p><h2>Lectura del negocio</h2><p class="section-description">Compará ventas, rentabilidad, caja e inventario en el período que elijas.</p></div><div class="reports-header-actions"><span class="reports-context">${ui.currentBranch?.name || 'Sucursal'} · ${selectedRegister}</span><button type="button" class="primary-action" data-action="export-report">Exportar CSV</button></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel report-filter-shell"><div class="report-filter-heading"><div><p class="kicker">Período de análisis</p><h3>Elegí qué querés comparar</h3></div><span class="report-date-label">${ui.reportDateFrom || ui.reportDateTo ? `${ui.reportDateFrom || 'Inicio'} → ${ui.reportDateTo || 'Hoy'}` : 'Todo el historial'}</span></div><form class="form-grid compact-form report-filter-form" data-form="report-filter"><label>Sucursal<input type="text" value="${ui.currentBranch?.name || '-'}" disabled /></label><label>Caja<select name="registerFilter"><option value="all">Todas</option>${ui.branchRegisters.map((register) => `<option value="${register.id}" ${reportRegisterFilter === register.id ? 'selected' : ''}>${register.name}</option>`).join('')}</select></label><label>Desde<input type="date" name="dateFrom" value="${ui.reportDateFrom}" /></label><label>Hasta<input type="date" name="dateTo" value="${ui.reportDateTo}" /></label><button type="submit">Aplicar período</button></form></section><section class="report-metric-grid"><article class="report-metric is-primary"><span>Ventas</span><strong>${money(salesTotal)}</strong><small>${ui.reportScopedSales.length} operaciones</small></article><article class="report-metric"><span>Ticket promedio</span><strong>${money(averageTicket)}</strong><small>Por operación</small></article><article class="report-metric"><span>Margen estimado</span><strong>${money(estimatedMargin)}</strong><small>Ventas menos costo</small></article><article class="report-metric"><span>Por cobrar</span><strong>${money(receivables)}</strong><small>Saldo pendiente</small></article><article class="report-metric"><span>Compras</span><strong>${money(purchasesTotal)}</strong><small>${ui.reportScopedReceipts.length} recepciones</small></article><article class="report-metric"><span>Stock movido</span><strong>${ui.reportScopedStockMovements.length}</strong><small>${collectionRate.toFixed(0)}% cobrado</small></article></section><section class="reports-focus-grid"><article class="panel report-top-products-panel"><div class="panel-head"><div><p class="kicker">Rendimiento comercial</p><h3>Productos más vendidos</h3><p>Unidades vendidas en el período seleccionado.</p></div></div><div class="report-product-ranking">${topProducts.map((item, index) => `<div class="report-product-row"><span class="report-rank">${String(index + 1).padStart(2, '0')}</span><div class="report-product-info"><strong>${escapeHtml(item.name)}</strong><div class="report-product-bar"><i style="width:${Math.round((item.qty / maxProductQty) * 100)}%"></i></div></div><b>${item.qty}</b></div>`).join('') || '<p class="empty-state">Todavía no hay ventas en este rango.</p>'}</div></article><article class="panel report-balance-panel"><div class="panel-head"><div><p class="kicker">Indicadores clave</p><h3>Salud operativa</h3><p>Lecturas que no aparecen en el Resumen general.</p></div></div><div class="report-summary-list"><div><span>Caja neta</span><strong>${money(cashNet)}</strong></div><div><span>Cobranza</span><strong>${collectionRate.toFixed(0)}%</strong></div><div><span>Comprobantes</span><strong>${ui.reportScopedInvoices.length}</strong></div><div><span>Movimientos de stock</span><strong>${ui.reportScopedStockMovements.length}</strong></div></div></article></section><section class="reports-movement-grid"><article class="panel report-movement-panel"><div class="panel-head"><div><p class="kicker">Inventario</p><h3>Movimientos de stock</h3><p>Ingresos y egresos recientes.</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">No hubo movimientos de stock en este período.</p>'}</div></article><article class="panel report-movement-panel"><div class="panel-head"><div><p class="kicker">Tesorería</p><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales.</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} · ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">No hubo movimientos de caja en este período.</p>'}</div></article></section></section>`
+  return `<section class="view-section reports-view"><div class="section-header"><div><p class="kicker">Centro de lectura</p><h2>Lectura del negocio</h2><p class="section-description">Compará ventas, rentabilidad, caja e inventario en el período que elijas.</p></div><div class="reports-header-actions"><span class="reports-context">${ui.currentBranch?.name || 'Sucursal'} · ${selectedRegister}</span><button type="button" class="primary-action" data-action="export-report">Exportar CSV</button></div></div>${feedbackMessage ? `<div class="feedback-banner">${feedbackMessage}</div>` : ''}<section class="panel report-filter-shell"><div class="report-filter-heading"><div><p class="kicker">Período de análisis</p><h3>Elegí qué querés comparar</h3></div><span class="report-date-label">${ui.reportDateFrom || ui.reportDateTo ? `${ui.reportDateFrom || 'Inicio'} → ${ui.reportDateTo || 'Hoy'}` : 'Todo el historial'}</span></div><form class="form-grid compact-form report-filter-form" data-form="report-filter"><label>Sucursal<input type="text" value="${ui.currentBranch?.name || '-'}" disabled /></label><label>Caja<select name="registerFilter"><option value="all">Todas</option>${ui.branchRegisters.map((register) => `<option value="${register.id}" ${reportRegisterFilter === register.id ? 'selected' : ''}>${register.name}</option>`).join('')}</select></label><label>Desde<input type="date" name="dateFrom" value="${ui.reportDateFrom}" /></label><label>Hasta<input type="date" name="dateTo" value="${ui.reportDateTo}" /></label><button type="submit">Aplicar período</button></form></section><section class="report-metric-grid"><article class="report-metric is-primary"><span>Ventas</span><strong>${money(salesTotal)}</strong><small>${ui.reportScopedSales.length} operaciones</small></article><article class="report-metric"><span>Ticket promedio</span><strong>${money(averageTicket)}</strong><small>Por operación</small></article><article class="report-metric"><span>Margen estimado</span><strong>${money(estimatedMargin)}</strong><small>Ventas menos costo</small></article><article class="report-metric"><span>Por cobrar</span><strong>${money(receivables)}</strong><small>Saldo pendiente</small></article><article class="report-metric"><span>Compras</span><strong>${money(purchasesTotal)}</strong><small>${ui.reportScopedReceipts.length} recepciones</small></article><article class="report-metric"><span>Stock movido</span><strong>${ui.reportScopedStockMovements.length}</strong><small>${collectionRate.toFixed(0)}% cobrado</small></article></section><section class="reports-focus-grid"><article class="panel report-top-products-panel"><div class="panel-head"><div><p class="kicker">Rendimiento comercial</p><h3>Productos más vendidos</h3><p>Unidades vendidas en el período seleccionado.</p></div></div><div class="report-product-ranking">${topProducts.map((item, index) => `<div class="report-product-row"><span class="report-rank">${String(index + 1).padStart(2, '0')}</span><div class="report-product-info"><strong>${escapeHtml(item.name)}</strong><div class="report-product-bar"><i style="width:${Math.round((item.qty / maxProductQty) * 100)}%"></i></div></div><b>${item.qty}</b></div>`).join('') || '<p class="empty-state">Todavía no hay ventas en este rango.</p>'}</div></article><article class="panel report-balance-panel"><div class="panel-head"><div><p class="kicker">Indicadores clave</p><h3>Salud operativa</h3><p>Lecturas que no aparecen en el Resumen general.</p></div></div><div class="report-summary-list"><div><span>Caja neta</span><strong>${money(cashNet)}</strong></div><div><span>Cobranza</span><strong>${collectionRate.toFixed(0)}%</strong></div><div><span>Comprobantes</span><strong>${ui.reportScopedInvoices.length}</strong></div><div><span>Movimientos de stock</span><strong>${ui.reportScopedStockMovements.length}</strong></div></div></article></section><section class="reports-movement-grid"><article class="panel report-movement-panel"><div class="panel-head"><div><p class="kicker">Inventario</p><h3>Movimientos de stock</h3><p>Ingresos y egresos recientes.</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${localDateTime(movement.createdAt)}</span></div>`).join('') || '<p class="empty-state">No hubo movimientos de stock en este período.</p>'}</div></article><article class="panel report-movement-panel"><div class="panel-head"><div><p class="kicker">Tesorería</p><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales.</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} · ${localDateTime(movement.createdAt)}</span></div>`).join('') || '<p class="empty-state">No hubo movimientos de caja en este período.</p>'}</div></article></section></section>`
 }
 
 const reportsViewLegacy = (ui) => `
@@ -3035,8 +3032,8 @@ const reportsViewLegacy = (ui) => `
     <section class="dashboard-grid reports-layout">
       <article class="panel"><div class="panel-head"><div><h3>Top productos</h3><p>Movimiento comercial filtrado</p></div></div><div class="top-list">${[...ui.reportScopedSales.reduce((map, sale) => { for (const item of sale.items) { const current = map.get(item.productId) || { name: ui.snapshot.products.find((product) => product.id === item.productId)?.name || 'Articulo', qty: 0 }; current.qty += item.quantity; map.set(item.productId, current) } return map }, new Map()).values()].sort((a, b) => b.qty - a.qty).slice(0, 5).map((item, index) => `<div class="top-row"><span>${index + 1}</span><div><strong>${item.name}</strong><p>${item.qty} unidades vendidas</p></div></div>`).join('') || '<p class="empty-state">Sin ventas en este rango.</p>'}</div></article>
       <article class="panel"><div class="panel-head"><div><h3>Balance rapido</h3><p>${ui.currentBranch?.name || 'Sucursal'}${reportRegisterFilter === 'all' ? '' : ` / ${ui.enrichedRegisters.find((register) => register.id === reportRegisterFilter)?.name || 'Caja'}`}</p></div></div><div class="priority-list"><div class="priority-item"><strong>Ventas filtradas</strong><p>${money(ui.reportScopedSales.reduce((sum, sale) => sum + sale.totalAmount, 0))}</p></div><div class="priority-item"><strong>Facturas filtradas</strong><p>${money(ui.reportScopedInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0))}</p></div><div class="priority-item"><strong>Mov. caja</strong><p>${money(ui.reportScopedCashMovements.reduce((sum, movement) => sum + movement.signedAmount, 0))}</p></div></div><div class="settings-actions"><button type="button" class="primary-action" data-action="export-report">Exportar CSV</button></div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Movimientos de stock</h3><p>Ingresos y egresos</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de stock en este rango.</p>'}</div></article>
-      <article class="panel"><div class="panel-head"><div><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} / ${movement.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de caja en este rango.</p>'}</div></article>
+      <article class="panel"><div class="panel-head"><div><h3>Movimientos de stock</h3><p>Ingresos y egresos</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedStockMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.quantity)}"><strong>${stockMovementTypeLabel(movement.type)}</strong><p>${movement.quantity} unidades</p><span>${localDateTime(movement.createdAt)}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de stock en este rango.</p>'}</div></article>
+      <article class="panel"><div class="panel-head"><div><h3>Movimientos de caja</h3><p>Ingresos y egresos manuales</p></div></div><div class="timeline-list">${byRecentDate(ui.reportScopedCashMovements, 'createdAt').slice(0, 6).map((movement) => `<div class="timeline-item ${movementDirectionClass(movement.signedAmount)}"><strong>${cashMovementKindLabel(movement.kind)}</strong><p>${movement.note || 'Sin detalle'}</p><span>${money(movement.signedAmount)} / ${localDateTime(movement.createdAt)}</span></div>`).join('') || '<p class="empty-state">Sin movimientos de caja en este rango.</p>'}</div></article>
     </section>
   </section>
 `
@@ -3047,7 +3044,7 @@ const ownerAdminViewV2 = (ui) => {
   const platform = ui.platformAdmin
   if (!platform) return `<section class="view-section"><div class="section-header"><div><p class="kicker">Control de plataforma</p><h2>Usuarios y trazabilidad</h2></div></div><article class="panel empty-panel"><h3>Consola global no disponible</h3><p>Actualizá para volver a consultar los datos de plataforma.</p><div class="settings-actions"><button type="button" class="primary-action" data-action="refresh-platform-admin">Actualizar</button></div></article></section>`
 
-  const formatDate = (value) => value ? String(value).replace('T', ' · ').slice(0, 16) : 'Sin dato'
+  const formatDate = (value) => value ? localDateTime(value) : 'Sin dato'
   const formatBytes = (value) => {
     const n = Number(value)
     if (!Number.isFinite(n) || n < 0) return null
@@ -3204,7 +3201,7 @@ const settingsViewV2 = (ui) => `
               </div>
             `}).join('')}
           </div>
-          <div class="settings-audit-column"><div class="panel-note"><strong>Actividad reciente</strong><span>Ultimos cambios del comercio.</span></div><div class="timeline-list compact-timeline">${ui.enrichedAudit.slice(0, 8).map((log) => `<div class="timeline-item"><strong>${log.action}</strong><p>${log.actorName} - ${log.entityType}${log.entityId ? ` #${String(log.entityId).slice(0, 8)}` : ''}</p><span>${log.createdAt.slice(0, 16).replace('T', ' ')}</span></div>`).join('') || '<p class="empty-state">Todavia no hay actividad registrada.</p>'}</div></div>
+          <div class="settings-audit-column"><div class="panel-note"><strong>Actividad reciente</strong><span>Ultimos cambios del comercio.</span></div><div class="timeline-list compact-timeline">${ui.enrichedAudit.slice(0, 8).map((log) => `<div class="timeline-item"><strong>${log.action}</strong><p>${log.actorName} - ${log.entityType}${log.entityId ? ` #${String(log.entityId).slice(0, 8)}` : ''}</p><span>${localDateTime(log.createdAt)}</span></div>`).join('') || '<p class="empty-state">Todavia no hay actividad registrada.</p>'}</div></div>
         </div>
       </article>` : ''}
       ${settingsPanelOpen === 'branches' && canViewBranches ? `<article class="panel settings-expand-panel" data-settings-content="branches"><div class="panel-head"><div><h3>Sucursales</h3><p>Locales, direccion y numeracion del comercio</p></div><div class="settings-actions">${editingBranch ? '' : createToggleButton('branch', showBranchForm, 'Agregar sucursal')}</div></div>
@@ -3287,7 +3284,7 @@ const progressiveProfileModal = (ui) => {
   const savedIndustry = String(profile.industry || '').trim()
   const draft = progressiveProfileDraft || { country: profile.country || '', industry: savedIndustry.length < 2 ? '' : savedIndustry, phone: profile.phone || '', email: profile.email || '', needsArca: profile.needsArca, operationalGoals: progressiveProfileGoalsDraft || profile.operationalGoals || [] }
   const selectedGoals = draft.operationalGoals || []
-  const totalSteps = 6
+  const totalSteps = 5
   const stepMeta = [
     ['Abramos tu<br />operación.', '¿Qué querés resolver primero?', 'Elegí el foco de hoy. Configurá el resto mientras trabajás.'],
     ['Elegí tu<br />rubro.', '¿Qué tipo de comercio tenés?', 'Esto nos ayuda a hablar el idioma de tu operación.'],
@@ -3305,7 +3302,7 @@ const progressiveProfileModal = (ui) => {
   if (progressiveProfileStep === 4) stepContent = `${hiddenState}<input type="hidden" name="industry" value="${escapeHtml(draft.industry)}" /><input type="hidden" name="country" value="${escapeHtml(draft.country)}" /><label class="progressive-single-field">Teléfono<input type="tel" name="phone" value="${escapeHtml(draft.phone)}" placeholder="Ej.: 11 4567-8901" autocomplete="tel" inputmode="tel" pattern="[+()0-9\\s-]{6,30}" autofocus /></label><p class="progressive-contact-status ${progressiveProfileError ? 'is-error' : ''}" aria-live="polite">${escapeHtml(progressiveProfileError || 'Podés dejarlo vacío y continuar.')}</p>${actions('Siguiente')}`
   if (progressiveProfileStep === 5) stepContent = `${hiddenState}<input type="hidden" name="industry" value="${escapeHtml(draft.industry)}" /><input type="hidden" name="country" value="${escapeHtml(draft.country)}" /><input type="hidden" name="phone" value="${escapeHtml(draft.phone)}" /><fieldset class="arca-choice"><legend>Facturación</legend><label><input type="radio" name="needsArca" value="yes" ${draft.needsArca === true ? 'checked' : ''} /> Sí, quiero prepararla</label><label><input type="radio" name="needsArca" value="no" ${draft.needsArca === false ? 'checked' : ''} /> No por ahora</label><label><input type="radio" name="needsArca" value="" ${draft.needsArca === null || draft.needsArca === undefined ? 'checked' : ''} /> Todavía no lo sé</label></fieldset><div class="progressive-profile-actions"><button type="button" class="ghost-action" data-action="progressive-profile-previous">Volver</button><button type="submit" class="primary-action">Guardar y terminar</button><button type="button" class="text-action" data-action="progressive-profile-skip">Omitir por ahora</button></div>`
   if (progressiveProfileStep === 6) stepContent = `<div class="progressive-profile-success"><span class="progressive-profile-success-mark">✓</span><h3>Planilla completa.</h3><p>Ya tenés tu punto de partida. Desde el panel podés cargar productos, abrir caja y hacer tu primera venta.</p><button type="button" class="primary-action" data-action="finish-progressive-profile">Ir al panel</button></div>`
-  return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title">${progressiveProfileStep === 1 ? '<button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button>' : ''}<div class="progressive-profile-layout"><aside class="progressive-profile-route"><span class="progressive-profile-step">${String(progressiveProfileStep).padStart(2, '0')}</span><p class="kicker">PLANILLA DE APERTURA</p><h2>${stepMeta[0]}</h2><p>${stepMeta[2]}</p><span class="progressive-profile-time">PASO ${progressiveProfileStep} / ${totalSteps} · MENOS DE 2 MINUTOS</span></aside><div class="progressive-profile-content"><p class="kicker">PUESTA A PUNTO</p><h2 id="progressive-profile-title">${stepMeta[1]}</h2><p class="progressive-profile-copy">Lo esencial primero. Todo lo demás queda disponible cuando lo necesites.</p><form class="progressive-profile-modal-form" data-form="progressive-profile">${stepContent}</form></div></div></section></div>`
+  return `<div class="progressive-profile-overlay" role="presentation"><section class="progressive-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="progressive-profile-title">${progressiveProfileStep === 1 ? '<button type="button" class="progressive-profile-close" data-action="close-progressive-profile" aria-label="Cerrar y seguir operando">×</button>' : ''}<div class="progressive-profile-layout"><aside class="progressive-profile-route"><span class="progressive-profile-step">${String(progressiveProfileStep).padStart(2, '0')}</span><p class="kicker">PLANILLA DE APERTURA</p><h2>${stepMeta[0]}</h2><p>${stepMeta[2]}</p><span class="progressive-profile-time">PASO ${progressiveProfileStep} / ${totalSteps} · MENOS DE 2 MINUTOS</span></aside><div class="progressive-profile-content"><p class="kicker">PUESTA A PUNTO</p><h2 id="progressive-profile-title">${stepMeta[1]}</h2><p class="progressive-profile-copy">Lo esencial primero. Todo lo demás queda disponible cuando lo necesites.</p>${progressiveProfileError ? `<p class="progressive-contact-status is-error" role="alert">${escapeHtml(progressiveProfileError)}</p>` : ''}<form class="progressive-profile-modal-form" data-form="progressive-profile">${stepContent}</form></div></div></section></div>`
 }
 
 const renderApp = (ui) => {
@@ -3481,6 +3478,12 @@ const render = () => {
     document.body.classList.remove('mobile-search-open')
   }
   const ui = getUiState()
+  if (ui.isAuthenticated && isAuthRoute()) {
+    window.history.replaceState({ section: activeSection }, '', '/panel/')
+  }
+  document.title = ui.isAuthenticated
+    ? `${navItems.find((item) => item.id === activeSection)?.label || 'Panel'} | Operando`
+    : ({ login: 'Ingresar', signup: 'Crear cuenta', recovery: 'Recuperar clave', reset: 'Restablecer clave' }[authModeFromPath()] || 'Operando') + ' | Operando'
   document.body.classList.toggle('catalog-form-open', Boolean(
     productFormOpen || stockAdjustmentFormOpen || stockTransferFormOpen
     || purchaseFormOpen || supplierFormOpen || supplierPaymentPanelOpen || supplierPaymentDraft
@@ -3709,7 +3712,7 @@ const getReceiptDocument = (saleId) => {
   .total{font-size:18px;font-weight:700;text-align:right;margin-top:14px}
   .meta strong{display:inline-block;width:72px}
   @media print { body{margin:0} .ticket{width:auto} }
-  </style></head><body><div class="ticket"><div class="brand"><h1>Operando</h1><p>${branch?.name || 'Sucursal'}<br />${branch?.address || ''}</p></div><div class="meta"><div><strong>Cliente:</strong> ${customer?.fullName || 'Mostrador'}</div><div><strong>Fecha:</strong> ${sale.soldAt.slice(0, 16).replace('T', ' ')}</div><div><strong>Canal:</strong> ${sale.channel}</div><div><strong>Pago:</strong> ${sale.paymentMethod}</div><div><strong>Caja:</strong> ${register?.name || 'Sin caja'}</div><div><strong>Venta:</strong> ${sale.id.slice(0, 8)}</div></div><table><thead><tr><th>Item</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${sale.items.map((item) => { const product = ui.snapshot.products.find((entry) => entry.id === item.productId); return `<tr><td>${product?.name || 'Articulo'}</td><td>${item.quantity}</td><td>${money(item.lineTotal)}</td></tr>` }).join('')}</tbody></table><p class="total">TOTAL ${money(sale.totalAmount)}</p><p class="footer">Comprobante interno generado por operando.app.</p></div></body></html>`
+  </style></head><body><div class="ticket"><div class="brand"><h1>Operando</h1><p>${branch?.name || 'Sucursal'}<br />${branch?.address || ''}</p></div><div class="meta"><div><strong>Cliente:</strong> ${customer?.fullName || 'Mostrador'}</div><div><strong>Fecha:</strong> ${localDateTime(sale.soldAt)}</div><div><strong>Canal:</strong> ${sale.channel}</div><div><strong>Pago:</strong> ${paymentMethodLabel(sale.paymentMethod)}</div><div><strong>Caja:</strong> ${register?.name || 'Sin caja'}</div><div><strong>Venta:</strong> ${sale.id.slice(0, 8)}</div></div><table><thead><tr><th>Item</th><th>Cant.</th><th>Total</th></tr></thead><tbody>${sale.items.map((item) => { const product = ui.snapshot.products.find((entry) => entry.id === item.productId); return `<tr><td>${product?.name || 'Articulo'}</td><td>${item.quantity}</td><td>${money(item.lineTotal)}</td></tr>` }).join('')}</tbody></table><p class="total">TOTAL ${money(sale.totalAmount)}</p><p class="footer">Comprobante interno generado por operando.app.</p></div></body></html>`
   return { html, filename: `comprobante-${sale.id}.pdf`, fallbackFilename: `comprobante-${sale.id}.html` }
 }
 
@@ -3832,7 +3835,7 @@ const buildThermalReceiptDocument = (saleId, paperWidth = '80') => {
     .footer{margin-top:10px;border-top:1px dashed #222;padding-top:8px}
     @page{size:${pageSize} auto;margin:4mm}
     @media print{body{margin:0}.ticket{width:auto;padding:0 0 8px}}
-  </style></head><body><div class="ticket"><div class="brand"><h1>operando.app</h1><p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p></div><div class="meta"><div class="meta-row"><span>Cliente</span><span>${escapeHtml(customer?.fullName || 'Mostrador')}</span></div><div class="meta-row"><span>Fecha</span><span>${escapeHtml(sale.soldAt.slice(0, 16).replace('T', ' '))}</span></div><div class="meta-row"><span>Canal</span><span>${escapeHtml(sale.channel)}</span></div><div class="meta-row"><span>Pago</span><span>${escapeHtml(sale.paymentMethod)}</span></div><div class="meta-row"><span>Caja</span><span>${escapeHtml(register?.name || 'Sin caja')}</span></div><div class="meta-row"><span>Operacion</span><span>${escapeHtml(sale.id.slice(0, 8).toUpperCase())}</span></div></div><table class="items"><thead><tr><th>Item</th><th>Cant</th><th>Unit</th><th>Total</th></tr></thead><tbody>${lines}</tbody></table><div class="totals"><div class="totals-row"><span>Subtotal</span><span>${money(sale.subtotalAmount || sale.totalAmount)}</span></div>${sale.discountAmount ? `<div class="totals-row"><span>Descuento</span><span>- ${money(sale.discountAmount)}</span></div>` : ''}<div class="totals-row"><span>Cobrado</span><span>${money(sale.amountPaid || 0)}</span></div><div class="totals-row grand"><span>TOTAL</span><span>${money(sale.totalAmount)}</span></div></div><div class="footer"><p>Comprobante interno ${pageSize}<br />Generado por operando.app</p></div></div></body></html>`
+  </style></head><body><div class="ticket"><div class="brand"><h1>operando.app</h1><p>${escapeHtml(branch?.name || 'Sucursal')}<br />${escapeHtml(branch?.address || '')}</p></div><div class="meta"><div class="meta-row"><span>Cliente</span><span>${escapeHtml(customer?.fullName || 'Mostrador')}</span></div><div class="meta-row"><span>Fecha</span><span>${escapeHtml(localDateTime(sale.soldAt))}</span></div><div class="meta-row"><span>Canal</span><span>${escapeHtml(sale.channel)}</span></div><div class="meta-row"><span>Pago</span><span>${escapeHtml(paymentMethodLabel(sale.paymentMethod))}</span></div><div class="meta-row"><span>Caja</span><span>${escapeHtml(register?.name || 'Sin caja')}</span></div><div class="meta-row"><span>Operacion</span><span>${escapeHtml(sale.id.slice(0, 8).toUpperCase())}</span></div></div><table class="items"><thead><tr><th>Item</th><th>Cant</th><th>Unit</th><th>Total</th></tr></thead><tbody>${lines}</tbody></table><div class="totals"><div class="totals-row"><span>Subtotal</span><span>${money(sale.subtotalAmount || sale.totalAmount)}</span></div>${sale.discountAmount ? `<div class="totals-row"><span>Descuento</span><span>- ${money(sale.discountAmount)}</span></div>` : ''}<div class="totals-row"><span>Cobrado</span><span>${money(sale.amountPaid || 0)}</span></div><div class="totals-row grand"><span>TOTAL</span><span>${money(sale.totalAmount)}</span></div></div><div class="footer"><p>Comprobante interno ${pageSize}<br />Generado por operando.app</p></div></div></body></html>`
   return {
     html,
     filename: `ticket-${pageSize}-${sale.id}.pdf`,
@@ -3891,11 +3894,11 @@ const exportReport = () => {
   const ui = getUiState()
   const rows = [
     ['Tipo', 'Fecha', 'Sucursal', 'Caja', 'Detalle', 'Importe'],
-    ...ui.reportScopedSales.map((sale) => ['Venta', sale.soldAt.slice(0, 16).replace('T', ' '), sale.branchName, sale.registerName, sale.itemSummary, sale.totalAmount]),
+    ...ui.reportScopedSales.map((sale) => ['Venta', localDateTime(sale.soldAt), sale.branchName, sale.registerName, sale.itemSummary, sale.totalAmount]),
     ...ui.reportScopedInvoices.map((invoice) => ['Factura', invoice.dueDate, invoice.branchName, '-', invoice.number, invoice.totalAmount]),
     ...ui.reportScopedReceipts.map((receipt) => ['Compra', receipt.receivedAt, receipt.branchName || ui.currentBranch?.name || 'Sucursal', '-', receipt.productName || receipt.note || 'Recepción', Number(receipt.quantity || 0) * Number(receipt.unitCost || 0)]),
-    ...ui.reportScopedCashMovements.map((movement) => ['Caja', String(movement.createdAt).slice(0, 16).replace('T', ' '), ui.currentBranch?.name || 'Sucursal', ui.enrichedRegisters.find((register) => register.id === movement.registerId)?.name || 'Caja', `${cashMovementKindLabel(movement.kind)}: ${movement.note}`, movement.signedAmount]),
-    ...ui.reportScopedStockMovements.map((movement) => ['Stock', String(movement.createdAt).slice(0, 16).replace('T', ' '), ui.currentBranch?.name || 'Sucursal', '-', `${stockMovementTypeLabel(movement.type)}: ${movement.productName || movement.note || 'Movimiento'}`, movement.quantity]),
+    ...ui.reportScopedCashMovements.map((movement) => ['Caja', localDateTime(movement.createdAt), ui.currentBranch?.name || 'Sucursal', ui.enrichedRegisters.find((register) => register.id === movement.registerId)?.name || 'Caja', `${cashMovementKindLabel(movement.kind)}: ${movement.note}`, movement.signedAmount]),
+    ...ui.reportScopedStockMovements.map((movement) => ['Stock', localDateTime(movement.createdAt), ui.currentBranch?.name || 'Sucursal', '-', `${stockMovementTypeLabel(movement.type)}: ${movement.productName || movement.note || 'Movimiento'}`, movement.quantity]),
   ]
   const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
@@ -3919,6 +3922,25 @@ const importData = async (event) => {
   } finally {
     event.target.value = ''
   }
+}
+
+const resetProgressiveProfile = () => { progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileDraft = null; progressiveProfileError = '' }
+const captureProgressiveDraft = () => {
+  const form = document.querySelector('.progressive-profile-modal-form')
+  const uiProfile = getUiState().progressiveProfile
+  const current = progressiveProfileDraft || { country: uiProfile.country || '', industry: uiProfile.industry || '', phone: uiProfile.phone || '', email: uiProfile.email || '', needsArca: uiProfile.needsArca, operationalGoals: uiProfile.operationalGoals || [] }
+  const read = (name) => form?.querySelector(`[name="${name}"]`)
+  const goalInputs = [...(form?.querySelectorAll('input[name="operationalGoals"]') || [])]
+  const checked = goalInputs.filter((input) => input.type === 'hidden' || input.checked).map((input) => input.value)
+  progressiveProfileDraft = {
+    ...current,
+    industry: read('industry')?.value?.trim() ?? current.industry,
+    country: read('country')?.value?.trim() ?? current.country,
+    phone: read('phone')?.value?.trim() ?? current.phone,
+    needsArca: form?.querySelector('[name="needsArca"]:checked')?.value === 'yes' ? true : form?.querySelector('[name="needsArca"]:checked')?.value === 'no' ? false : (read('needsArca') ? null : current.needsArca),
+    operationalGoals: goalInputs.length ? checked : current.operationalGoals,
+  }
+  progressiveProfileGoalsDraft = progressiveProfileDraft.operationalGoals
 }
 
 const handleSubmit = async (event) => {
@@ -4152,6 +4174,7 @@ const handleSubmit = async (event) => {
     feedbackMessage = result.message || ''
   }
   if (kind === 'progressive-profile') {
+    captureProgressiveDraft()
     progressiveProfileError = ''
     const wantsArca = formData.get('needsArca') === 'yes'
     const result = await store.updateProgressiveProfile({ country: String(formData.get('country') || '').trim(), industry: String(formData.get('industry') || '').trim(), phone: String(formData.get('phone') || '').trim(), email: String(formData.get('email') || '').trim(), needsArca: wantsArca ? true : formData.get('needsArca') === 'no' ? false : null, operationalGoals: formData.getAll('operationalGoals'), status: 'complete' })
@@ -4930,8 +4953,8 @@ const bindEvents = () => {
     const auditTerm = auditSearchQuery.trim().toLocaleLowerCase()
     const visibleEntries = auditUi.enrichedAudit.filter((entry) => {
       if (auditStart && new Date(entry.createdAt) < auditStart) return false
-      if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false
-      if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false
+      if (auditPeriodFilter === 'custom' && auditDateFrom && localDateKey(entry.createdAt) < auditDateFrom) return false
+      if (auditPeriodFilter === 'custom' && auditDateTo && localDateKey(entry.createdAt) > auditDateTo) return false
       if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false
       if (auditActionFilter !== 'all' && entry.action !== auditActionFilter) return false
       return !auditTerm || auditSearchText(auditUi, entry).includes(auditTerm)
@@ -4949,7 +4972,7 @@ const bindEvents = () => {
       const after = entry.afterData || {}
       const labels = { name: 'Nombre', full_name: 'Cliente', fullName: 'Cliente', phone: 'Telefono', email: 'Email', address: 'Direccion', sale_price: 'Precio venta', salePrice: 'Precio venta', cost_price: 'Costo', costPrice: 'Costo', quantity: 'Cantidad', signed_amount: 'Importe', signedAmount: 'Importe', note: 'Detalle', status: 'Estado', opening_amount: 'Apertura', openingAmount: 'Apertura', counted_amount: 'Contado', countedAmount: 'Contado', difference_amount: 'Diferencia', differenceAmount: 'Diferencia' }
       const valueText = (value) => value === null || value === undefined || value === '' ? '-' : (typeof value === 'boolean' ? (value ? 'Si' : 'No') : String(value))
-      const changedValues = Object.keys(labels).filter((key) => after[key] !== undefined || before[key] !== undefined).filter((key) => after[key] !== before[key]).slice(0, 4).map((key) => `<span><b>${labels[key]}</b> ${escapeHtml(valueText(before[key]))} -> ${escapeHtml(valueText(after[key]))}</span>`).join('')
+      const changedValues = Object.keys(labels).filter((key) => after[key] !== undefined || before[key] !== undefined).filter((key) => valueText(after[key]) !== valueText(before[key])).slice(0, 4).map((key) => `<span><b>${labels[key]}</b> ${escapeHtml(valueText(key === 'status' ? saleStatusLabel(before[key]) : before[key]))} → ${escapeHtml(valueText(key === 'status' ? saleStatusLabel(after[key]) : after[key]))}</span>`).join('')
       const cashSummary = ['cash_movement', 'cash_session'].includes(entry.entityType) ? `<span><b>Caja</b> ${escapeHtml(String(after.note || after.description || 'Movimiento registrado'))}${after.signedAmount != null || after.signed_amount != null ? ` · ${money(Number(after.signedAmount ?? after.signed_amount))}` : ''}${after.countedAmount != null || after.counted_amount != null ? ` · Contado ${money(Number(after.countedAmount ?? after.counted_amount))}` : ''}${after.differenceAmount != null || after.difference_amount != null ? ` · Diferencia ${money(Number(after.differenceAmount ?? after.difference_amount))}` : ''}</span>` : ''
       const stockProduct = auditUi.snapshot.products.find((product) => product.id === (after.productId || after.product_id || before.productId || before.product_id))
       const stockSummary = entry.entityType.includes('stock') ? `<span><b>Stock</b> ${escapeHtml(stockProduct?.name || after.productName || 'Producto')} · ${Number(after.quantity || 0) > 0 ? '+' : ''}${escapeHtml(String(after.quantity ?? '-'))} unidades</span>` : ''
@@ -4996,7 +5019,7 @@ const bindEvents = () => {
       const label = new Date(year, month - 1, day, 12).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
       const heading = document.createElement('h4')
       heading.className = 'audit-trace-date'
-      heading.textContent = date === new Date().toISOString().slice(0, 10) ? `Hoy · ${label}` : label
+      heading.textContent = date === localDateKey() ? `Hoy · ${label}` : label
       event.before(heading)
     }
     let dragStartY = 0; let dragStartScroll = 0
@@ -5018,8 +5041,8 @@ const bindEvents = () => {
     const term = auditSearchQuery.trim().toLowerCase()
     const entries = ui.enrichedAudit.filter((entry) => {
       if (auditStart && new Date(entry.createdAt) < auditStart) return false
-      if (auditPeriodFilter === 'custom' && auditDateFrom && String(entry.createdAt).slice(0, 10) < auditDateFrom) return false
-      if (auditPeriodFilter === 'custom' && auditDateTo && String(entry.createdAt).slice(0, 10) > auditDateTo) return false
+      if (auditPeriodFilter === 'custom' && auditDateFrom && localDateKey(entry.createdAt) < auditDateFrom) return false
+      if (auditPeriodFilter === 'custom' && auditDateTo && localDateKey(entry.createdAt) > auditDateTo) return false
       if (auditModuleFilter !== 'all' && !entry.modules.includes(auditModuleFilter)) return false
       if (auditActionFilter !== 'all' && entry.action !== auditActionFilter) return false
       return !term || [entry.actorName, entry.entityLabel, entry.action, entry.entityId, entry.moduleLabel].join(' ').toLowerCase().includes(term)
@@ -5043,7 +5066,7 @@ const bindEvents = () => {
     auditTrace.innerHTML = causalGroups.map((group) => {
       const root = group.find((entry) => ['sale', 'purchase_receipt', 'cash_session'].includes(entry.entityType)) || group[0]
       const children = group.filter((entry) => entry !== root)
-      const detail = (entry) => encodeURIComponent(JSON.stringify({ title: `${actionLabel(entry)} ${entry.entityLabel}`, actor: entry.actorName, time: String(entry.createdAt).slice(0, 16).replace('T', ' · '), before: entry.beforeData, after: entry.afterData }))
+      const detail = (entry) => encodeURIComponent(JSON.stringify({ title: `${actionLabel(entry)} ${entry.entityLabel}`, actor: entry.actorName, time: localDateTime(entry.createdAt), before: entry.beforeData, after: entry.afterData }))
       const groupWidth = Math.max(baseGroupWidth, children.length * 72 + 18)
       const branchNodes = children.map((entry, index) => {
         const left = ((index + 1) / (children.length + 1)) * 100
@@ -5768,23 +5791,6 @@ const bindEvents = () => {
       render()
     })
   }
-  const resetProgressiveProfile = () => { progressiveProfileStep = 1; progressiveProfileGoalsDraft = null; progressiveProfileDraft = null; progressiveProfileError = '' }
-  const captureProgressiveDraft = () => {
-    const form = document.querySelector('.progressive-profile-modal-form')
-    const uiProfile = getUiState().progressiveProfile
-    const current = progressiveProfileDraft || { country: uiProfile.country || '', industry: uiProfile.industry || '', phone: uiProfile.phone || '', email: uiProfile.email || '', needsArca: uiProfile.needsArca, operationalGoals: uiProfile.operationalGoals || [] }
-    const read = (name) => form?.querySelector(`[name="${name}"]`)
-    const checked = [...(form?.querySelectorAll('input[name="operationalGoals"]:checked') || [])].map((input) => input.value)
-    progressiveProfileDraft = {
-      ...current,
-      industry: read('industry')?.value?.trim() ?? current.industry,
-      country: read('country')?.value?.trim() ?? current.country,
-      phone: read('phone')?.value?.trim() ?? current.phone,
-      needsArca: read('needsArca')?.value === 'yes' ? true : read('needsArca')?.value === 'no' ? false : (read('needsArca') ? null : current.needsArca),
-      operationalGoals: checked.length ? checked : current.operationalGoals,
-    }
-    progressiveProfileGoalsDraft = progressiveProfileDraft.operationalGoals
-  }
   for (const toggleAccountButton of document.querySelectorAll('[data-action="toggle-account-menu"]')) toggleAccountButton.addEventListener('click', (event) => { event.stopPropagation(); accountMenuOpen = !accountMenuOpen; accountAlertsOpen = false; render() })
   const focusProgressiveField = () => window.requestAnimationFrame(() => {
     const nextField = document.querySelector('.progressive-profile-modal-form input[autofocus]')
@@ -5822,12 +5828,16 @@ const bindEvents = () => {
     progressiveProfileError = ''
     if (progressiveProfileStep < 5) { progressiveProfileStep += 1; render(); focusProgressiveField(); return }
     const draft = progressiveProfileDraft || {}
-    const result = await store.updateProgressiveProfile({ country: draft.country || '', industry: draft.industry || '', phone: draft.phone || '', email: draft.email || '', needsArca: draft.needsArca === true ? true : draft.needsArca === false ? false : null, operationalGoals: draft.operationalGoals || [], status: 'complete' })
-    if (!result.ok) { progressiveProfileError = result.message || 'No se pudo guardar el perfil.'; render(); return }
-    progressiveProfilePromptOpen = false
-    resetProgressiveProfile()
-    activeSection = 'dashboard'
-    feedbackMessage = 'Perfil listo. Ya podés operar normalmente.'
+    try {
+      const result = await store.updateProgressiveProfile({ country: draft.country || '', industry: draft.industry || '', phone: draft.phone || '', email: draft.email || '', needsArca: draft.needsArca === true ? true : draft.needsArca === false ? false : null, operationalGoals: draft.operationalGoals || [], status: 'complete' })
+      if (!result.ok) { progressiveProfileError = result.message || 'No se pudo guardar el perfil.'; render(); return }
+      progressiveProfilePromptOpen = false
+      resetProgressiveProfile()
+      activeSection = 'dashboard'
+      feedbackMessage = 'Perfil listo. Ya podés operar normalmente.'
+    } catch (error) {
+      progressiveProfileError = 'No se pudo guardar el perfil. Revisá la conexión e intentá nuevamente.'
+    }
     render()
   })
   for (const button of document.querySelectorAll('[data-action="progressive-profile-previous"]')) button.addEventListener('click', () => { captureProgressiveDraft(); progressiveProfileError = ''; progressiveProfileStep = Math.max(1, progressiveProfileStep - 1); render() })
