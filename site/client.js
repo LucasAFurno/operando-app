@@ -371,7 +371,7 @@ const loadCloudAccess = async (sessionPayload = null, { backgroundSync = false }
     store.clearCloudAuthSession()
     throw new Error('No se pudo activar la sesion del usuario.')
   }
-  const syncPromise = store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : ['dashboard'])
+  const syncPromise = store.syncFromCloud(activeProfile.isPlatformAdmin ? ['platform'] : [...new Set(['dashboard', ...(sectionDomains[activeSection] || [])])])
   if (backgroundSync) {
     syncPromise.then(() => {
       if (store?.isAuthenticated?.()) render()
