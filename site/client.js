@@ -3481,6 +3481,7 @@ const render = () => {
   if (ui.isAuthenticated && isAuthRoute()) {
     window.history.replaceState({ section: activeSection }, '', '/panel/')
   }
+  if (ui.isAuthenticated && isPanelRoute()) syncSectionPath()
   document.title = ui.isAuthenticated
     ? `${navItems.find((item) => item.id === activeSection)?.label || 'Panel'} | Operando`
     : ({ login: 'Ingresar', signup: 'Crear cuenta', recovery: 'Recuperar clave', reset: 'Restablecer clave' }[authModeFromPath()] || 'Operando') + ' | Operando'

@@ -43,6 +43,8 @@ test('optional onboarding saves without phone, keeps the chosen ARCA answer and 
     const { document } = env.window
     assert.equal(env.window.location.pathname, '/panel/')
     assert.equal(document.title, 'Resumen | Operando')
+    env.run("activeSection = 'caja'; render()")
+    assert.equal(env.window.location.pathname, '/panel/caja/')
     document.querySelector('[name="operationalGoals"][value="stock"]').checked = true
     env.run('captureProgressiveDraft(); progressiveProfileStep = 5; render()')
     document.querySelector('[name="needsArca"][value="no"]').checked = true
@@ -51,6 +53,7 @@ test('optional onboarding saves without phone, keeps the chosen ARCA answer and 
     assert.equal(env.payloads[0].needsArca, false)
     assert.deepEqual(Array.from(env.payloads[0].operationalGoals), ['stock'])
     assert.equal(document.querySelector('.progressive-profile-dialog'), null)
+    assert.equal(env.window.location.pathname, '/panel/')
   } finally { await env.window.happyDOM.abort() }
 })
 
