@@ -3895,8 +3895,8 @@ const exportReport = () => {
   const rows = [
     ['Tipo', 'Fecha', 'Sucursal', 'Caja', 'Detalle', 'Importe'],
     ...ui.reportScopedSales.map((sale) => ['Venta', localDateTime(sale.soldAt), sale.branchName, sale.registerName, sale.itemSummary, sale.totalAmount]),
-    ...ui.reportScopedInvoices.map((invoice) => ['Factura', invoice.dueDate, invoice.branchName, '-', invoice.number, invoice.totalAmount]),
-    ...ui.reportScopedReceipts.map((receipt) => ['Compra', receipt.receivedAt, receipt.branchName || ui.currentBranch?.name || 'Sucursal', '-', receipt.productName || receipt.note || 'Recepción', Number(receipt.quantity || 0) * Number(receipt.unitCost || 0)]),
+    ...ui.reportScopedInvoices.map((invoice) => [invoice.kind || 'Comprobante', invoice.dueDate, invoice.branchName, '-', invoice.number, invoice.totalAmount]),
+    ...ui.reportScopedReceipts.map((receipt) => ['Compra', localDateTime(receipt.receivedAt), receipt.branchName || ui.currentBranch?.name || 'Sucursal', '-', receipt.productName || receipt.note || 'Recepción', Number(receipt.quantity || 0) * Number(receipt.unitCost || 0)]),
     ...ui.reportScopedCashMovements.map((movement) => ['Caja', localDateTime(movement.createdAt), ui.currentBranch?.name || 'Sucursal', ui.enrichedRegisters.find((register) => register.id === movement.registerId)?.name || 'Caja', `${cashMovementKindLabel(movement.kind)}: ${movement.note}`, movement.signedAmount]),
     ...ui.reportScopedStockMovements.map((movement) => ['Stock', localDateTime(movement.createdAt), ui.currentBranch?.name || 'Sucursal', '-', `${stockMovementTypeLabel(movement.type)}: ${movement.productName || movement.note || 'Movimiento'}`, movement.quantity]),
   ]
