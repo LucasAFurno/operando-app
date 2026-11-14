@@ -3,6 +3,8 @@
 export const getRegisterCashSession = (sessions, branchId, registerId) =>
   branchId && registerId ? sessions.find((session) => session.status === 'open' && session.branchId === branchId && session.registerId === registerId) || null : null
 
+export const isCountedSale = (sale) => !['cancelled', 'returned'].includes(String(sale?.status || '').toLowerCase())
+
 export const getCashSessionTotals = (session, sales = [], movements = []) => {
   const entries = session ? movements.filter((entry) => entry.cashSessionId === session.id) : []
   const receipts = entries.filter((entry) => entry.kind === 'sale')

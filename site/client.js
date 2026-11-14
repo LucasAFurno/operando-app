@@ -1,6 +1,6 @@
 import { createBrowserDataStore } from './data-store.js?v=__OPERANDO_ASSET_VERSION__'
 import { createCloudAuthManager } from './cloud-auth.js?v=__OPERANDO_ASSET_VERSION__'
-import { getCashSessionTotals, getRegisterCashSession, invoiceBalance, localDateKey, localDateTime, localTime } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
+import { getCashSessionTotals, getRegisterCashSession, invoiceBalance, isCountedSale, localDateKey, localDateTime, localTime } from './operational-utils.js?v=__OPERANDO_ASSET_VERSION__'
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
 const today = localDateKey()
@@ -1146,7 +1146,7 @@ const getUiState = () => {
     totalStock: Number(product.stock || 0),
   }))
   const productMap = new Map(scopedProducts.map((item) => [item.id, item]))
-  const scopedSales = snapshot.sales.filter((sale) => sale.branchId === currentBranch?.id && (reportRegisterFilter === 'all' || sale.registerId === reportRegisterFilter))
+  const scopedSales = snapshot.sales.filter((sale) => isCountedSale(sale) && sale.branchId === currentBranch?.id && (reportRegisterFilter === 'all' || sale.registerId === reportRegisterFilter))
   const scopedInvoices = snapshot.invoices.filter((invoice) => invoice.branchId === currentBranch?.id)
   const scopedTickets = snapshot.tickets.filter((ticket) => ticket.branchId === currentBranch?.id)
   const scopedReceipts = snapshot.purchaseReceipts.filter((receipt) => {
@@ -1174,7 +1174,7 @@ const getUiState = () => {
       : paymentMethodLabel(sale.paymentMethod),
   }))
   const filteredSales = byRecentDate(enrichedSales.filter((sale) => sale.branchId === currentBranch?.id && (reportRegisterFilter === 'all' || sale.registerId === reportRegisterFilter)), 'soldAt')
-  const reportScopedSales = filteredSales.filter((sale) => isWithinDateRange(sale.soldAt, reportDateFrom, reportDateTo))
+  const reportScopedSales = filteredSales.filter((sale) => isCountedSale(sale) && isWithinDateRange(sale.soldAt, reportDateFrom, reportDateTo))
   const enrichedInvoices = byRecentDate(scopedInvoices, 'dueDate').map((invoice) => ({ ...invoice, customerName: customerMap.get(invoice.customerId)?.fullName || 'Consumidor final', branchName: branchMap.get(invoice.branchId)?.name || 'Sucursal' }))
   const enrichedTickets = byRecentDate(scopedTickets, 'updatedAt').map((ticket) => ({ ...ticket, customerName: customerMap.get(ticket.customerId)?.fullName || 'Sin cliente', branchName: branchMap.get(ticket.branchId)?.name || 'Sucursal' }))
   const enrichedScopedReceipts = byRecentDate(scopedReceipts, 'receivedAt').map((receipt) => ({
@@ -2004,11 +2004,12 @@ const salesViewV2 = (ui) => `
       const matchesPeriod = !periodStart || new Date(sale.soldAt) >= periodStart
       return matchesQuery && matchesStatus && matchesPayment && matchesPeriod
     })
-    const filteredHistoryTotal = filteredHistorySales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0)
-    const filteredHistoryPaid = filteredHistorySales.reduce((sum, sale) => sum + Number(sale.amountPaid || 0), 0)
+    const countedHistorySales = filteredHistorySales.filter(isCountedSale)
+    const filteredHistoryTotal = countedHistorySales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0)
+    const filteredHistoryPaid = countedHistorySales.reduce((sum, sale) => sum + Number(sale.amountPaid || 0), 0)
     return `
   <section class="view-section sales-view-v2"><div class="section-header"><div><p class="kicker">Punto de venta</p><h2>Nueva venta</h2></div><div class="panel-inline-stats section-inline-stats">
-      <span class="panel-inline-stat"><strong>${ui.enrichedSales.length}</strong><span>Ventas</span></span>
+      <span class="panel-inline-stat"><strong>${ui.enrichedSales.filter(isCountedSale).length}</strong><span>Ventas</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.totalSales)}</strong><span>Total</span></span>
       <span class="panel-inline-stat"><strong>${money(ui.unpaidSales)}</strong><span>Por cobrar</span></span>
     </div></div>
@@ -5574,15 +5575,19 @@ const bindEvents = () => {
         exportThermalReceipt(button.dataset.id, '80')
         return
       }
+      try {
       const result = button.dataset.saleAction === 'invoice'
         ? await store.createInvoiceFromSale(button.dataset.id)
         : button.dataset.saleAction === 'ticket'
           ? await store.createTicketFromSale(button.dataset.id)
           : button.dataset.saleAction === 'cancel'
-            ? store.cancelSale(button.dataset.id)
-            : store.createReturnFromSale(button.dataset.id)
+            ? await store.cancelSale(button.dataset.id)
+            : await store.createReturnFromSale(button.dataset.id)
       feedbackMessage = result.message || ''
       if (result.ok && button.dataset.saleAction === 'invoice') { completeOnboardingStep('receipt'); resumeOnboardingAfterStep('receipt') }
+      } catch (error) {
+        feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo completar la operación.')
+      }
       render()
     })
   }

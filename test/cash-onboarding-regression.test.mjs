@@ -1,13 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { getCashSessionTotals, getRegisterCashSession } from '../site/operational-utils.js'
+import { getCashSessionTotals, getRegisterCashSession, isCountedSale } from '../site/operational-utils.js'
 import { createBrowserDataStore } from '../site/data-store.js'
 
 const session = { id: 'session-qa', openingAmount: 5000 }
 const sale = { cashSessionId: session.id, paymentMethod: 'cash', amountPaid: 3000, paymentBreakdown: { cash: 3000 } }
 const receipt = { cashSessionId: session.id, kind: 'sale', signedAmount: 3000 }
 const movement = (kind, signedAmount) => ({ cashSessionId: session.id, kind, signedAmount })
+
+test('cancelled and returned sales do not count as revenue or receivables', () => {
+  const sales = [{ status: 'completed', totalAmount: 4500, amountPaid: 4500 }, { status: 'cancelled', totalAmount: 1500, amountPaid: 0 }, { status: 'returned', totalAmount: 1000, amountPaid: 0 }]
+  const active = sales.filter(isCountedSale)
+  assert.equal(active.reduce((sum, item) => sum + item.totalAmount, 0), 4500)
+  assert.equal(active.reduce((sum, item) => sum + item.totalAmount - item.amountPaid, 0), 0)
+})
 
 test('open sessions are isolated by branch and register', () => {
   const sessions = [{ id: 'one', status: 'open', branchId: 'A', registerId: 'A1' }, { id: 'two', status: 'open', branchId: 'B', registerId: 'B1' }]
