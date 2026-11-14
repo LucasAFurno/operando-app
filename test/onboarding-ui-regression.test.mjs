@@ -29,7 +29,7 @@ const setup = async () => {
   } }
   const context = vm.createContext({ window, document: window.document, location: window.location, console,
     URL, URLSearchParams, Intl, Date, setTimeout, clearTimeout,
-    FormData: window.FormData, HTMLInputElement: window.HTMLInputElement, HTMLElement: window.HTMLElement,
+    FormData: window.FormData, HTMLInputElement: window.HTMLInputElement, HTMLElement: window.HTMLElement, Node: window.Node,
     ...utils, __store: stub })
   const run = (code) => vm.runInContext(code, context)
   run(client)
@@ -82,5 +82,21 @@ test('final skip completes an empty optional profile instead of leaving the dial
     assert.equal(env.payloads.length, 1)
     assert.equal(env.payloads[0].status, 'complete')
     assert.equal(env.window.document.querySelector('.progressive-profile-dialog'), null)
+  } finally { await env.window.happyDOM.abort() }
+})
+
+test('duplicate SKU keeps entered product data and permits correction', async () => {
+  const env = await setup()
+  try {
+    env.run(`progressiveProfilePromptOpen = false; activeSection = 'productos'; productFormOpen = true;
+      store.createProduct = async () => { throw new Error('duplicate key value violates unique constraint "products_commerce_id_sku_key"') }; render()`)
+    const form = env.window.document.querySelector('form[data-form="product"]')
+    form.querySelector('[name="name"]').value = 'Café QA'
+    form.querySelector('[name="sku"]').value = 'QA-001'
+    await env.run('handleSubmit({preventDefault(){},currentTarget:document.querySelector("form[data-form=product]")})')
+    assert.equal(form.querySelector('[name="name"]').value, 'Café QA')
+    assert.equal(form.querySelector('[name="sku"]').value, 'QA-001')
+    assert.match(form.querySelector('[role="alert"]').textContent, /SKU/)
+    assert.equal(form.querySelector('button[type="submit"]').disabled, false)
   } finally { await env.window.happyDOM.abort() }
 })

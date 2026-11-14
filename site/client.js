@@ -3958,6 +3958,19 @@ const handleSubmit = async (event) => {
   }
   const formData = new FormData(form, event.submitter)
   const kind = form.dataset.form
+  const showFormError = (message) => {
+    let alert = form.querySelector('[data-form-error]')
+    if (!alert) {
+      alert = document.createElement('p')
+      alert.dataset.formError = ''
+      alert.setAttribute('role', 'alert')
+      alert.className = 'form-note full-span is-error'
+      form.prepend(alert)
+    }
+    alert.textContent = message
+    form.dataset.submitting = 'false'
+    for (const button of form.querySelectorAll('button[type="submit"]')) button.disabled = false
+  }
 
   // Enter en los pasos intermedios equivale a "Siguiente"; no debe guardar
   // el perfil ni cerrar la planilla antes del último paso.
@@ -4205,6 +4218,7 @@ const handleSubmit = async (event) => {
   }
   if (kind === 'product') {
     const result = await store.createProduct({ name: formData.get('name'), sku: formData.get('sku'), barcode: formData.get('barcode'), stock: formData.get('stock'), salePrice: formData.get('salePrice'), costPrice: formData.get('costPrice'), minStock: formData.get('minStock'), category: formData.get('category'), trackStock: formData.get('trackStock') === 'on' })
+    if (!result.ok) { showFormError(result.message || 'No se pudo guardar el producto.'); return }
     feedbackMessage = result.message || ''
     if (result.ok) { completeOnboardingStep('product'); resumeOnboardingAfterStep('product') }
     productFormOpen = false
@@ -4507,6 +4521,7 @@ const handleSubmit = async (event) => {
 
   form.reset()
   } catch (error) {
+    if (kind === 'product') { showFormError(mapPublicAuthError(error?.message || 'No se pudo guardar el producto.')); return }
     if (kind === 'sale') saleSubmissionInFlight = false
     if (kind === 'progressive-profile') progressiveProfileError = 'No se pudieron guardar los datos. Revisá la conexión e intentá nuevamente.'
     feedbackMessage = mapPublicAuthError(error?.message || 'No se pudo completar la accion.', kind === 'instance-setup' ? 'signup' : 'login')
