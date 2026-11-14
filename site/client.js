@@ -736,6 +736,7 @@ const cashMovementKindLabel = (value) => {
     opening: 'Apertura',
     closing: 'Cierre',
     sale: 'Cobro de venta',
+    refund: 'Devolución de efectivo',
   }
   return labels[normalized] || (value || 'Movimiento')
 }

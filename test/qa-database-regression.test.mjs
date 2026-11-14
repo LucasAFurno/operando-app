@@ -3,6 +3,20 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { PGlite } from '@electric-sql/pglite'
 
+test('cash export preserves signed refunds and withdrawals', async () => {
+  const db = new PGlite()
+  try {
+    await db.exec(`create table public.cash_movements(kind text, amount numeric, signed_amount numeric);
+      insert into public.cash_movements values ('sale',1500,1500),('refund',1500,-1500),('withdrawal',200,-200);
+      create function public.app_public_export_snapshot(text) returns jsonb language sql as $$
+        select jsonb_agg(jsonb_build_object('signedAmount', case when kind = 'expense' then amount * -1 else amount end)) from public.cash_movements
+      $$;`)
+    await db.exec(await readFile(new URL('../supabase/migrations/20261114013417_preserve_cash_movement_sign.sql', import.meta.url), 'utf8'))
+    const result = await db.query("select public.app_public_export_snapshot('qa') as movements")
+    assert.deepEqual(result.rows[0].movements.map((entry) => Number(entry.signedAmount)), [1500, -1500, -200])
+  } finally { await db.close() }
+})
+
 test('migration fixes cloud cash close and allows empty optional contact without removing validation', async () => {
   const db = new PGlite()
   try {
